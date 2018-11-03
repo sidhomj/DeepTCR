@@ -15,5 +15,6 @@ setup(
     url="https://github.com/sidhomj/DeepTCR",
     license="LICENSE",
     long_description=open("README.md").read(),
+    install_requires=open("requirements.txt").read()
 )
 
