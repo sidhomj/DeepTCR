@@ -24,7 +24,17 @@ DeepTCR has the following python library dependencies:
 
 ## Installation
 
-In order to install DeepTCR, run setup script:
+
+In order to install DeepTCR:
+
+```python
+pip3 install DeepTCR
+
+```
+
+Or to install latest updated versions from Github repo:
+ 
+Either download package, unzip, and run setup script:
 
 ```python
 python3 setup.py install
@@ -37,12 +47,7 @@ pip3 install git+https://github.com/sidhomj/DeepTCR.git
 
 ```
 
-Or use:
 
-```python
-pip3 install DeepTCR
-
-```
 
 
 
