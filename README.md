@@ -4,7 +4,8 @@ Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data
 
 DeepTCR is a python package that has a collection of unsupervsied and supervised 
 deep learning approaches to parse TCRSeq data. To see an example of how the algorithms can 
-be used on an example dataset, see Tutorial.ipnyb. 
+be used on an example dataset, see Tutorial.ipnyb. For complete documentation for all available methods,
+see 'Supervised_Documentation.txt' and 'Unsupervised_Documentation.txt'.
 
 DeepTCR has the following python library dependencies:
 1. numpy==1.14.5
