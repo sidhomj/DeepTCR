@@ -633,6 +633,7 @@ class DeepTCR_U(object):
         if labels is False:
             ax.set_yticklabels('')
         plt.subplots_adjust(right=0.8)
+        plt.show()
         plt.savefig(self.directory_results+filename)
 
     def Cluster(self,t=100,criterion='distance',write_to_sheets=False):
