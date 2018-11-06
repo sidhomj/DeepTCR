@@ -1339,22 +1339,6 @@ class DeepTCR_S(object):
             self.features_wf, self.features_seq, self.indices, self.seq,\
             self.X_Freq, self.y_pred, self.y_test,self.labels,self.Y,self.files,self.kernel = pickle.load(f)
 
-        # # #Create HM to visualize results
-        # color_dict = {'CMV+':'g','CMV-':'r'}
-        # row_colors = [color_dict[x] for x in self.labels]
-        #
-        # keep=[]
-        # for i,column in enumerate(self.features_wf.T,0):
-        #     if len(np.unique(column)) > 1:
-        #         keep.append(i)
-        # keep = np.asarray(keep)
-        # self.features_wf = self.features_wf[:, keep]
-        #
-        # df = pd.DataFrame(self.features_wf)
-        # # #df.index = self.files
-        # CM = sns.clustermap(df, standard_scale=1,cmap='bwr',row_colors=row_colors)
-        # # ax = CM.ax_heatmap
-        # # ax.set_yticklabels('')
 
         group_num = np.where(self.lb.classes_ == group)[0][0]
 
