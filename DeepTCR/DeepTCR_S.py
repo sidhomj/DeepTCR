@@ -1054,9 +1054,6 @@ class DeepTCR_S(object):
                 Seq_Features,conv_kernel,Indices = Convolutional_Features_WF(inputs_seq_embed, units=units,kernel=kernel, conv_weights=conv_weights,trainable_embedding=trainable_embedding)
                 conv_variables = tf.trainable_variables()
 
-
-
-
                 fc = Seq_Features
 
                 if num_fc_layers != 0:
@@ -1457,7 +1454,8 @@ class DeepTCR_S(object):
                 plt.close()
 
     def Monte_Carlo_CrossVal(self, fold=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,
-                             kernel=5,units=12,weight_by_class=False, trainable_embedding=True,accuracy_min = None, weight_by_freq = True,plot_loss=False):
+                             kernel=5,units=12,weight_by_class=False, trainable_embedding=True,accuracy_min = None, weight_by_freq = True,plot_loss=False,
+                             num_fc_layers=0, units_fc=12, drop_out_rate=0.0):
 
 
         """
@@ -1515,6 +1513,15 @@ class DeepTCR_S(object):
         plot_loss: bool
             To live plot the train/valid/test losses, set to True.
 
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
 
         Returns
         ---------------------------------------
@@ -1529,7 +1536,8 @@ class DeepTCR_S(object):
             self.Train_WF(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
                           kernel=kernel,units=units,weight_by_class=weight_by_class,
                           trainable_embedding=trainable_embedding,accuracy_min=accuracy_min,
-                          weight_by_freq = weight_by_freq,plot_loss=plot_loss)
+                          weight_by_freq = weight_by_freq,plot_loss=plot_loss,num_fc_layers=num_fc_layers,
+                          units_fc=units_fc,drop_out_rate=drop_out_rate)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -1549,7 +1557,8 @@ class DeepTCR_S(object):
         self.y_pred = np.vstack(y_pred)
 
     def K_Fold_CrossVal(self,folds=5,epochs_min=5,batch_size=25,stop_criterion=0.001, kernel=5,units=12, weight_by_class=False, iterations=None,
-                        trainable_embedding=True, accuracy_min = None, weight_by_freq = True, plot_loss=False):
+                        trainable_embedding=True, accuracy_min = None, weight_by_freq = True, plot_loss=False,
+                        num_fc_layers=0, units_fc=12, drop_out_rate=0.0):
 
         """
         K_Fold Cross-Validation for Whole Sample Classifier
@@ -1603,6 +1612,15 @@ class DeepTCR_S(object):
         plot_loss: bool
             To live plot the train/valid/test losses, set to True.
 
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
 
         Returns
         ---------------------------------------
@@ -1639,7 +1657,8 @@ class DeepTCR_S(object):
                           stop_criterion=stop_criterion, kernel=kernel,
                           units=units, weight_by_class=weight_by_class,
                           trainable_embedding=trainable_embedding,accuracy_min = accuracy_min,
-                          weight_by_freq = weight_by_freq, plot_loss = plot_loss)
+                          weight_by_freq = weight_by_freq, plot_loss = plot_loss,num_fc_layers=num_fc_layers,units_fc=units_fc,
+                          drop_out_rate=drop_out_rate)
 
 
             y_test.append(self.y_test)
