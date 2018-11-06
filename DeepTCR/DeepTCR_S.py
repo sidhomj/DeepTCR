@@ -1055,10 +1055,10 @@ class DeepTCR_S(object):
                 conv_variables = tf.trainable_variables()
                 fc = Seq_Features
 
-                # if num_fc_layers != 0:
-                #     for lyr in range(num_fc_layers):
-                #         fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
-                #         fc = tf.layers.dropout(fc,prob)
+                if num_fc_layers != 0:
+                    for lyr in range(num_fc_layers):
+                        fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
+                        fc = tf.layers.dropout(fc,prob)
 
 
                 if weight_by_freq is True:
@@ -1066,14 +1066,11 @@ class DeepTCR_S(object):
                     Seq_Features_Weight_Sum = tf.reduce_sum(Seq_Features_Weight, axis=1)
                     logits = tf.layers.dense(Seq_Features_Weight_Sum,self.Y.shape[1])
                     fc_avg = Seq_Features_Weight_Sum
-                    w_fc = Seq_Features_Weight
 
                 else:
-
                     Seq_Features_Sum = tf.reduce_sum(fc,axis=1)
                     logits = tf.layers.dense(Seq_Features_Sum,self.Y.shape[1])
                     fc_avg = Seq_Features_Sum
-                    w_fc = Seq_Features
 
                 fc_variables = list(set(tf.trainable_variables()) - set(conv_variables))
 
@@ -1231,14 +1228,12 @@ class DeepTCR_S(object):
             features_WF_list = []
             features_seq_list = []
             indices_list = []
-            weighted_features = []
             for x_seq, x_freq, y in get_batches_model(self.X_Seq,self.X_Freq, self.Y, batch_size=batch_size, random=False):
                 feed_dict = {X_Seq: x_seq, X_Freq: x_freq}
-                features_wf_i, features_i,indices_i,weight_feat = sess.run([fc_avg,Seq_Features, Indices,w_fc], feed_dict=feed_dict)
+                features_wf_i, features_i,indices_i = sess.run([fc_avg,Seq_Features, Indices], feed_dict=feed_dict)
                 features_WF_list.append(features_wf_i)
                 features_seq_list.append(features_i)
                 indices_list.append(indices_i)
-                weighted_features.append(weight_feat)
 
             self.features_wf = np.vstack(features_WF_list)
             self.features_seq = np.vstack(features_seq_list)
