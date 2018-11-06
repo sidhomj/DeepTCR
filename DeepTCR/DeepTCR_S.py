@@ -320,7 +320,6 @@ class DeepTCR_S(object):
                 saver = tf.train.Saver()
 
 
-
         #Initialize Training
         tf.reset_default_graph()
         config = tf.ConfigProto()
