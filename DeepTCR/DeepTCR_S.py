@@ -223,7 +223,8 @@ class DeepTCR_S(object):
         Vars = [self.X_Seq,self.sequences,self.file_id]
         self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False)
 
-    def Train_SS(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,trainable_embedding=True,weight_by_class=False):
+    def Train_SS(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,trainable_embedding=True,weight_by_class=False,
+                 num_fc_layers=0,units_fc=12,drop_out_rate=0.0):
         """
         Train Single-Sequence Classifier
 
@@ -251,6 +252,15 @@ class DeepTCR_S(object):
         trainable_embedding; bool
             Toggle to control whether a trainable embedding layer is used or native
             one-hot representation for convolutional layers.
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
 
 
         Returns
@@ -282,8 +292,13 @@ class DeepTCR_S(object):
                 # Convolutional Features
                 Seq_Features, Indices = Convolutional_Features(inputs_seq_embed,kernel=kernel,units=units,trainable_embedding=trainable_embedding)
                 Seq_Features = tf.identity(Seq_Features,'Seq_Features')
-
                 fc = Seq_Features
+
+                if num_fc_layers != 0:
+                    for lyr in range(num_fc_layers):
+                        fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
+                        fc = tf.layers.dropout(fc,prob)
+
 
                 logits = tf.layers.dense(fc, self.Y.shape[1])
 
@@ -305,7 +320,6 @@ class DeepTCR_S(object):
                 saver = tf.train.Saver()
 
 
-        drop_out_rate = 0.5
 
         #Initialize Training
         tf.reset_default_graph()
@@ -942,7 +956,8 @@ class DeepTCR_S(object):
             self.conditioned_kernel = kernel
 
     def Train_WF(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,
-                 weight_by_class=False,trainable_embedding = True,accuracy_min = None, weight_by_freq=True,plot_loss=False):
+                 weight_by_class=False,trainable_embedding = True,accuracy_min = None, weight_by_freq=True,plot_loss=False,
+                 num_fc_layers=0, units_fc=12, drop_out_rate=0.0):
 
 
         """
@@ -988,6 +1003,15 @@ class DeepTCR_S(object):
         plot_loss: bool
             To live plot the train/valid/test losses, set to True.
 
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
 
         Returns
         ---------------------------------------
@@ -1029,9 +1053,16 @@ class DeepTCR_S(object):
 
                 Seq_Features,conv_kernel,Indices = Convolutional_Features_WF(inputs_seq_embed, units=units,kernel=kernel, conv_weights=conv_weights,trainable_embedding=trainable_embedding)
                 conv_variables = tf.trainable_variables()
+                fc = Seq_Features
+
+                # if num_fc_layers != 0:
+                #     for lyr in range(num_fc_layers):
+                #         fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
+                #         fc = tf.layers.dropout(fc,prob)
+
 
                 if weight_by_freq is True:
-                    Seq_Features_Weight = tf.expand_dims(X_Freq, 2) * Seq_Features
+                    Seq_Features_Weight = tf.expand_dims(X_Freq, 2) * fc
                     Seq_Features_Weight_Sum = tf.reduce_sum(Seq_Features_Weight, axis=1)
                     logits = tf.layers.dense(Seq_Features_Weight_Sum,self.Y.shape[1])
                     fc_avg = Seq_Features_Weight_Sum
@@ -1039,7 +1070,7 @@ class DeepTCR_S(object):
 
                 else:
 
-                    Seq_Features_Sum = tf.reduce_sum(Seq_Features,axis=1)
+                    Seq_Features_Sum = tf.reduce_sum(fc,axis=1)
                     logits = tf.layers.dense(Seq_Features_Sum,self.Y.shape[1])
                     fc_avg = Seq_Features_Sum
                     w_fc = Seq_Features
@@ -1068,7 +1099,6 @@ class DeepTCR_S(object):
                 saver = tf.train.Saver()
 
 
-        drop_out_rate = 0.5
         tf.reset_default_graph()
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
