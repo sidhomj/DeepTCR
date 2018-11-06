@@ -296,8 +296,8 @@ class DeepTCR_S(object):
 
                 if num_fc_layers != 0:
                     for lyr in range(num_fc_layers):
-                        fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
                         fc = tf.layers.dropout(fc,prob)
+                        fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
 
 
                 logits = tf.layers.dense(fc, self.Y.shape[1])
@@ -1058,8 +1058,8 @@ class DeepTCR_S(object):
 
                 if num_fc_layers != 0:
                     for lyr in range(num_fc_layers):
-                        fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
                         fc = tf.layers.dropout(fc,prob)
+                        fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
 
 
                 if weight_by_freq is True:
