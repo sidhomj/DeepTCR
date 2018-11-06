@@ -1053,6 +1053,10 @@ class DeepTCR_S(object):
 
                 Seq_Features,conv_kernel,Indices = Convolutional_Features_WF(inputs_seq_embed, units=units,kernel=kernel, conv_weights=conv_weights,trainable_embedding=trainable_embedding)
                 conv_variables = tf.trainable_variables()
+
+
+
+
                 fc = Seq_Features
 
                 if num_fc_layers != 0:
@@ -1062,15 +1066,20 @@ class DeepTCR_S(object):
 
 
                 if weight_by_freq is True:
+                    Seq_Features_Weight_conv = tf.expand_dims(X_Freq, 2) * Seq_Features
+                    Seq_Features_Weight_Sum_conv = tf.reduce_sum(Seq_Features_Weight_conv, axis=1)
+                    fc_avg = Seq_Features_Weight_Sum_conv
+
                     Seq_Features_Weight = tf.expand_dims(X_Freq, 2) * fc
                     Seq_Features_Weight_Sum = tf.reduce_sum(Seq_Features_Weight, axis=1)
                     logits = tf.layers.dense(Seq_Features_Weight_Sum,self.Y.shape[1])
-                    fc_avg = Seq_Features_Weight_Sum
+
 
                 else:
+                    fc_avg = tf.reduce_sum(Seq_Features,axis=1)
+
                     Seq_Features_Sum = tf.reduce_sum(fc,axis=1)
                     logits = tf.layers.dense(Seq_Features_Sum,self.Y.shape[1])
-                    fc_avg = Seq_Features_Sum
 
                 fc_variables = list(set(tf.trainable_variables()) - set(conv_variables))
 
