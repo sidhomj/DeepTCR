@@ -183,6 +183,7 @@ class DeepTCR_S(object):
             args = list(zip(sequences, [self.aa_idx] * len(sequences), [self.max_length] * len(sequences)))
             result = p.starmap(Embed_Seq_Num, args)
             p.close()
+            p.join()
             sequences_num = np.vstack(result)
             X_Seq = np.expand_dims(sequences_num, 1)
 
@@ -683,6 +684,7 @@ class DeepTCR_S(object):
             args = list(zip(all_seq, [self.aa_idx] * len(all_seq), [self.max_length] * len(all_seq)))
             result = p.starmap(Embed_Seq_Num, args)
             p.close()
+            p.join()
             X_Seq = np.vstack(result).reshape(len(sequences), -1, self.max_length)
             X_Freq = np.vstack(freq)
 
