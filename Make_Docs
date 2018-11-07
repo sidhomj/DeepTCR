@@ -1,0 +1,3 @@
+#!/bin/bash
+python3 -m pydoc DeepTCR/DeepTCR_S.py > Supervised_Documentation.txt
+python3 -m pydoc DeepTCR/DeepTCR_U.py > Unsupervised_Documentation.txt
