@@ -166,7 +166,6 @@ class DeepTCR_U(object):
             freq = np.asarray(freq)
 
             args = list(zip(sequences, [self.aa_idx] * len(sequences), [self.max_length] * len(sequences)))
-            print('Embedding Sequences')
             result = p.starmap(Embed_Seq_Num, args)
             p.close()
             sequences_num = np.vstack(result)
@@ -184,6 +183,7 @@ class DeepTCR_U(object):
         self.label_id = label_id
         self.file_id = file_id
         self.freq = freq
+        print('Data Loaded')
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False):
         """
@@ -325,6 +325,7 @@ class DeepTCR_U(object):
                 keep.append(i)
         keep = np.asarray(keep)
         self.features = self.features[:,keep]
+        print('Training Done')
 
     def Train_GAN(self,Load_Prev_Data=False,batch_size=10000,it_min=50,latent_dim=256):
         """
@@ -491,6 +492,7 @@ class DeepTCR_U(object):
         keep = np.asarray(keep)
         self.features = self.features[:,keep]
         self.indices = self.indices[:,keep]
+        print('Training Done')
 
     def HeatMap_Sequences(self,filename='Heatmap_Features.tif',sample_num=None,sample_num_per_seq=None,color_dict=None):
         """
@@ -707,6 +709,7 @@ class DeepTCR_U(object):
 
         self.DFs = DFs
         self.var = var_list
+        print('Clustering Done')
 
 
 
