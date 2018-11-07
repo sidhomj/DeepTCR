@@ -181,7 +181,6 @@ class DeepTCR_S(object):
 
             #Embed sequences into ints
             args = list(zip(sequences, [self.aa_idx] * len(sequences), [self.max_length] * len(sequences)))
-            print('Embedding Sequences')
             result = p.starmap(Embed_Seq_Num, args)
             p.close()
             sequences_num = np.vstack(result)
@@ -202,6 +201,7 @@ class DeepTCR_S(object):
         self.sequences = sequences
         self.label_id = label_id
         self.file_id = file_id
+        print('Data Loaded')
 
     def Get_Train_Valid_Test_SS(self,test_size=0.2):
         """
@@ -379,7 +379,6 @@ class DeepTCR_S(object):
                         break
 
 
-            print('Done Training')
             features_list = []
             indices_list = []
             for x_seq, y in get_batches(self.X_Seq, self.Y, batch_size=batch_size, random=False):
@@ -395,6 +394,9 @@ class DeepTCR_S(object):
 
             with open(self.Name+'/'+self.Name + '_features.pkl','wb') as f:
                 pickle.dump([self.features,self.indices,self.seq_test,self.y_pred,self.y_test,self.kernel],f)
+
+            print('Done Training')
+
 
     def Motif_Identification_SS(self,group,p_val_threshold=0.05):
         """
@@ -495,6 +497,8 @@ class DeepTCR_S(object):
             seq_features_df_pos[f] = seq_cluster[ii]
 
         self.group_features_ss = seq_features_df_pos
+
+        print('Motif Identification Completed')
 
     def AUC_Curve(self,show_all=True,filename=None):
         """
@@ -677,7 +681,6 @@ class DeepTCR_S(object):
 
             all_seq = np.hstack(sequences).tolist()
             args = list(zip(all_seq, [self.aa_idx] * len(all_seq), [self.max_length] * len(all_seq)))
-            print('Embedding Sequences')
             result = p.starmap(Embed_Seq_Num, args)
             p.close()
             X_Seq = np.vstack(result).reshape(len(sequences), -1, self.max_length)
@@ -704,6 +707,7 @@ class DeepTCR_S(object):
         self.labels = labels
         self.files = files
         self.sequences = sequences
+        print('Data Loaded')
 
     def One_V_All(self,one_v_all):
         """
@@ -940,6 +944,7 @@ class DeepTCR_S(object):
             self.enriched_motifs = DFs
             self.num_conditioned_kernels = len(IDX)
             self.conditioned_kernel = kernel
+            print('Kernels Conditioned')
 
     def Train_WF(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,
                  weight_by_class=False,trainable_embedding = True,accuracy_min = None, weight_by_freq=True,plot_loss=False):
@@ -1177,23 +1182,19 @@ class DeepTCR_S(object):
                 if e > epochs_min:
                     if accuracy_min is not None:
                         if np.mean(train_accuracy_total[-3:]) >= accuracy_min:
-                            print('Done Training')
                             break
 
                     else:
                         if self.LOO is None:
                             a, b, c = -10, -7, -3
                             if (np.mean(val_loss_total[a:b]) - np.mean(val_loss_total[c:])) / np.mean(val_loss_total[a:b]) < stop_criterion:
-                                print('Done Training')
                                 break
                         else:
                             a, b, c = -10, -7, -3
                             if (np.mean(train_loss_total[a:b]) - np.mean(train_loss_total[c:])) / np.mean(train_loss_total[a:b]) < stop_criterion:
-                                print('Done Training')
                                 break
 
                             if np.mean(train_accuracy_total[-100:]) == 1.0:
-                                print('Done Training')
                                 break
 
 
@@ -1223,6 +1224,8 @@ class DeepTCR_S(object):
             with open(self.Name+'/'+self.Name + '_features_WF.pkl', 'wb') as f:
                 pickle.dump([self.features_wf, self.features_seq,self.indices,self.seq,
                              self.X_Freq, self.y_pred, self.y_test,self.labels,self.Y,self.files,self.kernel], f,protocol=4)
+
+            print('Done Training')
 
     def Get_Features(self):
         tf.reset_default_graph()
@@ -1308,22 +1311,7 @@ class DeepTCR_S(object):
             self.features_wf, self.features_seq, self.indices, self.seq,\
             self.X_Freq, self.y_pred, self.y_test,self.labels,self.Y,self.files,self.kernel = pickle.load(f)
 
-        # # #Create HM to visualize results
-        # color_dict = {'CMV+':'g','CMV-':'r'}
-        # row_colors = [color_dict[x] for x in self.labels]
-        #
-        # keep=[]
-        # for i,column in enumerate(self.features_wf.T,0):
-        #     if len(np.unique(column)) > 1:
-        #         keep.append(i)
-        # keep = np.asarray(keep)
-        # self.features_wf = self.features_wf[:, keep]
-        #
-        # df = pd.DataFrame(self.features_wf)
-        # # #df.index = self.files
-        # CM = sns.clustermap(df, standard_scale=1,cmap='bwr',row_colors=row_colors)
-        # # ax = CM.ax_heatmap
-        # # ax.set_yticklabels('')
+
 
         group_num = np.where(self.lb.classes_ == group)[0][0]
 
@@ -1422,6 +1410,9 @@ class DeepTCR_S(object):
                 plt.savefig(dir + '/feature' + str(feature) + '.tif')
                 plt.close()
 
+        print('Motif Identification Completed')
+
+
     def Monte_Carlo_CrossVal(self, fold=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,
                              kernel=5,units=12,weight_by_class=False, trainable_embedding=True,accuracy_min = None, weight_by_freq = True,plot_loss=False):
 
@@ -1513,6 +1504,7 @@ class DeepTCR_S(object):
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
+        print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal(self,folds=5,epochs_min=5,batch_size=25,stop_criterion=0.001, kernel=5,units=12, weight_by_class=False, iterations=None,
                         trainable_embedding=True, accuracy_min = None, weight_by_freq = True, plot_loss=False):
@@ -1627,6 +1619,7 @@ class DeepTCR_S(object):
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
+        print('K-fold Cross Validation Completed')
 
 
 
