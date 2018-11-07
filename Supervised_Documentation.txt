@@ -217,7 +217,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=5, epochs_min=5, batch_size=25, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False)
+     |  K_Fold_CrossVal(self, folds=5, epochs_min=5, batch_size=25, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0)
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -269,11 +269,20 @@ CLASSES
      |      plot_loss: bool
      |          To live plot the train/valid/test losses, set to True.
      |      
+     |      num_fc_layers: int
+     |          Number of fully connected layers following convolutional layer.
+     |      
+     |      units_fc: int
+     |          Number of nodes per fully-connected layers following convolutional layer.
+     |      
+     |      drop_out_rate: float
+     |          drop out rate for fully connected layers
+     |      
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, fold=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False)
+     |  Monte_Carlo_CrossVal(self, fold=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0)
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -327,6 +336,15 @@ CLASSES
      |      
      |      plot_loss: bool
      |          To live plot the train/valid/test losses, set to True.
+     |      
+     |      num_fc_layers: int
+     |          Number of fully connected layers following convolutional layer.
+     |      
+     |      units_fc: int
+     |          Number of nodes per fully-connected layers following convolutional layer.
+     |      
+     |      drop_out_rate: float
+     |          drop out rate for fully connected layers
      |      
      |      
      |      Returns
@@ -402,7 +420,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train_SS(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, kernel=5, units=12, trainable_embedding=True, weight_by_class=False)
+     |  Train_SS(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, kernel=5, units=12, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0)
      |      Train Single-Sequence Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -430,11 +448,20 @@ CLASSES
      |          Toggle to control whether a trainable embedding layer is used or native
      |          one-hot representation for convolutional layers.
      |      
+     |      num_fc_layers: int
+     |          Number of fully connected layers following convolutional layer.
+     |      
+     |      units_fc: int
+     |          Number of nodes per fully-connected layers following convolutional layer.
+     |      
+     |      drop_out_rate: float
+     |          drop out rate for fully connected layers
+     |      
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train_WF(self, batch_size=25, epochs_min=10, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False)
+     |  Train_WF(self, batch_size=25, epochs_min=10, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0)
      |      Train Whole-Sample Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -477,6 +504,15 @@ CLASSES
      |      plot_loss: bool
      |          To live plot the train/valid/test losses, set to True.
      |      
+     |      num_fc_layers: int
+     |          Number of fully connected layers following convolutional layer.
+     |      
+     |      units_fc: int
+     |          Number of nodes per fully-connected layers following convolutional layer.
+     |      
+     |      drop_out_rate: float
+     |          drop out rate for fully connected layers
+     |      
      |      
      |      Returns
      |      ---------------------------------------
@@ -507,6 +543,6 @@ CLASSES
      |      list of weak references to the object (if defined)
 
 FILE
-    /home/sidhom/DeepTCR_Package/DeepTCR/DeepTCR_S.py
+    /home/sidhom/DeepTCR_Github/DeepTCR/DeepTCR/DeepTCR_S.py
 
 
