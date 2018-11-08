@@ -589,7 +589,7 @@ class DeepTCR_U(object):
         plt.show()
         plt.savefig(self.directory_results+filename)
 
-    def HeatMap_Files(self,filename='Heatmap_Files.tif',Weight_by_Freq=True,color_dict=None,labels=True):
+    def HeatMap_Files(self,filename='Heatmap_Files.tif',Weight_by_Freq=True,color_dict=None,labels=True,font_scale=1.0):
         """
         HeatMap of Samples
 
@@ -611,6 +611,10 @@ class DeepTCR_U(object):
 
         labels: bool
             Option to show names of samples on y-axis of heatmap.
+
+        font_scale: float
+            This parameter controls the font size of the row labels. If there are many rows, one can make this value
+            smaller to get better labeling of the rows.
 
         Returns
         ---------------------------------------
@@ -646,7 +650,7 @@ class DeepTCR_U(object):
 
         dfs = pd.DataFrame(vector)
         dfs.set_index(sample_id, inplace=True)
-        sns.set(font_scale=1.0)
+        sns.set(font_scale=font_scale)
         CM = sns.clustermap(dfs, standard_scale=1, cmap='bwr', figsize=(12, 10), row_colors=row_colors)
         ax = CM.ax_heatmap
         ax.set_xticklabels('')
