@@ -185,7 +185,7 @@ class DeepTCR_U(object):
         self.freq = freq
         print('Data Loaded')
 
-    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False):
+    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False):
         """
         Train Variational Autoencoder (VAE)
 
@@ -206,6 +206,9 @@ class DeepTCR_U(object):
 
         Load_Prev_Data: bool
             Load previous feature data from prior training.
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
 
         Returns
         ---------------------------------------
@@ -277,11 +280,14 @@ class DeepTCR_U(object):
                         train_loss, recon_loss, latent_loss, accuracy_check, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
                         accuracy_list.append(accuracy_check)
                         iteration += 1
-                    print("Epoch = {}/{}".format(e, epochs),
-                          "Total Loss: {:.5f}:".format(train_loss),
-                          "Recon Loss: {:.5f}:".format(recon_loss),
-                          "Latent Loss: {:5f}:".format(latent_loss),
-                          "AE Accuracy: {:.5f}".format(accuracy_check))
+
+                    if suppress_output is False:
+                        print("Epoch = {}/{}".format(e, epochs),
+                              "Total Loss: {:.5f}:".format(train_loss),
+                              "Recon Loss: {:.5f}:".format(recon_loss),
+                              "Latent Loss: {:5f}:".format(latent_loss),
+                              "AE Accuracy: {:.5f}".format(accuracy_check))
+
 
                     if accuracy_min is not None:
                         if np.mean(accuracy_list[-10:]) > accuracy_min:
@@ -327,7 +333,7 @@ class DeepTCR_U(object):
         self.features = self.features[:,keep]
         print('Training Done')
 
-    def Train_GAN(self,Load_Prev_Data=False,batch_size=10000,it_min=50,latent_dim=256):
+    def Train_GAN(self,Load_Prev_Data=False,batch_size=10000,it_min=50,latent_dim=256,suppress_output=False):
         """
         Train Generative Adversarial Network (GAN)
 
@@ -348,6 +354,9 @@ class DeepTCR_U(object):
 
         Load_Prev_Data: bool
             Load previous feature data from prior training.
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
 
         Returns
         ---------------------------------------
@@ -418,11 +427,13 @@ class DeepTCR_U(object):
 
                         d_loss_i,__= sess.run([d_loss, opt_d], feed_dict={X_Seq: x_seq,inputs_z:batch_z, prob: drop_out_rate, training: True})
                         d_loss_list.append(d_loss_i)
-                        print("D_Loss = {} ".format(d_loss_i), end='', flush=True)
+                        if suppress_output is False:
+                            print("D_Loss = {} ".format(d_loss_i), end='', flush=True)
 
                         g_loss_i, _ = sess.run([g_loss, opt_g], feed_dict={X_Seq: x_seq,inputs_z:batch_z, prob: drop_out_rate, training: True})
                         g_loss_list.append(g_loss_i)
-                        print("G_Loss = {}".format(g_loss_i))
+                        if suppress_output is False:
+                            print("G_Loss = {}".format(g_loss_i))
 
                         if step % 10 ==0:
                             batch_z = np.random.normal(size=(5, z_dim))
@@ -439,7 +450,8 @@ class DeepTCR_U(object):
                                 seq_list.append(''.join(seq_out))
 
                             seq_list = np.asarray(seq_list)
-                            print(seq_list)
+                            if suppress_output is False:
+                                print(seq_list)
 
                         if step > it_min:
                             if np.mean(d_loss_list[-10:]) < 1.0:
