@@ -1536,7 +1536,8 @@ class DeepTCR_S(object):
         y_pred = []
         y_test = []
         for i in range(0, fold):
-            print(i)
+            if suppress_output is False:
+                print(i)
             self.Get_Train_Valid_Test_WF(test_size=test_size, LOO=LOO)
             self.Train_WF(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
                           kernel=kernel,units=units,weight_by_class=weight_by_class,
@@ -1549,13 +1550,15 @@ class DeepTCR_S(object):
 
             y_test2 = np.vstack(y_test)
             y_pred2 = np.vstack(y_pred)
-            print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
 
-            if self.y_test.shape[1]==2:
-                if i > 0:
-                    y_test2 = np.vstack(y_test)
-                    if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
-                        print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+            if suppress_output is False:
+                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
+
+                if self.y_test.shape[1] == 2:
+                    if i > 0:
+                        y_test2 = np.vstack(y_test)
+                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
 
 
         self.y_test = np.vstack(y_test)
@@ -1654,7 +1657,8 @@ class DeepTCR_S(object):
         y_test = []
         y_pred = []
         for ii in range(folds):
-            print(ii)
+            if suppress_output is False:
+                print(ii)
             train_idx = np.setdiff1d(idx,test_idx[ii])
 
             Vars = [self.X_Seq, self.X_Freq,self.files,np.asarray(self.sequences)]
@@ -1675,12 +1679,14 @@ class DeepTCR_S(object):
 
             y_test2 = np.vstack(y_test)
             y_pred2 = np.vstack(y_pred)
-            print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
 
-            if self.y_test.shape[1]==2:
-                if ii > 0:
-                    if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
-                        print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+            if suppress_output is False:
+                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))))
+
+                if self.y_test.shape[1] == 2:
+                    if ii > 0:
+                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
 
 
             if iterations is not None:
