@@ -141,6 +141,7 @@ class DeepTCR_U(object):
             label_id = []
             file_id = []
             freq = []
+            file_list = []
             for type in self.classes:
                 files_read = glob.glob(directory + type + ext)
                 num_ins = len(files_read)
@@ -158,6 +159,7 @@ class DeepTCR_U(object):
                     sequences += df['aminoAcid'].tolist()
                     label_id += [type] * len(df)
                     file_id += [file.split('/')[-1]] * len(df)
+                    file_list.append(file.split('/')[-1])
                     freq += df['Frequency'].tolist()
 
             sequences = np.asarray(sequences)
@@ -172,17 +174,18 @@ class DeepTCR_U(object):
             X_Seq = np.expand_dims(sequences_num, 1)
 
             with open(self.Name+'/'+self.Name + '_Data.pkl', 'wb') as f:
-                pickle.dump([X_Seq, sequences, label_id, file_id, freq,self.lb],f,protocol=4)
+                pickle.dump([X_Seq, sequences, label_id, file_id, freq,self.lb,file_list],f,protocol=4)
 
         else:
             with open(self.Name+'/'+self.Name + '_Data.pkl', 'rb') as f:
-                X_Seq, sequences, label_id, file_id, freq,self.lb = pickle.load(f)
+                X_Seq, sequences, label_id, file_id, freq,self.lb,file_list = pickle.load(f)
 
         self.X_Seq = X_Seq
         self.sequences = sequences
         self.label_id = label_id
         self.file_id = file_id
         self.freq = freq
+        self.file_list = file_list
         print('Data Loaded')
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False):
@@ -672,6 +675,8 @@ class DeepTCR_U(object):
 
         write_to_sheets: bool
             To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
+            Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
+            of each cluster to each sample.
 
         Returns
 
@@ -680,6 +685,10 @@ class DeepTCR_U(object):
 
         self.var: list
             Variance of lengths in each cluster
+
+        self.Cluster_Frequencies: Pandas dataframe
+            A dataframe containing the frequency contribution of each cluster to each sample.
+
         ---------------------------------------
 
         """
@@ -694,6 +703,9 @@ class DeepTCR_U(object):
 
 
         DFs = []
+        DF_Sum = pd.DataFrame()
+        DF_Sum['File'] = self.file_list
+        DF_Sum.set_index('File',inplace=True)
         var_list = []
         for i in np.unique(IDX):
             if i != -1:
@@ -711,7 +723,12 @@ class DeepTCR_U(object):
                 df['Sequences'] = seq
                 df['Labels'] = label
                 df['File'] = file
-                df['Frequency'] =freq
+                df['Frequency'] = freq
+
+                df_sum = df.groupby(by='File',sort=False).agg({'Frequency':'sum'})
+
+                DF_Sum['Cluster_'+ str(i)] = df_sum
+
                 DFs.append(df)
 
 
@@ -725,7 +742,10 @@ class DeepTCR_U(object):
             for ii,df in enumerate(DFs,1):
                 df.to_csv(self.directory_results+'Clusters/'+str(ii)+'.csv',index=False)
 
+            DF_Sum.to_csv(self.directory_results+'Cluster_Frequencies_by_Sample.csv')
+
         self.DFs = DFs
+        self.Cluster_Frequencies = DF_Sum
         self.var = var_list
         print('Clustering Done')
 
