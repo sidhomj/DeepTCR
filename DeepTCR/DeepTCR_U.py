@@ -700,6 +700,8 @@ class DeepTCR_U(object):
                 sel = IDX == i
                 seq = self.sequences[sel]
                 label = self.label_id[sel]
+                file = self.file_id[sel]
+                freq = self.freq[sel]
 
                 len_sel = [len(x) for x in seq]
                 var = max(len_sel) - min(len_sel)
@@ -708,6 +710,8 @@ class DeepTCR_U(object):
                 df = pd.DataFrame()
                 df['Sequences'] = seq
                 df['Labels'] = label
+                df['File'] = file
+                df['Frequency'] =freq
                 DFs.append(df)
 
 
