@@ -170,6 +170,7 @@ class DeepTCR_U(object):
             args = list(zip(sequences, [self.aa_idx] * len(sequences), [self.max_length] * len(sequences)))
             result = p.starmap(Embed_Seq_Num, args)
             p.close()
+            p.join()
             sequences_num = np.vstack(result)
             X_Seq = np.expand_dims(sequences_num, 1)
 
