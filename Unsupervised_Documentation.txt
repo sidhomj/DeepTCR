@@ -29,6 +29,8 @@ CLASSES
      |      
      |      write_to_sheets: bool
      |          To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
+     |          Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
+     |          of each cluster to each sample.
      |      
      |      Returns
      |      
@@ -37,6 +39,10 @@ CLASSES
      |      
      |      self.var: list
      |          Variance of lengths in each cluster
+     |      
+     |      self.Cluster_Frequencies: Pandas dataframe
+     |          A dataframe containing the frequency contribution of each cluster to each sample.
+     |      
      |      ---------------------------------------
      |  
      |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column=None, count_column=None, sep='\t')
