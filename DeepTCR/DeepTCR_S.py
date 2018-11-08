@@ -225,7 +225,7 @@ class DeepTCR_S(object):
         self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False)
 
     def Train_SS(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,trainable_embedding=True,weight_by_class=False,
-                 num_fc_layers=0,units_fc=12,drop_out_rate=0.0):
+                 num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False):
         """
         Train Single-Sequence Classifier
 
@@ -262,6 +262,9 @@ class DeepTCR_S(object):
 
         drop_out_rate: float
             drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
 
 
         Returns
@@ -377,15 +380,17 @@ class DeepTCR_S(object):
 
                 auc = roc_auc_score(self.test[-1],predicted_out)
 
-                print("Training_Statistics: \n",
-                      "Epoch: {}/{}".format(e + 1, epochs),
-                      "Training loss: {:.5f}".format(train_loss),
-                      "Validation loss: {:.5f}".format(val_loss),
-                      "Testing loss: {:.5f}".format(test_loss),
-                      "Training Accuracy: {:.5}".format(train_accuracy),
-                      "Validation Accuracy: {:.5}".format(val_accuracy),
-                      'Training AUC: {:.5}'.format(train_auc),
-                      "Testing AUC: {:.5}".format(auc))
+                if suppress_output is False:
+                    print("Training_Statistics: \n",
+                          "Epoch: {}/{}".format(e + 1, epochs),
+                          "Training loss: {:.5f}".format(train_loss),
+                          "Validation loss: {:.5f}".format(val_loss),
+                          "Testing loss: {:.5f}".format(test_loss),
+                          "Training Accuracy: {:.5}".format(train_accuracy),
+                          "Validation Accuracy: {:.5}".format(val_accuracy),
+                          'Training AUC: {:.5}'.format(train_auc),
+                          "Testing AUC: {:.5}".format(auc))
+
 
                 if e > epochs_min:
                     a, b, c = -10, -7, -3
@@ -963,7 +968,7 @@ class DeepTCR_S(object):
 
     def Train_WF(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,
                  weight_by_class=False,trainable_embedding = True,accuracy_min = None, weight_by_freq=True,plot_loss=False,
-                 num_fc_layers=0, units_fc=12, drop_out_rate=0.0):
+                 num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False):
 
 
         """
@@ -1017,6 +1022,10 @@ class DeepTCR_S(object):
 
         drop_out_rate: float
             drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
 
 
         Returns
@@ -1201,16 +1210,17 @@ class DeepTCR_S(object):
                     ax_loss.legend()
                     plt.pause(0.05)
 
-                print("Training_Statistics: \n",
-                      "Epoch: {}/{}".format(e + 1, epochs),
-                      "Training loss: {:.5f}".format(train_loss),
-                      "Validation loss: {:.5f}".format(val_loss),
-                      "Testing loss: {:.5f}".format(test_loss),
-                      "Training Accuracy: {:.5}".format(train_accuracy),
-                      "Validation Accuracy: {:.5}".format(val_accuracy),
-                      "Testing Accuracy: {:.5}".format(test_accuracy),
-                      'Training AUC: {:.5}'.format(roc_score_train),
-                      'Testing AUC: {:.5}'.format(roc_score))
+                if suppress_output is False:
+                    print("Training_Statistics: \n",
+                          "Epoch: {}/{}".format(e + 1, epochs),
+                          "Training loss: {:.5f}".format(train_loss),
+                          "Validation loss: {:.5f}".format(val_loss),
+                          "Testing loss: {:.5f}".format(test_loss),
+                          "Training Accuracy: {:.5}".format(train_accuracy),
+                          "Validation Accuracy: {:.5}".format(val_accuracy),
+                          "Testing Accuracy: {:.5}".format(test_accuracy),
+                          'Training AUC: {:.5}'.format(roc_score_train),
+                          'Testing AUC: {:.5}'.format(roc_score))
 
 
                 if e > epochs_min:
@@ -1447,7 +1457,7 @@ class DeepTCR_S(object):
 
     def Monte_Carlo_CrossVal(self, fold=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,
                              kernel=5,units=12,weight_by_class=False, trainable_embedding=True,accuracy_min = None, weight_by_freq = True,plot_loss=False,
-                             num_fc_layers=0, units_fc=12, drop_out_rate=0.0):
+                             num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False):
 
 
         """
@@ -1514,6 +1524,9 @@ class DeepTCR_S(object):
         drop_out_rate: float
             drop out rate for fully connected layers
 
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
 
         Returns
         ---------------------------------------
@@ -1529,7 +1542,7 @@ class DeepTCR_S(object):
                           kernel=kernel,units=units,weight_by_class=weight_by_class,
                           trainable_embedding=trainable_embedding,accuracy_min=accuracy_min,
                           weight_by_freq = weight_by_freq,plot_loss=plot_loss,num_fc_layers=num_fc_layers,
-                          units_fc=units_fc,drop_out_rate=drop_out_rate)
+                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -1551,7 +1564,7 @@ class DeepTCR_S(object):
 
     def K_Fold_CrossVal(self,folds=5,epochs_min=5,batch_size=25,stop_criterion=0.001, kernel=5,units=12, weight_by_class=False, iterations=None,
                         trainable_embedding=True, accuracy_min = None, weight_by_freq = True, plot_loss=False,
-                        num_fc_layers=0, units_fc=12, drop_out_rate=0.0):
+                        num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False):
 
         """
         K_Fold Cross-Validation for Whole Sample Classifier
@@ -1614,6 +1627,9 @@ class DeepTCR_S(object):
         drop_out_rate: float
             drop out rate for fully connected layers
 
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
 
         Returns
         ---------------------------------------
@@ -1651,7 +1667,7 @@ class DeepTCR_S(object):
                           units=units, weight_by_class=weight_by_class,
                           trainable_embedding=trainable_embedding,accuracy_min = accuracy_min,
                           weight_by_freq = weight_by_freq, plot_loss = plot_loss,num_fc_layers=num_fc_layers,units_fc=units_fc,
-                          drop_out_rate=drop_out_rate)
+                          drop_out_rate=drop_out_rate,suppress_output=suppress_output)
 
 
             y_test.append(self.y_test)
