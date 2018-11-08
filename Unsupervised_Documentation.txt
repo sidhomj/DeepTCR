@@ -143,7 +143,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train_GAN(self, Load_Prev_Data=False, batch_size=10000, it_min=50, latent_dim=256)
+     |  Train_GAN(self, Load_Prev_Data=False, batch_size=10000, it_min=50, latent_dim=256, suppress_output=False)
      |      Train Generative Adversarial Network (GAN)
      |      
      |      This method trains the network and saves features values for sequences
@@ -164,10 +164,13 @@ CLASSES
      |      Load_Prev_Data: bool
      |          Load previous feature data from prior training.
      |      
+     |      suppress_output: bool
+     |          To suppress command line output with training statisitcs, set to True.
+     |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False)
+     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False)
      |      Train Variational Autoencoder (VAE)
      |      
      |      This method trains the network and saves features values for sequences
@@ -187,6 +190,9 @@ CLASSES
      |      
      |      Load_Prev_Data: bool
      |          Load previous feature data from prior training.
+     |      
+     |      suppress_output: bool
+     |          To suppress command line output with training statisitcs, set to True.
      |      
      |      Returns
      |      ---------------------------------------

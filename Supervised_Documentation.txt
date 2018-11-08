@@ -217,7 +217,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=5, epochs_min=5, batch_size=25, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0)
+     |  K_Fold_CrossVal(self, folds=5, epochs_min=5, batch_size=25, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -278,11 +278,14 @@ CLASSES
      |      drop_out_rate: float
      |          drop out rate for fully connected layers
      |      
+     |      suppress_output: bool
+     |          To suppress command line output with training statisitcs, set to True.
+     |      
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, fold=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0)
+     |  Monte_Carlo_CrossVal(self, fold=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -345,6 +348,9 @@ CLASSES
      |      
      |      drop_out_rate: float
      |          drop out rate for fully connected layers
+     |      
+     |      suppress_output: bool
+     |          To suppress command line output with training statisitcs, set to True.
      |      
      |      
      |      Returns
@@ -420,7 +426,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train_SS(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, kernel=5, units=12, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0)
+     |  Train_SS(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, kernel=5, units=12, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
      |      Train Single-Sequence Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -457,11 +463,14 @@ CLASSES
      |      drop_out_rate: float
      |          drop out rate for fully connected layers
      |      
+     |      suppress_output: bool
+     |          To suppress command line output with training statisitcs, set to True.
+     |      
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train_WF(self, batch_size=25, epochs_min=10, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0)
+     |  Train_WF(self, batch_size=25, epochs_min=10, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
      |      Train Whole-Sample Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -512,6 +521,10 @@ CLASSES
      |      
      |      drop_out_rate: float
      |          drop out rate for fully connected layers
+     |      
+     |      suppress_output: bool
+     |          To suppress command line output with training statisitcs, set to True.
+     |      
      |      
      |      
      |      Returns
