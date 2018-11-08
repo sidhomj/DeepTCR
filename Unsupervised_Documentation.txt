@@ -103,7 +103,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  HeatMap_Files(self, filename='Heatmap_Files.tif', Weight_by_Freq=True, color_dict=None, labels=True)
+     |  HeatMap_Files(self, filename='Heatmap_Files.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
      |      HeatMap of Samples
      |      
      |      This method creates a heatmap/clustermap for samples by latent features
@@ -124,6 +124,10 @@ CLASSES
      |      
      |      labels: bool
      |          Option to show names of samples on y-axis of heatmap.
+     |      
+     |      font_scale: float
+     |          This parameter controls the font size of the row labels. If there are many rows, one can make this value
+     |          smaller to get better labeling of the rows.
      |      
      |      Returns
      |      ---------------------------------------
