@@ -732,6 +732,8 @@ class DeepTCR_U(object):
                 DFs.append(df)
 
 
+        DF_Sum.fillna(0.0,inplace=True)
+
         if write_to_sheets is True:
             if not os.path.exists(self.directory_results+'Clusters/'):
                 os.makedirs(self.directory_results+'Clusters/')
