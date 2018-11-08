@@ -420,7 +420,9 @@ class DeepTCR_U(object):
                 step = 0
                 find=False
                 for e in range(epochs):
-                    print('Epoch: {}'.format(e))
+                    if suppress_output is False:
+                        print('Epoch: {}'.format(e))
+
                     for x_seq,y in get_batches(self.X_Seq,self.X_Seq,batch_size=batch_size,random=True):
                         step +=1
                         batch_z = np.random.normal(size=(batch_size, z_dim))
