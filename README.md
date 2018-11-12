@@ -11,6 +11,7 @@ for optimal training times, we suggest training these algorithms on GPU's (requi
 For full description of algorithm and methods behind DeepTCR, refer to the following manuscript:
 
 Sidhom, J. W., Larman, H. B., Pardoll, D. M., & Baras, A. S. (2018). DeepTCR: a deep learning framework for revealing structural concepts within TCR Repertoire. bioRxiv, 464107.
+
 https://www.biorxiv.org/content/early/2018/11/07/464107
 
 ## Dependencies
