@@ -8,6 +8,14 @@ be used on an example dataset, see Tutorial.ipnyb. For complete documentation fo
 see 'Supervised_Documentation.txt' and 'Unsupervised_Documentation.txt'. While DeepTCR will run with Tensorflow-CPU versions,
 for optimal training times, we suggest training these algorithms on GPU's (requiring CUDA, cuDNN, and tensorflow-GPU). 
 
+For full description of algorithm and methods behind DeepTCR, refer to the following manuscript:
+
+```python
+Sidhom, J. W., Larman, H. B., Pardoll, D. M., & Baras, A. S. (2018). DeepTCR: a deep learning framework for revealing structural concepts within TCR Repertoire. bioRxiv, 464107.
+https://www.biorxiv.org/content/early/2018/11/07/464107
+```
+
+
 ## Dependencies
 
 DeepTCR has the following python library dependencies:
