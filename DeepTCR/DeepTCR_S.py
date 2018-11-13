@@ -52,7 +52,7 @@ class DeepTCR_S(object):
         self.aa_idx_inv = aa_idx_inv
 
         #Create directory for results of analysis
-        directory = self.Name + '_Results/'
+        directory = self.Name + '_Results'
         self.directory_results = directory
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -189,12 +189,12 @@ class DeepTCR_S(object):
 
             #Save Data
             if save_data is True:
-                with open(self.Name + '/' + self.Name + '_Data.pkl', 'wb') as f:
+                with open(os.path.join(self.Name, self.Name) + '_Data.pkl', 'wb') as f:
                     pickle.dump([X_Seq, Y, sequences, label_id, file_id, self.lb], f, protocol=4)
 
         else:
             #Load Data
-            with open(self.Name+'/'+self.Name + '_Data.pkl', 'rb') as f:
+            with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
                 X_Seq,Y, sequences, label_id, file_id, self.lb = pickle.load(f)
 
         self.X_Seq = X_Seq
@@ -411,7 +411,7 @@ class DeepTCR_S(object):
             self.seq_test = self.sequences
             self.kernel = kernel
 
-            with open(self.Name+'/'+self.Name + '_features.pkl','wb') as f:
+            with open(os.path.join(self.Name,self.Name) + '_features.pkl','wb') as f:
                 pickle.dump([self.features,self.indices,self.seq_test,self.y_pred,self.y_test,self.kernel],f)
 
             print('Done Training')
@@ -444,7 +444,7 @@ class DeepTCR_S(object):
 
         """
         #Get Saved Features, Indices, and Sequences
-        with open(self.Name+'/'+self.Name + '_features.pkl', 'rb') as f:
+        with open(os.path.join(self.Name,self.Name) + '_features.pkl', 'rb') as f:
             self.features, self.indices, self.seq_test, self.y_pred, self.y_test,self.kernel = pickle.load(f)
 
         group_num = np.where(self.lb.classes_ == group)[0][0]
@@ -481,7 +481,7 @@ class DeepTCR_S(object):
         df_features.sort_values(by='Mag',inplace=True,ascending=False)
 
         # Get motifs for positive features
-        dir = self.directory_results+group + '_SS_Motifs'
+        dir = os.path.join(self.directory_results,group + '_SS_Motifs')
         if not os.path.exists(dir):
             os.makedirs(dir)
 
@@ -509,7 +509,7 @@ class DeepTCR_S(object):
                     motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
                     motifs.append(motif)
 
-                SeqIO.write(motifs, dir + '/feature_' + str(feature) + '.fasta', 'fasta')
+                SeqIO.write(motifs, os.path.join(dir , 'feature_') + str(feature) + '.fasta', 'fasta')
 
         seq_features_df_pos = pd.DataFrame()
         for ii, f in enumerate(feature_keep, 0):
@@ -568,9 +568,9 @@ class DeepTCR_S(object):
 
             plt.legend(loc="lower right")
         if filename is None:
-            plt.savefig(self.directory_results + 'AUC.tif')
+            plt.savefig(os.path.join(self.directory_results, 'AUC.tif'))
         else:
-            plt.savefig(self.directory_results + filename+'_AUC.tif')
+            plt.savefig(os.path.join(self.directory_results, filename+'_AUC.tif'))
 
         plt.show(block=False)
 
@@ -713,11 +713,11 @@ class DeepTCR_S(object):
 
 
             if save_data is True:
-                with open(self.Name + '/' + self.Name + '_Data_WF.pkl', 'wb') as f:
+                with open(os.path.join(self.Name,self.Name) + '_Data_WF.pkl', 'wb') as f:
                     pickle.dump([X_Seq, X_Freq, Y, labels, files, self.lb, sequences], f, protocol=4)
 
         else:
-            with open(self.Name+'/'+self.Name + '_Data_WF.pkl', 'rb') as f:
+            with open(os.path.join(self.Name,self.Name) + '_Data_WF.pkl', 'rb') as f:
                 X_Seq, X_Freq, Y, labels, files,self.lb,sequences = pickle.load(f)
 
 
@@ -1263,7 +1263,7 @@ class DeepTCR_S(object):
                 plt.close()
 
 
-            with open(self.Name+'/'+self.Name + '_features_WF.pkl', 'wb') as f:
+            with open(os.path.join(self.Name,self.Name) + '_features_WF.pkl', 'wb') as f:
                 pickle.dump([self.features_wf, self.features_seq,self.indices,self.seq,
                              self.X_Freq, self.y_pred, self.y_test,self.labels,self.Y,self.files,self.kernel], f,protocol=4)
 
@@ -1349,7 +1349,7 @@ class DeepTCR_S(object):
         """
 
         #Get Features
-        with open(self.Name+'/'+self.Name + '_features_WF.pkl', 'rb') as f:
+        with open(os.path.join(self.Name,self.Name) + '_features_WF.pkl', 'rb') as f:
             self.features_wf, self.features_seq, self.indices, self.seq,\
             self.X_Freq, self.y_pred, self.y_test,self.labels,self.Y,self.files,self.kernel = pickle.load(f)
 
@@ -1391,7 +1391,7 @@ class DeepTCR_S(object):
         indices = np.asarray(np.reshape(self.indices, [-1, self.indices.shape[-1]]))
 
         #Get motifs for positive features
-        dir = self.directory_results+group + '_WF_Motifs'
+        dir = os.path.join(self.directory_results,group + '_WF_Motifs')
         if not os.path.exists(dir):
             os.makedirs(dir)
 
@@ -1422,14 +1422,15 @@ class DeepTCR_S(object):
                     motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
                     motifs.append(motif)
 
-                SeqIO.write(motifs, dir+'/feature_' + str(feature) + '.fasta', 'fasta')
+                SeqIO.write(motifs, os.path.join(dir , 'feature_') + str(feature) + '.fasta', 'fasta')
+
 
         seq_features_df_pos = pd.DataFrame()
         for ii, f in enumerate(feature_keep, 0):
             seq_features_df_pos[f] = seq_cluster[ii]
 
         self.group_features_wf = seq_features_df_pos
-        seq_features_df_pos.to_csv(dir+'/feature_sequences.csv',index=False)
+        seq_features_df_pos.to_csv(os.path.join(dir,'feature_sequences.csv'),index=False)
 
         if save_images is True:
             for feature, thresh in zip(feature_keep, seq_thresh_pos):
@@ -1449,7 +1450,7 @@ class DeepTCR_S(object):
                 sns.set(font_scale=1)
                 sns.violinplot(data=df, x='Cohort', y='Fraction of Response')
                 plt.title('Feature ' + str(feature))
-                plt.savefig(dir + '/feature' + str(feature) + '.tif')
+                plt.savefig(os.path.join(dir , 'feature') + str(feature) + '.tif')
                 plt.close()
 
         print('Motif Identification Completed')

@@ -46,7 +46,7 @@ class DeepTCR_U(object):
         self.aa_idx_inv = aa_idx_inv
 
         #Create directory for results of analysis
-        directory = self.Name + '_Results/'
+        directory = self.Name + '_Results'
         self.directory_results = directory
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -174,11 +174,11 @@ class DeepTCR_U(object):
             sequences_num = np.vstack(result)
             X_Seq = np.expand_dims(sequences_num, 1)
 
-            with open(self.Name+'/'+self.Name + '_Data.pkl', 'wb') as f:
+            with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
                 pickle.dump([X_Seq, sequences, label_id, file_id, freq,self.lb,file_list],f,protocol=4)
 
         else:
-            with open(self.Name+'/'+self.Name + '_Data.pkl', 'rb') as f:
+            with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
                 X_Seq, sequences, label_id, file_id, freq,self.lb,file_list = pickle.load(f)
 
         self.X_Seq = X_Seq
@@ -317,11 +317,11 @@ class DeepTCR_U(object):
                 recon = np.vstack(recon_list)
                 print('Reconstruction Accuracy: {:.5f}'.format(np.nanmean(accuracy_list)))
 
-            with open(self.Name+'/'+self.Name + '_VAE_features.pkl', 'wb') as f:
+            with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
                 pickle.dump([features, recon], f,protocol=4)
 
         else:
-            with open(self.Name+'/'+self.Name + '_VAE_features.pkl', 'rb') as f:
+            with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'rb') as f:
                 features,recon = pickle.load(f)
 
 
@@ -492,12 +492,12 @@ class DeepTCR_U(object):
                 indices = np.vstack(latent_indices)
 
 
-            with open(self.Name+'/'+self.Name + '_GAN_features.pkl','wb') as f:
+            with open(os.path.join(self.Name,self.Name) + '_GAN_features.pkl','wb') as f:
                 pickle.dump([features,indices],f,protocol=4)
 
         else:
 
-            with open(self.Name+'/'+self.Name + '_GAN_features.pkl','rb') as f:
+            with open(os.path.join(self.Name,self.Name) + '_GAN_features.pkl','rb') as f:
                 features,indices = pickle.load(f)
 
 
@@ -587,7 +587,7 @@ class DeepTCR_U(object):
         ax.set_xticklabels('')
         ax.set_yticklabels('')
         plt.show()
-        plt.savefig(self.directory_results+filename)
+        plt.savefig(os.path.join(self.directory_results,filename))
 
     def HeatMap_Files(self,filename='Heatmap_Files.tif',Weight_by_Freq=True,color_dict=None,labels=True,font_scale=1.0):
         """
@@ -658,7 +658,7 @@ class DeepTCR_U(object):
             ax.set_yticklabels('')
         plt.subplots_adjust(right=0.8)
         plt.show()
-        plt.savefig(self.directory_results+filename)
+        plt.savefig(os.path.join(self.directory_results,filename))
 
     def Cluster(self,t=100,criterion='distance',write_to_sheets=False):
         """
@@ -740,16 +740,16 @@ class DeepTCR_U(object):
         DF_Sum.fillna(0.0,inplace=True)
 
         if write_to_sheets is True:
-            if not os.path.exists(self.directory_results+'Clusters/'):
-                os.makedirs(self.directory_results+'Clusters/')
+            if not os.path.exists(os.path.join(self.directory_results,'Clusters')):
+                os.makedirs(os.path.join(self.directory_results,'Clusters'))
             else:
-                shutil.rmtree(self.directory_results+'Clusters/')
-                os.makedirs(self.directory_results + 'Clusters/')
+                shutil.rmtree(os.path.join(self.directory_results,'Clusters'))
+                os.makedirs(os.path.join(self.directory_results, 'Clusters'))
 
             for ii,df in enumerate(DFs,1):
-                df.to_csv(self.directory_results+'Clusters/'+str(ii)+'.csv',index=False)
+                df.to_csv(os.path.join(self.directory_results,'Clusters',str(ii)+'.csv'),index=False)
 
-            DF_Sum.to_csv(self.directory_results+'Cluster_Frequencies_by_Sample.csv')
+            DF_Sum.to_csv(os.path.join(self.directory_results,'Cluster_Frequencies_by_Sample.csv'))
 
         self.DFs = DFs
         self.Cluster_Frequencies = DF_Sum
