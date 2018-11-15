@@ -63,7 +63,7 @@ class DeepTCR_S(object):
             os.makedirs(directory)
 
     def Get_Data_SS(self, directory, Load_Prev_Data=False,classes=None,save_data=True,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
-                    aa_column = None, count_column = None,sep='\t'):
+                    aa_column = None, count_column = None,sep='\t',aggregate_by_aa=True):
 
         """
         Get Data for Single Sequence Classification.
@@ -122,6 +122,10 @@ class DeepTCR_S(object):
         sep: str
             Type of delimiter used in file with TCRSeq data.
 
+        aggregate_by_aa: bool
+            Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
+            of the same amino acid sequence given it comes from different nucleotide clones.
+
         Returns
         ---------------------------------------
 
@@ -162,7 +166,8 @@ class DeepTCR_S(object):
                                 [aa_column] * num_ins,
                                 [count_column] * num_ins,
                                 [sep] * num_ins,
-                                [self.max_length]*num_ins))
+                                [self.max_length]*num_ins,
+                                [aggregate_by_aa] * num_ins))
 
                 DF = p.starmap(Get_DF_Data, args)
 
@@ -575,7 +580,7 @@ class DeepTCR_S(object):
         plt.show(block=False)
 
     def Get_Data_WF(self,directory,Load_Prev_Data=False,classes=None,save_data=True,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
-                    aa_column = None, count_column = None,sep='\t'):
+                    aa_column = None, count_column = None,sep='\t',aggregate_by_aa=True):
         """
         Get Data for Whole Sample Classification.
 
@@ -632,7 +637,11 @@ class DeepTCR_S(object):
             counts column.
 
         sep: str
-            Type of delimiter used in file with TCRSeq data.
+            Type of delimiter used in file with TCRSeq data
+
+        aggregate_by_aa: bool
+            Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
+            of the same amino acid sequence given it comes from different nucleotide clones.
 
 
         Returns
@@ -672,7 +681,8 @@ class DeepTCR_S(object):
                                 [aa_column]*num_ins,
                                 [count_column]*num_ins,
                                 [sep]*num_ins,
-                                [self.max_length]*num_ins))
+                                [self.max_length]*num_ins,
+                                [aggregate_by_aa] * num_ins))
 
                 DF = p.starmap(Get_DF_Data,args)
 

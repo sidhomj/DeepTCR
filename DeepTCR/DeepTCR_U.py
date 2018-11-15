@@ -13,6 +13,9 @@ import seaborn as sns
 import colorsys
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage,fcluster
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import phenograph
+
 
 class DeepTCR_U(object):
 
@@ -57,7 +60,7 @@ class DeepTCR_U(object):
             os.makedirs(directory)
 
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
-                    aa_column = None, count_column = None,sep='\t'):
+                    aa_column = None, count_column = None,sep='\t',aggregate_by_aa=True):
         """
         Get Data for Unsupervised Deep Learning Methods.
 
@@ -113,6 +116,10 @@ class DeepTCR_U(object):
         sep: str
             Type of delimiter used in file with TCRSeq data.
 
+        aggregate_by_aa: bool
+            Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
+            of the same amino acid sequence given it comes from different nucleotide clones.
+
         Returns
         ---------------------------------------
 
@@ -151,7 +158,8 @@ class DeepTCR_U(object):
                                 [aa_column] * num_ins,
                                 [count_column] * num_ins,
                                 [sep] * num_ins,
-                                [self.max_length]*num_ins))
+                                [self.max_length]*num_ins,
+                                [aggregate_by_aa]*num_ins))
 
                 DF = p.starmap(Get_DF_Data, args)
 
@@ -216,7 +224,7 @@ class DeepTCR_U(object):
 
         Returns
 
-        self.features: array
+        self.vae_features: array
             An array that contains n x latent_dim containing features for all sequences
 
         ---------------------------------------
@@ -338,7 +346,8 @@ class DeepTCR_U(object):
             if len(np.unique(column)) > 1:
                 keep.append(i)
         keep = np.asarray(keep)
-        self.features = self.features[:,keep]
+        self.vae_features = self.features[:,keep]
+        self.features = self.vae_features
         print('Training Done')
 
     def Train_GAN(self,Load_Prev_Data=False,batch_size=10000,it_min=50,latent_dim=256,suppress_output=False):
@@ -368,7 +377,7 @@ class DeepTCR_U(object):
 
         Returns
 
-        self.features: array
+        self.gan_features: array
             An array that contains n x latent_dim containing features for all sequences
 
         ---------------------------------------
@@ -516,7 +525,8 @@ class DeepTCR_U(object):
             if len(np.unique(column)) > 1:
                 keep.append(i)
         keep = np.asarray(keep)
-        self.features = self.features[:,keep]
+        self.gan_features = self.features[:,keep]
+        self.features = self.gan_features
         self.indices = self.indices[:,keep]
         print('Training Done')
 
@@ -668,7 +678,7 @@ class DeepTCR_U(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results,filename))
 
-    def Cluster(self,t=100,criterion='distance',write_to_sheets=False):
+    def Cluster(self,t=100,criterion='distance',on=None,write_to_sheets=False,method='ward',metric='euclidean'):
         """
         Clustering Sequences by Latent Features
 
@@ -691,6 +701,17 @@ class DeepTCR_U(object):
             Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
             of each cluster to each sample.
 
+        on: str
+            Specificy which feature space to cluster on. Options are 'VAE','GAN','Both',None. If nothing is specified, the
+            features from the last algorithm ran are used. If 'Both' is specified, a clustering solution is applied that merges
+            the feature space from both unsupervised algorithms before clustering.
+
+        method: str
+            method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+
+        metric: str
+            metric parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+
         Returns
 
         self.DFs: list of Pandas dataframes
@@ -705,20 +726,28 @@ class DeepTCR_U(object):
         ---------------------------------------
 
         """
-        #Normalize Features
-        from sklearn.preprocessing import StandardScaler
-        SS= StandardScaler()
-        features=SS.fit_transform(self.features)
+        SS = StandardScaler()
 
-        #Hierarchical Clustering
-        Z = linkage(features, method='ward',metric='euclidean')
-        IDX = fcluster(Z,t,criterion=criterion)
+        # Normalize Features
+        if on is None:
+            features = SS.fit_transform(self.features)
+        elif on is 'VAE':
+            features = SS.fit_transform(self.vae_features)
+        elif on is 'GAN':
+            features = SS.fit_transform(self.gan_features)
+        elif on is 'Both':
+            vae_features = SS.fit_transform(self.vae_features)
+            gan_features = SS.fit_transform(self.gan_features)
+            features = np.concatenate((vae_features,gan_features),axis=1)
 
+        # # Hierarchical Clustering
+        Z = linkage(features, method=method, metric=metric)
+        IDX = fcluster(Z, t, criterion=criterion)
 
         DFs = []
         DF_Sum = pd.DataFrame()
         DF_Sum['File'] = self.file_list
-        DF_Sum.set_index('File',inplace=True)
+        DF_Sum.set_index('File', inplace=True)
         var_list = []
         for i in np.unique(IDX):
             if i != -1:
@@ -738,31 +767,32 @@ class DeepTCR_U(object):
                 df['File'] = file
                 df['Frequency'] = freq
 
-                df_sum = df.groupby(by='File',sort=False).agg({'Frequency':'sum'})
+                df_sum = df.groupby(by='File', sort=False).agg({'Frequency': 'sum'})
 
-                DF_Sum['Cluster_'+ str(i)] = df_sum
+                DF_Sum['Cluster_' + str(i)] = df_sum
 
                 DFs.append(df)
 
-
-        DF_Sum.fillna(0.0,inplace=True)
+        DF_Sum.fillna(0.0, inplace=True)
 
         if write_to_sheets is True:
-            if not os.path.exists(os.path.join(self.directory_results,'Clusters')):
-                os.makedirs(os.path.join(self.directory_results,'Clusters'))
+            if not os.path.exists(os.path.join(self.directory_results, 'Clusters')):
+                os.makedirs(os.path.join(self.directory_results, 'Clusters'))
             else:
-                shutil.rmtree(os.path.join(self.directory_results,'Clusters'))
+                shutil.rmtree(os.path.join(self.directory_results, 'Clusters'))
                 os.makedirs(os.path.join(self.directory_results, 'Clusters'))
 
-            for ii,df in enumerate(DFs,1):
-                df.to_csv(os.path.join(self.directory_results,'Clusters',str(ii)+'.csv'),index=False)
+            for ii, df in enumerate(DFs, 1):
+                df.to_csv(os.path.join(self.directory_results, 'Clusters', str(ii) + '.csv'), index=False)
 
-            DF_Sum.to_csv(os.path.join(self.directory_results,'Cluster_Frequencies_by_Sample.csv'))
+            DF_Sum.to_csv(os.path.join(self.directory_results, 'Cluster_Frequencies_by_Sample.csv'))
 
         self.DFs = DFs
         self.Cluster_Frequencies = DF_Sum
         self.var = var_list
         print('Clustering Done')
+
+
 
 
 

@@ -54,7 +54,7 @@ def Cut_DF(df,type_cut,cut):
     elif type_cut == 'Read_Sum':
         return df.iloc[np.where(np.cumsum(df.ix[:, 1]) <= (cut))[0]]
 
-def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_column=None,count_column=None,sep='\t',max_length=40):
+def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_column=None,count_column=None,sep='\t',max_length=40,aggregate_by_aa=True):
     df = pd.read_csv(file, sep=sep)
     df = df.ix[:, 0:10]
     if aa_column is None:
@@ -76,8 +76,7 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
     idx_templates = np.where(df.columns == templates_column)[0]
     idx_sel = idx_templates
 
-    comb = 1
-    if comb ==1:
+    if aggregate_by_aa is True:
         # Combine sequences that share nucleotide sequence
         df = df.groupby(df.columns[amino_column]).agg({df.columns[idx_sel[0]]: 'sum'})
         df = df.sort_values(df.columns[0], ascending=False)
