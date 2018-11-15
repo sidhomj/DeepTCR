@@ -107,8 +107,13 @@ class DeepTCR_U(object):
         n_jobs: int
             Number of processes to use for parallelized operations.
 
-        aa_column: int
-            Columns where amino acid data is stored. If set to None, column with a header containing 'acid' is used as
+        aa_column_alpha: int
+            Column where alpha chain amino acid data is stored. (0-indexed)
+
+        aa_column_beta: int
+            Column where beta chain amino acid data is stored.(0-indexed)
+
+        If both column integers are left to None, column with a header containing 'acid' is used as
             the amino acid column.
 
         count_column: int
