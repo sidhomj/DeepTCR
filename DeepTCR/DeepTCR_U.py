@@ -232,11 +232,11 @@ class DeepTCR_U(object):
 
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
-                pickle.dump([X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,self.lb,file_list],f,protocol=4)
+                pickle.dump([X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,self.lb,file_list,self.use_alpha,self.use_beta],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
-                X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,self.lb,file_list = pickle.load(f)
+                X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,self.lb,file_list,self.use_alpha,self.use_beta = pickle.load(f)
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
@@ -286,8 +286,14 @@ class DeepTCR_U(object):
             with tf.device('/gpu:0'):
                 graph_model_AE = tf.Graph()
                 with graph_model_AE.as_default():
-                    X_Seq = tf.placeholder(tf.int64, shape=[None, self.X_Seq.shape[1], self.X_Seq.shape[2]], name='Input')
-                    X_Seq_OH = tf.one_hot(X_Seq, depth=21)
+                    if self.use_alpha is True:
+                        X_Seq_alpha = tf.placeholder(tf.int64, shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],name='Input_Alpha')
+                        X_Seq_alpha_OH = tf.one_hot(X_Seq_alpha, depth=21)
+
+                    if self.use_beta is True:
+                        X_Seq_beta = tf.placeholder(tf.int64, shape=[None, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2]],name='Input_Beta')
+                        X_Seq_beta_OH = tf.one_hot(X_Seq_beta, depth=21)
+
                     training = tf.placeholder_with_default(False, shape=())
                     prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
 
@@ -296,10 +302,26 @@ class DeepTCR_U(object):
                         embedding_dim_aa = 64
                         embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq', shape=[21, embedding_dim_aa])
                         embedding_layer_seq = tf.expand_dims(tf.expand_dims(embedding_layer_seq, axis=0), axis=0)
-                        inputs_seq_embed = tf.squeeze(tf.tensordot(X_Seq_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                        if self.use_alpha is True:
+                            inputs_seq_embed_alpha = tf.squeeze(tf.tensordot(X_Seq_alpha_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                        if self.use_beta is True:
+                            inputs_seq_embed_beta = tf.squeeze(tf.tensordot(X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+
 
                     # Convolutional Features
-                    Seq_Features = Convolutional_Features_AE(inputs_seq_embed, training=training, prob=prob)
+                    if self.use_alpha is True:
+                        Seq_Features_alpha = Convolutional_Features_AE(inputs_seq_embed_alpha, training=training, prob=prob,name='alpha_conv')
+                    if self.use_beta is True:
+                        Seq_Features_beta = Convolutional_Features_AE(inputs_seq_embed_beta, training=training, prob=prob,name='beta_conv')
+
+
+                    if (self.use_alpha is True) and (self.use_beta is True):
+                        Seq_Features = tf.concat((Seq_Features_alpha, Seq_Features_beta), axis=1)
+                    elif (self.use_alpha is True) and (self.use_beta is False):
+                        Seq_Features = Seq_Features_alpha
+                    elif (self.use_alpha is False) and (self.use_beta is True):
+                        Seq_Features = Seq_Features_beta
+
 
                     fc = tf.layers.dense(Seq_Features, 256)
                     fc = tf.layers.dense(fc, 128)

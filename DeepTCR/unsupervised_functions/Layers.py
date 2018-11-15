@@ -2,8 +2,8 @@ import tensorflow as tf
 import numpy as np
 
 #Layers for VAE
-def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0):
-    with tf.variable_scope('Convolutional_Features',reuse=reuse):
+def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='Convolutional_Features'):
+    with tf.variable_scope(name,reuse=reuse):
         kernel = 3
         units = 12
         conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')
@@ -44,9 +44,9 @@ def AE_Loss(inputs,logits,z_log_var,z_mean):
 
 #Layers for GAN
 
-def Convolutional_Features_GAN(inputs,reuse=False,training=False,prob=0.0,kernel=3,units=256):
+def Convolutional_Features_GAN(inputs,reuse=False,training=False,prob=0.0,kernel=3,units=256,name='Convolutional_Features'):
 
-    with tf.variable_scope('Convolutional_Features',reuse=reuse):
+    with tf.variable_scope(name,reuse=reuse):
         conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')
         conv = tf.nn.leaky_relu(conv)
 
@@ -55,8 +55,8 @@ def Convolutional_Features_GAN(inputs,reuse=False,training=False,prob=0.0,kernel
 
         return tf.layers.flatten(conv),tf.layers.flatten(indices)
 
-def generator(z,embedding_dim_aa=64,prob=0.0,training=True):
-    with tf.variable_scope('generator'):
+def generator(z,embedding_dim_aa=64,prob=0.0,training=True,name='generator',reuse=False):
+    with tf.variable_scope(name,reuse=reuse):
         z = tf.layers.dense(z,512)
         z = tf.reshape(z,(-1,1,1,z.shape[-1]))
         z = tf.layers.batch_normalization(z,training=training)
