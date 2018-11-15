@@ -13,7 +13,7 @@ import seaborn as sns
 import colorsys
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage,fcluster
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 class DeepTCR_U(object):
 
@@ -676,7 +676,7 @@ class DeepTCR_U(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results,filename))
 
-    def Cluster(self,t=100,criterion='distance',write_to_sheets=False):
+    def Cluster(self,t=100,criterion='distance',on=None,write_to_sheets=False,method='ward',metric='euclidean'):
         """
         Clustering Sequences by Latent Features
 
@@ -699,6 +699,17 @@ class DeepTCR_U(object):
             Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
             of each cluster to each sample.
 
+        on: str
+            Specificy which feature space to cluster on. Options are 'VAE','GAN','Both',None. If nothing is specified, the
+            features from the last algorithm ran are used. If 'Both' is specified, a clustering solution is applied that merges
+            clustering solutions from both methods.
+
+        method: str
+            method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+
+        metric: str
+            metric parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+
         Returns
 
         self.DFs: list of Pandas dataframes
@@ -713,19 +724,44 @@ class DeepTCR_U(object):
         ---------------------------------------
 
         """
-        #Normalize Features
-        SS= StandardScaler()
-        features=SS.fit_transform(self.features)
+        SS = StandardScaler()
 
-        #Hierarchical Clustering
-        Z = linkage(features, method='ward',metric='euclidean')
-        IDX = fcluster(Z,t,criterion=criterion)
+        # Normalize Features
+        if on is None:
+            features = SS.fit_transform(self.features)
+        elif on is 'VAE':
+            features = SS.fit_transform(self.vae_features)
+        elif on is 'GAN':
+            features = SS.fit_transform(self.gan_features)
+        elif on is 'Both':
+            vae_features = SS.fit_transform(self.vae_features)
+            gan_features = SS.fit_transform(self.gan_features)
+            features = np.concatenate((vae_features,gan_features),axis=1)
 
+        # Hierarchical Clustering
+        Z = linkage(features, method=method, metric=metric)
+        IDX = fcluster(Z, t, criterion=criterion)
+
+
+        # if on is 'Both':
+        #     Z = linkage(features, method='ward', metric='euclidean')
+        #     IDX = fcluster(Z, t, criterion=criterion)
+        #
+        #     # Z_vae = linkage(vae_features, method='ward', metric='euclidean')
+        #     # IDX_vae = fcluster(Z_vae, t, criterion=criterion)
+        #     # Z_gan = linkage(gan_features, method='ward', metric='euclidean')
+        #     # IDX_gan = fcluster(Z_gan, t, criterion=criterion)
+        #     #
+        #     # #Merge Clusters
+        #     # IDX = Merge_Clusters(IDX_vae,IDX_gan)
+        # else:
+        #     Z = linkage(features, method='ward', metric='euclidean')
+        #     IDX = fcluster(Z, t, criterion=criterion)
 
         DFs = []
         DF_Sum = pd.DataFrame()
         DF_Sum['File'] = self.file_list
-        DF_Sum.set_index('File',inplace=True)
+        DF_Sum.set_index('File', inplace=True)
         var_list = []
         for i in np.unique(IDX):
             if i != -1:
@@ -745,46 +781,32 @@ class DeepTCR_U(object):
                 df['File'] = file
                 df['Frequency'] = freq
 
-                df_sum = df.groupby(by='File',sort=False).agg({'Frequency':'sum'})
+                df_sum = df.groupby(by='File', sort=False).agg({'Frequency': 'sum'})
 
-                DF_Sum['Cluster_'+ str(i)] = df_sum
+                DF_Sum['Cluster_' + str(i)] = df_sum
 
                 DFs.append(df)
 
-
-        DF_Sum.fillna(0.0,inplace=True)
+        DF_Sum.fillna(0.0, inplace=True)
 
         if write_to_sheets is True:
-            if not os.path.exists(os.path.join(self.directory_results,'Clusters')):
-                os.makedirs(os.path.join(self.directory_results,'Clusters'))
+            if not os.path.exists(os.path.join(self.directory_results, 'Clusters')):
+                os.makedirs(os.path.join(self.directory_results, 'Clusters'))
             else:
-                shutil.rmtree(os.path.join(self.directory_results,'Clusters'))
+                shutil.rmtree(os.path.join(self.directory_results, 'Clusters'))
                 os.makedirs(os.path.join(self.directory_results, 'Clusters'))
 
-            for ii,df in enumerate(DFs,1):
-                df.to_csv(os.path.join(self.directory_results,'Clusters',str(ii)+'.csv'),index=False)
+            for ii, df in enumerate(DFs, 1):
+                df.to_csv(os.path.join(self.directory_results, 'Clusters', str(ii) + '.csv'), index=False)
 
-            DF_Sum.to_csv(os.path.join(self.directory_results,'Cluster_Frequencies_by_Sample.csv'))
+            DF_Sum.to_csv(os.path.join(self.directory_results, 'Cluster_Frequencies_by_Sample.csv'))
 
         self.DFs = DFs
         self.Cluster_Frequencies = DF_Sum
         self.var = var_list
         print('Clustering Done')
 
-    def Cluster_2(self,t=100,criterion='distance',write_to_sheets=False):
 
-        # Normalize Features
-        SS = StandardScaler()
-        vae_features = SS.fit_transform(self.vae_features)
-
-        SS = StandardScaler()
-        gan_features = SS.fit_transform(self.gan_features)
-
-
-
-        # Hierarchical Clustering
-        Z_vae = linkage(vae_features, method='ward', metric='euclidean')
-        IDX_vae = fcluster(Z_vae, t, criterion=criterion)
 
 
 
