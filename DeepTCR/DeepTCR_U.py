@@ -14,6 +14,8 @@ import colorsys
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage,fcluster
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+import phenograph
+
 
 class DeepTCR_U(object):
 
@@ -738,10 +740,11 @@ class DeepTCR_U(object):
             gan_features = SS.fit_transform(self.gan_features)
             features = np.concatenate((vae_features,gan_features),axis=1)
 
-        # Hierarchical Clustering
+        # # Hierarchical Clustering
         Z = linkage(features, method=method, metric=metric)
         IDX = fcluster(Z, t, criterion=criterion)
 
+        #IDX, graph, Q = phenograph.cluster(features,k=t)
 
         # if on is 'Both':
         #     Z = linkage(features, method='ward', metric='euclidean')
