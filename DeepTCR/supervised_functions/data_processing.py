@@ -94,8 +94,52 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
         df['Frequency'] = df['counts'] / np.sum(df['counts'])
         df = Cut_DF(df=df, type_cut=type_of_data_cut, cut=data_cut,read_i=2,freq_i=3)
 
-    else:
+    elif (aa_column_alpha is not None) and (aa_column_beta is None):
+        df = df.dropna(subset=[df.columns[aa_column_alpha]])
+        searchfor = ['\*', 'X', 'O']
+        df[df.columns[aa_column_alpha]] = df[df.columns[aa_column_alpha]].str.strip()
+        df = df[~df.iloc[:, aa_column_alpha].str.contains('|'.join(searchfor))]
 
+        idx_templates = np.where(df.columns == templates_column)[0]
+        idx_sel = idx_templates
+
+        df.rename(columns={templates_column: 'counts', df.columns[aa_column_alpha]: 'alpha'}, inplace=True)
+
+        if aggregate_by_aa is True:
+            # Combine sequences that share nucleotide sequence
+            df = df.groupby('alpha').agg({'counts': 'sum'})
+            df = df.sort_values(df.columns[0], ascending=False)
+            df.reset_index(inplace=True)
+
+        df = df[df['alpha'].str.len() <= max_length]
+        df['Frequency'] = df['counts'] / np.sum(df['counts'])
+
+        df = Cut_DF(df=df, type_cut=type_of_data_cut, cut=data_cut, read_i=1, freq_i=2)
+
+    elif (aa_column_alpha is None) and (aa_column_beta is not None):
+        df = df.dropna(subset=[df.columns[aa_column_beta]])
+        searchfor = ['\*', 'X', 'O']
+        df[df.columns[aa_column_beta]] = df[df.columns[aa_column_beta]].str.strip()
+        df = df[~df.iloc[:, aa_column_beta].str.contains('|'.join(searchfor))]
+
+        idx_templates = np.where(df.columns == templates_column)[0]
+        idx_sel = idx_templates
+
+        df.rename(columns={templates_column: 'counts', df.columns[aa_column_beta]: 'beta'}, inplace=True)
+
+        if aggregate_by_aa is True:
+            # Combine sequences that share nucleotide sequence
+            df = df.groupby('beta').agg({'counts': 'sum'})
+            df = df.sort_values(df.columns[0], ascending=False)
+            df.reset_index(inplace=True)
+
+        df = df[df['beta'].str.len() <= max_length]
+        df['Frequency'] = df['counts'] / np.sum(df['counts'])
+
+        df = Cut_DF(df=df, type_cut=type_of_data_cut, cut=data_cut, read_i=1, freq_i=2)
+
+
+    else:
 
         if aa_column_beta is None:
             amino_column = int(np.where([re.search('Acid', f, flags=re.IGNORECASE) != None for f in df.columns.tolist()])[0])

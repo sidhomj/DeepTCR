@@ -41,6 +41,8 @@ class DeepTCR_U(object):
         #Assign parameters
         self.Name = Name
         self.max_length = max_length
+        self.use_beta = True
+        self.use_alpha = False
 
         #Create dataframes for assigning AA to ints
         aa_idx, aa_mat = make_aa_df()
@@ -126,6 +128,13 @@ class DeepTCR_U(object):
         """
 
         if Load_Prev_Data is False:
+
+            if aa_column_alpha is not None:
+                self.use_alpha = True
+
+            if (aa_column_beta is None) and (aa_column_alpha is not None):
+                self.use_beta = False
+
             if classes is None:
                 classes = [d for d in os.listdir(directory) if os.path.isdir(directory + d)]
                 classes = [f for f in classes if not f.startswith('.')]
@@ -166,35 +175,68 @@ class DeepTCR_U(object):
                 DF = p.starmap(Get_DF_Data, args)
 
                 for df, file in zip(DF, files_read):
-                    if len(df.columns) == 4:
-                        alpha_sequences += df['alpha']
-                    sequences += df['aminoAcid'].tolist()
+                    if aa_column_alpha is not None:
+                        alpha_sequences += df['alpha'].tolist()
+                    if aa_column_beta is not None:
+                        beta_sequences += df['beta'].tolist()
+
+                    if (aa_column_alpha is None) and (aa_column_beta is None):
+                        beta_sequences += df['beta'].tolist()
+
+
                     label_id += [type] * len(df)
                     file_id += [file.split('/')[-1]] * len(df)
                     file_list.append(file.split('/')[-1])
                     freq += df['Frequency'].tolist()
 
-            sequences = np.asarray(sequences)
+            alpha_sequences = np.asarray(alpha_sequences)
+            beta_sequences = np.asarray(beta_sequences)
             label_id = np.asarray(label_id)
             file_id = np.asarray(file_id)
             freq = np.asarray(freq)
 
-            args = list(zip(sequences, [self.aa_idx] * len(sequences), [self.max_length] * len(sequences)))
-            result = p.starmap(Embed_Seq_Num, args)
+            if aa_column_alpha is not None:
+                args = list(zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
+                result = p.starmap(Embed_Seq_Num, args)
+                sequences_num = np.vstack(result)
+                X_Seq_alpha = np.expand_dims(sequences_num, 1)
+
+            if aa_column_beta is not None:
+                args = list(zip(beta_sequences, [self.aa_idx] * len(beta_sequences),  [self.max_length] * len(beta_sequences)))
+                result = p.starmap(Embed_Seq_Num, args)
+                sequences_num = np.vstack(result)
+                X_Seq_beta = np.expand_dims(sequences_num, 1)
+
+            if (aa_column_alpha is None) and (aa_column_beta is None):
+                args = list(zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length] * len(beta_sequences)))
+                result = p.starmap(Embed_Seq_Num, args)
+                sequences_num = np.vstack(result)
+                X_Seq_beta = np.expand_dims(sequences_num, 1)
+
+
             p.close()
             p.join()
-            sequences_num = np.vstack(result)
-            X_Seq = np.expand_dims(sequences_num, 1)
+
+            if (self.use_beta is True) and (self.use_alpha is False):
+                X_Seq_alpha = None
+                alpha_sequences = None
+
+            if (self.use_beta is False) and (self.use_alpha is True):
+                X_Seq_beta = None
+                beta_sequences = None
+
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
-                pickle.dump([X_Seq, sequences, label_id, file_id, freq,self.lb,file_list],f,protocol=4)
+                pickle.dump([X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,self.lb,file_list],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
-                X_Seq, sequences, label_id, file_id, freq,self.lb,file_list = pickle.load(f)
+                X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,self.lb,file_list = pickle.load(f)
 
-        self.X_Seq = X_Seq
-        self.sequences = sequences
+        self.X_Seq_alpha = X_Seq_alpha
+        self.X_Seq_beta = X_Seq_beta
+        self.alpha_sequences = alpha_sequences
+        self.beta_sequences = beta_sequences
         self.label_id = label_id
         self.file_id = file_id
         self.freq = freq
