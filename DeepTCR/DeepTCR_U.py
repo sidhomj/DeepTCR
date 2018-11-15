@@ -704,7 +704,7 @@ class DeepTCR_U(object):
         on: str
             Specificy which feature space to cluster on. Options are 'VAE','GAN','Both',None. If nothing is specified, the
             features from the last algorithm ran are used. If 'Both' is specified, a clustering solution is applied that merges
-            clustering solutions from both methods.
+            the feature space from both unsupervised algorithms before clustering.
 
         method: str
             method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
@@ -743,23 +743,6 @@ class DeepTCR_U(object):
         # # Hierarchical Clustering
         Z = linkage(features, method=method, metric=metric)
         IDX = fcluster(Z, t, criterion=criterion)
-
-        #IDX, graph, Q = phenograph.cluster(features,k=t)
-
-        # if on is 'Both':
-        #     Z = linkage(features, method='ward', metric='euclidean')
-        #     IDX = fcluster(Z, t, criterion=criterion)
-        #
-        #     # Z_vae = linkage(vae_features, method='ward', metric='euclidean')
-        #     # IDX_vae = fcluster(Z_vae, t, criterion=criterion)
-        #     # Z_gan = linkage(gan_features, method='ward', metric='euclidean')
-        #     # IDX_gan = fcluster(Z_gan, t, criterion=criterion)
-        #     #
-        #     # #Merge Clusters
-        #     # IDX = Merge_Clusters(IDX_vae,IDX_gan)
-        # else:
-        #     Z = linkage(features, method='ward', metric='euclidean')
-        #     IDX = fcluster(Z, t, criterion=criterion)
 
         DFs = []
         DF_Sum = pd.DataFrame()

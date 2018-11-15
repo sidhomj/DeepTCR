@@ -166,50 +166,6 @@ def get_mers(X,mer=15,stride=7):
 
     return Seq_Mers, np.asarray(Seq_ID)
 
-def Merge_Clusters(IDX_1,IDX_2):
-    clusters_1 = list(set(IDX_1))
-    clusters_2 = list(set(IDX_2))
-    seq_num = np.asarray(list(range(len(IDX_1))))
-
-    all_clusters = []
-    for cluster in clusters_1:
-        all_clusters.append(seq_num[IDX_1 == cluster])
-
-    for cluster in clusters_2:
-        all_clusters.append(seq_num[IDX_2 == cluster])
-
-
-    G = to_graph(all_clusters)
-    merged_clusters = list(connected_components(G))
-    IDX_Out = np.zeros_like(IDX_1)
-    count = 1
-    for c in merged_clusters:
-        for n in c:
-            IDX_Out[n] = count
-        count +=1
-
-    return IDX_Out
-
-def to_graph(l):
-    G = networkx.Graph()
-    for part in l:
-        # each sublist is a bunch of nodes
-        G.add_nodes_from(part)
-        # it also imlies a number of edges:
-        G.add_edges_from(to_edges(part))
-    return G
-
-def to_edges(l):
-    """
-        treat `l` as a Graph and returns it's edges
-        to_edges(['a','b','c','d']) -> [(a,b), (b,c),(c,d)]
-    """
-    it = iter(l)
-    last = next(it)
-
-    for current in it:
-        yield last, current
-        last = current
 
 
 
