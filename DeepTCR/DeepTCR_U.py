@@ -13,6 +13,7 @@ import seaborn as sns
 import colorsys
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage,fcluster
+from sklearn.preprocessing import StandardScaler
 
 class DeepTCR_U(object):
 
@@ -57,7 +58,7 @@ class DeepTCR_U(object):
             os.makedirs(directory)
 
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
-                    aa_column = None, count_column = None,sep='\t'):
+                    aa_column = None, count_column = None,sep='\t',aggregate_by_aa=True):
         """
         Get Data for Unsupervised Deep Learning Methods.
 
@@ -113,6 +114,10 @@ class DeepTCR_U(object):
         sep: str
             Type of delimiter used in file with TCRSeq data.
 
+        aggregate_by_aa: bool
+            Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
+            of the same amino acid sequence given it comes from different nucleotide clones.
+
         Returns
         ---------------------------------------
 
@@ -151,7 +156,8 @@ class DeepTCR_U(object):
                                 [aa_column] * num_ins,
                                 [count_column] * num_ins,
                                 [sep] * num_ins,
-                                [self.max_length]*num_ins))
+                                [self.max_length]*num_ins,
+                                [aggregate_by_aa]*num_ins))
 
                 DF = p.starmap(Get_DF_Data, args)
 
@@ -216,7 +222,7 @@ class DeepTCR_U(object):
 
         Returns
 
-        self.features: array
+        self.vae_features: array
             An array that contains n x latent_dim containing features for all sequences
 
         ---------------------------------------
@@ -338,7 +344,8 @@ class DeepTCR_U(object):
             if len(np.unique(column)) > 1:
                 keep.append(i)
         keep = np.asarray(keep)
-        self.features = self.features[:,keep]
+        self.vae_features = self.features[:,keep]
+        self.features = self.vae_features
         print('Training Done')
 
     def Train_GAN(self,Load_Prev_Data=False,batch_size=10000,it_min=50,latent_dim=256,suppress_output=False):
@@ -368,7 +375,7 @@ class DeepTCR_U(object):
 
         Returns
 
-        self.features: array
+        self.gan_features: array
             An array that contains n x latent_dim containing features for all sequences
 
         ---------------------------------------
@@ -516,7 +523,8 @@ class DeepTCR_U(object):
             if len(np.unique(column)) > 1:
                 keep.append(i)
         keep = np.asarray(keep)
-        self.features = self.features[:,keep]
+        self.gan_features = self.features[:,keep]
+        self.features = self.gan_features
         self.indices = self.indices[:,keep]
         print('Training Done')
 
@@ -706,7 +714,6 @@ class DeepTCR_U(object):
 
         """
         #Normalize Features
-        from sklearn.preprocessing import StandardScaler
         SS= StandardScaler()
         features=SS.fit_transform(self.features)
 
@@ -763,6 +770,21 @@ class DeepTCR_U(object):
         self.Cluster_Frequencies = DF_Sum
         self.var = var_list
         print('Clustering Done')
+
+    def Cluster_2(self,t=100,criterion='distance',write_to_sheets=False):
+
+        # Normalize Features
+        SS = StandardScaler()
+        vae_features = SS.fit_transform(self.vae_features)
+
+        SS = StandardScaler()
+        gan_features = SS.fit_transform(self.gan_features)
+
+
+
+        # Hierarchical Clustering
+        Z_vae = linkage(vae_features, method='ward', metric='euclidean')
+        IDX_vae = fcluster(Z_vae, t, criterion=criterion)
 
 
 
