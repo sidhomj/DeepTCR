@@ -60,7 +60,7 @@ class DeepTCR_U(object):
             os.makedirs(directory)
 
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
-                    aa_column = None, count_column = None,sep='\t',aggregate_by_aa=True):
+                    aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True):
         """
         Get Data for Unsupervised Deep Learning Methods.
 
@@ -144,7 +144,8 @@ class DeepTCR_U(object):
                 print('Not Valid Delimiter')
                 return
 
-            sequences = []
+            alpha_sequences = []
+            beta_sequences = []
             label_id = []
             file_id = []
             freq = []
@@ -155,7 +156,8 @@ class DeepTCR_U(object):
                 args = list(zip(files_read,
                                 [type_of_data_cut] * num_ins,
                                 [data_cut] * num_ins,
-                                [aa_column] * num_ins,
+                                [aa_column_alpha] * num_ins,
+                                [aa_column_beta] * num_ins,
                                 [count_column] * num_ins,
                                 [sep] * num_ins,
                                 [self.max_length]*num_ins,
@@ -164,6 +166,8 @@ class DeepTCR_U(object):
                 DF = p.starmap(Get_DF_Data, args)
 
                 for df, file in zip(DF, files_read):
+                    if len(df.columns) == 4:
+                        alpha_sequences += df['alpha']
                     sequences += df['aminoAcid'].tolist()
                     label_id += [type] * len(df)
                     file_id += [file.split('/')[-1]] * len(df)
