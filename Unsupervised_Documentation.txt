@@ -178,6 +178,10 @@ CLASSES
      |          To suppress command line output with training statisitcs, set to True.
      |      
      |      Returns
+     |      
+     |      self.features: array
+     |          An array that contains n x latent_dim containing features for all sequences
+     |      
      |      ---------------------------------------
      |  
      |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False)
@@ -205,6 +209,10 @@ CLASSES
      |          To suppress command line output with training statisitcs, set to True.
      |      
      |      Returns
+     |      
+     |      self.features: array
+     |          An array that contains n x latent_dim containing features for all sequences
+     |      
      |      ---------------------------------------
      |  
      |  __init__(self, Name, max_length=40)

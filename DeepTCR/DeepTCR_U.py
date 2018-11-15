@@ -215,6 +215,10 @@ class DeepTCR_U(object):
             To suppress command line output with training statisitcs, set to True.
 
         Returns
+
+        self.features: array
+            An array that contains n x latent_dim containing features for all sequences
+
         ---------------------------------------
 
         """
@@ -363,6 +367,10 @@ class DeepTCR_U(object):
             To suppress command line output with training statisitcs, set to True.
 
         Returns
+
+        self.features: array
+            An array that contains n x latent_dim containing features for all sequences
+
         ---------------------------------------
 
         """
