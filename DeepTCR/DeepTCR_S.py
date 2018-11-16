@@ -333,8 +333,7 @@ class DeepTCR_S(object):
         with tf.device(self.device):
             with graph_model.as_default():
                 if self.use_alpha is True:
-                    X_Seq_alpha = tf.placeholder(tf.int64,
-                                                 shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],name='Input_Alpha')
+                    X_Seq_alpha = tf.placeholder(tf.int64,shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],name='Input_Alpha')
                     X_Seq_alpha_OH = tf.one_hot(X_Seq_alpha, depth=21)
 
                 if self.use_beta is True:
@@ -918,7 +917,7 @@ class DeepTCR_S(object):
 
         """
 
-        Vars = [self.X_Seq, self.X_Freq,self.files,np.asarray(self.sequences)]
+        Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,np.asarray(self.alpha_sequences,self.beta_sequences)]
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=self.Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
 
@@ -956,6 +955,9 @@ class DeepTCR_S(object):
         ---------------------------------------
 
         """
+
+        print('Function deprecated in this current version')
+        return
 
         #Generate all k-mer motifs
         numbers = list(range(1,21))
@@ -1172,8 +1174,14 @@ class DeepTCR_S(object):
             with graph_model.as_default():
 
                 # Create All Placeholders
-                X_Seq = tf.placeholder(tf.int64, shape=[None, None, self.X_Seq.shape[2]], name='Input_Seq')
-                X_Seq_OH = tf.one_hot(X_Seq, depth=21)
+                if self.use_alpha is True:
+                    X_Seq_alpha = tf.placeholder(tf.int64,shape=[None, None, self.X_Seq_alpha.shape[2]],name='Input_Alpha')
+                    X_Seq_alpha_OH = tf.one_hot(X_Seq_alpha, depth=21)
+
+                if self.use_beta is True:
+                    X_Seq_beta = tf.placeholder(tf.int64,shape=[None, None, self.X_Seq_beta.shape[2]],name='Input_Beta')
+                    X_Seq_beta_OH = tf.one_hot(X_Seq_beta, depth=21)
+
                 X_Freq = tf.placeholder(tf.float32, shape=[None, None], name='Input_Freq')
                 Y = tf.placeholder(tf.int64, shape=[None, self.Y.shape[1]], name='Y')
                 prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
@@ -1186,10 +1194,17 @@ class DeepTCR_S(object):
                         embedding_dim_aa = 64
                         embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq', shape=[21, embedding_dim_aa],trainable=True)
                         embedding_layer_seq = tf.expand_dims(tf.expand_dims(embedding_layer_seq, axis=0), axis=0)
+                        if self.use_alpha is True:
+                            inputs_seq_embed_alpha = tf.squeeze(tf.tensordot(X_Seq_alpha_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                        if self.use_beta is True:
+                            inputs_seq_embed_beta = tf.squeeze(tf.tensordot(X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
 
-                        inputs_seq_embed = tf.squeeze(tf.tensordot(X_Seq_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
                 else:
-                    inputs_seq_embed = X_Seq_OH
+                    if self.use_alpha is True:
+                        inputs_seq_embed_alpha = X_Seq_alpha_OH
+
+                    if self.use_beta is True:
+                        inputs_seq_embed_beta = X_Seq_beta_OH
 
 
                 if self.condition_kernels is True:
@@ -1198,6 +1213,27 @@ class DeepTCR_S(object):
                     kernel = self.conditioned_kernel
                 else:
                     conv_weights = None
+
+                if self.use_alpha is True:
+                    Seq_Features_alpha, conv_kernel_alpha, Indices_alpha = Convolutional_Features_WF(inputs_seq_embed_alpha,
+                        units=units,kernel=kernel,conv_weights=conv_weights,trainable_embedding=trainable_embedding,name='alpha_conv')
+
+                if self.use_beta is True:
+                    Seq_Features_beta, conv_kernel_beta, Indices_beta = Convolutional_Features_WF(inputs_seq_embed_beta,
+                        units=units,kernel=kernel,conv_weights=conv_weights,trainable_embedding=trainable_embedding,name='beta_conv')
+
+                if (self.use_alpha is True) and (self.use_beta is True):
+                    Seq_Features = tf.concat((Seq_Features_alpha,Seq_Features_beta),axis=1)
+                elif (self.use_alpha is True) and (self.use_beta is False):
+                    Seq_Features = Seq_Features_alpha
+                elif (self.use_alpha is False) and (self.use_beta is True):
+                    Seq_Features = Seq_Features_beta
+
+
+
+
+
+
 
                 Seq_Features,conv_kernel,Indices = Convolutional_Features_WF(inputs_seq_embed, units=units,kernel=kernel, conv_weights=conv_weights,trainable_embedding=trainable_embedding)
                 conv_variables = tf.trainable_variables()
