@@ -3,8 +3,8 @@ import numpy as np
 from sklearn.preprocessing import OneHotEncoder
 import pickle
 
-def Convolutional_Features(inputs,reuse=False,units=12,kernel=5,trainable_embedding=False):
-    with tf.variable_scope('Convolutional_Features',reuse=reuse):
+def Convolutional_Features(inputs,reuse=False,units=12,kernel=5,trainable_embedding=False,name='Convolutional_Features'):
+    with tf.variable_scope(name,reuse=reuse):
 
         if trainable_embedding is True:
             conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')
@@ -23,8 +23,8 @@ def Convolutional_Features(inputs,reuse=False,units=12,kernel=5,trainable_embedd
 
         return tf.layers.flatten(conv), tf.layers.flatten(indices)
 
-def Convolutional_Features_WF(inputs,reuse=False,units=12,kernel=5,trainable_embedding=False,conv_weights=None):
-    with tf.variable_scope('Convolutional_Features',reuse=reuse):
+def Convolutional_Features_WF(inputs,reuse=False,units=12,kernel=5,trainable_embedding=False,conv_weights=None,name='Convolutional_Features'):
+    with tf.variable_scope(name,reuse=reuse):
         if conv_weights is not None:
             conv_weights = conv_weights[:,:,1:,:]
             units_orig = conv_weights.shape[-1]
@@ -67,8 +67,8 @@ def Convolutional_Features_WF(inputs,reuse=False,units=12,kernel=5,trainable_emb
         conv = tf.reduce_max(conv, axis=2)
         return conv, conv_weights_out, indices
 
-def Convolutional_Features_Test(inputs,motifs,bias=0,reuse=False):
-    with tf.variable_scope('Convolutional_Features',reuse=reuse):
+def Convolutional_Features_Test(inputs,motifs,bias=0,reuse=False,name='Convolutional_Features'):
+    with tf.variable_scope(name,reuse=reuse):
         conv = tf.nn.conv2d(inputs,motifs,padding='SAME',strides=[1,1,1,1]) - bias
         conv = tf.nn.relu(conv)
         conv = tf.squeeze(tf.layers.max_pooling2d(conv,(1,conv.shape[2]),(1,conv.shape[2])),2)
