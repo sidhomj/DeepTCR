@@ -223,12 +223,12 @@ class DeepTCR_U(object):
             p.join()
 
             if (self.use_beta is True) and (self.use_alpha is False):
-                X_Seq_alpha = None
-                alpha_sequences = None
+                X_Seq_alpha = np.zeros_like(X_Seq_beta)
+                alpha_sequences = np.asarray([None]*len(X_Seq_beta))
 
             if (self.use_beta is False) and (self.use_alpha is True):
-                X_Seq_beta = None
-                beta_sequences = None
+                X_Seq_beta = np.zeros_like(X_Seq_alpha)
+                beta_sequences = np.asarray([None]*len(X_Seq_alpha))
 
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
@@ -685,25 +685,30 @@ class DeepTCR_U(object):
             self.features = self.features[sel]
             self.label_id = self.label_id[sel]
             self.file_id = self.file_id[sel]
-            self.sequences = self.sequences[sel]
+            self.alpha_sequences = self.alpha_sequences[sel]
+            self.beta_sequences = self.beta_sequences[sel]
+
 
         if sample_num_per_seq is not None:
             features_temp = []
             label_temp = []
             file_temp = []
-            seq_temp = []
+            seq_temp_alpha = []
+            seq_temp_Beta = []
             for i in self.lb.classes_:
                 sel = np.where(self.label_id==i)[0]
                 sel = np.random.choice(sel,sample_num_per_seq,replace=False)
                 features_temp.append(self.features[sel])
                 label_temp.append(self.label_id[sel])
                 file_temp.append(self.file_id[sel])
-                seq_temp.append(self.sequences[sel])
+                seq_temp_alpha.append(self.alpha_sequences[sel])
+                seq_temp_beta.append(self.beta_sequences[sel])
 
             self.features = np.vstack(features_temp)
             self.label_id = np.hstack(label_temp)
             self.file_id = np.hstack(file_temp)
-            self.sequences = np.hstack(seq_temp)
+            self.alpha_sequences = np.hstack(seq_temp_alpha)
+            self.beta_sequences = np.hstack(seq_temp_beta)
 
 
         keep=[]
@@ -870,21 +875,36 @@ class DeepTCR_U(object):
         DF_Sum = pd.DataFrame()
         DF_Sum['File'] = self.file_list
         DF_Sum.set_index('File', inplace=True)
-        var_list = []
+        var_list_alpha = []
+        var_list_beta = []
         for i in np.unique(IDX):
             if i != -1:
                 sel = IDX == i
-                seq = self.sequences[sel]
+                seq_alpha = self.alpha_sequences[sel]
+                seq_beta = self.beta_sequences[sel]
                 label = self.label_id[sel]
                 file = self.file_id[sel]
                 freq = self.freq[sel]
 
-                len_sel = [len(x) for x in seq]
-                var = max(len_sel) - min(len_sel)
-                var_list.append(var)
+                if self.use_alpha is True:
+                    len_sel = [len(x) for x in seq_alpha]
+                    var = max(len_sel) - min(len_sel)
+                    var_list_alpha.append(var)
+                else:
+                    var_list_alpha.append(0)
+
+
+                if self.use_beta is True:
+                    len_sel = [len(x) for x in seq_beta]
+                    var = max(len_sel) - min(len_sel)
+                    var_list_beta.append(var)
+                else:
+                    var_list_beta.append(0)
+
 
                 df = pd.DataFrame()
-                df['Sequences'] = seq
+                df['Alpha_Sequences'] = seq_alpha
+                df['Beta_Sequences'] = seq_beta
                 df['Labels'] = label
                 df['File'] = file
                 df['Frequency'] = freq
@@ -911,7 +931,8 @@ class DeepTCR_U(object):
 
         self.DFs = DFs
         self.Cluster_Frequencies = DF_Sum
-        self.var = var_list
+        self.var_alpha = var_list_alpha
+        self.var_beta = var_list_beta
         print('Clustering Done')
 
 
