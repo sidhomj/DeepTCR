@@ -336,20 +336,56 @@ class DeepTCR_U(object):
                     fc_up = tf.layers.dense(fc_up, 256)
                     fc_up = tf.reshape(fc_up, shape=[-1, 1, 4, 64])
 
-                    upsample1 = tf.layers.conv2d_transpose(fc_up, 12, (1, 3), (1, 2), activation=tf.nn.relu)
-                    upsample2 = tf.layers.conv2d_transpose(upsample1, 32, (1, 3), (1, 2), activation=tf.nn.relu)
-                    upsample3 = tf.layers.conv2d_transpose(upsample2, embedding_dim_aa, (1, 4), (1, 2), activation=tf.nn.relu)
+                    if self.use_beta is True:
+                        upsample1_beta = tf.layers.conv2d_transpose(fc_up, 12, (1, 3), (1, 2), activation=tf.nn.relu)
+                        upsample2_beta = tf.layers.conv2d_transpose(upsample1_beta, 32, (1, 3), (1, 2), activation=tf.nn.relu)
+                        upsample3_beta = tf.layers.conv2d_transpose(upsample2_beta, embedding_dim_aa, (1, 4), (1, 2),activation=tf.nn.relu)
 
-                    embedding_layer_seq_back = tf.transpose(embedding_layer_seq, perm=(0, 1, 3, 2))
-                    logits_AE = tf.squeeze(tf.tensordot(upsample3, embedding_layer_seq_back, axes=(3, 2)), axis=(3, 4), name='logits')
 
-                    total_cost, recon_cost, latent_cost = AE_Loss(X_Seq, logits_AE, z_mean, z_log_var)
+                        embedding_layer_seq_back = tf.transpose(embedding_layer_seq, perm=(0, 1, 3, 2))
+                        logits_AE_beta = tf.squeeze(tf.tensordot(upsample3_beta, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
 
-                    predicted = tf.squeeze(tf.argmax(logits_AE, axis=3), axis=1)
-                    actual_ae = tf.squeeze(X_Seq, axis=1)
-                    w = tf.cast(tf.squeeze(tf.greater(X_Seq, 0), 1), tf.float32)
-                    correct_ae = tf.reduce_sum(w * tf.cast(tf.equal(predicted, actual_ae), tf.float32), axis=1) / tf.reduce_sum(w, axis=1)
-                    accuracy = tf.reduce_mean(correct_ae, axis=0)
+                        total_cost_beta, recon_cost_beta, latent_cost = AE_Loss(X_Seq_beta, logits_AE_beta, z_mean, z_log_var)
+
+                        predicted_beta = tf.squeeze(tf.argmax(logits_AE_beta, axis=3), axis=1)
+                        actual_ae_beta = tf.squeeze(X_Seq_beta, axis=1)
+                        w = tf.cast(tf.squeeze(tf.greater(X_Seq_beta, 0), 1), tf.float32)
+                        correct_ae_beta = tf.reduce_sum(w * tf.cast(tf.equal(predicted_beta, actual_ae_beta), tf.float32),axis=1) / tf.reduce_sum(w, axis=1)
+
+                        accuracy_beta = tf.reduce_mean(correct_ae_beta, axis=0)
+
+                    if self.use_alpha is True:
+                        upsample1_alpha = tf.layers.conv2d_transpose(fc_up, 12, (1, 3), (1, 2), activation=tf.nn.relu)
+                        upsample2_alpha = tf.layers.conv2d_transpose(upsample1_alpha, 32, (1, 3), (1, 2),activation=tf.nn.relu)
+                        upsample3_alpha = tf.layers.conv2d_transpose(upsample2_alpha, embedding_dim_aa, (1, 4), (1, 2),activation=tf.nn.relu)
+
+
+                        embedding_layer_seq_back = tf.transpose(embedding_layer_seq, perm=(0, 1, 3, 2))
+                        logits_AE_alpha = tf.squeeze(tf.tensordot(upsample3_alpha, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
+
+
+                        total_cost_alpha, recon_cost_alpha, latent_cost = AE_Loss(X_Seq_alpha, logits_AE_alpha, z_mean,z_log_var)
+
+
+                        predicted_alpha = tf.squeeze(tf.argmax(logits_AE_alpha, axis=3), axis=1)
+                        actual_ae_alpha = tf.squeeze(X_Seq_alpha, axis=1)
+                        w = tf.cast(tf.squeeze(tf.greater(X_Seq_alpha, 0), 1), tf.float32)
+                        correct_ae_alpha = tf.reduce_sum(w * tf.cast(tf.equal(predicted_alpha, actual_ae_alpha), tf.float32), axis=1) / tf.reduce_sum(w, axis=1)
+                        accuracy_alpha = tf.reduce_mean(correct_ae_alpha, axis=0)
+
+
+                    if (self.use_alpha is True) and (self.use_beta is True):
+                        total_cost = recon_cost_beta + recon_cost_alpha + latent_cost
+                        recon_cost = recon_cost_alpha + recon_cost_beta
+                        accuracy = (accuracy_alpha + accuracy_beta)/2
+                    elif (self.use_alpha is True) and (self.use_beta is False):
+                        total_cost = total_cost_alpha
+                        recon_cost = recon_cost_alpha
+                        accuracy = accuracy_alpha
+                    elif (self.use_alpha is False) and (self.use_beta is True):
+                        total_cost = total_cost_beta
+                        recon_cost = recon_cost_beta
+                        accuracy = accuracy_beta
 
                     opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
 
@@ -360,12 +396,28 @@ class DeepTCR_U(object):
             tf.reset_default_graph()
             config = tf.ConfigProto()
             config.gpu_options.allow_growth = True
+            if (self.use_alpha is True) and (self.use_beta is True):
+                X_Seq_Alpha_Feed = self.X_Seq_alpha
+                X_Seq_Beta_Feed = self.X_Seq_beta
+            elif (self.use_alpha is True) and (self.use_beta is False):
+                X_Seq_Alpha_Feed = self.X_Seq_alpha
+                X_Seq_Beta_Feed = np.zeros_like(self.X_Seq_alpha)
+            elif (self.use_alpha is False) and (self.use_beta is True):
+                X_Seq_Alpha_Feed = np.zeros_like(self.X_Seq_beta)
+                X_Seq_Beta_Feed = self.X_Seq_beta
+
+
             with tf.Session(graph=graph_model_AE,config=config) as sess:
                 sess.run(tf.global_variables_initializer())
                 for e in range(epochs):
                     accuracy_list = []
-                    for x_ae_seq in get_batches_seq(self.X_Seq, batch_size=batch_size):
-                        feed_dict = {X_Seq: x_ae_seq, training: True}
+                    for x_ae_seqa,x_ae_seqb in get_batches_seq2(X_Seq_Alpha_Feed,X_Seq_Beta_Feed, batch_size=batch_size):
+                        feed_dict = {training:True}
+                        if self.use_alpha is True:
+                            feed_dict[X_Seq_alpha] = x_ae_seqa
+                        if self.use_beta is True:
+                            feed_dict[X_Seq_beta] = x_ae_seqb
+
                         train_loss, recon_loss, latent_loss, accuracy_check, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
                         accuracy_list.append(accuracy_check)
                         iteration += 1
@@ -382,36 +434,33 @@ class DeepTCR_U(object):
                         if np.mean(accuracy_list[-10:]) > accuracy_min:
                             break
 
-                #saver.save(sess, self.Name + '_VAE/' + self.Name + '_VAE.ckpt')
 
                 features_list = []
-                recon_list = []
                 accuracy_list = []
-                for x_ae_seq in get_batches_seq(self.X_Seq, batch_size=batch_size, random=False):
-                    feed_dict = {X_Seq: x_ae_seq}
-                    features_ind, recon_ind, accuracy_check,embedding_layer = sess.run([z_mean, logits_AE, accuracy,embedding_layer_seq], feed_dict=feed_dict)
+                for x_ae_seqa,x_ae_seqb in get_batches_seq2(X_Seq_Alpha_Feed,X_Seq_Beta_Feed, batch_size=batch_size, random=False):
+                    if self.use_alpha is True:
+                        feed_dict[X_Seq_alpha] = x_ae_seqa
+                    if self.use_beta is True:
+                        feed_dict[X_Seq_beta] = x_ae_seqb
+
+                    features_ind, accuracy_check = sess.run([z_mean, accuracy], feed_dict=feed_dict)
                     features_list.append(features_ind)
-                    recon_list.append(np.squeeze(recon_ind, 1))
                     accuracy_list.append(accuracy_check)
 
-                # with open('Embedding_Layer_Test.pkl','wb') as f:
-                #     pickle.dump(embedding_layer,f)
 
                 features = np.vstack(features_list)
                 accuracy_list = np.hstack(accuracy_list)
-                recon = np.vstack(recon_list)
                 print('Reconstruction Accuracy: {:.5f}'.format(np.nanmean(accuracy_list)))
 
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
-                pickle.dump([features, recon], f,protocol=4)
+                pickle.dump(features, f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'rb') as f:
-                features,recon = pickle.load(f)
+                features = pickle.load(f)
 
 
         self.features = features
-        self.recon = recon
 
         self.features = features
         keep=[]

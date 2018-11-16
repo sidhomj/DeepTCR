@@ -150,6 +150,28 @@ def get_batches_seq(x, batch_size=10,random=False):
             X   = x[sel_ind]
         yield X
 
+def get_batches_seq2(x,x2, batch_size=10,random=False):
+    """ Return a generator that yields batches from arrays x and y. """
+    #batch_size = len(x) // n_batches
+    if len(x) % batch_size == 0:
+        n_batches = (len(x) // batch_size)
+    else:
+        n_batches = (len(x) // batch_size) + 1
+
+    sel = np.asarray(list(range(x.shape[0])))
+    if random is True:
+        np.random.shuffle(sel)
+
+    for ii in range(0, n_batches * batch_size, batch_size):
+        # If we're not on the last batch, grab data with size batch_size
+        if ii != (n_batches - 1) * batch_size:
+            sel_ind=sel[ii: ii + batch_size]
+        else:
+            sel_ind = sel[ii:]
+
+        X ,X2  = x[sel_ind], x2[sel_ind]
+        yield X,X2
+
 def get_mers(X,mer=15,stride=7):
 
     Seq_ID = []

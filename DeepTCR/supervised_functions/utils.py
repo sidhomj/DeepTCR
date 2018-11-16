@@ -159,7 +159,6 @@ def get_batches_model(x,x2,y, batch_size=10,random=False):
             X,X2,Y  = x[sel_ind],x2[sel_ind], y[sel_ind]
         yield X,X2,Y
 
-
 def get_batches_model_2(x,x2,y,y2, batch_size=10,random=False):
     """ Return a generator that yields batches from arrays x and y. """
     #batch_size = len(x) // n_batches
