@@ -492,24 +492,52 @@ class DeepTCR_S(object):
                         break
 
 
-            # features_list = []
-            # indices_list = []
-            # for x_seq_a,x_seq_b, y in get_batches_model(self.X_Seq_alpha,self.X_Seq_beta, self.Y, batch_size=batch_size, random=False):
-            #     if self.use_alpha is True:
-            #         feed_dict[X_Seq_alpha] = x_seq_a
-            #     if self.use_beta is True:
-            #         feed_dict[X_Seq_beta] = x_seq_b
-            #     features_i,indices_i = sess.run([Seq_Features,Indices],feed_dict=feed_dict)
-            #     features_list.append(features_i)
-            #     indices_list.append(indices_i)
+            alpha_features_list = []
+            beta_features_list = []
+            alpha_indices_list = []
+            beta_indices_list = []
+            for x_seq_a,x_seq_b, y in get_batches_model(self.X_Seq_alpha,self.X_Seq_beta, self.Y, batch_size=batch_size, random=False):
+                if self.use_alpha is True:
+                    feed_dict[X_Seq_alpha] = x_seq_a
+                if self.use_beta is True:
+                    feed_dict[X_Seq_beta] = x_seq_b
+
+                if (self.use_alpha is True) and (self.use_beta is True):
+                    features_i_alpha,indices_i_alpha,features_i_beta,indices_i_beta = sess.run([Seq_Features_alpha,Indices_alpha,Seq_Features_beta,Indices_beta],feed_dict=feed_dict)
+                elif (self.use_alpha is True) and (self.use_beta is False):
+                    features_i_alpha,indices_i_alpha = sess.run([Seq_Features_alpha,Indices_alpha],feed_dict=feed_dict)
+                elif (self.use_alpha is False) and (self.use_beta is True):
+                    features_i_beta,indices_i_beta = sess.run([Seq_Features_beta,Indices_beta],feed_dict=feed_dict)
+
+                if self.use_alpha is True:
+                    alpha_features_list.append(features_i_alpha)
+                    alpha_indices_list.append(indices_i_alpha)
+
+                if self.use_beta is True:
+                    beta_features_list.append(features_i_beta)
+                    beta_indices_list.append(indices_i_beta)
+
+            if self.use_alpha is True:
+                self.alpha_features = np.vstack(alpha_features_list)
+                self.alpha_indices = np.vstack(alpha_indices_list)
+
+            if self.use_beta is True:
+                self.beta_features = np.vstack(beta_features_list)
+                self.beta_indices = np.vstack(beta_indices_list)
+
+
+            self.kernel = kernel
             #
-            # self.features = np.vstack(features_list)
-            # self.indices = np.vstack(indices_list)
-            # self.seq_test = self.sequences
-            # self.kernel = kernel
-            #
-            # with open(os.path.join(self.Name,self.Name) + '_features.pkl','wb') as f:
-            #     pickle.dump([self.features,self.indices,self.seq_test,self.y_pred,self.y_test,self.kernel],f)
+            var_save = []
+            if self.use_alpha is True:
+                var_save.extend([self.alpha_features,self.alpha_indices,self.alpha_sequences])
+            if self.use_beta is True:
+                var_save.extend([self.beta_features,self.beta_indices,self.beta_sequences])
+
+            var_save.extend([self.y_pred,self.y_test,self.kernel])
+
+            with open(os.path.join(self.Name,self.Name) + '_features.pkl','wb') as f:
+                pickle.dump(var_save,f)
 
             print('Done Training')
 
@@ -534,7 +562,7 @@ class DeepTCR_S(object):
         Returns
         ---------------------------------------
 
-        self.group_features_ss: Pandas Dataframe
+        self.(alpha/beta)_group_features_ss: Pandas Dataframe
             Sequences used to determine motifs in fasta files
             are stored in this dataframe where column names represent
             the feature number.
@@ -542,7 +570,18 @@ class DeepTCR_S(object):
         """
         #Get Saved Features, Indices, and Sequences
         with open(os.path.join(self.Name,self.Name) + '_features.pkl', 'rb') as f:
-            self.features, self.indices, self.seq_test, self.y_pred, self.y_test,self.kernel = pickle.load(f)
+            var_load = pickle.load(f)
+
+        if (self.use_alpha is True) and (self.use_beta is True):
+            self.alpha_features, self.alpha_indices, self.alpha_sequences,\
+            self.beta_features, self.beta_indices, self.beta_sequences,self.y_pred,self.y_test,self.kernel = var_load
+
+        elif (self.use_alpha is True) and (self.use_beta is False):
+            self.alpha_features, self.alpha_indices, self.alpha_sequences,self.y_pred,self.y_test,self.kernel = var_load
+
+        elif (self.use_alpha is False) and (self.use_beta is True):
+            self.beta_features, self.beta_indices, self.beta_sequences, self.y_pred, self.y_test, self.kernel = var_load
+
 
         group_num = np.where(self.lb.classes_ == group)[0][0]
 
@@ -550,69 +589,14 @@ class DeepTCR_S(object):
         idx_pos = self.Y[:, group_num] == 1
         idx_neg = self.Y[:, group_num] == 0
 
-        pos_mean = []
-        neg_mean = []
-        p_val = []
-        feature_num = list(range(len(self.features.T)))
-        for i in feature_num:
-            pos = self.features[idx_pos, i]
-            neg = self.features[idx_neg, i]
-            pos_mean.append(np.mean(pos))
-            neg_mean.append(np.mean(neg))
-            try:
-                stat, p = mannwhitneyu(pos,neg)
-                p_val.append(p)
-            except:
-                p_val.append(1.0)
+        if self.use_alpha is True:
+            self.alpha_group_features_ss = Diff_Features(self.alpha_features, self.alpha_indices, self.alpha_sequences, 'alpha',
+                                     p_val_threshold, idx_pos, idx_neg, self.directory_results, group, self.kernel)
 
+        if self.use_beta is True:
+            self.beta_group_features_ss = Diff_Features(self.beta_features, self.beta_indices, self.beta_sequences, 'beta',
+                                     p_val_threshold, idx_pos, idx_neg, self.directory_results, group, self.kernel)
 
-        df_features = pd.DataFrame()
-        df_features['Feature'] = feature_num
-        df_features['P_Val'] = p_val
-        df_features['Pos'] = pos_mean
-        df_features['Neg'] = neg_mean
-        df_features['Mag'] = df_features['Pos'] - df_features['Neg']
-
-        df_features = df_features[df_features['P_Val']<p_val_threshold]
-
-        df_features.sort_values(by='Mag',inplace=True,ascending=False)
-
-        # Get motifs for positive features
-        dir = os.path.join(self.directory_results,group + '_SS_Motifs')
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-
-        file_list = [f for f in os.listdir(dir)]
-        [os.remove(os.path.join(dir, f)) for f in file_list]
-
-        top_seq = 10
-        seq_cluster = []
-        feature_keep = []
-        for feature in df_features['Feature'].tolist():
-            if df_features['Mag'][feature] > 0:
-                feature_keep.append(feature)
-                sel = np.flip(self.features[:, feature].argsort(), -1)
-                sel = sel[0:top_seq]
-                seq_sel = self.seq_test[sel]
-                ind_sel = self.indices[sel, feature]
-                seq_cluster.append(seq_sel)
-
-                motifs = []
-                for ii, i in enumerate(ind_sel, 0):
-                    motif = seq_sel[ii][int(i):int(i) + self.kernel]
-                    if len(motif) < self.kernel:
-                        motif = motif + 'X' * (self.kernel - len(motif))
-                    motif = motif.lower()
-                    motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
-                    motifs.append(motif)
-
-                SeqIO.write(motifs, os.path.join(dir , 'feature_') + str(feature) + '.fasta', 'fasta')
-
-        seq_features_df_pos = pd.DataFrame()
-        for ii, f in enumerate(feature_keep, 0):
-            seq_features_df_pos[f] = seq_cluster[ii]
-
-        self.group_features_ss = seq_features_df_pos
 
         print('Motif Identification Completed')
 

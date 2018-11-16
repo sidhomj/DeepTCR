@@ -1,6 +1,16 @@
 import numpy as np
 import colorsys
 import matplotlib.pyplot as plt
+import pandas as pd
+from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
+from scipy.stats import mannwhitneyu
+import os
+from Bio.Alphabet import IUPAC
+
+
+
 
 def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None):
 
@@ -230,7 +240,6 @@ def get_batches_seq(x, batch_size=10,random=False):
             X   = x[sel_ind]
         yield X
 
-
 def get_mers(X,mer=15,stride=7):
 
     Seq_ID = []
@@ -314,3 +323,68 @@ def randperm_test(data, labels, func, n_perms=100):
     p = np.mean(np.abs(rnd) >= np.abs(obs)[:, :, np.newaxis], axis=2)
 
     return obs, p
+
+def Diff_Features(features,indices,sequences,type,p_val_threshold,idx_pos,idx_neg,directory_results,group,kernel):
+
+    pos_mean = []
+    neg_mean = []
+    p_val = []
+    feature_num = list(range(len(features.T)))
+    for i in feature_num:
+        pos = features[idx_pos, i]
+        neg = features[idx_neg, i]
+        pos_mean.append(np.mean(pos))
+        neg_mean.append(np.mean(neg))
+        try:
+            stat, p = mannwhitneyu(pos, neg)
+            p_val.append(p)
+        except:
+            p_val.append(1.0)
+
+    df_features = pd.DataFrame()
+    df_features['Feature'] = feature_num
+    df_features['P_Val'] = p_val
+    df_features['Pos'] = pos_mean
+    df_features['Neg'] = neg_mean
+    df_features['Mag'] = df_features['Pos'] - df_features['Neg']
+
+    df_features = df_features[df_features['P_Val'] < p_val_threshold]
+
+    df_features.sort_values(by='Mag', inplace=True, ascending=False)
+
+    # Get motifs for positive features
+    dir = os.path.join(directory_results, group + '_'+type+'_SS_Motifs')
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+    file_list = [f for f in os.listdir(dir)]
+    [os.remove(os.path.join(dir, f)) for f in file_list]
+
+    top_seq = 10
+    seq_cluster = []
+    feature_keep = []
+    for feature in df_features['Feature'].tolist():
+        if df_features['Mag'][feature] > 0:
+            feature_keep.append(feature)
+            sel = np.flip(features[:, feature].argsort(), -1)
+            sel = sel[0:top_seq]
+            seq_sel = sequences[sel]
+            ind_sel = indices[sel, feature]
+            seq_cluster.append(seq_sel)
+
+            motifs = []
+            for ii, i in enumerate(ind_sel, 0):
+                motif = seq_sel[ii][int(i):int(i) + kernel]
+                if len(motif) < kernel:
+                    motif = motif + 'X' * (kernel - len(motif))
+                motif = motif.lower()
+                motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
+                motifs.append(motif)
+
+            SeqIO.write(motifs, os.path.join(dir, 'feature_') + str(feature) + '.fasta', 'fasta')
+
+    seq_features_df_pos = pd.DataFrame()
+    for ii, f in enumerate(feature_keep, 0):
+        seq_features_df_pos[f] = seq_cluster[ii]
+
+    return seq_features_df_pos
