@@ -141,9 +141,13 @@ class DeepTCR_S(object):
         if Load_Prev_Data is False:
             if aa_column_alpha is not None:
                 self.use_alpha = True
+            else:
+                self.use_alpha = False
 
             if (aa_column_beta is None) and (aa_column_alpha is not None):
                 self.use_beta = False
+            else:
+                self.use_beta = True
 
             if classes is None:
                 # Get names of classes from folders names
@@ -656,7 +660,7 @@ class DeepTCR_S(object):
         plt.show(block=False)
 
     def Get_Data_WF(self,directory,Load_Prev_Data=False,classes=None,save_data=True,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
-                    aa_column = None, count_column = None,sep='\t',aggregate_by_aa=True):
+                    aa_column_alpha = None, aa_column_beta=None, count_column = None,sep='\t',aggregate_by_aa=True):
         """
         Get Data for Whole Sample Classification.
 
@@ -704,8 +708,13 @@ class DeepTCR_S(object):
         n_jobs: int
             Number of processes to use for parallelized operations.
 
-        aa_column: int
-            Columns where amino acid data is stored. If set to None, column with a header containing 'acid' is used as
+        aa_column_alpha: int
+            Column where alpha chain amino acid data is stored. (0-indexed)
+
+        aa_column_beta: int
+            Column where beta chain amino acid data is stored.(0-indexed)
+
+        If both column integers are left to None, column with a header containing 'acid' is used as
             the amino acid column.
 
         count_column: int
@@ -724,7 +733,19 @@ class DeepTCR_S(object):
         ---------------------------------------
 
         """
+
         if Load_Prev_Data is False:
+
+            if aa_column_alpha is not None:
+                self.use_alpha = True
+            else:
+                self.use_alpha = False
+
+            if (aa_column_beta is None) and (aa_column_alpha is not None):
+                self.use_beta = False
+            else:
+                self.use_beta = True
+
             if classes is None:
                 classes = [d for d in os.listdir(directory) if os.path.isdir(directory + d)]
                 classes = [f for f in classes if not f.startswith('.')]
@@ -733,7 +754,8 @@ class DeepTCR_S(object):
             self.lb.fit(classes)
             self.classes = self.lb.classes_
 
-            sequences = []
+            alpha_sequences = []
+            beta_sequences = []
             labels = []
             files = []
             len_file = []
@@ -754,7 +776,8 @@ class DeepTCR_S(object):
                 args = list(zip(files_read,
                                 [type_of_data_cut] * num_ins,
                                 [data_cut] * num_ins,
-                                [aa_column]*num_ins,
+                                [aa_column_alpha] * num_ins,
+                                [aa_column_beta] * num_ins,
                                 [count_column]*num_ins,
                                 [sep]*num_ins,
                                 [self.max_length]*num_ins,
@@ -763,7 +786,14 @@ class DeepTCR_S(object):
                 DF = p.starmap(Get_DF_Data,args)
 
                 for df, file in zip(DF, files_read):
-                    sequences.append(df['aminoAcid'].tolist())
+                    if aa_column_alpha is not None:
+                        alpha_sequences.append(df['alpha'].tolist())
+                    if aa_column_beta is not None:
+                        beta_sequences.append(df['beta'].tolist())
+
+                    if (aa_column_alpha is None) and (aa_column_beta is None):
+                        beta_sequences.append(df['beta'].tolist())
+
                     freq.append(df['Frequency'].tolist())
                     labels.append(type)
                     files.append(file.split('/')[-1])
@@ -775,44 +805,61 @@ class DeepTCR_S(object):
             len_file = np.asarray(len_file)
 
             num_seq_per_instance = np.max(len_file)
+            if self.use_alpha is True:
+                alpha_sequences = pad_sequences(alpha_sequences,num_seq_per_instance)
+            if self.use_beta is True:
+                beta_sequences = pad_sequences(beta_sequences,num_seq_per_instance)
 
-            for ii, sample in enumerate(sequences):
-                if len(sample) > num_seq_per_instance:
-                    sequences[ii] = sample[0:num_seq_per_instance]
-                    freq[ii] = np.asarray(freq[ii][0:num_seq_per_instance])
-                elif len(sample) < num_seq_per_instance:
-                    sequences[ii] = sample + ['null'] * (num_seq_per_instance - len(sample))
-                    freq[ii] = np.pad(freq[ii], (0, num_seq_per_instance - len(sample)), mode='constant')
-
-            all_seq = np.hstack(sequences).tolist()
-            args = list(zip(all_seq, [self.aa_idx] * len(all_seq), [self.max_length] * len(all_seq)))
-            result = p.starmap(Embed_Seq_Num, args)
-            p.close()
-            p.join()
-            X_Seq = np.vstack(result).reshape(len(sequences), -1, self.max_length)
+            freq = pad_freq(freq,num_seq_per_instance)
             X_Freq = np.vstack(freq)
 
+
+            #Embed sequences into ints
+            if self.use_alpha is True:
+                all_seq = np.hstack(alpha_sequences).tolist()
+                args = list(zip(all_seq, [self.aa_idx] * len(all_seq), [self.max_length] * len(all_seq)))
+                result = p.starmap(Embed_Seq_Num, args)
+                X_Seq_alpha = np.vstack(result).reshape(len(alpha_sequences), -1, self.max_length)
+
+            if self.use_beta is True:
+                all_seq = np.hstack(beta_sequences).tolist()
+                args = list(zip(all_seq, [self.aa_idx] * len(all_seq), [self.max_length] * len(all_seq)))
+                result = p.starmap(Embed_Seq_Num, args)
+                X_Seq_beta = np.vstack(result).reshape(len(beta_sequences), -1, self.max_length)
+
+            p.close()
+            p.join()
 
             Y = self.lb.transform(labels)
             OH = OneHotEncoder(sparse=False)
             Y = OH.fit_transform(Y.reshape(-1,1))
 
+            if (self.use_beta is True) and (self.use_alpha is False):
+                X_Seq_alpha = np.zeros_like(X_Seq_beta)
+                alpha_sequences = np.asarray([None]*len(X_Seq_beta))
+
+            if (self.use_beta is False) and (self.use_alpha is True):
+                X_Seq_beta = np.zeros_like(X_Seq_alpha)
+                beta_sequences = np.asarray([None]*len(X_Seq_alpha))
+
 
             if save_data is True:
                 with open(os.path.join(self.Name,self.Name) + '_Data_WF.pkl', 'wb') as f:
-                    pickle.dump([X_Seq, X_Freq, Y, labels, files, self.lb, sequences], f, protocol=4)
+                    pickle.dump([X_Seq_alpha,X_Seq_beta,alpha_sequences,beta_sequences,X_Freq, Y, labels, files, self.lb, self.use_alpha,self.use_beta], f, protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data_WF.pkl', 'rb') as f:
-                X_Seq, X_Freq, Y, labels, files,self.lb,sequences = pickle.load(f)
+                X_Seq_alpha, X_Seq_beta, alpha_sequences, beta_sequences, X_Freq, Y, labels, files, self.lb, self.use_alpha, self.use_beta = pickle.load(f)
 
 
-        self.X_Seq = X_Seq
+        self.X_Seq_alpha = X_Seq_alpha
+        self.X_Seq_beta = X_Seq_beta
+        self.alpha_sequences = alpha_sequences
+        self.beta_sequences = beta_sequences
         self.X_Freq = X_Freq
         self.Y = Y
         self.labels = labels
         self.files = files
-        self.sequences = sequences
         print('Data Loaded')
 
     def One_V_All(self,one_v_all):

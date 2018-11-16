@@ -325,7 +325,6 @@ def randperm_test(data, labels, func, n_perms=100):
     return obs, p
 
 def Diff_Features(features,indices,sequences,type,p_val_threshold,idx_pos,idx_neg,directory_results,group,kernel):
-
     pos_mean = []
     neg_mean = []
     p_val = []
@@ -388,3 +387,21 @@ def Diff_Features(features,indices,sequences,type,p_val_threshold,idx_pos,idx_ne
         seq_features_df_pos[f] = seq_cluster[ii]
 
     return seq_features_df_pos
+
+def pad_sequences(sequences,num_seq_per_instance):
+    for ii, sample in enumerate(sequences):
+        if len(sample) > num_seq_per_instance:
+            sequences[ii] = sample[0:num_seq_per_instance]
+        elif len(sample) < num_seq_per_instance:
+            sequences[ii] = sample + ['null'] * (num_seq_per_instance - len(sample))
+
+    return sequences
+
+def pad_freq(freq,num_seq_per_instance):
+    for ii, sample in enumerate(freq):
+        if len(sample) > num_seq_per_instance:
+            freq[ii] = np.asarray(freq[ii][0:num_seq_per_instance])
+        elif len(sample) < num_seq_per_instance:
+            freq[ii] = np.pad(freq[ii], (0, num_seq_per_instance - len(sample)), mode='constant')
+
+    return freq
