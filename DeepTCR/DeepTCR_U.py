@@ -506,6 +506,10 @@ class DeepTCR_U(object):
 
         """
         if Load_Prev_Data is False:
+
+            if (self.use_alpha is True) and (self.use_beta is True):
+                latent_dim = latent_dim//2
+
             z_dim = 256
             graph_model = tf.Graph()
             j=21
@@ -514,8 +518,14 @@ class DeepTCR_U(object):
             with tf.device('/gpu:0'):
                 with graph_model.as_default():
                     # Setup Placeholders
-                    X_Seq = tf.placeholder(tf.int64, [None, self.X_Seq.shape[1], self.X_Seq.shape[2]], name='Input_Seq')
-                    X_Seq_OH = tf.one_hot(X_Seq, depth=j)
+                    if self.use_alpha is True:
+                        X_Seq_alpha = tf.placeholder(tf.int64, shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],name='Input_Alpha')
+                        X_Seq_alpha_OH = tf.one_hot(X_Seq_alpha, depth=21)
+
+                    if self.use_beta is True:
+                        X_Seq_beta = tf.placeholder(tf.int64, shape=[None, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2]],name='Input_Beta')
+                        X_Seq_beta_OH = tf.one_hot(X_Seq_beta, depth=21)
+
                     training = tf.placeholder_with_default(False, shape=())
                     prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
 
@@ -524,20 +534,46 @@ class DeepTCR_U(object):
                         embedding_dim_aa = 64
                         embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq', shape=[j, embedding_dim_aa])
                         embedding_layer_seq = tf.expand_dims(tf.expand_dims(embedding_layer_seq, axis=0), axis=0)
-                        inputs_seq_embed = tf.squeeze(tf.tensordot(X_Seq_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                        if self.use_alpha is True:
+                            inputs_seq_embed_alpha = tf.squeeze(tf.tensordot(X_Seq_alpha_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                        if self.use_beta is True:
+                            inputs_seq_embed_beta = tf.squeeze(tf.tensordot(X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
 
-                    latent_real,indices_real = Convolutional_Features_GAN(inputs_seq_embed,training=training,prob=prob,
-                                                                          units=latent_dim)
+                    if self.use_alpha is True:
+                        latent_real_alpha,indices_real_alpha = Convolutional_Features_GAN(inputs_seq_embed_alpha,training=training,prob=prob,units=latent_dim,name='alpha_conv')
+                    if self.use_beta is True:
+                        latent_real_beta,indices_real_beta = Convolutional_Features_GAN(inputs_seq_embed_beta,training=training,prob=prob,units=latent_dim,name='beta_conv')
+
+                    if (self.use_alpha is True) and (self.use_beta is True):
+                        latent_real = tf.concat((latent_real_alpha,latent_real_beta),axis=1)
+                    elif (self.use_alpha is True) and (self.use_beta is False):
+                        latent_real = latent_real_alpha
+                    elif (self.use_alpha is False) and (self.use_beta is True):
+                        latent_real = latent_real_beta
+
                     latent_real = tf.identity(latent_real,'latent_real')
                     logits_real = tf.layers.dense(latent_real,1,name='logits_real')
 
-                    inputs_z = tf.placeholder(tf.float32, shape=[None, z_dim])
-                    gen_seq = generator(inputs_z, training=training,embedding_dim_aa=embedding_dim_aa,prob=prob)
-                    gen_seq_out = tf.squeeze(tf.tensordot(gen_seq,tf.transpose(embedding_layer_seq,perm=[0,1,3,2]),axes=(3,2)),axis=(3,4))
-                    latent_fake,indices_fake = Convolutional_Features_GAN(gen_seq,reuse=True,prob=prob,training=training,units=latent_dim)
-                    latent_fake = tf.identity(latent_fake,'latent_fake')
-                    logits_fake = tf.layers.dense(latent_fake,1,name='logits_fake')
+                    if self.use_alpha is True:
+                        inputs_z_alpha = tf.placeholder(tf.float32, shape=[None, z_dim])
+                        gen_seq_alpha = generator(inputs_z_alpha, training=training, embedding_dim_aa=embedding_dim_aa, prob=prob,name='generator_alpha')
+                        latent_fake_alpha, indices_fake_alpha = Convolutional_Features_GAN(gen_seq_alpha, reuse=True, prob=prob,training=training, units=latent_dim,name='alpha_conv')
 
+                    if self.use_beta is True:
+                        inputs_z_beta = tf.placeholder(tf.float32, shape=[None, z_dim])
+                        gen_seq_beta = generator(inputs_z_beta, training=training, embedding_dim_aa=embedding_dim_aa,prob=prob, name='generator_beta')
+                        latent_fake_beta, indices_fake_beta = Convolutional_Features_GAN(gen_seq_beta, reuse=True,prob=prob, training=training,units=latent_dim,name='beta_conv')
+
+
+                    if (self.use_alpha is True) and (self.use_beta is True):
+                        latent_fake = tf.concat((latent_fake_alpha,latent_fake_beta),axis=1)
+                    elif (self.use_alpha is True) and (self.use_beta is False):
+                        latent_fake = latent_fake_alpha
+                    elif (self.use_alpha is False) and (self.use_beta is True):
+                        latent_fake = latent_fake_beta
+
+                    latent_fake = tf.identity(latent_fake, 'latent_fake')
+                    logits_fake = tf.layers.dense(latent_fake, 1, name='logits_fake')
 
                     d_loss, g_loss = model_loss(logits_real, logits_fake,latent_real,latent_fake)
 
@@ -566,37 +602,28 @@ class DeepTCR_U(object):
                     if suppress_output is False:
                         print('Epoch: {}'.format(e))
 
-                    for x_seq,y in get_batches(self.X_Seq,self.X_Seq,batch_size=batch_size,random=True):
+                    for x_seq_a,x_seq_b in get_batches(self.X_Seq_alpha,self.X_Seq_beta,batch_size=batch_size,random=True):
                         step +=1
-                        batch_z = np.random.normal(size=(batch_size, z_dim))
 
-                        d_loss_i,__= sess.run([d_loss, opt_d], feed_dict={X_Seq: x_seq,inputs_z:batch_z, prob: drop_out_rate, training: True})
+                        feed_dict = {training:True,prob:drop_out_rate}
+                        if self.use_alpha is True:
+                            feed_dict[X_Seq_alpha] = x_seq_a
+                            batch_z_alpha = np.random.normal(size=(batch_size, z_dim))
+                            feed_dict[inputs_z_alpha] = batch_z_alpha
+                        if self.use_beta is True:
+                            feed_dict[X_Seq_beta] = x_seq_b
+                            batch_z_beta = np.random.normal(size=(batch_size, z_dim))
+                            feed_dict[inputs_z_beta] = batch_z_beta
+
+                        d_loss_i,__= sess.run([d_loss, opt_d], feed_dict=feed_dict)
                         d_loss_list.append(d_loss_i)
                         if suppress_output is False:
                             print("D_Loss = {} ".format(d_loss_i), end='', flush=True)
 
-                        g_loss_i, _ = sess.run([g_loss, opt_g], feed_dict={X_Seq: x_seq,inputs_z:batch_z, prob: drop_out_rate, training: True})
+                        g_loss_i, _ = sess.run([g_loss, opt_g], feed_dict=feed_dict)
                         g_loss_list.append(g_loss_i)
                         if suppress_output is False:
                             print("G_Loss = {}".format(g_loss_i))
-
-                        if step % 10 ==0:
-                            batch_z = np.random.normal(size=(5, z_dim))
-                            feed_dict = {inputs_z: batch_z}
-                            gen_out = sess.run(gen_seq_out, feed_dict=feed_dict)
-                            check = np.squeeze(np.argmax(gen_out, -1), 1)
-
-                            seq_list = []
-                            for seq in check:
-                                seq_out = []
-                                for i in seq:
-                                    if i != 0:
-                                        seq_out.append(self.aa_idx_inv[i])
-                                seq_list.append(''.join(seq_out))
-
-                            seq_list = np.asarray(seq_list)
-                            if suppress_output is False:
-                                print(seq_list)
 
                         if step > it_min:
                             if np.mean(d_loss_list[-10:]) < 1.0:
@@ -614,34 +641,29 @@ class DeepTCR_U(object):
                         break
 
 
-                # plt.figure()
-                # plt.plot(d_loss_list,label='Discriminator Loss')
-                # plt.plot(g_loss_list,label='Generator loss')
-                # plt.legend(loc='best')
-                # plt.xlabel('Epochs')
-                # plt.ylabel('Loss')
-
                 latent_features = []
-                latent_indices = []
-                for x_seq, y in get_batches(self.X_Seq, self.X_Seq, batch_size=batch_size):
-                    latent_i,indices_i = sess.run([latent_real,indices_real],feed_dict={X_Seq:x_seq})
+                for x_seq_a, x_seq_b in get_batches(self.X_Seq_alpha, self.X_Seq_beta, batch_size=batch_size):
+                    feed_dict = {}
+                    if self.use_alpha is True:
+                        feed_dict[X_Seq_alpha] = x_seq_a
+                    if self.use_beta is True:
+                        feed_dict[X_Seq_beta] = x_seq_b
+
+                    latent_i = sess.run(latent_real,feed_dict=feed_dict)
                     latent_features.append(latent_i)
-                    latent_indices.append(indices_i)
                 features = np.vstack(latent_features)
-                indices = np.vstack(latent_indices)
 
 
             with open(os.path.join(self.Name,self.Name) + '_GAN_features.pkl','wb') as f:
-                pickle.dump([features,indices],f,protocol=4)
+                pickle.dump(features,f,protocol=4)
 
         else:
 
             with open(os.path.join(self.Name,self.Name) + '_GAN_features.pkl','rb') as f:
-                features,indices = pickle.load(f)
+                features = pickle.load(f)
 
 
         self.features = features
-        self.indices = indices
         keep=[]
         for i,column in enumerate(self.features.T,0):
             if len(np.unique(column)) > 1:
@@ -649,7 +671,6 @@ class DeepTCR_U(object):
         keep = np.asarray(keep)
         self.gan_features = self.features[:,keep]
         self.features = self.gan_features
-        self.indices = self.indices[:,keep]
         print('Training Done')
 
     def HeatMap_Sequences(self,filename='Heatmap_Features.tif',sample_num=None,sample_num_per_seq=None,color_dict=None):
