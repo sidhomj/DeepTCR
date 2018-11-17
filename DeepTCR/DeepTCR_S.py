@@ -815,7 +815,7 @@ class DeepTCR_S(object):
         self.y_pred = np.vstack(y_pred)
         print('K-fold Cross Validation Completed')
 
-    def AUC_Curve(self,show_all=True,filename=None):
+    def AUC_Curve(self,show_all=True,filename=None,title=None):
         """
         AUC Curve for both Single Sequence and Whole File Models
 
@@ -867,6 +867,9 @@ class DeepTCR_S(object):
             plt.savefig(os.path.join(self.directory_results, 'AUC.tif'))
         else:
             plt.savefig(os.path.join(self.directory_results, filename+'_AUC.tif'))
+
+        if title is not None:
+            plt.title(title)
 
         plt.show(block=False)
 
