@@ -8,8 +8,7 @@ from Bio.Seq import Seq
 from scipy.stats import mannwhitneyu
 import os
 from Bio.Alphabet import IUPAC
-
-
+import seaborn as sns
 
 
 def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None):
@@ -385,6 +384,101 @@ def Diff_Features(features,indices,sequences,type,p_val_threshold,idx_pos,idx_ne
     seq_features_df_pos = pd.DataFrame()
     for ii, f in enumerate(feature_keep, 0):
         seq_features_df_pos[f] = seq_cluster[ii]
+
+    return seq_features_df_pos
+
+def Diff_Features_WF(features_wf,features_seq,indices,sequences,X_Freq,labels,kernel,idx_pos,idx_neg,directory_results,
+                     p_val_threshold,cut,type,group,save_images,lb):
+
+    pos_mean = []
+    neg_mean = []
+    p_val = []
+    feature_num = list(range(len(features_wf.T)))
+    for i in feature_num:
+        pos = features_wf[idx_pos, i]
+        neg = features_wf[idx_neg, i]
+        pos_mean.append(np.mean(pos))
+        neg_mean.append(np.mean(neg))
+        try:
+            stat, p = mannwhitneyu(pos, neg)
+            p_val.append(p)
+        except:
+            p_val.append(1.0)
+
+    df_features = pd.DataFrame()
+    df_features['Feature'] = feature_num
+    df_features['P_Val'] = p_val
+    df_features['Pos'] = pos_mean
+    df_features['Neg'] = neg_mean
+    df_features['Mag'] = df_features['Pos'] - df_features['Neg']
+    df_features = df_features[df_features['P_Val'] < p_val_threshold]
+
+    df_features.sort_values(by='Mag', inplace=True, ascending=False)
+
+    features_seq = np.reshape(features_seq, [-1, features_seq.shape[-1]])
+    sequences = np.asarray(np.hstack(sequences).tolist())
+    indices = np.asarray(np.reshape(indices, [-1, indices.shape[-1]]))
+
+    # Get motifs for positive features
+    dir = os.path.join(directory_results, group + '_' + type + '_WF_Motifs')
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+    file_list = [f for f in os.listdir(dir)]
+    [os.remove(os.path.join(dir, f)) for f in file_list]
+
+    top_seq = 10
+    seq_cluster = []
+    feature_keep = []
+    seq_thresh_pos = []
+    for feature in df_features['Feature'].tolist():
+        if df_features['Mag'][feature] > 0:
+            feature_keep.append(feature)
+            sel = np.flip(features_seq[:, feature].argsort(), -1)
+            feature_sort = features_seq[sel, feature]
+            seq_thresh_pos.append(np.percentile(feature_sort, cut))
+            sel = sel[0:top_seq]
+            seq_sel = sequences[sel]
+            ind_sel = indices[sel, feature]
+            seq_cluster.append(seq_sel)
+
+            motifs = []
+            for ii, i in enumerate(ind_sel, 0):
+                motif = seq_sel[ii][int(i):int(i) + kernel]
+                if len(motif) < kernel:
+                    motif = motif + 'X' * (kernel - len(motif))
+                motif = motif.lower()
+                motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
+                motifs.append(motif)
+
+            SeqIO.write(motifs, os.path.join(dir, 'feature_') + str(feature) + '.fasta', 'fasta')
+
+    seq_features_df_pos = pd.DataFrame()
+    for ii, f in enumerate(feature_keep, 0):
+        seq_features_df_pos[f] = seq_cluster[ii]
+
+    seq_features_df_pos.to_csv(os.path.join(dir, 'feature_sequences.csv'), index=False)
+
+    if save_images is True:
+        for feature, thresh in zip(feature_keep, seq_thresh_pos):
+            labels = []
+            values = []
+            for g in lb.classes_:
+                sel = labels == g
+                features_seq_sel = (features_seq[sel, :, feature] > thresh) * X_Freq[sel]
+                features_contrib = list(np.sum(features_seq_sel, -1))
+                labels += [g] * np.sum(sel)
+                values += features_contrib
+
+            df = pd.DataFrame()
+            df['Cohort'] = labels
+            df['Fraction of Response'] = values
+            plt.figure()
+            sns.set(font_scale=1)
+            sns.violinplot(data=df, x='Cohort', y='Fraction of Response')
+            plt.title('Feature ' + str(feature))
+            plt.savefig(os.path.join(dir, 'feature') + str(feature) + '.tif')
+            plt.close()
 
     return seq_features_df_pos
 

@@ -917,7 +917,7 @@ class DeepTCR_S(object):
 
         """
 
-        Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,np.asarray(self.alpha_sequences,self.beta_sequences)]
+        Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,np.asarray(self.alpha_sequences),np.asarray(self.beta_sequences)]
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=self.Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
 
@@ -1223,19 +1223,28 @@ class DeepTCR_S(object):
                         units=units,kernel=kernel,conv_weights=conv_weights,trainable_embedding=trainable_embedding,name='beta_conv')
 
                 if (self.use_alpha is True) and (self.use_beta is True):
-                    Seq_Features = tf.concat((Seq_Features_alpha,Seq_Features_beta),axis=1)
+                    Seq_Features = tf.concat((Seq_Features_alpha,Seq_Features_beta),axis=2)
                 elif (self.use_alpha is True) and (self.use_beta is False):
                     Seq_Features = Seq_Features_alpha
                 elif (self.use_alpha is False) and (self.use_beta is True):
                     Seq_Features = Seq_Features_beta
 
+                if self.use_alpha is True:
+                    if weight_by_freq is True:
+                        Seq_Features_Weight_conv = tf.expand_dims(X_Freq, 2) * Seq_Features_alpha
+                        Seq_Features_Weight_Sum_conv = tf.reduce_sum(Seq_Features_Weight_conv, axis=1)
+                        fc_avg_alpha = Seq_Features_Weight_Sum_conv
+                    else:
+                        fc_avg_alpha = tf.reduce_sum(Seq_Features_alpha,axis=1)
 
+                if self.use_beta is True:
+                    if weight_by_freq is True:
+                        Seq_Features_Weight_conv = tf.expand_dims(X_Freq, 2) * Seq_Features_beta
+                        Seq_Features_Weight_Sum_conv = tf.reduce_sum(Seq_Features_Weight_conv, axis=1)
+                        fc_avg_beta = Seq_Features_Weight_Sum_conv
+                    else:
+                        fc_avg_beta = tf.reduce_sum(Seq_Features_beta,axis=1)
 
-
-
-
-
-                Seq_Features,conv_kernel,Indices = Convolutional_Features_WF(inputs_seq_embed, units=units,kernel=kernel, conv_weights=conv_weights,trainable_embedding=trainable_embedding)
                 conv_variables = tf.trainable_variables()
 
                 fc = Seq_Features
@@ -1247,18 +1256,11 @@ class DeepTCR_S(object):
 
 
                 if weight_by_freq is True:
-                    Seq_Features_Weight_conv = tf.expand_dims(X_Freq, 2) * Seq_Features
-                    Seq_Features_Weight_Sum_conv = tf.reduce_sum(Seq_Features_Weight_conv, axis=1)
-                    fc_avg = Seq_Features_Weight_Sum_conv
-
                     Seq_Features_Weight = tf.expand_dims(X_Freq, 2) * fc
                     Seq_Features_Weight_Sum = tf.reduce_sum(Seq_Features_Weight, axis=1)
                     logits = tf.layers.dense(Seq_Features_Weight_Sum,self.Y.shape[1])
 
-
                 else:
-                    fc_avg = tf.reduce_sum(Seq_Features,axis=1)
-
                     Seq_Features_Sum = tf.reduce_sum(fc,axis=1)
                     logits = tf.layers.dense(Seq_Features_Sum,self.Y.shape[1])
 
@@ -1306,8 +1308,13 @@ class DeepTCR_S(object):
                 #Train
                 train_loss = []
                 train_accuracy = []
-                for x_seq, x_freq,y in get_batches_model(self.train[0],self.train[1],self.train[-1], batch_size=batch_size, random=True):
-                    feed_dict = {X_Seq: x_seq, X_Freq: x_freq, Y: y, prob: drop_out_rate,training: True}
+                for x_seq_a,x_seq_b, x_freq,y in get_batches_model_2(self.train[0],self.train[1],self.train[2],self.train[-1], batch_size=batch_size, random=True):
+                    feed_dict = {X_Freq:x_freq,Y:y,prob:drop_out_rate,training:True}
+                    if self.use_alpha is True:
+                        feed_dict[X_Seq_alpha] = x_seq_a
+                    if self.use_beta is True:
+                        feed_dict[X_Seq_beta] = x_seq_b
+
                     loss_i, accuracy_i, _ =  sess.run([loss, accuracy, opt], feed_dict=feed_dict)
                     train_loss.append(loss_i)
                     train_accuracy.append(accuracy_i)
@@ -1319,8 +1326,12 @@ class DeepTCR_S(object):
 
 
                 train_predicted_list = []
-                for x_seq, x_freq, y in get_batches_model(self.train[0], self.train[1], self.train[-1],batch_size=batch_size, random=False):
-                    feed_dict = {X_Seq: x_seq, X_Freq: x_freq, Y: y, prob: drop_out_rate, training: False}
+                for x_seq_a,x_seq_b, x_freq, y in get_batches_model_2(self.train[0], self.train[1],self.train[2], self.train[-1],batch_size=batch_size, random=False):
+                    feed_dict = {X_Freq:x_freq,Y:y,prob:drop_out_rate,training:False}
+                    if self.use_alpha is True:
+                        feed_dict[X_Seq_alpha] = x_seq_a
+                    if self.use_beta is True:
+                        feed_dict[X_Seq_beta] = x_seq_b
                     predicted_i = sess.run(predicted,feed_dict=feed_dict)
                     train_predicted_list.append(predicted_i)
                 y_pred = np.vstack(train_predicted_list)
@@ -1336,8 +1347,13 @@ class DeepTCR_S(object):
                 #Validation
                 val_loss = []
                 val_accuracy = []
-                for x_seq,x_freq, y in get_batches_model(self.valid[0],self.valid[1], self.valid[-1], batch_size=batch_size, random=False):
-                    feed_dict = {X_Seq: x_seq, X_Freq: x_freq, Y: y, training: False}
+                for x_seq_a,x_seq_b,x_freq, y in get_batches_model_2(self.valid[0],self.valid[1],self.valid[2], self.valid[-1], batch_size=batch_size, random=False):
+                    feed_dict = {X_Freq:x_freq,Y:y,training:False}
+                    if self.use_alpha is True:
+                        feed_dict[X_Seq_alpha] = x_seq_a
+                    if self.use_beta is True:
+                        feed_dict[X_Seq_beta] = x_seq_b
+
                     loss_i, accuracy_i = sess.run([loss, accuracy], feed_dict=feed_dict)
                     val_loss.append(loss_i)
                     val_accuracy.append(accuracy_i)
@@ -1350,8 +1366,12 @@ class DeepTCR_S(object):
                 test_loss = []
                 test_accuracy = []
                 predicted_list = []
-                for x_seq,x_freq, y in get_batches_model(self.test[0], self.test[1],self.test[-1], batch_size=batch_size, random=False):
-                    feed_dict = {X_Seq: x_seq, X_Freq: x_freq, Y: y}
+                for x_seq_a,x_seq_b,x_freq, y in get_batches_model_2(self.test[0], self.test[1],self.test[2],self.test[-1], batch_size=batch_size, random=False):
+                    feed_dict = {X_Freq:x_freq,Y:y,training:False}
+                    if self.use_alpha is True:
+                        feed_dict[X_Seq_alpha] = x_seq_a
+                    if self.use_beta is True:
+                        feed_dict[X_Seq_beta] = x_seq_b
                     loss_i, accuracy_i, predicted_i = sess.run([loss, accuracy, predicted], feed_dict=feed_dict)
                     test_loss.append(loss_i)
                     test_accuracy.append(accuracy_i)
@@ -1412,75 +1432,57 @@ class DeepTCR_S(object):
 
 
             #saver.save(sess, self.Name + '_WF/' + self.Name + '_WF.ckpt')
-            features_WF_list = []
-            features_seq_list = []
-            indices_list = []
-            for x_seq, x_freq, y in get_batches_model(self.X_Seq,self.X_Freq, self.Y, batch_size=batch_size, random=False):
-                feed_dict = {X_Seq: x_seq, X_Freq: x_freq}
-                features_wf_i, features_i,indices_i = sess.run([fc_avg,Seq_Features, Indices], feed_dict=feed_dict)
-                features_WF_list.append(features_wf_i)
-                features_seq_list.append(features_i)
-                indices_list.append(indices_i)
+            alpha_features_WF_list = []
+            alpha_features_seq_list = []
+            alpha_indices_list = []
+            beta_features_WF_list = []
+            beta_features_seq_list = []
+            beta_indices_list = []
+            for x_seq_a,x_seq_b, x_freq, y in get_batches_model_2(self.X_Seq_alpha,self.X_Seq_beta,self.X_Freq, self.Y, batch_size=batch_size, random=False):
+                feed_dict = {X_Freq:x_freq}
+                if self.use_alpha is True:
+                    feed_dict[X_Seq_alpha] = x_seq_a
+                if self.use_beta is True:
+                    feed_dict[X_Seq_beta] = x_seq_b
 
-            self.features_wf = np.vstack(features_WF_list)
-            self.features_seq = np.vstack(features_seq_list)
-            self.indices = np.vstack(indices_list)
-            self.seq = self.sequences
-            self.kernel = kernel
+                if self.use_alpha is True:
+                    features_wf_i, features_i, indices_i = sess.run([fc_avg_alpha, Seq_Features_alpha, Indices_alpha],feed_dict=feed_dict)
+                    alpha_features_WF_list.append(features_wf_i)
+                    alpha_features_seq_list.append(features_i)
+                    alpha_indices_list.append(indices_i)
+
+                if self.use_beta is True:
+                    features_wf_i, features_i, indices_i = sess.run([fc_avg_beta, Seq_Features_beta, Indices_beta],feed_dict=feed_dict)
+                    beta_features_WF_list.append(features_wf_i)
+                    beta_features_seq_list.append(features_i)
+                    beta_indices_list.append(indices_i)
+
+
+            if self.use_alpha is True:
+                self.alpha_features_wf = np.vstack(alpha_features_WF_list)
+                self.alpha_features_seq = np.vstack(alpha_features_seq_list)
+                self.alpha_indices = np.vstack(alpha_indices_list)
+                self.kernel = kernel
+
+                with open(os.path.join(self.Name, self.Name) + '_alpha_features_WF.pkl', 'wb') as f:
+                    pickle.dump([self.alpha_features_wf, self.alpha_features_seq, self.alpha_indices, self.alpha_sequences,
+                                 self.X_Freq, self.y_pred, self.y_test, self.labels, self.Y, self.files, self.kernel],f, protocol=4)
+
+            if self.use_beta is True:
+                self.beta_features_wf = np.vstack(beta_features_WF_list)
+                self.beta_features_seq = np.vstack(beta_features_seq_list)
+                self.beta_indices = np.vstack(beta_indices_list)
+                self.kernel = kernel
+
+                with open(os.path.join(self.Name, self.Name) + '_beta_features_WF.pkl', 'wb') as f:
+                    pickle.dump([self.beta_features_wf, self.beta_features_seq, self.beta_indices, self.beta_sequences,
+                                 self.X_Freq, self.y_pred, self.y_test, self.labels, self.Y, self.files, self.kernel],f, protocol=4)
+
 
             if plot_loss is True:
                 plt.close()
 
-
-            with open(os.path.join(self.Name,self.Name) + '_features_WF.pkl', 'wb') as f:
-                pickle.dump([self.features_wf, self.features_seq,self.indices,self.seq,
-                             self.X_Freq, self.y_pred, self.y_test,self.labels,self.Y,self.files,self.kernel], f,protocol=4)
-
             print('Done Training')
-
-    def Get_Features(self):
-        tf.reset_default_graph()
-        config = tf.ConfigProto()
-        config.gpu_options.allow_growth = True
-        with tf.Session(config=config) as sess:
-            saver = tf.train.import_meta_graph(self.Name + '_WF/' + self.Name + '_WF.ckpt.meta')
-            saver.restore(sess, tf.train.latest_checkpoint(self.Name + '_WF'))
-            graph = tf.get_default_graph()
-            input = graph.get_tensor_by_name('Input_Seq:0')
-            input_f = graph.get_tensor_by_name('Input_Freq:0')
-            Seq_Features = graph.get_tensor_by_name('Seq_Features:0')
-            predicted = graph.get_tensor_by_name('predicted:0')
-
-            feed_dict = {input:self.X_Seq,input_f:self.X_Freq}
-            Seq_Features_Out,Predicted_Out = sess.run([Seq_Features,predicted],feed_dict=feed_dict)
-
-        write_dir = self.directory_results+'Feature_Values/'
-        if not os.path.isdir(write_dir):
-            os.makedirs(write_dir)
-
-        p_val = []
-        for s in range(Seq_Features_Out.shape[-1]):
-            seq_f = []
-            seq_labels = []
-            for ii, (label,i) in enumerate(zip(self.labels,self.X_Seq)):
-                sel = np.sum(i, 1) > 0
-                seq_features = Seq_Features_Out[ii, sel, s]
-                seq_f+=list(seq_features)
-                seq_labels += [label]*len(seq_features)
-
-            df = pd.DataFrame()
-            df['Label'] = seq_labels
-            df['Feature Value'] = seq_f
-
-            val_1 = df['Feature Value'][df['Label']=='CMV'].tolist()
-            val_2 = df['Feature Value'][df['Label']=='EBV'].tolist()
-            stat, p = mannwhitneyu(val_1,val_2)
-            p_val.append(p)
-
-            plt.figure()
-            sns.violinplot(data=df,x='Label',y='Feature Value')
-            plt.savefig(write_dir+'Feature_'+str(s)+'.tif')
-            plt.close()
 
     def Motif_Identification_WF(self,group,p_val_threshold=0.05,cut=95,save_images=False):
         """
@@ -1518,9 +1520,16 @@ class DeepTCR_S(object):
         """
 
         #Get Features
-        with open(os.path.join(self.Name,self.Name) + '_features_WF.pkl', 'rb') as f:
-            self.features_wf, self.features_seq, self.indices, self.seq,\
-            self.X_Freq, self.y_pred, self.y_test,self.labels,self.Y,self.files,self.kernel = pickle.load(f)
+
+        if self.use_alpha is True:
+            with open(os.path.join(self.Name, self.Name) + '_alpha_features_WF.pkl', 'rb') as f:
+                self.alpha_features_wf, self.alpha_features_seq, self.alpha_indices, self.alpha_sequences, \
+                self.X_Freq, self.y_pred, self.y_test, self.labels, self.Y, self.files, self.kernel = pickle.load(f)
+
+        if self.use_beta is True:
+            with open(os.path.join(self.Name, self.Name) + '_beta_features_WF.pkl', 'rb') as f:
+                self.beta_features_wf, self.beta_features_seq, self.beta_indices, self.beta_sequences, \
+                self.X_Freq, self.y_pred, self.y_test, self.labels, self.Y, self.files, self.kernel = pickle.load(f)
 
 
 
@@ -1530,97 +1539,15 @@ class DeepTCR_S(object):
         idx_pos = self.Y[:, group_num] == 1
         idx_neg = self.Y[:, group_num] == 0
 
-        pos_mean = []
-        neg_mean = []
-        p_val = []
-        feature_num = list(range(len(self.features_wf.T)))
-        for i in feature_num:
-            pos = self.features_wf[idx_pos,i]
-            neg = self.features_wf[idx_neg,i]
-            pos_mean.append(np.mean(pos))
-            neg_mean.append(np.mean(neg))
-            try:
-                stat, p = mannwhitneyu(pos,neg)
-                p_val.append(p)
-            except:
-                p_val.append(1.0)
+        if self.use_alpha is True:
+            self.alpha_group_features_wf = Diff_Features_WF(self.alpha_features_wf,self.alpha_features_seq,self.alpha_indices,self.alpha_sequences,
+                                                            self.X_Freq,self.labels,self.kernel,idx_pos,idx_neg,self.directory_results,p_val_threshold,
+                                                            cut,'alpha',group,save_images,self.lb)
 
-        df_features = pd.DataFrame()
-        df_features['Feature'] = feature_num
-        df_features['P_Val'] = p_val
-        df_features['Pos'] = pos_mean
-        df_features['Neg'] = neg_mean
-        df_features['Mag'] = df_features['Pos'] - df_features['Neg']
-        df_features = df_features[df_features['P_Val']< p_val_threshold]
-
-        df_features.sort_values(by='Mag',inplace=True,ascending=False)
-
-        features_seq = np.reshape(self.features_seq, [-1, self.features_seq.shape[-1]])
-        sequences = np.asarray(np.hstack(self.seq).tolist())
-        indices = np.asarray(np.reshape(self.indices, [-1, self.indices.shape[-1]]))
-
-        #Get motifs for positive features
-        dir = os.path.join(self.directory_results,group + '_WF_Motifs')
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-
-        file_list = [f for f in os.listdir(dir)]
-        [os.remove(os.path.join(dir, f)) for f in file_list]
-
-        top_seq = 10
-        seq_cluster = []
-        feature_keep = []
-        seq_thresh_pos = []
-        for feature in df_features['Feature'].tolist():
-            if df_features['Mag'][feature] > 0:
-                feature_keep.append(feature)
-                sel = np.flip(features_seq[:, feature].argsort(), -1)
-                feature_sort = features_seq[sel,feature]
-                seq_thresh_pos.append(np.percentile(feature_sort,cut))
-                sel = sel[0:top_seq]
-                seq_sel = sequences[sel]
-                ind_sel = indices[sel, feature]
-                seq_cluster.append(seq_sel)
-
-                motifs = []
-                for ii, i in enumerate(ind_sel, 0):
-                    motif = seq_sel[ii][int(i):int(i) + self.kernel]
-                    if len(motif) < self.kernel:
-                        motif = motif + 'X' * (self.kernel - len(motif))
-                    motif = motif.lower()
-                    motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
-                    motifs.append(motif)
-
-                SeqIO.write(motifs, os.path.join(dir , 'feature_') + str(feature) + '.fasta', 'fasta')
-
-
-        seq_features_df_pos = pd.DataFrame()
-        for ii, f in enumerate(feature_keep, 0):
-            seq_features_df_pos[f] = seq_cluster[ii]
-
-        self.group_features_wf = seq_features_df_pos
-        seq_features_df_pos.to_csv(os.path.join(dir,'feature_sequences.csv'),index=False)
-
-        if save_images is True:
-            for feature, thresh in zip(feature_keep, seq_thresh_pos):
-                labels = []
-                values = []
-                for g in self.lb.classes_:
-                    sel = self.labels == g
-                    features_seq_sel = (self.features_seq[sel, :, feature] > thresh) * self.X_Freq[sel]
-                    features_contrib = list(np.sum(features_seq_sel, -1))
-                    labels += [g] * np.sum(sel)
-                    values += features_contrib
-
-                df = pd.DataFrame()
-                df['Cohort'] = labels
-                df['Fraction of Response'] = values
-                plt.figure()
-                sns.set(font_scale=1)
-                sns.violinplot(data=df, x='Cohort', y='Fraction of Response')
-                plt.title('Feature ' + str(feature))
-                plt.savefig(os.path.join(dir , 'feature') + str(feature) + '.tif')
-                plt.close()
+        if self.use_beta is True:
+            self.beta_group_features_wf = Diff_Features_WF(self.beta_features_wf,self.beta_features_seq,self.beta_indices,self.beta_sequences,
+                                                            self.X_Freq,self.labels,self.kernel,idx_pos,idx_neg,self.directory_results,p_val_threshold,
+                                                            cut,'beta',group,save_images,self.lb)
 
         print('Motif Identification Completed')
 
