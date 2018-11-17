@@ -1532,7 +1532,6 @@ class DeepTCR_S(object):
                 self.X_Freq, self.y_pred, self.y_test, self.labels, self.Y, self.files, self.kernel = pickle.load(f)
 
 
-
         group_num = np.where(self.lb.classes_ == group)[0][0]
 
         #Find diff expressed features
@@ -1758,7 +1757,7 @@ class DeepTCR_S(object):
                 print(ii)
             train_idx = np.setdiff1d(idx,test_idx[ii])
 
-            Vars = [self.X_Seq, self.X_Freq,self.files,np.asarray(self.sequences)]
+            Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,np.asarray(self.alpha_sequences),np.asarray(self.beta_sequences)]
             self.train, self.test = Get_Train_Test(Vars=Vars,train_idx=train_idx,test_idx = test_idx[ii],Y=self.Y)
             self.valid = self.test
             self.LOO = True
