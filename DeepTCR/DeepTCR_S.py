@@ -472,7 +472,11 @@ class DeepTCR_S(object):
                 self.y_pred = predicted_out
                 self.y_test = self.test[-1]
 
-                auc = roc_auc_score(self.test[-1],predicted_out)
+                y_test2 = np.vstack(self.y_test)
+                if (np.sum(y_test2[:,0])!=len(y_test2)) and (np.sum(y_test2[:,0])!=0):
+                    auc = roc_auc_score(np.vstack(self.y_test),np.vstack(self.y_pred))
+                else:
+                    auc = 0.0
 
                 if suppress_output is False:
                     print("Training_Statistics: \n",
@@ -613,20 +617,21 @@ class DeepTCR_S(object):
 
         Inputs
         ---------------------------------------
+        fold: int
+            Number of iterations for Cross-Validation
+
         test_size: float
             Fraction of sample to be used for valid and test set.
 
         LOO: int
             Number of sequences to leave-out in Leave-One-Out Cross-Validation
 
-        fold: int
-            Number of iterations for Cross-Validation
+        epochs_min: int
+            Minimum number of epochs for training neural network.
 
         batch_size: int
             Size of batch to be used for each training iteration of the net.
 
-        epochs_min: int
-            Minimum number of epochs for training neural network.
 
         stop_criterion: float
             Minimum percent decrease in determined interval (below) to continue
@@ -691,6 +696,124 @@ class DeepTCR_S(object):
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
         print('Monte Carlo Simulation Completed')
+
+    def K_Fold_CrossVal_SS(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
+                           trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
+                           iterations=None):
+        '''
+        K_Fold Cross-Validation for Single-Sequence Classifier
+
+        If the number of sequences is small but training the single-sequence classifier, one
+        can use K_Fold Cross Validation to train on all but one before assessing
+        predictive performance.After this method is run, the AUC_Curve method can be run to
+        assess the overall performance.
+
+        Inputs
+        ---------------------------------------
+
+        folds: int
+            Number of Folds
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        kernel: int
+            Size of convolutional kernel.
+
+        units: int
+            Number of filters to be used for convolutional kernel.
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        iterations: int
+            Option to specify how many iterations one wants to complete before
+            terminating training. Useful for very large datasets.
+
+
+        Returns
+        ---------------------------------------
+
+        '''
+
+        if folds is None:
+            folds = len(self.Y)
+
+        #Create Folds
+        idx = list(range(len(self.Y)))
+        idx_left = idx
+        file_per_sample = len(self.Y) // folds
+        test_idx = []
+        for ii in range(folds):
+            if ii != folds-1:
+                idx_sel = np.random.choice(idx_left, size=file_per_sample, replace=False)
+            else:
+                idx_sel = idx_left
+
+            test_idx.append(idx_sel)
+            idx_left = np.setdiff1d(idx_left, idx_sel)
+
+
+        y_test = []
+        y_pred = []
+        for ii in range(folds):
+            if suppress_output is False:
+                print(ii)
+            train_idx = np.setdiff1d(idx,test_idx[ii])
+
+            Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.alpha_sequences, self.beta_sequences, self.file_id]
+            self.train, self.test = Get_Train_Test(Vars=Vars,train_idx=train_idx,test_idx = test_idx[ii],Y=self.Y)
+            self.valid = self.test
+            self.LOO = True
+
+            self.Train_SS(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
+                          kernel=kernel,units=units,weight_by_class=weight_by_class,
+                          trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
+                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output)
+
+
+            y_test.append(self.y_test)
+            y_pred.append(self.y_pred)
+
+            y_test2 = np.vstack(y_test)
+            y_pred2 = np.vstack(y_pred)
+
+            if suppress_output is False:
+                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))))
+
+                if self.y_test.shape[1] == 2:
+                    if ii > 0:
+                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+
+
+            if iterations is not None:
+                if ii > iterations:
+                    break
+
+        self.y_test = np.vstack(y_test)
+        self.y_pred = np.vstack(y_pred)
+        print('K-fold Cross Validation Completed')
 
     def AUC_Curve(self,show_all=True,filename=None):
         """
@@ -1766,7 +1889,7 @@ class DeepTCR_S(object):
 
         Inputs
         ---------------------------------------
-        fold_size: int
+        folds: int
             Number of Folds
 
         batch_size: int
