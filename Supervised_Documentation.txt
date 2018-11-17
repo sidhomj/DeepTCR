@@ -58,7 +58,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Get_Data_SS(self, directory, Load_Prev_Data=False, classes=None, save_data=True, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column=None, count_column=None, sep='\t')
+     |  Get_Data_SS(self, directory, Load_Prev_Data=False, classes=None, save_data=True, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True)
      |      Get Data for Single Sequence Classification.
      |      
      |      Parse Data into appropriate inputs for neural network.
@@ -104,8 +104,13 @@ CLASSES
      |      n_jobs: int
      |          Number of processes to use for parallelized operations.
      |      
-     |      aa_column: int
-     |          Columns where amino acid data is stored. If set to None, column with a header containing 'acid' is used as
+     |      aa_column_alpha: int
+     |          Column where alpha chain amino acid data is stored. (0-indexed)
+     |      
+     |      aa_column_beta: int
+     |          Column where beta chain amino acid data is stored.(0-indexed)
+     |      
+     |      If both column integers are left to None, column with a header containing 'acid' is used as
      |          the amino acid column.
      |      
      |      count_column: int
@@ -115,10 +120,14 @@ CLASSES
      |      sep: str
      |          Type of delimiter used in file with TCRSeq data.
      |      
+     |      aggregate_by_aa: bool
+     |          Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
+     |          of the same amino acid sequence given it comes from different nucleotide clones.
+     |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Get_Data_WF(self, directory, Load_Prev_Data=False, classes=None, save_data=True, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column=None, count_column=None, sep='\t')
+     |  Get_Data_WF(self, directory, Load_Prev_Data=False, classes=None, save_data=True, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True)
      |      Get Data for Whole Sample Classification.
      |      
      |      Parse Data into appropriate inputs for neural network.
@@ -165,8 +174,13 @@ CLASSES
      |      n_jobs: int
      |          Number of processes to use for parallelized operations.
      |      
-     |      aa_column: int
-     |          Columns where amino acid data is stored. If set to None, column with a header containing 'acid' is used as
+     |      aa_column_alpha: int
+     |          Column where alpha chain amino acid data is stored. (0-indexed)
+     |      
+     |      aa_column_beta: int
+     |          Column where beta chain amino acid data is stored.(0-indexed)
+     |      
+     |      If both column integers are left to None, column with a header containing 'acid' is used as
      |          the amino acid column.
      |      
      |      count_column: int
@@ -174,13 +188,15 @@ CLASSES
      |          counts column.
      |      
      |      sep: str
-     |          Type of delimiter used in file with TCRSeq data.
+     |          Type of delimiter used in file with TCRSeq data
+     |      
+     |      aggregate_by_aa: bool
+     |          Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
+     |          of the same amino acid sequence given it comes from different nucleotide clones.
      |      
      |      
      |      Returns
      |      ---------------------------------------
-     |  
-     |  Get_Features(self)
      |  
      |  Get_Train_Valid_Test_SS(self, test_size=0.2)
      |      Train/Valid/Test Splits.
@@ -217,7 +233,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=5, epochs_min=5, batch_size=25, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=5, batch_size=25, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -375,7 +391,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |      
-     |      self.group_features_ss: Pandas Dataframe
+     |      self.(alpha/beta)_group_features_ss: Pandas Dataframe
      |          Sequences used to determine motifs in fasta files
      |          are stored in this dataframe where column names represent
      |          the feature number.

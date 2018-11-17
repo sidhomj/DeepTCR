@@ -10,7 +10,7 @@ CLASSES
     class DeepTCR_U(builtins.object)
      |  Methods defined here:
      |  
-     |  Cluster(self, t=100, criterion='distance', write_to_sheets=False)
+     |  Cluster(self, t=100, criterion='distance', on=None, write_to_sheets=False, method='ward', metric='euclidean')
      |      Clustering Sequences by Latent Features
      |      
      |      This method clusters all sequences by learned latent features from
@@ -32,6 +32,17 @@ CLASSES
      |          Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
      |          of each cluster to each sample.
      |      
+     |      on: str
+     |          Specificy which feature space to cluster on. Options are 'VAE','GAN','Both',None. If nothing is specified, the
+     |          features from the last algorithm ran are used. If 'Both' is specified, a clustering solution is applied that merges
+     |          the feature space from both unsupervised algorithms before clustering.
+     |      
+     |      method: str
+     |          method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+     |      
+     |      metric: str
+     |          metric parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+     |      
      |      Returns
      |      
      |      self.DFs: list of Pandas dataframes
@@ -45,7 +56,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column=None, count_column=None, sep='\t')
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True)
      |      Get Data for Unsupervised Deep Learning Methods.
      |      
      |      Parse Data into appropriate inputs for neural network.
@@ -89,8 +100,13 @@ CLASSES
      |      n_jobs: int
      |          Number of processes to use for parallelized operations.
      |      
-     |      aa_column: int
-     |          Columns where amino acid data is stored. If set to None, column with a header containing 'acid' is used as
+     |      aa_column_alpha: int
+     |          Column where alpha chain amino acid data is stored. (0-indexed)
+     |      
+     |      aa_column_beta: int
+     |          Column where beta chain amino acid data is stored.(0-indexed)
+     |      
+     |      If both column integers are left to None, column with a header containing 'acid' is used as
      |          the amino acid column.
      |      
      |      count_column: int
@@ -99,6 +115,10 @@ CLASSES
      |      
      |      sep: str
      |          Type of delimiter used in file with TCRSeq data.
+     |      
+     |      aggregate_by_aa: bool
+     |          Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
+     |          of the same amino acid sequence given it comes from different nucleotide clones.
      |      
      |      Returns
      |      ---------------------------------------
@@ -179,7 +199,7 @@ CLASSES
      |      
      |      Returns
      |      
-     |      self.features: array
+     |      self.gan_features: array
      |          An array that contains n x latent_dim containing features for all sequences
      |      
      |      ---------------------------------------
@@ -210,7 +230,7 @@ CLASSES
      |      
      |      Returns
      |      
-     |      self.features: array
+     |      self.vae_features: array
      |          An array that contains n x latent_dim containing features for all sequences
      |      
      |      ---------------------------------------
