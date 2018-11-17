@@ -255,7 +255,7 @@ class DeepTCR_S(object):
         self.file_id = file_id
         print('Data Loaded')
 
-    def Get_Train_Valid_Test_SS(self,test_size=0.2):
+    def Get_Train_Valid_Test_SS(self,test_size=0.2,LOO=None):
         """
         Train/Valid/Test Splits.
 
@@ -268,12 +268,15 @@ class DeepTCR_S(object):
         test_size: float
             Fraction of sample to be used for valid and test set.
 
+        LOO: int
+            Number of sequences to leave-out in Leave-One-Out Cross-Validation
+
         Returns
         ---------------------------------------
 
         """
         Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.file_id]
-        self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False)
+        self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False,LOO=LOO)
 
     def Train_SS(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,trainable_embedding=True,weight_by_class=False,
                  num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False):
@@ -596,6 +599,98 @@ class DeepTCR_S(object):
 
 
         print('Motif Identification Completed')
+
+    def Monte_Carlo_CrossVal_SS(self,fold=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
+                                trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False):
+
+        '''
+        Monte Carlo Cross-Validation for Single-Sequence Classifier
+
+        If the number of sequences is small but training the single-sequence classifier, one
+        can use Monte Carlo Cross Validation to train a number of iterations before assessing
+        predictive performance.After this method is run, the AUC_Curve method can be run to
+        assess the overall performance.
+
+        Inputs
+        ---------------------------------------
+        test_size: float
+            Fraction of sample to be used for valid and test set.
+
+        LOO: int
+            Number of sequences to leave-out in Leave-One-Out Cross-Validation
+
+        fold: int
+            Number of iterations for Cross-Validation
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        kernel: int
+            Size of convolutional kernel.
+
+        units: int
+            Number of filters to be used for convolutional kernel.
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+
+        Returns
+        ---------------------------------------
+
+
+        '''
+
+        y_pred = []
+        y_test = []
+        for i in range(0, fold):
+            if suppress_output is False:
+                print(i)
+            self.Get_Train_Valid_Test_SS(test_size=test_size, LOO=LOO)
+            self.Train_SS(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
+                          kernel=kernel,units=units,weight_by_class=weight_by_class,
+                          trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
+                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output)
+
+            y_test.append(self.y_test)
+            y_pred.append(self.y_pred)
+
+            y_test2 = np.vstack(y_test)
+            y_pred2 = np.vstack(y_pred)
+
+            if suppress_output is False:
+                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
+
+                if self.y_test.shape[1] == 2:
+                    if i > 0:
+                        y_test2 = np.vstack(y_test)
+                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+
+
+        self.y_test = np.vstack(y_test)
+        self.y_pred = np.vstack(y_pred)
+        print('Monte Carlo Simulation Completed')
 
     def AUC_Curve(self,show_all=True,filename=None):
         """
@@ -1547,7 +1642,7 @@ class DeepTCR_S(object):
         print('Motif Identification Completed')
 
 
-    def Monte_Carlo_CrossVal(self, fold=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,
+    def Monte_Carlo_CrossVal_WF(self, fold=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,
                              kernel=5,units=12,weight_by_class=False, trainable_embedding=True,accuracy_min = None, weight_by_freq = True,plot_loss=False,
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False):
 
@@ -1657,7 +1752,7 @@ class DeepTCR_S(object):
         self.y_pred = np.vstack(y_pred)
         print('Monte Carlo Simulation Completed')
 
-    def K_Fold_CrossVal(self,folds=None,epochs_min=5,batch_size=25,stop_criterion=0.001, kernel=5,units=12, weight_by_class=False, iterations=None,
+    def K_Fold_CrossVal_WF(self,folds=None,epochs_min=5,batch_size=25,stop_criterion=0.001, kernel=5,units=12, weight_by_class=False, iterations=None,
                         trainable_embedding=True, accuracy_min = None, weight_by_freq = True, plot_loss=False,
                         num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False):
 
