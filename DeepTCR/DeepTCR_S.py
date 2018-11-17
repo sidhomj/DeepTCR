@@ -697,6 +697,7 @@ class DeepTCR_S(object):
         self.y_pred = np.vstack(y_pred)
         print('Monte Carlo Simulation Completed')
 
+
     def K_Fold_CrossVal_SS(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
                            trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                            iterations=None):
@@ -814,6 +815,8 @@ class DeepTCR_S(object):
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
         print('K-fold Cross Validation Completed')
+
+
 
     def AUC_Curve(self,show_all=True,filename=None,title=None):
         """
