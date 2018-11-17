@@ -917,6 +917,8 @@ class DeepTCR_S(object):
 
     def Condition_Kernels(self,kernel=3,sample_batch_size=50,motif_batch_size=1000,top_kernels=10,weight_by_freq=False,sample=None):
         """
+        DEPRECATED
+        --------------------------------------
         Condition Kernels with differentially used motifs.
 
         This method determines in a brute-force heuristic which k-mers are differentially used in each cohort prior to
