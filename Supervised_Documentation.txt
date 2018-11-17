@@ -10,7 +10,7 @@ CLASSES
     class DeepTCR_S(builtins.object)
      |  Methods defined here:
      |  
-     |  AUC_Curve(self, show_all=True, filename=None)
+     |  AUC_Curve(self, show_all=True, filename=None, title=None)
      |      AUC Curve for both Single Sequence and Whole File Models
      |      
      |      Inputs
@@ -22,6 +22,9 @@ CLASSES
      |      
      |      filename: str
      |          Filename to save tif file of AUC curve.
+     |      
+     |      title: str
+     |          Optional Title to put on ROC Curve.
      |      
      |      Returns
      |      ---------------------------------------
@@ -200,7 +203,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Get_Train_Valid_Test_SS(self, test_size=0.2)
+     |  Get_Train_Valid_Test_SS(self, test_size=0.2, LOO=None)
      |      Train/Valid/Test Splits.
      |      
      |      Divide data for train, valid, test set. Training is used to
@@ -211,6 +214,9 @@ CLASSES
      |      ---------------------------------------
      |      test_size: float
      |          Fraction of sample to be used for valid and test set.
+     |      
+     |      LOO: int
+     |          Number of sequences to leave-out in Leave-One-Out Cross-Validation
      |      
      |      Returns
      |      ---------------------------------------
@@ -235,7 +241,61 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=5, batch_size=25, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
+     |  K_Fold_CrossVal_SS(self, folds=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, kernel=5, units=12, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, iterations=None)
+     |      K_Fold Cross-Validation for Single-Sequence Classifier
+     |      
+     |      If the number of sequences is small but training the single-sequence classifier, one
+     |      can use K_Fold Cross Validation to train on all but one before assessing
+     |      predictive performance.After this method is run, the AUC_Curve method can be run to
+     |      assess the overall performance.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      folds: int
+     |          Number of Folds
+     |      
+     |      epochs_min: int
+     |          Minimum number of epochs for training neural network.
+     |      
+     |      batch_size: int
+     |          Size of batch to be used for each training iteration of the net.
+     |      
+     |      stop_criterion: float
+     |          Minimum percent decrease in determined interval (below) to continue
+     |          training. Used as early stopping criterion.
+     |      
+     |      kernel: int
+     |          Size of convolutional kernel.
+     |      
+     |      units: int
+     |          Number of filters to be used for convolutional kernel.
+     |      
+     |      trainable_embedding; bool
+     |          Toggle to control whether a trainable embedding layer is used or native
+     |          one-hot representation for convolutional layers.
+     |      
+     |      num_fc_layers: int
+     |          Number of fully connected layers following convolutional layer.
+     |      
+     |      units_fc: int
+     |          Number of nodes per fully-connected layers following convolutional layer.
+     |      
+     |      drop_out_rate: float
+     |          drop out rate for fully connected layers
+     |      
+     |      suppress_output: bool
+     |          To suppress command line output with training statisitcs, set to True.
+     |      
+     |      iterations: int
+     |          Option to specify how many iterations one wants to complete before
+     |          terminating training. Useful for very large datasets.
+     |      
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |  
+     |  K_Fold_CrossVal_WF(self, folds=None, epochs_min=5, batch_size=25, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -245,7 +305,7 @@ CLASSES
      |      
      |      Inputs
      |      ---------------------------------------
-     |      fold_size: int
+     |      folds: int
      |          Number of Folds
      |      
      |      batch_size: int
@@ -303,7 +363,63 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, fold=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
+     |  Monte_Carlo_CrossVal_SS(self, fold=5, test_size=0.25, LOO=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, kernel=5, units=12, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
+     |      Monte Carlo Cross-Validation for Single-Sequence Classifier
+     |      
+     |      If the number of sequences is small but training the single-sequence classifier, one
+     |      can use Monte Carlo Cross Validation to train a number of iterations before assessing
+     |      predictive performance.After this method is run, the AUC_Curve method can be run to
+     |      assess the overall performance.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      fold: int
+     |          Number of iterations for Cross-Validation
+     |      
+     |      test_size: float
+     |          Fraction of sample to be used for valid and test set.
+     |      
+     |      LOO: int
+     |          Number of sequences to leave-out in Leave-One-Out Cross-Validation
+     |      
+     |      epochs_min: int
+     |          Minimum number of epochs for training neural network.
+     |      
+     |      batch_size: int
+     |          Size of batch to be used for each training iteration of the net.
+     |      
+     |      
+     |      stop_criterion: float
+     |          Minimum percent decrease in determined interval (below) to continue
+     |          training. Used as early stopping criterion.
+     |      
+     |      kernel: int
+     |          Size of convolutional kernel.
+     |      
+     |      units: int
+     |          Number of filters to be used for convolutional kernel.
+     |      
+     |      trainable_embedding; bool
+     |          Toggle to control whether a trainable embedding layer is used or native
+     |          one-hot representation for convolutional layers.
+     |      
+     |      num_fc_layers: int
+     |          Number of fully connected layers following convolutional layer.
+     |      
+     |      units_fc: int
+     |          Number of nodes per fully-connected layers following convolutional layer.
+     |      
+     |      drop_out_rate: float
+     |          drop out rate for fully connected layers
+     |      
+     |      suppress_output: bool
+     |          To suppress command line output with training statisitcs, set to True.
+     |      
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |  
+     |  Monte_Carlo_CrossVal_WF(self, fold=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, weight_by_freq=True, plot_loss=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one

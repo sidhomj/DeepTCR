@@ -829,6 +829,9 @@ class DeepTCR_S(object):
         filename: str
             Filename to save tif file of AUC curve.
 
+        title: str
+            Optional Title to put on ROC Curve.
+
         Returns
         ---------------------------------------
 
@@ -863,13 +866,13 @@ class DeepTCR_S(object):
                 plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score))
 
             plt.legend(loc="lower right")
+
+        if title is not None:
+            plt.title(title)
         if filename is None:
             plt.savefig(os.path.join(self.directory_results, 'AUC.tif'))
         else:
             plt.savefig(os.path.join(self.directory_results, filename+'_AUC.tif'))
-
-        if title is not None:
-            plt.title(title)
 
         plt.show(block=False)
 
