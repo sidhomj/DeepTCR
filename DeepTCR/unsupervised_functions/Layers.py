@@ -1,5 +1,4 @@
 import tensorflow as tf
-import numpy as np
 
 #Layers for VAE
 def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='Convolutional_Features'):

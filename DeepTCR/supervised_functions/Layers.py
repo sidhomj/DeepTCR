@@ -1,7 +1,4 @@
 import tensorflow as tf
-import numpy as np
-from sklearn.preprocessing import OneHotEncoder
-import pickle
 
 def Convolutional_Features(inputs,reuse=False,units=12,kernel=5,trainable_embedding=False,name='Convolutional_Features'):
     with tf.variable_scope(name,reuse=reuse):

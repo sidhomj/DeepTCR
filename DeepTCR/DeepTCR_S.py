@@ -1,4 +1,3 @@
-import os
 import sys
 sys.path.append('../')
 from DeepTCR.supervised_functions.utils import *
@@ -10,11 +9,6 @@ from multiprocessing import Pool
 import pickle
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
-from scipy.stats import mannwhitneyu
-from Bio import SeqIO
-from Bio.SeqRecord import SeqRecord
-from Bio.Seq import Seq
-import seaborn as sns
 import itertools
 from scipy.stats import ttest_ind
 

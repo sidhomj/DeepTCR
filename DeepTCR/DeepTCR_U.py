@@ -13,8 +13,7 @@ import seaborn as sns
 import colorsys
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage,fcluster
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-import phenograph
+from sklearn.preprocessing import StandardScaler
 
 
 class DeepTCR_U(object):
