@@ -1735,7 +1735,7 @@ class DeepTCR_S(object):
         Returns
         ---------------------------------------
 
-        self.group_features_wf: Pandas Dataframe
+        self.(alpha/beta)_group_features_wf: Pandas Dataframe
             Sequences used to determine motifs in fasta files
             are stored in this dataframe where column names represent
             the feature number.
