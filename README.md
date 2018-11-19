@@ -8,6 +8,9 @@ be used on an example dataset, see Tutorial.ipnyb. For complete documentation fo
 see 'Supervised_Documentation.txt' and 'Unsupervised_Documentation.txt'. While DeepTCR will run with Tensorflow-CPU versions,
 for optimal training times, we suggest training these algorithms on GPU's (requiring CUDA, cuDNN, and tensorflow-GPU). 
 
+DeepTCR now has the added functionality of being able to analyze paired alpha/beta chain inputs. For detailed instructions on 
+how to upload this type of data, refer to the documentation for loading data into DeepTCR.  
+
 ## Publication
 
 For full description of algorithm and methods behind DeepTCR, refer to the following manuscript:
