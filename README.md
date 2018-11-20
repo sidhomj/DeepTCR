@@ -11,6 +11,8 @@ for optimal training times, we suggest training these algorithms on GPU's (requi
 DeepTCR now has the added functionality of being able to analyze paired alpha/beta chain inputs. For detailed instructions on 
 how to upload this type of data, refer to the documentation for loading data into DeepTCR.  
 
+For questions or help, email: jsidhom1@jhmi.edu
+
 ## Publication
 
 For full description of algorithm and methods behind DeepTCR, refer to the following manuscript:
