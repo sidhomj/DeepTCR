@@ -28,6 +28,10 @@ class DeepTCR_S(object):
         max_length: int
             maximum length of CDR3 sequence
 
+        device: str
+            In the case user is using tensorflow-gpu, one can
+            specify the particular device to build the graphs on.
+
         Returns
         ---------------------------------------
 
