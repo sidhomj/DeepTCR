@@ -258,6 +258,7 @@ class DeepTCR_S(object):
         self.label_id = label_id
         self.file_id = file_id
         self.seq_index = np.asarray(list(range(len(self.Y))))
+        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         print('Data Loaded')
 
     def Get_Train_Valid_Test_SS(self,test_size=0.2,LOO=None):
@@ -505,7 +506,6 @@ class DeepTCR_S(object):
             beta_features_list = []
             alpha_indices_list = []
             beta_indices_list = []
-            predicted_list= []
             for x_seq_a,x_seq_b, y in get_batches_model(self.X_Seq_alpha,self.X_Seq_beta, self.Y, batch_size=batch_size, random=False):
                 if self.use_alpha is True:
                     feed_dict[X_Seq_alpha] = x_seq_a
@@ -527,8 +527,6 @@ class DeepTCR_S(object):
                     beta_features_list.append(features_i_beta)
                     beta_indices_list.append(indices_i_beta)
 
-                predicted_i = sess.run(predicted,feed_dict=feed_dict)
-                predicted_list.append(predicted_i)
 
             if self.use_alpha is True:
                 self.alpha_features = np.vstack(alpha_features_list)
@@ -539,8 +537,6 @@ class DeepTCR_S(object):
                 self.beta_indices = np.vstack(beta_indices_list)
 
 
-            self.predicted = np.vstack(predicted_list)
-            self.predicted = np.zeros_like(self.predicted)
             self.predicted[self.test[5]] += self.y_pred
 
             self.kernel = kernel
@@ -563,7 +559,7 @@ class DeepTCR_S(object):
         """
         Identify most highly predicted sequences for each class
 
-        This method allows the user to query which sequences were most predictd to belong to a given class.
+        This method allows the user to query which sequences were most predicted to belong to a given class.
 
         Inputs
         ---------------------------------------
@@ -744,6 +740,13 @@ class DeepTCR_S(object):
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
 
+            if i == 0:
+                predicted = np.zeros_like(self.predicted)
+                counts = np.zeros_like(self.predicted)
+
+            predicted[self.test[5]] += self.y_pred
+            counts[self.test[5]] += 1
+
             y_test2 = np.vstack(y_test)
             y_pred2 = np.vstack(y_pred)
 
@@ -759,6 +762,7 @@ class DeepTCR_S(object):
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
+        self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
 
@@ -846,7 +850,7 @@ class DeepTCR_S(object):
                 print(ii)
             train_idx = np.setdiff1d(idx,test_idx[ii])
 
-            Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.alpha_sequences, self.beta_sequences, self.file_id]
+            Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.alpha_sequences, self.beta_sequences, self.file_id,self.seq_index]
             self.train, self.test = Get_Train_Test(Vars=Vars,train_idx=train_idx,test_idx = test_idx[ii],Y=self.Y)
             self.valid = self.test
             self.LOO = True
@@ -878,6 +882,10 @@ class DeepTCR_S(object):
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
+        test_idx = np.hstack(test_idx)
+        self.predicted = np.zeros_like(self.predicted)
+        self.predicted[test_idx] = self.y_pred
+
         print('K-fold Cross Validation Completed')
 
 
