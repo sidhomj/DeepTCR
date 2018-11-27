@@ -560,6 +560,44 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
+     |  Representative_Sequences_SS(self, top_seq=10)
+     |      Identify most highly predicted sequences for each class for single sequence classifier.
+     |      
+     |      This method allows the user to query which sequences were most predicted to belong to a given class.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      top_seq: int
+     |          The number of top sequences to show for each class.
+     |      
+     |      Returns
+     |      
+     |      self.Rep_Seq_SS: dictionary of dataframes
+     |          This dictionary of dataframes holds for each class the top sequences and their respective
+     |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences_SS.
+     |      
+     |      ---------------------------------------
+     |  
+     |  Representative_Sequences_WF(self, top_seq=10)
+     |      Identify most highly predicted sequences for each class for whole sample classifier.
+     |      
+     |      This method allows the user to query which sequences were most predicted to belong to a given class.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      top_seq: int
+     |          The number of top sequences to show for each class.
+     |      
+     |      Returns
+     |      
+     |      self.Rep_Seq_WF: dictionary of dataframes
+     |          This dictionary of dataframes holds for each class the top sequences and their respective
+     |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences_WF.
+     |      
+     |      ---------------------------------------
+     |  
      |  Train_SS(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, kernel=5, units=12, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
      |      Train Single-Sequence Classifier
      |      
