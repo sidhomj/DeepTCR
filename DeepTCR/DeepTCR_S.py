@@ -257,6 +257,7 @@ class DeepTCR_S(object):
         self.Y = Y
         self.label_id = label_id
         self.file_id = file_id
+        self.seq_index = np.asarray(list(range(len(self.Y))))
         print('Data Loaded')
 
     def Get_Train_Valid_Test_SS(self,test_size=0.2,LOO=None):
@@ -279,7 +280,7 @@ class DeepTCR_S(object):
         ---------------------------------------
 
         """
-        Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.file_id]
+        Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.file_id,self.seq_index]
         self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False,LOO=LOO)
 
     def Train_SS(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,trainable_embedding=True,weight_by_class=False,
@@ -504,6 +505,7 @@ class DeepTCR_S(object):
             beta_features_list = []
             alpha_indices_list = []
             beta_indices_list = []
+            predicted_list= []
             for x_seq_a,x_seq_b, y in get_batches_model(self.X_Seq_alpha,self.X_Seq_beta, self.Y, batch_size=batch_size, random=False):
                 if self.use_alpha is True:
                     feed_dict[X_Seq_alpha] = x_seq_a
@@ -525,6 +527,9 @@ class DeepTCR_S(object):
                     beta_features_list.append(features_i_beta)
                     beta_indices_list.append(indices_i_beta)
 
+                predicted_i = sess.run(predicted,feed_dict=feed_dict)
+                predicted_list.append(predicted_i)
+
             if self.use_alpha is True:
                 self.alpha_features = np.vstack(alpha_features_list)
                 self.alpha_indices = np.vstack(alpha_indices_list)
@@ -533,6 +538,10 @@ class DeepTCR_S(object):
                 self.beta_features = np.vstack(beta_features_list)
                 self.beta_indices = np.vstack(beta_indices_list)
 
+
+            self.predicted = np.vstack(predicted_list)
+            self.predicted = np.zeros_like(self.predicted)
+            self.predicted[self.test[5]] += self.y_pred
 
             self.kernel = kernel
             #
@@ -549,6 +558,57 @@ class DeepTCR_S(object):
 
             print('Done Training')
 
+
+    def Representative_Sequences_SS(self,top_seq=10):
+        """
+        Identify most highly predicted sequences for each class
+
+        This method allows the user to query which sequences were most predictd to belong to a given class.
+
+        Inputs
+        ---------------------------------------
+
+        top_seq: int
+            The number of top sequences to show for each class.
+
+        Returns
+
+        self.Rep_Seq_SS: dictionary of dataframes
+            This dictionary of dataframes holds for each class the top sequences and their respective
+            probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences_SS.
+
+        ---------------------------------------
+
+
+        """
+        dir = 'Rep_Sequences_SS'
+        dir = os.path.join(self.directory_results,dir)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        file_list = [f for f in os.listdir(dir)]
+        [os.remove(os.path.join(dir, f)) for f in file_list]
+
+        Rep_Seq = []
+        keep = []
+        df_temp = pd.DataFrame()
+        df_temp['alpha'] = self.alpha_sequences
+        df_temp['beta'] = self.beta_sequences
+        df_temp['label'] = self.label_id
+        df_temp['file'] = self.file_id
+        for ii,sample in enumerate(self.lb.classes_,0):
+            df_temp[sample] = self.predicted[:,ii]
+
+        for ii,sample in enumerate(self.lb.classes_,0):
+            df_temp.sort_values(by=sample,ascending=False,inplace=True)
+            df_sample = df_temp[df_temp['label']==sample][0:top_seq]
+
+            if not df_sample.empty:
+                Rep_Seq.append(df_sample)
+                df_sample.to_csv(os.path.join(dir,sample+'.csv'),index=False)
+                keep.append(ii)
+
+        self.Rep_Seq_SS = dict(zip(self.lb.classes_[keep],Rep_Seq))
 
     def Motif_Identification_SS(self,group,p_val_threshold=0.05):
         """
