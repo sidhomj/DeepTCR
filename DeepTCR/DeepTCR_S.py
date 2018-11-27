@@ -1098,9 +1098,9 @@ class DeepTCR_S(object):
 
             num_seq_per_instance = np.max(len_file)
             if self.use_alpha is True:
-                alpha_sequences = pad_sequences(alpha_sequences,num_seq_per_instance)
+                alpha_sequences = np.asarray(pad_sequences(alpha_sequences,num_seq_per_instance))
             if self.use_beta is True:
-                beta_sequences = pad_sequences(beta_sequences,num_seq_per_instance)
+                beta_sequences = np.asarray(pad_sequences(beta_sequences,num_seq_per_instance))
 
             freq = pad_freq(freq,num_seq_per_instance)
             X_Freq = np.vstack(freq)
@@ -1128,12 +1128,11 @@ class DeepTCR_S(object):
 
             if (self.use_beta is True) and (self.use_alpha is False):
                 X_Seq_alpha = np.zeros_like(X_Seq_beta)
-                alpha_sequences = np.asarray([None]*len(X_Seq_beta))
+                alpha_sequences = np.matlib.repmat(np.asarray([None]*X_Seq_beta.shape[1]),X_Seq_beta.shape[0],1)
 
             if (self.use_beta is False) and (self.use_alpha is True):
                 X_Seq_beta = np.zeros_like(X_Seq_alpha)
-                beta_sequences = np.asarray([None]*len(X_Seq_alpha))
-
+                beta_sequences = np.matlib.repmat(np.asarray([None]*X_Seq_alpha.shape[1]),X_Seq_alpha.shape[0],1)
 
             if save_data is True:
                 with open(os.path.join(self.Name,self.Name) + '_Data_WF.pkl', 'wb') as f:
@@ -1151,7 +1150,12 @@ class DeepTCR_S(object):
         self.X_Freq = X_Freq
         self.Y = Y
         self.labels = labels
+        self.label_id = np.matlib.repmat(labels,X_Seq_alpha.shape[1],1).T
         self.files = files
+        self.files_id = np.matlib.repmat(files,X_Seq_alpha.shape[1],1).T
+        seq_index = np.asarray(list(range(X_Seq_alpha.shape[0]*X_Seq_alpha.shape[1])))
+        self.seq_index = np.reshape(seq_index,[X_Seq_alpha.shape[0],X_Seq_alpha.shape[1]])
+        self.predicted = np.zeros((len(seq_index),len(self.lb.classes_)))
         print('Data Loaded')
 
     def One_V_All(self,one_v_all):
@@ -1210,7 +1214,7 @@ class DeepTCR_S(object):
 
         """
 
-        Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,np.asarray(self.alpha_sequences),np.asarray(self.beta_sequences)]
+        Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,self.alpha_sequences,self.beta_sequences,self.seq_index]
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=self.Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
 
@@ -1753,6 +1757,24 @@ class DeepTCR_S(object):
                     beta_indices_list.append(indices_i)
 
 
+            predicted_seq_list = []
+            for x_seq_a, x_seq_b, x_freq, y in get_batches_model_2(self.test[0], self.test[1], self.test[2],self.test[-1], batch_size=batch_size, random=False):
+                x_freq = np.expand_dims(np.reshape(x_freq,[x_freq.shape[0]*x_freq.shape[1]]),-1)
+                feed_dict = {X_Freq: x_freq, Y: y, training: False}
+                if self.use_alpha is True:
+                    feed_dict[X_Seq_alpha] = np.expand_dims(np.reshape(x_seq_a,[x_seq_a.shape[0]*x_seq_a.shape[1],x_seq_a.shape[-1]]),1)
+                if self.use_beta is True:
+                    feed_dict[X_Seq_beta] = np.expand_dims(np.reshape(x_seq_b,[x_seq_b.shape[0]*x_seq_b.shape[1],x_seq_b.shape[-1]]),1)
+
+                predicted_i = sess.run(predicted, feed_dict=feed_dict)
+                predicted_seq_list.append(predicted_i)
+
+            predicted_seq_list = np.vstack(predicted_seq_list)
+            idx = np.reshape(self.test[6],[self.test[6].shape[0]*self.test[6].shape[1]])
+            self.predicted[idx] = predicted_seq_list
+            self.predicted_seq = predicted_seq_list
+
+
             if self.use_alpha is True:
                 self.alpha_features_wf = np.vstack(alpha_features_WF_list)
                 self.alpha_features_seq = np.vstack(alpha_features_seq_list)
@@ -1778,6 +1800,37 @@ class DeepTCR_S(object):
                 plt.close()
 
             print('Done Training')
+
+    def Representative_Sequences_WF(self,top_seq=10):
+        dir = 'Rep_Sequences_WF'
+        dir = os.path.join(self.directory_results,dir)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        file_list = [f for f in os.listdir(dir)]
+        [os.remove(os.path.join(dir, f)) for f in file_list]
+
+        Rep_Seq = []
+        keep = []
+        df_temp = pd.DataFrame()
+        df_temp['alpha'] = np.reshape(self.alpha_sequences,[self.alpha_sequences.shape[0]*self.alpha_sequences.shape[1]])
+        df_temp['beta'] = np.reshape(self.beta_sequences,[self.beta_sequences.shape[0]*self.beta_sequences.shape[1]])
+        df_temp['freq'] = np.reshape(self.X_Freq,[self.X_Freq.shape[0]*self.X_Freq.shape[1]])
+        df_temp['label'] = np.reshape(self.label_id,[self.label_id.shape[0]*self.label_id.shape[1]])
+        df_temp['file'] = np.reshape(self.files_id,[self.files_id.shape[0]*self.files_id.shape[1]])
+        for ii,sample in enumerate(self.lb.classes_,0):
+            df_temp[sample] = self.predicted[:,ii]
+
+        for ii,sample in enumerate(self.lb.classes_,0):
+            df_temp.sort_values(by=sample,ascending=False,inplace=True)
+            df_sample = df_temp[df_temp['label']==sample][0:top_seq]
+
+            if not df_sample.empty:
+                Rep_Seq.append(df_sample)
+                df_sample.to_csv(os.path.join(dir,sample+'.csv'),index=False)
+                keep.append(ii)
+
+        self.Rep_Seq_WF = dict(zip(self.lb.classes_[keep],Rep_Seq))
 
     def Motif_Identification_WF(self,group,p_val_threshold=0.05,cut=95,save_images=False):
         """
@@ -1939,6 +1992,14 @@ class DeepTCR_S(object):
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
 
+            if i == 0:
+                predicted = np.zeros_like(self.predicted)
+                counts = np.zeros_like(self.predicted)
+
+            idx = np.reshape(self.test[6],[self.test[6].shape[0]*self.test[6].shape[1]])
+            predicted[idx] += self.predicted_seq
+            counts[idx] += 1
+
             y_test2 = np.vstack(y_test)
             y_pred2 = np.vstack(y_pred)
 
@@ -1954,6 +2015,7 @@ class DeepTCR_S(object):
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
+        self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal_WF(self,folds=None,epochs_min=5,batch_size=25,stop_criterion=0.001, kernel=5,units=12, weight_by_class=False, iterations=None,
@@ -2055,7 +2117,7 @@ class DeepTCR_S(object):
                 print(ii)
             train_idx = np.setdiff1d(idx,test_idx[ii])
 
-            Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,np.asarray(self.alpha_sequences),np.asarray(self.beta_sequences)]
+            Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,self.alpha_sequences,self.beta_sequences,self.seq_index]
             self.train, self.test = Get_Train_Test(Vars=Vars,train_idx=train_idx,test_idx = test_idx[ii],Y=self.Y)
             self.valid = self.test
             self.LOO = True
