@@ -557,7 +557,7 @@ class DeepTCR_S(object):
 
     def Representative_Sequences_SS(self,top_seq=10):
         """
-        Identify most highly predicted sequences for each class
+        Identify most highly predicted sequences for each class for single sequence classifier.
 
         This method allows the user to query which sequences were most predicted to belong to a given class.
 
@@ -1802,6 +1802,27 @@ class DeepTCR_S(object):
             print('Done Training')
 
     def Representative_Sequences_WF(self,top_seq=10):
+        """
+        Identify most highly predicted sequences for each class for whole sample classifier.
+
+        This method allows the user to query which sequences were most predicted to belong to a given class.
+
+        Inputs
+        ---------------------------------------
+
+        top_seq: int
+            The number of top sequences to show for each class.
+
+        Returns
+
+        self.Rep_Seq_WF: dictionary of dataframes
+            This dictionary of dataframes holds for each class the top sequences and their respective
+            probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences_WF.
+
+        ---------------------------------------
+
+
+        """
         dir = 'Rep_Sequences_WF'
         dir = os.path.join(self.directory_results,dir)
         if not os.path.exists(dir):
