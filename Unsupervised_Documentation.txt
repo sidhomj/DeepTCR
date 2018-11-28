@@ -235,7 +235,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  __init__(self, Name, max_length=40)
+     |  __init__(self, Name, max_length=40, device='/gpu:0')
      |      Initialize Training Object.
      |      
      |      Initializes object and sets initial parameters.
@@ -247,6 +247,10 @@ CLASSES
      |      
      |      max_length: int
      |          maximum length of CDR3 sequence
+     |      
+     |      device: str
+     |          In the case user is using tensorflow-gpu, one can
+     |          specify the particular device to build the graphs on.
      |      
      |      Returns
      |      ---------------------------------------

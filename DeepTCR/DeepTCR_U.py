@@ -18,7 +18,7 @@ from sklearn.preprocessing import StandardScaler
 
 class DeepTCR_U(object):
 
-    def __init__(self,Name,max_length=40):
+    def __init__(self,Name,max_length=40,device='/gpu:0'):
         """
         Initialize Training Object.
 
@@ -32,6 +32,10 @@ class DeepTCR_U(object):
         max_length: int
             maximum length of CDR3 sequence
 
+        device: str
+            In the case user is using tensorflow-gpu, one can
+            specify the particular device to build the graphs on.
+
         Returns
         ---------------------------------------
 
@@ -42,6 +46,7 @@ class DeepTCR_U(object):
         self.max_length = max_length
         self.use_beta = True
         self.use_alpha = False
+        self.device = device
 
         #Create dataframes for assigning AA to ints
         aa_idx, aa_mat = make_aa_df()
@@ -282,7 +287,7 @@ class DeepTCR_U(object):
         """
 
         if Load_Prev_Data is False:
-            with tf.device('/gpu:0'):
+            with tf.device(self.device):
                 graph_model_AE = tf.Graph()
                 with graph_model_AE.as_default():
                     if self.use_alpha is True:
@@ -514,7 +519,7 @@ class DeepTCR_U(object):
             j=21
             epochs = 500
 
-            with tf.device('/gpu:0'):
+            with tf.device(self.device):
                 with graph_model.as_default():
                     # Setup Placeholders
                     if self.use_alpha is True:
