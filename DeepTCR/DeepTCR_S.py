@@ -1842,6 +1842,12 @@ class DeepTCR_S(object):
         for ii,sample in enumerate(self.lb.classes_,0):
             df_temp[sample] = self.predicted[:,ii]
 
+        if self.use_beta is True:
+            df_temp = df_temp[df_temp['beta'] != 'null']
+
+        if self.use_alpha is True:
+            df_temp = df_temp[df_temp['alpha'] != 'null']
+
         for ii,sample in enumerate(self.lb.classes_,0):
             df_temp.sort_values(by=sample,ascending=False,inplace=True)
             df_sample = df_temp[df_temp['label']==sample][0:top_seq]
