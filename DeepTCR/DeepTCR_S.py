@@ -149,7 +149,7 @@ class DeepTCR_S(object):
 
             if classes is None:
                 # Get names of classes from folders names
-                classes = [d for d in os.listdir(directory) if os.path.isdir(directory + d)]
+                classes = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory,d))]
                 classes = [f for f in classes if not f.startswith('.')]
 
 
@@ -174,7 +174,7 @@ class DeepTCR_S(object):
                 return
 
             for type in self.classes:
-                files_read = glob.glob(directory + type + ext)
+                files_read = glob.glob(os.path.join(directory,type) + ext)
                 num_ins = len(files_read)
                 args = list(zip(files_read,
                                 [type_of_data_cut] * num_ins,
@@ -1039,7 +1039,7 @@ class DeepTCR_S(object):
                 self.use_beta = True
 
             if classes is None:
-                classes = [d for d in os.listdir(directory) if os.path.isdir(directory + d)]
+                classes = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory,d))]
                 classes = [f for f in classes if not f.startswith('.')]
 
             self.lb = LabelEncoder()
@@ -1063,7 +1063,7 @@ class DeepTCR_S(object):
                 return
 
             for type in self.classes:
-                files_read = glob.glob(directory + type + ext)
+                files_read = glob.glob(os.path.join(directory,type) + ext)
                 num_ins = len(files_read)
                 args = list(zip(files_read,
                                 [type_of_data_cut] * num_ins,
