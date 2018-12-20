@@ -10,7 +10,7 @@ CLASSES
     class DeepTCR_S(builtins.object)
      |  Methods defined here:
      |  
-     |  AUC_Curve(self, show_all=True, filename=None, title=None)
+     |  AUC_Curve(self, show_all=True, filename='AUC.tif', title=None)
      |      AUC Curve for both Single Sequence and Whole File Models
      |      
      |      Inputs
