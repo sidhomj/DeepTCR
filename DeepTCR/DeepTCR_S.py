@@ -890,7 +890,7 @@ class DeepTCR_S(object):
 
 
 
-    def AUC_Curve(self,show_all=True,filename=None,title=None):
+    def AUC_Curve(self,show_all=True,filename='AUC.tif',title=None):
         """
         AUC Curve for both Single Sequence and Whole File Models
 
@@ -944,11 +944,8 @@ class DeepTCR_S(object):
 
         if title is not None:
             plt.title(title)
-        if filename is None:
-            plt.savefig(os.path.join(self.directory_results, 'AUC.tif'))
-        else:
-            plt.savefig(os.path.join(self.directory_results, filename+'_AUC.tif'))
 
+        plt.savefig(os.path.join(self.directory_results,filename))
         plt.show(block=False)
 
     def Get_Data_WF(self,directory,Load_Prev_Data=False,classes=None,save_data=True,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
