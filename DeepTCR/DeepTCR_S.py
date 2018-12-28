@@ -2170,7 +2170,7 @@ class DeepTCR_S(object):
 
 
             if iterations is not None:
-                if ii > iterations:
+                if ii+1 >= iterations:
                     break
 
         self.y_test = np.vstack(y_test)
