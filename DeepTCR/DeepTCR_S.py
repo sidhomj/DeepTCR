@@ -1716,12 +1716,15 @@ class DeepTCR_S(object):
                     else:
                         if self.LOO is None:
                             a, b, c = -10, -7, -3
-                            if (np.mean(val_loss_total[a:b]) - np.mean(val_loss_total[c:])) / np.mean(val_loss_total[a:b]) < stop_criterion:
-                                break
+                            if not val_loss_total:
+                                if (np.mean(val_loss_total[a:b]) - np.mean(val_loss_total[c:])) / np.mean(val_loss_total[a:b]) < stop_criterion:
+                                    break
+
                         else:
                             a, b, c = -10, -7, -3
-                            if (np.mean(train_loss_total[a:b]) - np.mean(train_loss_total[c:])) / np.mean(train_loss_total[a:b]) < stop_criterion:
-                                break
+                            if not train_loss_total:
+                                if (np.mean(train_loss_total[a:b]) - np.mean(train_loss_total[c:])) / np.mean(train_loss_total[a:b]) < stop_criterion:
+                                    break
 
                             if np.mean(train_accuracy_total[-100:]) == 1.0:
                                 break
