@@ -719,7 +719,7 @@ class DeepTCR_U(object):
             label_temp = []
             file_temp = []
             seq_temp_alpha = []
-            seq_temp_Beta = []
+            seq_temp_beta = []
             for i in self.lb.classes_:
                 sel = np.where(self.label_id==i)[0]
                 sel = np.random.choice(sel,sample_num_per_seq,replace=False)
