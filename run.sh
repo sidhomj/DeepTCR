@@ -4,5 +4,5 @@
 jupyter nbconvert \
   --ExecutePreprocessor.allow_errors=True \
   --ExecutePreprocessor.timeout=-1 \
-  --output-dir =/results \
+  --output-dir=results \
   --execute Tutorial.ipynb
