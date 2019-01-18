@@ -166,15 +166,15 @@ class DeepTCR_S(object):
             p = Pool(n_jobs)
 
             if sep == '\t':
-                ext = '/*.tsv'
+                ext = '*.tsv'
             elif sep == ',':
-                ext = '/*.csv'
+                ext = '*.csv'
             else:
                 print('Not Valid Delimiter')
                 return
 
             for type in self.classes:
-                files_read = glob.glob(os.path.join(directory,type) + ext)
+                files_read = glob.glob(os.path.join(directory, type, ext))
                 num_ins = len(files_read)
                 args = list(zip(files_read,
                                 [type_of_data_cut] * num_ins,
@@ -1052,15 +1052,15 @@ class DeepTCR_S(object):
             p = Pool(n_jobs)
 
             if sep == '\t':
-                ext = '/*.tsv'
+                ext = '*.tsv'
             elif sep == ',':
-                ext = '/*.csv'
+                ext = '*.csv'
             else:
                 print('Not Valid Delimiter')
                 return
 
             for type in self.classes:
-                files_read = glob.glob(os.path.join(directory,type) + ext)
+                files_read = glob.glob(os.path.join(directory, type, ext))
                 num_ins = len(files_read)
                 args = list(zip(files_read,
                                 [type_of_data_cut] * num_ins,
