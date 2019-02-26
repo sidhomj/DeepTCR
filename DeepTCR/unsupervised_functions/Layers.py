@@ -87,6 +87,23 @@ def generator(z,embedding_dim_aa=64,prob=0.0,training=True,name='generator',reus
 
         return logits
 
+def generator_genes(z,embedding_dim,prob=0.0,training=True,name='generator_genes',reuse=False):
+    with tf.variable_scope(name,reuse=reuse):
+        z = tf.layers.dense(z,512)
+        z = tf.layers.batch_normalization(z,training=training)
+        z = tf.nn.leaky_relu(z)
+
+        z1 = tf.layers.dense(z,256)
+        z1 = tf.layers.batch_normalization(z1,training=training)
+        z1 = tf.nn.leaky_relu(z1)
+
+        z2 = tf.layers.dense(z1, embedding_dim)
+        z2 = tf.layers.batch_normalization(z2, training=training)
+        z2 = tf.nn.leaky_relu(z2)
+
+        return z2
+
+
 def model_loss(logits_real,logits_fake,features_real,features_fake):
 
     #Vanilla GAN

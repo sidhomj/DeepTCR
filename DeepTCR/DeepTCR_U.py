@@ -51,6 +51,8 @@ class DeepTCR_U(object):
         self.use_v_beta = False
         self.use_d_beta = False
         self.use_j_beta = False
+        self.use_v_alpha = False
+        self.use_j_alpha = False
 
         #Create dataframes for assigning AA to ints
         aa_idx, aa_mat = make_aa_df()
@@ -71,6 +73,7 @@ class DeepTCR_U(object):
 
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
+                    v_alpha_column=None,j_alpha_column=None,
                     v_beta_column=None,j_beta_column=None,d_beta_column=None):
         """
         Get Data for Unsupervised Deep Learning Methods.
@@ -149,6 +152,12 @@ class DeepTCR_U(object):
             if aa_column_beta is not None:
                 self.use_beta = True
 
+            if v_alpha_column is not None:
+                self.use_v_alpha = True
+
+            if j_alpha_column is not None:
+                self.use_j_alpha = True
+
             if v_beta_column is not None:
                 self.use_v_beta = True
 
@@ -157,6 +166,8 @@ class DeepTCR_U(object):
 
             if j_beta_column is not None:
                 self.use_j_beta = True
+
+
 
             #Determine classes based on directory names
             if classes is None:
@@ -183,6 +194,8 @@ class DeepTCR_U(object):
             v_beta = []
             d_beta = []
             j_beta = []
+            v_alpha = []
+            j_alpha = []
             label_id = []
             file_id = []
             freq = []
@@ -201,7 +214,9 @@ class DeepTCR_U(object):
                                 [aggregate_by_aa]*num_ins,
                                 [v_beta_column]*num_ins,
                                 [d_beta_column]*num_ins,
-                                [j_beta_column]*num_ins))
+                                [j_beta_column]*num_ins,
+                                [v_alpha_column]*num_ins,
+                                [j_alpha_column]*num_ins))
 
                 DF = p.starmap(Get_DF_Data, args)
 
@@ -210,6 +225,12 @@ class DeepTCR_U(object):
                         alpha_sequences += df['alpha'].tolist()
                     if aa_column_beta is not None:
                         beta_sequences += df['beta'].tolist()
+
+                    if v_alpha_column is not None:
+                        v_alpha += df['v_alpha'].tolist()
+
+                    if j_alpha_column is not None:
+                        j_alpha += df['j_alpha'].tolist()
 
                     if v_beta_column is not None:
                         v_beta += df['v_beta'].tolist()
@@ -230,6 +251,8 @@ class DeepTCR_U(object):
             v_beta = np.asarray(v_beta)
             d_beta = np.asarray(d_beta)
             j_beta = np.asarray(j_beta)
+            v_alpha = np.asarray(v_alpha)
+            j_alpha = np.asarray(j_alpha)
             label_id = np.asarray(label_id)
             file_id = np.asarray(file_id)
             freq = np.asarray(freq)
@@ -282,23 +305,37 @@ class DeepTCR_U(object):
                 self.lb_j_beta = LabelEncoder()
                 j_beta_num = np.zeros(shape=[num_seq])
 
+            if self.use_v_alpha is True:
+                self.lb_v_alpha = LabelEncoder()
+                v_alpha_num = self.lb_v_alpha.fit_transform(v_alpha)
+            else:
+                self.lb_v_alpha = LabelEncoder()
+                v_alpha_num = np.zeros(shape=[num_seq])
+
+            if self.use_j_alpha is True:
+                self.lb_j_alpha = LabelEncoder()
+                j_alpha_num = self.lb_j_alpha.fit_transform(j_alpha)
+            else:
+                self.lb_j_alpha = LabelEncoder()
+                j_alpha_num = np.zeros(shape=[num_seq])
+
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
                 pickle.dump([X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,
                              self.lb,file_list,self.use_alpha,self.use_beta,
-                             self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
-                             v_beta, d_beta,j_beta,
-                             v_beta_num, d_beta_num, j_beta_num,
-                             self.use_v_beta,self.use_d_beta,self.use_j_beta],f,protocol=4)
+                             self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,
+                             v_beta, d_beta,j_beta,v_alpha,j_alpha,
+                             v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,
+                             self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
                 X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,\
                 self.lb,file_list,self.use_alpha,self.use_beta,\
-                    self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,\
-                    v_beta, d_beta,j_beta,\
-                    v_beta_num, d_beta_num, j_beta_num,\
-                    self.use_v_beta,self.use_d_beta,self.use_j_beta = pickle.load(f)
+                    self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,\
+                    v_beta, d_beta,j_beta,v_alpha,j_alpha,\
+                    v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,\
+                    self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha = pickle.load(f)
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
@@ -314,6 +351,10 @@ class DeepTCR_U(object):
         self.d_beta_num = d_beta_num
         self.j_beta = j_beta
         self.j_beta_num = j_beta_num
+        self.v_alpha = v_alpha
+        self.v_alpha_num = v_alpha_num
+        self.j_alpha = j_alpha
+        self.j_alpha_num = j_alpha_num
         print('Data Loaded')
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False):
@@ -366,7 +407,9 @@ class DeepTCR_U(object):
                     gene_features = []
                     X_v_beta, X_v_beta_OH, embedding_layer_v_beta,\
                     X_d_beta, X_d_beta_OH, embedding_layer_d_beta,\
-                    X_j_beta, X_j_beta_OH, embedding_layer_j_beta,\
+                    X_j_beta, X_j_beta_OH, embedding_layer_j_beta, \
+                    X_v_alpha, X_v_alpha_OH, embedding_layer_v_alpha, \
+                    X_j_alpha, X_j_alpha_OH, embedding_layer_j_alpha, \
                     gene_features = Get_Gene_Features(self,embedding_dim_genes,gene_features)
 
 
@@ -470,6 +513,14 @@ class DeepTCR_U(object):
                         j_beta_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_j_beta,X_j_beta_OH)
                         gene_loss.append(j_beta_loss)
 
+                    if self.use_v_alpha is True:
+                        v_alpha_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_v_alpha,X_v_alpha_OH)
+                        gene_loss.append(v_alpha_loss)
+
+                    if self.use_j_alpha is True:
+                        j_alpha_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_j_alpha,X_j_alpha_OH)
+                        gene_loss.append(j_alpha_loss)
+
 
                     recon_losses = recon_losses + gene_loss
                     temp = []
@@ -506,7 +557,7 @@ class DeepTCR_U(object):
                 sess.run(tf.global_variables_initializer())
                 for e in range(epochs):
                     accuracy_list = []
-                    Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num]
+                    Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num]
                     for vars in get_batches_gen(Vars, batch_size=batch_size):
                         feed_dict = {training:True}
                         if self.use_alpha is True:
@@ -522,6 +573,12 @@ class DeepTCR_U(object):
 
                         if self.use_j_beta is True:
                             feed_dict[X_j_beta] = vars[4]
+
+                        if self.use_v_alpha is True:
+                            feed_dict[X_v_alpha] = vars[5]
+
+                        if self.use_j_alpha is True:
+                            feed_dict[X_j_alpha] = vars[6]
 
                         train_loss, recon_loss, latent_loss, accuracy_check, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
                         accuracy_list.append(accuracy_check)
@@ -542,7 +599,8 @@ class DeepTCR_U(object):
 
                 features_list = []
                 accuracy_list = []
-                Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num]
+                Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,self.v_alpha_num, self.j_alpha_num]
+
                 for vars in get_batches_gen(Vars, batch_size=batch_size, random=False):
                     if self.use_alpha is True:
                         feed_dict[X_Seq_alpha] = vars[0]
@@ -557,6 +615,12 @@ class DeepTCR_U(object):
 
                     if self.use_j_beta is True:
                         feed_dict[X_j_beta] = vars[4]
+
+                    if self.use_v_alpha is True:
+                        feed_dict[X_v_alpha] = vars[5]
+
+                    if self.use_j_alpha is True:
+                        feed_dict[X_j_alpha] = vars[6]
 
                     features_ind, accuracy_check = sess.run([z_mean, accuracy], feed_dict=feed_dict)
                     features_list.append(features_ind)
@@ -641,6 +705,15 @@ class DeepTCR_U(object):
                         X_Seq_beta = tf.placeholder(tf.int64, shape=[None, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2]],name='Input_Beta')
                         X_Seq_beta_OH = tf.one_hot(X_Seq_beta, depth=21)
 
+                    embedding_dim_genes = 48
+                    gene_features = []
+                    X_v_beta, X_v_beta_OH, embedding_layer_v_beta,\
+                    X_d_beta, X_d_beta_OH, embedding_layer_d_beta,\
+                    X_j_beta, X_j_beta_OH, embedding_layer_j_beta, \
+                    X_v_alpha, X_v_alpha_OH, embedding_layer_v_alpha, \
+                    X_j_alpha, X_j_alpha_OH, embedding_layer_j_alpha, \
+                    gene_features = Get_Gene_Features(self,embedding_dim_genes,gene_features)
+
                     training = tf.placeholder_with_default(False, shape=())
                     prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
 
@@ -666,7 +739,12 @@ class DeepTCR_U(object):
                     elif (self.use_alpha is False) and (self.use_beta is True):
                         latent_real = latent_real_beta
 
+                    if not isinstance(gene_features, list):
+                        latent_real = tf.concat((latent_real, gene_features), axis=1)
+
+
                     latent_real = tf.identity(latent_real,'latent_real')
+                    ortho_loss = Get_Ortho_Loss(latent_real)
                     logits_real = tf.layers.dense(latent_real,1,name='logits_real')
 
                     if self.use_alpha is True:
@@ -679,6 +757,32 @@ class DeepTCR_U(object):
                         gen_seq_beta = generator(inputs_z_beta, training=training, embedding_dim_aa=embedding_dim_aa,prob=prob, name='generator_beta')
                         latent_fake_beta, indices_fake_beta = Convolutional_Features_GAN(gen_seq_beta, reuse=True,prob=prob, training=training,units=latent_dim,name='beta_conv')
 
+                    gene_features = []
+                    if self.use_v_alpha is True:
+                        gen_v_alpha = generator_genes(inputs_z_alpha,embedding_dim_genes,training=training,prob=prob,name='generator_v_alpha')
+                        gene_features.append(gen_v_alpha)
+
+                    if self.use_j_alpha is True:
+                        gen_j_alpha = generator_genes(inputs_z_alpha,embedding_dim_genes,training=training,prob=prob,name='generator_j_alpha')
+                        gene_features.append(gen_j_alpha)
+
+                    if self.use_v_beta is True:
+                        gen_v_beta = generator_genes(inputs_z_beta, embedding_dim_genes, training=training, prob=prob,
+                                                      name='generator_v_beta')
+                        gene_features.append(gen_v_beta)
+
+                    if self.use_d_beta is True:
+                        gen_d_beta = generator_genes(inputs_z_beta, embedding_dim_genes, training=training, prob=prob,
+                                                     name='generator_d_beta')
+                        gene_features.append(gen_d_beta)
+
+                    if self.use_j_beta is True:
+                        gen_j_beta = generator_genes(inputs_z_beta, embedding_dim_genes, training=training, prob=prob,
+                                                     name='generator_j_beta')
+                        gene_features.append(gen_j_beta)
+
+                    if gene_features:
+                        gene_features = tf.concat(gene_features, axis=1)
 
                     if (self.use_alpha is True) and (self.use_beta is True):
                         latent_fake = tf.concat((latent_fake_alpha,latent_fake_beta),axis=1)
@@ -687,6 +791,9 @@ class DeepTCR_U(object):
                     elif (self.use_alpha is False) and (self.use_beta is True):
                         latent_fake = latent_fake_beta
 
+                    if not isinstance(gene_features, list):
+                        latent_fake = tf.concat((latent_fake, gene_features), axis=1)
+
                     latent_fake = tf.identity(latent_fake, 'latent_fake')
                     logits_fake = tf.layers.dense(latent_fake, 1, name='logits_fake')
 
@@ -694,7 +801,7 @@ class DeepTCR_U(object):
 
                     var_list = tf.trainable_variables()
                     var_train = [x for x in var_list if not x.name.startswith('generator')]
-                    opt_d = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(d_loss, var_list=var_train)
+                    opt_d = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(d_loss+ortho_loss, var_list=var_train)
 
                     var_train = [x for x in var_list if x.name.startswith('generator')]
                     opt_g = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(g_loss, var_list=var_train)
@@ -716,6 +823,8 @@ class DeepTCR_U(object):
                 for e in range(epochs):
                     if suppress_output is False:
                         print('Epoch: {}'.format(e))
+
+                    Vars =
 
                     for x_seq_a,x_seq_b in get_batches(self.X_Seq_alpha,self.X_Seq_beta,batch_size=batch_size,random=True):
                         step +=1

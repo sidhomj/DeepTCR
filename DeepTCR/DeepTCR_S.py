@@ -477,10 +477,7 @@ class DeepTCR_S(object):
 
 
                 logits = tf.layers.dense(fc, self.Y.shape[1])
-                #ortho_loss = Get_Ortho_Loss(tf.trainable_variables()[-2])
-                #ortho_loss = Get_Ortho_Loss(tf.trainable_variables()[4],alpha=1e-2)
-                Seq_Features_norm = tf.nn.l2_normalize(Seq_Features,0)
-                ortho_loss = 1e-3*tf.reduce_sum(tf.multiply(Seq_Features_norm,Seq_Features_norm))
+                ortho_loss = Get_Ortho_Loss(Seq_Features)
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])

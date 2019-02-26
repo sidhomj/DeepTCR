@@ -66,7 +66,8 @@ def Process_Seq(df,col):
 
 def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_column_alpha=None,aa_column_beta=None,
                 count_column=None,sep='\t',max_length=40,aggregate_by_aa=True,v_beta_column=None,
-                d_beta_column=None,j_beta_columns=None):
+                d_beta_column=None,j_beta_columns=None,
+                v_alpha_column=None,j_alpha_column=None):
 
     df = pd.read_csv(file, sep=sep)
 
@@ -91,6 +92,14 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
         df['counts'] = 1
         cols_to_keep.append(-1)
         column_names.append('counts')
+
+    if v_alpha_column is not None:
+        cols_to_keep.append(v_alpha_column)
+        column_names.append('v_alpha')
+
+    if j_alpha_column is not None:
+        cols_to_keep.append(j_alpha_column)
+        column_names.append('j_alpha')
 
     if v_beta_column is not None:
         cols_to_keep.append(v_beta_column)
