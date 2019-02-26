@@ -745,18 +745,18 @@ class DeepTCR_U(object):
 
                     latent_real = tf.concat(latent_real,axis=1)
 
-                    latent_indices_real = []
-                    if self.use_alpha is True:
-                        latent_indices_real.append(indices_real_alpha)
-                    if self.use_beta is True:
-                        latent_indices_real.append(indices_real_beta)
-
-                    latent_indices_real = tf.concat(latent_indices_real,axis=1)
-
-                    distances_real = latent_indices_real[:,tf.newaxis,:] - latent_indices_real[:,:,tf.newaxis]
-                    distances_real = tf.layers.flatten(distances_real)
-
-                    latent_real = tf.concat((latent_real,distances_real),axis=1)
+                    # latent_indices_real = []
+                    # if self.use_alpha is True:
+                    #     latent_indices_real.append(indices_real_alpha)
+                    # if self.use_beta is True:
+                    #     latent_indices_real.append(indices_real_beta)
+                    #
+                    # latent_indices_real = tf.concat(latent_indices_real,axis=1)
+                    #
+                    # distances_real = latent_indices_real[:,tf.newaxis,:] - latent_indices_real[:,:,tf.newaxis]
+                    # distances_real = tf.layers.flatten(distances_real)
+                    #
+                    # latent_real = tf.concat((latent_real,distances_real),axis=1)
 
 
                     if not isinstance(gene_features, list):
@@ -811,17 +811,17 @@ class DeepTCR_U(object):
                         latent_fake.append(latent_fake_beta)
                     latent_fake = tf.concat(latent_fake,axis=1)
 
-                    latent_indices_fake = []
-                    if self.use_alpha is True:
-                        latent_indices_fake.append(indices_fake_alpha)
-                    if self.use_beta is True:
-                        latent_indices_fake.append(indices_fake_beta)
-
-                    latent_indices_fake = tf.concat(latent_indices_fake,axis=1)
-                    distances_fake = latent_indices_fake[:,tf.newaxis,:] - latent_indices_fake[:,:,tf.newaxis]
-                    distances_fake = tf.layers.flatten(distances_fake)
-
-                    latent_fake = tf.concat((latent_fake,distances_fake),axis=1)
+                    # latent_indices_fake = []
+                    # if self.use_alpha is True:
+                    #     latent_indices_fake.append(indices_fake_alpha)
+                    # if self.use_beta is True:
+                    #     latent_indices_fake.append(indices_fake_beta)
+                    #
+                    # latent_indices_fake = tf.concat(latent_indices_fake,axis=1)
+                    # distances_fake = latent_indices_fake[:,tf.newaxis,:] - latent_indices_fake[:,:,tf.newaxis]
+                    # distances_fake = tf.layers.flatten(distances_fake)
+                    #
+                    # latent_fake = tf.concat((latent_fake,distances_fake),axis=1)
 
 
                     if not isinstance(gene_features, list):
