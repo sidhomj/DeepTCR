@@ -357,7 +357,7 @@ class DeepTCR_U(object):
         self.j_alpha_num = j_alpha_num
         print('Data Loaded')
 
-    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False):
+    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=True):
         """
         Train Variational Autoencoder (VAE)
 
@@ -451,6 +451,7 @@ class DeepTCR_U(object):
                     z_log_var = tf.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
 
                     z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)
+                    ortho_loss = Get_Ortho_Loss(z)
                     z = tf.identity(z, name='z')
 
                     fc_up = tf.layers.dense(z, 128)
@@ -543,7 +544,10 @@ class DeepTCR_U(object):
                     accuracy = accuracy/num_acc
                     latent_cost = tf.reduce_sum(latent_cost)
 
-                    opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
+                    if ortho_norm is True:
+                        opt_ae = tf.train.AdamOptimizer().minimize(total_cost+ortho_loss)
+                    else:
+                        opt_ae = tf.train.AdamOptimizer().minimize(total_cost + ortho_loss)
 
                     saver = tf.train.Saver()
 
@@ -651,7 +655,7 @@ class DeepTCR_U(object):
         self.features = self.vae_features
         print('Training Done')
 
-    def Train_GAN(self,Load_Prev_Data=False,batch_size=10000,it_min=50,latent_dim=256,suppress_output=False):
+    def Train_GAN(self,Load_Prev_Data=False,batch_size=10000,it_min=50,latent_dim=256,suppress_output=False,ortho_norm=True):
         """
         Train Generative Adversarial Network (GAN)
 
@@ -732,12 +736,28 @@ class DeepTCR_U(object):
                     if self.use_beta is True:
                         latent_real_beta,indices_real_beta = Convolutional_Features_GAN(inputs_seq_embed_beta,training=training,prob=prob,units=latent_dim,name='beta_conv')
 
-                    if (self.use_alpha is True) and (self.use_beta is True):
-                        latent_real = tf.concat((latent_real_alpha,latent_real_beta),axis=1)
-                    elif (self.use_alpha is True) and (self.use_beta is False):
-                        latent_real = latent_real_alpha
-                    elif (self.use_alpha is False) and (self.use_beta is True):
-                        latent_real = latent_real_beta
+
+                    latent_real = []
+                    if self.use_alpha is True:
+                        latent_real.append(latent_real_alpha)
+                    if self.use_beta is True:
+                        latent_real.append(latent_real_beta)
+
+                    latent_real = tf.concat(latent_real,axis=1)
+
+                    latent_indices_real = []
+                    if self.use_alpha is True:
+                        latent_indices_real.append(indices_real_alpha)
+                    if self.use_beta is True:
+                        latent_indices_real.append(indices_real_beta)
+
+                    latent_indices_real = tf.concat(latent_indices_real,axis=1)
+
+                    distances_real = latent_indices_real[:,tf.newaxis,:] - latent_indices_real[:,:,tf.newaxis]
+                    distances_real = tf.layers.flatten(distances_real)
+
+                    latent_real = tf.concat((latent_real,distances_real),axis=1)
+
 
                     if not isinstance(gene_features, list):
                         latent_real = tf.concat((latent_real, gene_features), axis=1)
@@ -784,12 +804,25 @@ class DeepTCR_U(object):
                     if gene_features:
                         gene_features = tf.concat(gene_features, axis=1)
 
-                    if (self.use_alpha is True) and (self.use_beta is True):
-                        latent_fake = tf.concat((latent_fake_alpha,latent_fake_beta),axis=1)
-                    elif (self.use_alpha is True) and (self.use_beta is False):
-                        latent_fake = latent_fake_alpha
-                    elif (self.use_alpha is False) and (self.use_beta is True):
-                        latent_fake = latent_fake_beta
+                    latent_fake = []
+                    if self.use_alpha is True:
+                        latent_fake.append(latent_fake_alpha)
+                    if self.use_beta is True:
+                        latent_fake.append(latent_fake_beta)
+                    latent_fake = tf.concat(latent_fake,axis=1)
+
+                    latent_indices_fake = []
+                    if self.use_alpha is True:
+                        latent_indices_fake.append(indices_fake_alpha)
+                    if self.use_beta is True:
+                        latent_indices_fake.append(indices_fake_beta)
+
+                    latent_indices_fake = tf.concat(latent_indices_fake,axis=1)
+                    distances_fake = latent_indices_fake[:,tf.newaxis,:] - latent_indices_fake[:,:,tf.newaxis]
+                    distances_fake = tf.layers.flatten(distances_fake)
+
+                    latent_fake = tf.concat((latent_fake,distances_fake),axis=1)
+
 
                     if not isinstance(gene_features, list):
                         latent_fake = tf.concat((latent_fake, gene_features), axis=1)
@@ -801,7 +834,10 @@ class DeepTCR_U(object):
 
                     var_list = tf.trainable_variables()
                     var_train = [x for x in var_list if not x.name.startswith('generator')]
-                    opt_d = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(d_loss+ortho_loss, var_list=var_train)
+                    if ortho_norm is True:
+                        opt_d = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(d_loss+ortho_loss, var_list=var_train)
+                    else:
+                        opt_d = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(d_loss, var_list=var_train)
 
                     var_train = [x for x in var_list if x.name.startswith('generator')]
                     opt_g = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(g_loss, var_list=var_train)
