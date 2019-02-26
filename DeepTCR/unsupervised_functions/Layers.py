@@ -103,7 +103,6 @@ def generator_genes(z,embedding_dim,prob=0.0,training=True,name='generator_genes
 
         return z2
 
-
 def model_loss(logits_real,logits_fake,features_real,features_fake):
 
     #Vanilla GAN
