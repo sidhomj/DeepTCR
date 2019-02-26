@@ -121,7 +121,6 @@ def Get_Train_Test(Vars,test_idx,train_idx,Y=None):
 
     return var_train, var_test
 
-
 def get_batches(x,y, batch_size=10,random=False):
     """ Return a generator that yields batches from arrays x and y. """
     #batch_size = len(x) // n_batches
@@ -311,7 +310,6 @@ def Plot_Feature_Space(seq_f,freq,idx,ax,color_dict=None,classes=None,clustering
 
     return ax.get_xlim(),ax.get_ylim()
 
-
 def t_stat(data, idx_logic):
     # means
     m = [np.mean(data[idx_logic]), np.mean(data[~idx_logic])]
@@ -327,7 +325,6 @@ def t_stat(data, idx_logic):
         out.append(out[0] / np.sqrt((v[0] / np.sum(idx_logic)) + (v[1] / np.sum(~idx_logic))))
 
     return out
-
 
 def randperm_test(data, labels, func, n_perms=100):
     # get metrics with observed labels
