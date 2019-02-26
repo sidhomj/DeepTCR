@@ -259,26 +259,27 @@ class DeepTCR_U(object):
                 beta_sequences = np.asarray([None]*len(X_Seq_alpha))
 
             #transform v/d/j genes into categorical space
+            num_seq = X_Seq_alpha.shape[0]
             if self.use_v_gene is True:
                 self.lb_v = LabelEncoder()
                 v_genes_num = self.lb_v.fit_transform(v_genes)
             else:
                 self.lb_v = LabelEncoder()
-                v_genes_num = np.zeros(shape=[v_genes.shape[0]])
+                v_genes_num = np.zeros(shape=[num_seq])
 
             if self.use_d_gene is True:
                 self.lb_d = LabelEncoder()
                 d_genes_num = self.lb_d.fit_transform(d_genes)
             else:
                 self.lb_d = LabelEncoder()
-                d_genes_num = np.zeros(shape=[d_genes.shape[0]])
+                d_genes_num = np.zeros(shape=[num_seq])
 
             if self.use_j_gene is True:
                 self.lb_j = LabelEncoder()
                 j_genes_num = self.lb_j.fit_transform(j_genes)
             else:
                 self.lb_j = LabelEncoder()
-                j_genes_num = np.zeros(shape=[j_genes.shape[0]])
+                j_genes_num = np.zeros(shape=[num_seq])
 
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
@@ -508,27 +509,27 @@ class DeepTCR_U(object):
             tf.reset_default_graph()
             config = tf.ConfigProto()
             config.gpu_options.allow_growth = True
-            if (self.use_alpha is True) and (self.use_beta is True):
-                X_Seq_Alpha_Feed = self.X_Seq_alpha
-                X_Seq_Beta_Feed = self.X_Seq_beta
-            elif (self.use_alpha is True) and (self.use_beta is False):
-                X_Seq_Alpha_Feed = self.X_Seq_alpha
-                X_Seq_Beta_Feed = np.zeros_like(self.X_Seq_alpha)
-            elif (self.use_alpha is False) and (self.use_beta is True):
-                X_Seq_Alpha_Feed = np.zeros_like(self.X_Seq_beta)
-                X_Seq_Beta_Feed = self.X_Seq_beta
-
 
             with tf.Session(graph=graph_model_AE,config=config) as sess:
                 sess.run(tf.global_variables_initializer())
                 for e in range(epochs):
                     accuracy_list = []
-                    for x_ae_seqa,x_ae_seqb in get_batches_seq2(X_Seq_Alpha_Feed,X_Seq_Beta_Feed, batch_size=batch_size):
+                    Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_genes_num,self.d_genes_num,self.j_genes_num]
+                    for vars in get_batches_gen(Vars, batch_size=batch_size):
                         feed_dict = {training:True}
                         if self.use_alpha is True:
-                            feed_dict[X_Seq_alpha] = x_ae_seqa
+                            feed_dict[X_Seq_alpha] = vars[0]
                         if self.use_beta is True:
-                            feed_dict[X_Seq_beta] = x_ae_seqb
+                            feed_dict[X_Seq_beta] = vars[1]
+
+                        if self.use_v_gene is True:
+                            feed_dict[X_v] = vars[2]
+
+                        if self.use_d_gene is True:
+                            feed_dict[X_d] = vars[3]
+
+                        if self.use_j_gene is True:
+                            feed_dict[X_j] = vars[4]
 
                         train_loss, recon_loss, latent_loss, accuracy_check, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
                         accuracy_list.append(accuracy_check)
@@ -549,11 +550,21 @@ class DeepTCR_U(object):
 
                 features_list = []
                 accuracy_list = []
-                for x_ae_seqa,x_ae_seqb in get_batches_seq2(X_Seq_Alpha_Feed,X_Seq_Beta_Feed, batch_size=batch_size, random=False):
+                Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_genes_num, self.d_genes_num, self.j_genes_num]
+                for vars in get_batches_gen(Vars, batch_size=batch_size, random=False):
                     if self.use_alpha is True:
-                        feed_dict[X_Seq_alpha] = x_ae_seqa
+                        feed_dict[X_Seq_alpha] = vars[0]
                     if self.use_beta is True:
-                        feed_dict[X_Seq_beta] = x_ae_seqb
+                        feed_dict[X_Seq_beta] = vars[1]
+
+                    if self.use_v_gene is True:
+                        feed_dict[X_v] = vars[2]
+
+                    if self.use_d_gene is True:
+                        feed_dict[X_d] = vars[3]
+
+                    if self.use_j_gene is True:
+                        feed_dict[X_j] = vars[4]
 
                     features_ind, accuracy_check = sess.run([z_mean, accuracy], feed_dict=feed_dict)
                     features_list.append(features_ind)
