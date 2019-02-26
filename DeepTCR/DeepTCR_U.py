@@ -824,20 +824,36 @@ class DeepTCR_U(object):
                     if suppress_output is False:
                         print('Epoch: {}'.format(e))
 
-                    Vars =
+                    Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num]
 
-                    for x_seq_a,x_seq_b in get_batches(self.X_Seq_alpha,self.X_Seq_beta,batch_size=batch_size,random=True):
+
+                    for vars in get_batches_gen(Vars,batch_size=batch_size,random=True):
                         step +=1
 
                         feed_dict = {training:True,prob:drop_out_rate}
                         if self.use_alpha is True:
-                            feed_dict[X_Seq_alpha] = x_seq_a
+                            feed_dict[X_Seq_alpha] = vars[0]
                             batch_z_alpha = np.random.normal(size=(batch_size, z_dim))
                             feed_dict[inputs_z_alpha] = batch_z_alpha
                         if self.use_beta is True:
-                            feed_dict[X_Seq_beta] = x_seq_b
+                            feed_dict[X_Seq_beta] = vars[1]
                             batch_z_beta = np.random.normal(size=(batch_size, z_dim))
                             feed_dict[inputs_z_beta] = batch_z_beta
+
+                        if self.use_v_beta is True:
+                            feed_dict[X_v_beta] = vars[2]
+
+                        if self.use_d_beta is True:
+                            feed_dict[X_d_beta] = vars[3]
+
+                        if self.use_j_beta is True:
+                            feed_dict[X_j_beta] = vars[4]
+
+                        if self.use_v_alpha is True:
+                            feed_dict[X_v_alpha] = vars[5]
+
+                        if self.use_j_alpha is True:
+                            feed_dict[X_j_alpha] = vars[6]
 
                         d_loss_i,__= sess.run([d_loss, opt_d], feed_dict=feed_dict)
                         d_loss_list.append(d_loss_i)
@@ -866,12 +882,30 @@ class DeepTCR_U(object):
 
 
                 latent_features = []
-                for x_seq_a, x_seq_b in get_batches(self.X_Seq_alpha, self.X_Seq_beta, batch_size=batch_size):
+                Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,
+                        self.v_alpha_num, self.j_alpha_num]
+
+                for vars in get_batches_gen(Vars, batch_size=batch_size):
                     feed_dict = {}
                     if self.use_alpha is True:
-                        feed_dict[X_Seq_alpha] = x_seq_a
+                        feed_dict[X_Seq_alpha] = vars[0]
                     if self.use_beta is True:
-                        feed_dict[X_Seq_beta] = x_seq_b
+                        feed_dict[X_Seq_beta] = vars[1]
+
+                    if self.use_v_beta is True:
+                        feed_dict[X_v_beta] = vars[2]
+
+                    if self.use_d_beta is True:
+                        feed_dict[X_d_beta] = vars[3]
+
+                    if self.use_j_beta is True:
+                        feed_dict[X_j_beta] = vars[4]
+
+                    if self.use_v_alpha is True:
+                        feed_dict[X_v_alpha] = vars[5]
+
+                    if self.use_j_alpha is True:
+                        feed_dict[X_j_alpha] = vars[6]
 
                     latent_i = sess.run(latent_real,feed_dict=feed_dict)
                     latent_features.append(latent_i)
