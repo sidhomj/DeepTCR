@@ -558,7 +558,7 @@ class DeepTCR_U(object):
                 for e in range(epochs):
                     accuracy_list = []
                     Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num]
-                    for vars in get_batches_gen(Vars, batch_size=batch_size):
+                    for vars in get_batches(Vars, batch_size=batch_size):
                         feed_dict = {training:True}
                         if self.use_alpha is True:
                             feed_dict[X_Seq_alpha] = vars[0]
@@ -601,7 +601,7 @@ class DeepTCR_U(object):
                 accuracy_list = []
                 Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,self.v_alpha_num, self.j_alpha_num]
 
-                for vars in get_batches_gen(Vars, batch_size=batch_size, random=False):
+                for vars in get_batches(Vars, batch_size=batch_size, random=False):
                     if self.use_alpha is True:
                         feed_dict[X_Seq_alpha] = vars[0]
                     if self.use_beta is True:
@@ -827,7 +827,7 @@ class DeepTCR_U(object):
                     Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num]
 
 
-                    for vars in get_batches_gen(Vars,batch_size=batch_size,random=True):
+                    for vars in get_batches(Vars,batch_size=batch_size,random=True):
                         step +=1
 
                         feed_dict = {training:True,prob:drop_out_rate}
@@ -885,7 +885,7 @@ class DeepTCR_U(object):
                 Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,
                         self.v_alpha_num, self.j_alpha_num]
 
-                for vars in get_batches_gen(Vars, batch_size=batch_size):
+                for vars in get_batches(Vars, batch_size=batch_size):
                     feed_dict = {}
                     if self.use_alpha is True:
                         feed_dict[X_Seq_alpha] = vars[0]
