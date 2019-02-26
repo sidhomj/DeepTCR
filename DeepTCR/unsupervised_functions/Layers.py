@@ -34,19 +34,14 @@ def AE_Loss(inputs,logits,z_log_var,z_mean):
     #Calculate Per Sample Variational Loss
     latent_loss = -1e-9 *tf.reduce_sum(1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1)
 
-    total_loss = recon_loss + latent_loss
-    total_loss = tf.reduce_sum(total_loss)
-    recon_loss = tf.reduce_sum(recon_loss)
-    latent_loss = tf.reduce_sum(latent_loss)
-
-    return total_loss,recon_loss,latent_loss
+    return recon_loss,latent_loss
 
 def Get_Gene_Loss(fc,embedding_layer,X_OH):
     upsample1 = tf.layers.dense(fc, 124, tf.nn.relu)
     upsample2 = tf.layers.dense(upsample1, 64, tf.nn.relu)
-    upsample3 = tf.layers.dense(upsample2, 12, tf.nn.relu)
+    upsample3 = tf.layers.dense(upsample2, embedding_layer.shape[1], tf.nn.relu)
     logits = tf.matmul(upsample3, tf.transpose(embedding_layer))
-    loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits_v2(labels=X_OH, logits=logits))
+    loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=X_OH, logits=logits)
     return loss
 
 #Layers for GAN
