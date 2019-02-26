@@ -41,6 +41,14 @@ def AE_Loss(inputs,logits,z_log_var,z_mean):
 
     return total_loss,recon_loss,latent_loss
 
+def Get_Gene_Loss(fc,embedding_layer,X_OH):
+    upsample1 = tf.layers.dense(fc, 124, tf.nn.relu)
+    upsample2 = tf.layers.dense(upsample1, 64, tf.nn.relu)
+    upsample3 = tf.layers.dense(upsample2, 12, tf.nn.relu)
+    logits = tf.matmul(upsample3, tf.transpose(embedding_layer))
+    loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits_v2(labels=X_OH, logits=logits))
+    return loss
+
 #Layers for GAN
 
 def Convolutional_Features_GAN(inputs,reuse=False,training=False,prob=0.0,kernel=3,units=256,name='Convolutional_Features'):

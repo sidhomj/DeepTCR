@@ -44,7 +44,7 @@ class DeepTCR_U(object):
         #Assign parameters
         self.Name = Name
         self.max_length = max_length
-        self.use_beta = True
+        self.use_beta = False
         self.use_alpha = False
         self.device = device
         self.use_v_gene = False
@@ -145,9 +145,19 @@ class DeepTCR_U(object):
             if aa_column_alpha is not None:
                 self.use_alpha = True
 
-            if (aa_column_beta is None) and (aa_column_alpha is not None):
-                self.use_beta = False
+            if aa_column_beta is not None:
+                self.use_beta = True
 
+            if v_gene_column is not None:
+                self.use_v_gene = True
+
+            if d_gene_column is not None:
+                self.use_d_gene = True
+
+            if j_gene_column is not None:
+                self.use_j_gene = True
+
+            #Determine classes based on directory names
             if classes is None:
                 classes = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory,d))]
                 classes = [f for f in classes if not f.startswith('.')]
@@ -166,6 +176,7 @@ class DeepTCR_U(object):
                 print('Not Valid Delimiter')
                 return
 
+            #Get data from tcr-seq files
             alpha_sequences = []
             beta_sequences = []
             v_genes = []
@@ -208,9 +219,6 @@ class DeepTCR_U(object):
                     if j_gene_column is not None:
                         j_genes += df['j_gene'].tolist()
 
-                    check=1
-
-
                     label_id += [type] * len(df)
                     file_id += [file.split('/')[-1]] * len(df)
                     file_list.append(file.split('/')[-1])
@@ -218,10 +226,14 @@ class DeepTCR_U(object):
 
             alpha_sequences = np.asarray(alpha_sequences)
             beta_sequences = np.asarray(beta_sequences)
+            v_genes = np.asarray(v_genes)
+            d_genes = np.asarray(d_genes)
+            j_genes = np.asarray(j_genes)
             label_id = np.asarray(label_id)
             file_id = np.asarray(file_id)
             freq = np.asarray(freq)
 
+            #transform sequences into numerical space
             if aa_column_alpha is not None:
                 args = list(zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
                 result = p.starmap(Embed_Seq_Num, args)
@@ -230,12 +242,6 @@ class DeepTCR_U(object):
 
             if aa_column_beta is not None:
                 args = list(zip(beta_sequences, [self.aa_idx] * len(beta_sequences),  [self.max_length] * len(beta_sequences)))
-                result = p.starmap(Embed_Seq_Num, args)
-                sequences_num = np.vstack(result)
-                X_Seq_beta = np.expand_dims(sequences_num, 1)
-
-            if (aa_column_alpha is None) and (aa_column_beta is None):
-                args = list(zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length] * len(beta_sequences)))
                 result = p.starmap(Embed_Seq_Num, args)
                 sequences_num = np.vstack(result)
                 X_Seq_beta = np.expand_dims(sequences_num, 1)
@@ -252,13 +258,45 @@ class DeepTCR_U(object):
                 X_Seq_beta = np.zeros_like(X_Seq_alpha)
                 beta_sequences = np.asarray([None]*len(X_Seq_alpha))
 
+            #transform v/d/j genes into categorical space
+            if self.use_v_gene is True:
+                self.lb_v = LabelEncoder()
+                v_genes_num = self.lb_v.fit_transform(v_genes)
+            else:
+                self.lb_v = LabelEncoder()
+                v_genes_num = np.zeros(shape=[v_genes.shape[0]])
+
+            if self.use_d_gene is True:
+                self.lb_d = LabelEncoder()
+                d_genes_num = self.lb_d.fit_transform(d_genes)
+            else:
+                self.lb_d = LabelEncoder()
+                d_genes_num = np.zeros(shape=[d_genes.shape[0]])
+
+            if self.use_j_gene is True:
+                self.lb_j = LabelEncoder()
+                j_genes_num = self.lb_j.fit_transform(j_genes)
+            else:
+                self.lb_j = LabelEncoder()
+                j_genes_num = np.zeros(shape=[j_genes.shape[0]])
+
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
-                pickle.dump([X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,self.lb,file_list,self.use_alpha,self.use_beta],f,protocol=4)
+                pickle.dump([X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,
+                             self.lb,file_list,self.use_alpha,self.use_beta,
+                             self.lb_v, self.lb_d, self.lb_j,
+                             v_genes, d_genes,j_genes,
+                             v_genes_num, d_genes_num, j_genes_num,
+                             self.use_v_gene,self.use_d_gene,self.use_j_gene],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
-                X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,self.lb,file_list,self.use_alpha,self.use_beta = pickle.load(f)
+                X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,\
+                self.lb,file_list,self.use_alpha,self.use_beta,\
+                    self.lb_v, self.lb_d, self.lb_j,\
+                    v_genes, d_genes,j_genes,\
+                    v_genes_num, d_genes_num, j_genes_num,\
+                    self.use_v_gene,self.use_d_gene,self.use_j_gene = pickle.load(f)
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
@@ -268,6 +306,12 @@ class DeepTCR_U(object):
         self.file_id = file_id
         self.freq = freq
         self.file_list = file_list
+        self.v_genes = v_genes
+        self.v_genes_num = v_genes_num
+        self.d_genes = d_genes
+        self.d_genes_num = d_genes_num
+        self.j_genes = j_genes
+        self.j_genes_num = j_genes_num
         print('Data Loaded')
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False):
@@ -316,6 +360,34 @@ class DeepTCR_U(object):
                         X_Seq_beta = tf.placeholder(tf.int64, shape=[None, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2]],name='Input_Beta')
                         X_Seq_beta_OH = tf.one_hot(X_Seq_beta, depth=21)
 
+                    embedding_dim_genes = 12
+                    gene_features = []
+                    if self.use_v_gene is True:
+                        X_v = tf.placeholder(tf.int64,shape=[None,],name='Input_V')
+                        X_v_OH = tf.one_hot(X_v,depth=len(self.lb_v.classes_))
+                        embedding_layer_v = tf.get_variable(name='Embedding_V', shape=[len(self.lb_v.classes_), embedding_dim_genes])
+                        X_v_embed = tf.matmul(X_v_OH,embedding_layer_v)
+                        gene_features.append(X_v_embed)
+
+                    if self.use_d_gene is True:
+                        X_d = tf.placeholder(tf.int64,shape=[None,],name='Input_D')
+                        X_d_OH = tf.one_hot(X_d,depth=len(self.lb_d.classes_))
+                        embedding_layer_d = tf.get_variable(name='Embedding_D', shape=[len(self.lb_d.classes_), embedding_dim_genes])
+                        X_d_embed = tf.matmul(X_d_OH,embedding_layer_d)
+                        gene_features.append(X_d_embed)
+
+
+                    if self.use_j_gene is True:
+                        X_j = tf.placeholder(tf.int64,shape=[None,],name='Input_J')
+                        X_j_OH = tf.one_hot(X_j,depth=len(self.lb_j.classes_))
+                        embedding_layer_j = tf.get_variable(name='Embedding_J', shape=[len(self.lb_j.classes_), embedding_dim_genes])
+                        X_j_embed = tf.matmul(X_j_OH,embedding_layer_j)
+                        gene_features.append(X_j_embed)
+
+                    if gene_features:
+                        gene_features = tf.concat(gene_features,axis=1)
+
+
                     training = tf.placeholder_with_default(False, shape=())
                     prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
 
@@ -344,6 +416,8 @@ class DeepTCR_U(object):
                     elif (self.use_alpha is False) and (self.use_beta is True):
                         Seq_Features = Seq_Features_beta
 
+                    if not isinstance(gene_features,list):
+                        Seq_Features = tf.concat((Seq_Features,gene_features),axis=1)
 
                     fc = tf.layers.dense(Seq_Features, 256)
                     fc = tf.layers.dense(fc, 128)
@@ -356,6 +430,7 @@ class DeepTCR_U(object):
 
                     fc_up = tf.layers.dense(z, 128)
                     fc_up = tf.layers.dense(fc_up, 256)
+                    fc_up_flat = fc_up
                     fc_up = tf.reshape(fc_up, shape=[-1, 1, 4, 64])
 
                     if self.use_beta is True:
@@ -395,18 +470,33 @@ class DeepTCR_U(object):
                         correct_ae_alpha = tf.reduce_sum(w * tf.cast(tf.equal(predicted_alpha, actual_ae_alpha), tf.float32), axis=1) / tf.reduce_sum(w, axis=1)
                         accuracy_alpha = tf.reduce_mean(correct_ae_alpha, axis=0)
 
+                    gene_loss = []
+                    if self.use_v_gene is True:
+                        v_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_v,X_v_OH)
+                        gene_loss.append(v_loss)
+
+                    if self.use_d_gene is True:
+                        d_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_d,X_d_OH)
+                        gene_loss.append(d_loss)
+
+                    if self.use_j_gene is True:
+                        j_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_j,X_j_OH)
+                        gene_loss.append(j_loss)
+
+                    gene_loss = tf.reduce_sum(gene_loss)
+
 
                     if (self.use_alpha is True) and (self.use_beta is True):
-                        total_cost = recon_cost_beta + recon_cost_alpha + latent_cost
-                        recon_cost = recon_cost_alpha + recon_cost_beta
+                        total_cost = recon_cost_beta + recon_cost_alpha + latent_cost + gene_loss
+                        recon_cost = recon_cost_alpha + recon_cost_beta + gene_loss
                         accuracy = (accuracy_alpha + accuracy_beta)/2
                     elif (self.use_alpha is True) and (self.use_beta is False):
-                        total_cost = total_cost_alpha
-                        recon_cost = recon_cost_alpha
+                        total_cost = total_cost_alpha + gene_loss
+                        recon_cost = recon_cost_alpha + gene_loss
                         accuracy = accuracy_alpha
                     elif (self.use_alpha is False) and (self.use_beta is True):
-                        total_cost = total_cost_beta
-                        recon_cost = recon_cost_beta
+                        total_cost = total_cost_beta + gene_loss
+                        recon_cost = recon_cost_beta + gene_loss
                         accuracy = accuracy_beta
 
                     opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
