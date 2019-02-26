@@ -149,13 +149,13 @@ class DeepTCR_U(object):
                 self.use_beta = True
 
             if v_beta_column is not None:
-                self.use_v_gene = True
+                self.use_v_beta = True
 
             if d_beta_column is not None:
-                self.use_d_gene = True
+                self.use_d_beta = True
 
             if j_beta_column is not None:
-                self.use_j_gene = True
+                self.use_j_beta = True
 
             #Determine classes based on directory names
             if classes is None:
@@ -269,14 +269,14 @@ class DeepTCR_U(object):
 
             if self.use_d_beta is True:
                 self.lb_d_beta = LabelEncoder()
-                d_beta_num = self.lb_d.fit_transform(d_beta)
+                d_beta_num = self.lb_d_beta.fit_transform(d_beta)
             else:
                 self.lb_d_beta = LabelEncoder()
                 d_beta_num = np.zeros(shape=[num_seq])
 
             if self.use_j_beta is True:
                 self.lb_j_beta = LabelEncoder()
-                j_beta_num = self.lb_j.fit_transform(j_beta)
+                j_beta_num = self.lb_j_beta.fit_transform(j_beta)
             else:
                 self.lb_j_beta = LabelEncoder()
                 j_beta_num = np.zeros(shape=[num_seq])
@@ -477,17 +477,17 @@ class DeepTCR_U(object):
                         accuracies.append(accuracy_alpha)
 
                     gene_loss = []
-                    if self.use_v_gene is True:
-                        v_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_v,X_v_OH)
-                        gene_loss.append(v_loss)
+                    if self.use_v_beta is True:
+                        v_beta_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_v_beta,X_v_beta_OH)
+                        gene_loss.append(v_beta_loss)
 
-                    if self.use_d_gene is True:
-                        d_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_d,X_d_OH)
-                        gene_loss.append(d_loss)
+                    if self.use_d_beta is True:
+                        d_beta_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_d_beta,X_d_beta_OH)
+                        gene_loss.append(d_beta_loss)
 
-                    if self.use_j_gene is True:
-                        j_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_j,X_j_OH)
-                        gene_loss.append(j_loss)
+                    if self.use_j_beta is True:
+                        j_beta_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_j_beta,X_j_beta_OH)
+                        gene_loss.append(j_beta_loss)
 
 
                     recon_losses = recon_losses + gene_loss
@@ -525,7 +525,7 @@ class DeepTCR_U(object):
                 sess.run(tf.global_variables_initializer())
                 for e in range(epochs):
                     accuracy_list = []
-                    Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_genes_num,self.d_genes_num,self.j_genes_num]
+                    Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num]
                     for vars in get_batches_gen(Vars, batch_size=batch_size):
                         feed_dict = {training:True}
                         if self.use_alpha is True:
@@ -533,14 +533,14 @@ class DeepTCR_U(object):
                         if self.use_beta is True:
                             feed_dict[X_Seq_beta] = vars[1]
 
-                        if self.use_v_gene is True:
-                            feed_dict[X_v] = vars[2]
+                        if self.use_v_beta is True:
+                            feed_dict[X_v_beta] = vars[2]
 
-                        if self.use_d_gene is True:
-                            feed_dict[X_d] = vars[3]
+                        if self.use_d_beta is True:
+                            feed_dict[X_d_beta] = vars[3]
 
-                        if self.use_j_gene is True:
-                            feed_dict[X_j] = vars[4]
+                        if self.use_j_beta is True:
+                            feed_dict[X_j_beta] = vars[4]
 
                         train_loss, recon_loss, latent_loss, accuracy_check, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
                         accuracy_list.append(accuracy_check)
@@ -561,21 +561,21 @@ class DeepTCR_U(object):
 
                 features_list = []
                 accuracy_list = []
-                Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_genes_num, self.d_genes_num, self.j_genes_num]
+                Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num]
                 for vars in get_batches_gen(Vars, batch_size=batch_size, random=False):
                     if self.use_alpha is True:
                         feed_dict[X_Seq_alpha] = vars[0]
                     if self.use_beta is True:
                         feed_dict[X_Seq_beta] = vars[1]
 
-                    if self.use_v_gene is True:
-                        feed_dict[X_v] = vars[2]
+                    if self.use_v_beta is True:
+                        feed_dict[X_v_beta] = vars[2]
 
-                    if self.use_d_gene is True:
-                        feed_dict[X_d] = vars[3]
+                    if self.use_d_beta is True:
+                        feed_dict[X_d_beta] = vars[3]
 
-                    if self.use_j_gene is True:
-                        feed_dict[X_j] = vars[4]
+                    if self.use_j_beta is True:
+                        feed_dict[X_j_beta] = vars[4]
 
                     features_ind, accuracy_check = sess.run([z_mean, accuracy], feed_dict=feed_dict)
                     features_list.append(features_ind)
