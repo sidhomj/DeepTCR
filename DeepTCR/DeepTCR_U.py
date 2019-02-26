@@ -374,7 +374,7 @@ class DeepTCR_U(object):
                         X_d_beta = tf.placeholder(tf.int64,shape=[None,],name='Input_D_Beta')
                         X_d_beta_OH = tf.one_hot(X_d_beta,depth=len(self.lb_d_beta.classes_))
                         embedding_layer_d_beta = tf.get_variable(name='Embedding_D_beta', shape=[len(self.lb_d_beta.classes_), embedding_dim_genes])
-                        X_d_beta_embed = tf.matmul(X_d_OH,embedding_layer_d_beta)
+                        X_d_beta_embed = tf.matmul(X_d_beta_OH,embedding_layer_d_beta)
                         gene_features.append(X_d_beta_embed)
 
 
