@@ -47,6 +47,9 @@ class DeepTCR_U(object):
         self.use_beta = True
         self.use_alpha = False
         self.device = device
+        self.use_v_gene = False
+        self.use_d_gene = False
+        self.use_j_gene = False
 
         #Create dataframes for assigning AA to ints
         aa_idx, aa_mat = make_aa_df()
@@ -66,7 +69,8 @@ class DeepTCR_U(object):
             os.makedirs(directory)
 
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
-                    aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True):
+                    aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
+                    v_gene_column=None,j_gene_column=None,d_gene_column=None):
         """
         Get Data for Unsupervised Deep Learning Methods.
 
@@ -164,6 +168,9 @@ class DeepTCR_U(object):
 
             alpha_sequences = []
             beta_sequences = []
+            v_genes = []
+            d_genes = []
+            j_genes = []
             label_id = []
             file_id = []
             freq = []
@@ -179,7 +186,10 @@ class DeepTCR_U(object):
                                 [count_column] * num_ins,
                                 [sep] * num_ins,
                                 [self.max_length]*num_ins,
-                                [aggregate_by_aa]*num_ins))
+                                [aggregate_by_aa]*num_ins,
+                                [v_gene_column]*num_ins,
+                                [d_gene_column]*num_ins,
+                                [j_gene_column]*num_ins))
 
                 DF = p.starmap(Get_DF_Data, args)
 
@@ -189,8 +199,16 @@ class DeepTCR_U(object):
                     if aa_column_beta is not None:
                         beta_sequences += df['beta'].tolist()
 
-                    if (aa_column_alpha is None) and (aa_column_beta is None):
-                        beta_sequences += df['beta'].tolist()
+                    if v_gene_column is not None:
+                        v_genes += df['v_gene'].tolist()
+
+                    if d_gene_column is not None:
+                        d_genes += df['d_gene'].tolist()
+
+                    if j_gene_column is not None:
+                        j_genes += df['j_gene'].tolist()
+
+                    check=1
 
 
                     label_id += [type] * len(df)
