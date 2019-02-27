@@ -301,6 +301,7 @@ class DeepTCR_U(object):
             else:
                 self.lb_v_beta = LabelEncoder()
                 v_beta_num = np.zeros(shape=[num_seq])
+                v_beta = np.asarray([None]*len(label_id))
 
             if self.use_d_beta is True:
                 self.lb_d_beta = LabelEncoder()
@@ -308,6 +309,7 @@ class DeepTCR_U(object):
             else:
                 self.lb_d_beta = LabelEncoder()
                 d_beta_num = np.zeros(shape=[num_seq])
+                d_beta = np.asarray([None]*len(label_id))
 
             if self.use_j_beta is True:
                 self.lb_j_beta = LabelEncoder()
@@ -315,6 +317,7 @@ class DeepTCR_U(object):
             else:
                 self.lb_j_beta = LabelEncoder()
                 j_beta_num = np.zeros(shape=[num_seq])
+                j_beta = np.asarray([None]*len(label_id))
 
             if self.use_v_alpha is True:
                 self.lb_v_alpha = LabelEncoder()
@@ -322,6 +325,7 @@ class DeepTCR_U(object):
             else:
                 self.lb_v_alpha = LabelEncoder()
                 v_alpha_num = np.zeros(shape=[num_seq])
+                v_alpha = np.asarray([None]*len(label_id))
 
             if self.use_j_alpha is True:
                 self.lb_j_alpha = LabelEncoder()
@@ -329,7 +333,7 @@ class DeepTCR_U(object):
             else:
                 self.lb_j_alpha = LabelEncoder()
                 j_alpha_num = np.zeros(shape=[num_seq])
-
+                j_alpha = np.asarray([None]*len(label_id))
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
                 pickle.dump([X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,
@@ -1234,6 +1238,11 @@ class DeepTCR_U(object):
                 df['Labels'] = label
                 df['File'] = file
                 df['Frequency'] = freq
+                df['V_alpha'] = self.v_alpha[sel]
+                df['J_alpha'] = self.j_alpha[sel]
+                df['V_beta'] = self.v_beta[sel]
+                df['D_beta'] = self.d_beta[sel]
+                df['J_beta'] = self.j_beta[sel]
 
                 df_sum = df.groupby(by='File', sort=False).agg({'Frequency': 'sum'})
 

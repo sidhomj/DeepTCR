@@ -9,16 +9,17 @@ DTCRU = DeepTCR_U('Dash')
 # DTCRU.Get_Data(directory='../Data/Dash/Traditional/Human',Load_Prev_Data=False,aggregate_by_aa=False,
 #                aa_column_alpha=0,aa_column_beta=1,count_column=2,v_alpha_column=3,j_alpha_column=4,v_beta_column=5,j_beta_column=6)
 
-DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=True,aggregate_by_aa=False,aa_column_beta=1,count_column=2)
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=False,aa_column_beta=None,count_column=None,
+               v_beta_column=7,d_beta_column=14,j_beta_column=21)
 
 #Choose Method to Analyze
-method_dim = 'GAN' #Set to 'VAE' or 'GAN'
+method_dim = 'VAE' #Set to 'VAE' or 'GAN'
 
 #Get Feature from VAE/GAN
 if method_dim is 'GAN':
     DTCRU.Train_GAN(Load_Prev_Data=False,latent_dim=256,ortho_norm=False,use_distances=False)
 else:
-    DTCRU.Train_VAE(accuracy_min=0.9,Load_Prev_Data=False)
+    DTCRU.Train_VAE(accuracy_min=0.9,Load_Prev_Data=True)
 
 #Collect data for plots
 x = []
@@ -26,13 +27,14 @@ y = []
 
 num_steps = 10
 max = 30
+min=0.001
 
 if method_dim is 'GAN':
     #GAN
-    r = np.logspace(np.log10(1),np.log10(max),num_steps)
+    r = np.logspace(np.log10(min),np.log10(max),num_steps)
 else:
     # VAE
-    r = np.logspace(np.log10(1), np.log10(max), num_steps)
+    r = np.logspace(np.log10(min), np.log10(max), num_steps)
 
 total_seq = len(DTCRU.X_Seq_alpha)
 df_look = []
@@ -71,7 +73,7 @@ df_out['Percent Clustered'] = 100*np.asarray(x)
 df_out['Percent Correctly Clustered'] = 100*np.asarray(y)
 df_out['Number of Clusters'] = num_clusters
 df_out['Length Variance of Clusters'] = variance
-df_out.to_csv(method_dim+'_Sidhom.csv',index=False)
+df_out.to_csv(method_dim+'_Sidhom_Genes.csv',index=False)
 
 #Plot Performance
 sns.regplot(data=df_out,x='Percent Clustered',y='Percent Correctly Clustered',fit_reg=False)
