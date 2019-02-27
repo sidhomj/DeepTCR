@@ -22,7 +22,7 @@ def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='C
 
         return tf.layers.flatten(conv)
 
-def Recon_Loss(inputs,logits,z_log_var,z_mean):
+def Recon_Loss(inputs,logits):
     #Calculate Per Sample Reconstruction Loss
     shape_layer_1 = inputs.get_shape().as_list()
     shape_layer_2 = tf.shape(inputs)
