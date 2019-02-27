@@ -22,8 +22,7 @@ def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='C
 
         return tf.layers.flatten(conv)
 
-def AE_Loss(inputs,logits,z_log_var,z_mean):
-
+def Recon_Loss(inputs,logits,z_log_var,z_mean):
     #Calculate Per Sample Reconstruction Loss
     shape_layer_1 = inputs.get_shape().as_list()
     shape_layer_2 = tf.shape(inputs)
@@ -31,11 +30,12 @@ def AE_Loss(inputs,logits,z_log_var,z_mean):
     recon_loss = tf.reshape(recon_loss,shape=[shape_layer_2[0]*shape_layer_2[1],shape_layer_1[2]])
     w=tf.cast(tf.squeeze(tf.greater(inputs,0),1),tf.float32)
     recon_loss = tf.reduce_mean(w*recon_loss,axis=1)
+    return recon_loss
 
+def Latent_Loss(z_log_var,z_mean):
     #Calculate Per Sample Variational Loss
     latent_loss = -1e-9 *tf.reduce_sum(1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1)
-
-    return recon_loss,latent_loss
+    return latent_loss
 
 def Get_Gene_Loss(fc,embedding_layer,X_OH):
     upsample1 = tf.layers.dense(fc, 124, tf.nn.relu)
@@ -43,7 +43,12 @@ def Get_Gene_Loss(fc,embedding_layer,X_OH):
     upsample3 = tf.layers.dense(upsample2, embedding_layer.shape[1], tf.nn.relu)
     logits = tf.matmul(upsample3, tf.transpose(embedding_layer))
     loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=X_OH, logits=logits)
-    return loss
+
+    predicted = tf.argmax(logits,1)
+    actual = tf.argmax(X_OH,1)
+    accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted,actual),tf.float32))
+
+    return loss,accuracy
 
 #Layers for GAN
 
