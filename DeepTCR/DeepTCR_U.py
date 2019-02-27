@@ -455,8 +455,10 @@ class DeepTCR_U(object):
                     if self.use_beta is True:
                         Seq_Features.append(Seq_Features_beta)
 
-                    if not isinstance(Seq_Features,list):
+                    if Seq_Features:
                         Seq_Features = tf.concat(Seq_Features,axis=1)
+
+                    if not isinstance(Seq_Features,list):
                         if not isinstance(gene_features, list):
                             Seq_Features = tf.concat((Seq_Features, gene_features), axis=1)
                     else:

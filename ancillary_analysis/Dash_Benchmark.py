@@ -6,15 +6,14 @@ import seaborn as sns
 
 #Instantiate training object
 DTCRU = DeepTCR_U('Dash')
+DTCRU.Get_Data(directory='../Data/Dash/Traditional/Human',Load_Prev_Data=False,aggregate_by_aa=False,
+               aa_column_alpha=0,aa_column_beta=1,count_column=2,v_alpha_column=3,j_alpha_column=4,v_beta_column=5,j_beta_column=6)
+
 # DTCRU.Get_Data(directory='../Data/Dash/Traditional/Human',Load_Prev_Data=False,aggregate_by_aa=False,
-#                aa_column_alpha=0,aa_column_beta=1,count_column=2,v_alpha_column=3,j_alpha_column=4,v_beta_column=5,j_beta_column=6)
-
-DTCRU.Get_Data(directory='../Data/Dash/Traditional/Human',Load_Prev_Data=True,aggregate_by_aa=False,
-               aa_column_alpha=0,aa_column_beta=1,count_column=2)
-
+#                aa_column_alpha=0,aa_column_beta=1,count_column=2)
 
 #Choose Method to Analyze
-method_dim = 'GAN' #Set to 'VAE' or 'GAN'
+method_dim = 'VAE' #Set to 'VAE' or 'GAN'
 
 #Get Feature from VAE/GAN
 if method_dim is 'GAN':

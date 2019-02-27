@@ -9,15 +9,15 @@ DTCRU = DeepTCR_U('Dash')
 # DTCRU.Get_Data(directory='../Data/Dash/Traditional/Human',Load_Prev_Data=False,aggregate_by_aa=False,
 #                aa_column_alpha=0,aa_column_beta=1,count_column=2,v_alpha_column=3,j_alpha_column=4,v_beta_column=5,j_beta_column=6)
 
-DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=False,aa_column_beta=None,count_column=None,
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=False,aa_column_beta=1,count_column=None,
                v_beta_column=7,d_beta_column=14,j_beta_column=21)
 
 #Choose Method to Analyze
-method_dim = 'VAE' #Set to 'VAE' or 'GAN'
+method_dim = 'GAN' #Set to 'VAE' or 'GAN'
 
 #Get Feature from VAE/GAN
 if method_dim is 'GAN':
-    DTCRU.Train_GAN(Load_Prev_Data=False,latent_dim=256,ortho_norm=False,use_distances=False)
+    DTCRU.Train_GAN(Load_Prev_Data=False,latent_dim=256,ortho_norm=True,use_distances=False)
 else:
     DTCRU.Train_VAE(accuracy_min=0.9,Load_Prev_Data=True)
 
@@ -27,7 +27,7 @@ y = []
 
 num_steps = 10
 max = 30
-min=0.001
+min=0.01
 
 if method_dim is 'GAN':
     #GAN
@@ -73,7 +73,7 @@ df_out['Percent Clustered'] = 100*np.asarray(x)
 df_out['Percent Correctly Clustered'] = 100*np.asarray(y)
 df_out['Number of Clusters'] = num_clusters
 df_out['Length Variance of Clusters'] = variance
-df_out.to_csv(method_dim+'_Sidhom_Genes.csv',index=False)
+df_out.to_csv(method_dim+'_Sidhom_Seq_Genes_ortho.csv',index=False)
 
 #Plot Performance
 sns.regplot(data=df_out,x='Percent Clustered',y='Percent Correctly Clustered',fit_reg=False)
@@ -100,5 +100,20 @@ sns.lineplot(data=df_gan,x='Percent Clustered',y='Length Variance of Clusters',l
 sns.lineplot(data=df_vae,x='Percent Clustered',y='Length Variance of Clusters',label='VAE',ax=ax2)
 ax1.set_xlabel('')
 plt.savefig('Cluster_Characteristics_Sidhom.tif')
+
+#Characterize performance between seq,genes, seq+genes
+files = ['VAE_Sidhom_Seq.csv','VAE_Sidhom_Genes.csv','VAE_Sidhom_Seq_Genes.csv','GAN_Sidhom_Seq_Genes.csv','GAN_Sidhom_Seq_Genes_ortho.csv']
+dfs= []
+for file in files:
+    dfs.append(pd.read_csv(file))
+
+plt.figure()
+sns.set(font_scale=1.0)
+for df,file in zip(dfs,files):
+    sns.lineplot(data=df, x='Percent Clustered', y='Percent Correctly Clustered', label=file)
+#plt.ylim(0,100)
+plt.legend()
+
+
 
 

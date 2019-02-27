@@ -12,7 +12,7 @@ DTCRU = DeepTCR_U('Glanville')
 DTCRU.Get_Data(directory='../Data/Glanville',Load_Prev_Data=False,aggregate_by_aa=False,aa_column_beta=1,count_column=2)
 
 #Choose Method to Analyze
-method_dim = 'GAN' #Set to 'VAE' or 'GAN'
+method_dim = 'VAE' #Set to 'VAE' or 'GAN'
 
 #Get Feature from VAE/GAN
 if method_dim is 'GAN':
