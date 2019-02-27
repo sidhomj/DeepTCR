@@ -85,7 +85,9 @@ def rbf_layer(x,units,name='rbf_layer',reuse=False):
     with tf.variable_scope(name,reuse=reuse):
         y = tf.layers.dense(x, units, use_bias=False)
         mu = tf.get_variable(name='mu', shape=y.shape[1])
-        distances = tf.exp(-tf.square(mu - y))
+        e = tf.get_variable(name='e',shape=y.shape[1])
+        r = tf.abs(mu-y)
+        distances = tf.exp(-tf.square(e*r))
         return distances
 
 

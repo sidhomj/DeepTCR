@@ -120,14 +120,18 @@ def model_loss(logits_real,logits_fake,features_real,features_fake):
 
     return d_loss,g_loss
 
-def discriminator(features,indices,gene_features,name='discriminator',reuse=False,use_distances=False):
+def discriminator(features,indices,gene_features,name='discriminator',reuse=False,use_distances=False,num_fc=None):
     with tf.variable_scope(name,reuse=reuse):
-        distances = rbf_layer(indices,12)
+        distances = rbf_layer(indices,64)
         if use_distances is True:
             features = tf.concat((features,distances),axis=1)
 
         if not isinstance(gene_features, list):
             features = tf.concat((features, gene_features), axis=1)
+
+        if num_fc is not None:
+            for n in range(num_fc):
+                features = tf.layers.dense(features,256,tf.nn.relu)
 
         logits = tf.layers.dense(features,1)
         return logits,features

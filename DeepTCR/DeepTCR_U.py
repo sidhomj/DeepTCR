@@ -752,7 +752,8 @@ class DeepTCR_U(object):
 
                     latent_indices_real = tf.concat(latent_indices_real,axis=1)
 
-                    logits_real,latent_real = discriminator(latent_real,latent_indices_real,gene_features,use_distances=use_distances)
+                    num_desc_fc = 1
+                    logits_real,latent_real = discriminator(latent_real,latent_indices_real,gene_features,use_distances=use_distances,num_fc=num_desc_fc)
                     latent_real = tf.identity(latent_real,'latent_real')
                     ortho_loss = Get_Ortho_Loss(latent_real)
 
@@ -808,7 +809,7 @@ class DeepTCR_U(object):
 
                     latent_indices_fake = tf.concat(latent_indices_fake,axis=1)
 
-                    logits_fake,latent_fake = discriminator(latent_fake,latent_indices_fake,gene_features,reuse=True,use_distances=use_distances)
+                    logits_fake,latent_fake = discriminator(latent_fake,latent_indices_fake,gene_features,reuse=True,use_distances=use_distances,num_fc=num_desc_fc)
                     latent_fake = tf.identity(latent_fake, 'latent_fake')
 
                     d_loss, g_loss = model_loss(logits_real, logits_fake,latent_real,latent_fake)
@@ -848,13 +849,14 @@ class DeepTCR_U(object):
                         step +=1
 
                         feed_dict = {training:True,prob:drop_out_rate}
+                        input_batch = np.random.normal(size=(batch_size, z_dim))
                         if self.use_alpha is True:
                             feed_dict[X_Seq_alpha] = vars[0]
-                            batch_z_alpha = np.random.normal(size=(batch_size, z_dim))
+                            batch_z_alpha = input_batch
                             feed_dict[inputs_z_alpha] = batch_z_alpha
                         if self.use_beta is True:
                             feed_dict[X_Seq_beta] = vars[1]
-                            batch_z_beta = np.random.normal(size=(batch_size, z_dim))
+                            batch_z_beta = input_batch
                             feed_dict[inputs_z_beta] = batch_z_beta
 
                         if self.use_v_beta is True:

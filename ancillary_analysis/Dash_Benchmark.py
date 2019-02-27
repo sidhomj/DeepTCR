@@ -1,6 +1,3 @@
-"""This script is used to benchmark the performance and cluster characteristics of the VAE/GAN on the Glanville et.al
-antigen-specific dataset. The dataset consists of 2066 sequences across 7 Class I specificities."""
-
 from DeepTCR.DeepTCR_U import DeepTCR_U
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,8 +5,13 @@ import pandas as pd
 import seaborn as sns
 
 #Instantiate training object
-DTCRU = DeepTCR_U('Glanville')
-DTCRU.Get_Data(directory='../Data/Glanville',Load_Prev_Data=True,aggregate_by_aa=False,aa_column_beta=1,count_column=2)
+DTCRU = DeepTCR_U('Dash')
+# DTCRU.Get_Data(directory='../Data/Dash/Traditional/Human',Load_Prev_Data=False,aggregate_by_aa=False,
+#                aa_column_alpha=0,aa_column_beta=1,count_column=2,v_alpha_column=3,j_alpha_column=4,v_beta_column=5,j_beta_column=6)
+
+DTCRU.Get_Data(directory='../Data/Dash/Traditional/Human',Load_Prev_Data=True,aggregate_by_aa=False,
+               aa_column_alpha=0,aa_column_beta=1,count_column=2)
+
 
 #Get Feature from VAE/GAN
 #DTCRU.Train_VAE(accuracy_min=0.9,Load_Prev_Data=False)
@@ -22,7 +24,7 @@ y = []
 #Choose Method to Analyze
 method_dim = 'GAN' #Set to 'VAE' or 'GAN'
 num_steps = 10
-max = 15
+max = 30
 
 if method_dim is 'GAN':
     #GAN
@@ -30,7 +32,6 @@ if method_dim is 'GAN':
 else:
     # VAE
     r = np.logspace(np.log10(1), np.log10(max), num_steps)
-
 
 total_seq = len(DTCRU.X_Seq_alpha)
 df_look = []
@@ -98,15 +99,5 @@ sns.lineplot(data=df_gan,x='Percent Clustered',y='Length Variance of Clusters',l
 sns.lineplot(data=df_vae,x='Percent Clustered',y='Length Variance of Clusters',label='VAE',ax=ax2)
 ax1.set_xlabel('')
 plt.savefig('Cluster_Characteristics.tif')
-
-
-
-
-
-
-
-
-
-
 
 
