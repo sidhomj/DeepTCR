@@ -285,13 +285,13 @@ class DeepTCR_U(object):
             p.close()
             p.join()
 
-            if (self.use_beta is True) and (self.use_alpha is False):
-                X_Seq_alpha = np.zeros_like(X_Seq_beta)
-                alpha_sequences = np.asarray([None]*len(X_Seq_beta))
+            if self.use_alpha is False:
+                X_Seq_alpha = np.zeros(shape=[len(label_id)])
+                alpha_sequences = np.asarray([None]*len(label_id))
 
-            if (self.use_beta is False) and (self.use_alpha is True):
-                X_Seq_beta = np.zeros_like(X_Seq_alpha)
-                beta_sequences = np.asarray([None]*len(X_Seq_alpha))
+            if self.use_beta is False:
+                X_Seq_beta = np.zeros(shape=[len(label_id)])
+                beta_sequences = np.asarray([None]*len(label_id))
 
             #transform v/d/j genes into categorical space
             num_seq = X_Seq_alpha.shape[0]
@@ -445,21 +445,26 @@ class DeepTCR_U(object):
                         Seq_Features_beta = Convolutional_Features_AE(inputs_seq_embed_beta, training=training, prob=prob,name='beta_conv')
 
 
-                    if (self.use_alpha is True) and (self.use_beta is True):
-                        Seq_Features = tf.concat((Seq_Features_alpha, Seq_Features_beta), axis=1)
-                    elif (self.use_alpha is True) and (self.use_beta is False):
-                        Seq_Features = Seq_Features_alpha
-                    elif (self.use_alpha is False) and (self.use_beta is True):
-                        Seq_Features = Seq_Features_beta
+                    Seq_Features = []
+                    if self.use_alpha is True:
+                        Seq_Features.append(Seq_Features_alpha)
+                    if self.use_beta is True:
+                        Seq_Features.append(Seq_Features_beta)
 
-                    if not isinstance(gene_features,list):
-                        Seq_Features = tf.concat((Seq_Features,gene_features),axis=1)
+                    if not isinstance(Seq_Features,list):
+                        Seq_Features = tf.concat(Seq_Features,axis=1)
+                        if not isinstance(gene_features, list):
+                            Seq_Features = tf.concat((Seq_Features, gene_features), axis=1)
+                    else:
+                        Seq_Features = gene_features
+
 
                     fc = tf.layers.dense(Seq_Features, 256)
                     fc = tf.layers.dense(fc, 128)
 
                     z_mean = tf.layers.dense(fc, latent_dim, activation=None, name='z_mean')
                     z_log_var = tf.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
+                    latent_cost = Latent_Loss(z_log_var,z_mean)
 
                     z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)
                     ortho_loss = Get_Ortho_Loss(z)
@@ -481,7 +486,7 @@ class DeepTCR_U(object):
                         embedding_layer_seq_back = tf.transpose(embedding_layer_seq, perm=(0, 1, 3, 2))
                         logits_AE_beta = tf.squeeze(tf.tensordot(upsample3_beta, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
 
-                        recon_cost_beta, latent_cost = AE_Loss(X_Seq_beta, logits_AE_beta, z_mean, z_log_var)
+                        recon_cost_beta = Recon_Loss(X_Seq_beta, logits_AE_beta)
                         recon_losses.append(recon_cost_beta)
 
                         predicted_beta = tf.squeeze(tf.argmax(logits_AE_beta, axis=3), axis=1)
@@ -502,7 +507,7 @@ class DeepTCR_U(object):
                         logits_AE_alpha = tf.squeeze(tf.tensordot(upsample3_alpha, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
 
 
-                        recon_cost_alpha, latent_cost = AE_Loss(X_Seq_alpha, logits_AE_alpha, z_mean,z_log_var)
+                        recon_cost_alpha = Recon_Loss(X_Seq_alpha, logits_AE_alpha)
                         recon_losses.append(recon_cost_alpha)
 
                         predicted_alpha = tf.squeeze(tf.argmax(logits_AE_alpha, axis=3), axis=1)
@@ -514,24 +519,29 @@ class DeepTCR_U(object):
 
                     gene_loss = []
                     if self.use_v_beta is True:
-                        v_beta_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_v_beta,X_v_beta_OH)
+                        v_beta_loss,v_beta_acc = Get_Gene_Loss(fc_up_flat,embedding_layer_v_beta,X_v_beta_OH)
                         gene_loss.append(v_beta_loss)
+                        accuracies.append(v_beta_acc)
 
                     if self.use_d_beta is True:
-                        d_beta_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_d_beta,X_d_beta_OH)
+                        d_beta_loss, d_beta_acc = Get_Gene_Loss(fc_up_flat,embedding_layer_d_beta,X_d_beta_OH)
                         gene_loss.append(d_beta_loss)
+                        accuracies.append(d_beta_acc)
 
                     if self.use_j_beta is True:
-                        j_beta_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_j_beta,X_j_beta_OH)
+                        j_beta_loss,j_beta_acc = Get_Gene_Loss(fc_up_flat,embedding_layer_j_beta,X_j_beta_OH)
                         gene_loss.append(j_beta_loss)
+                        accuracies.append(j_beta_acc)
 
                     if self.use_v_alpha is True:
-                        v_alpha_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_v_alpha,X_v_alpha_OH)
+                        v_alpha_loss,v_alpha_acc = Get_Gene_Loss(fc_up_flat,embedding_layer_v_alpha,X_v_alpha_OH)
                         gene_loss.append(v_alpha_loss)
+                        accuracies.append(v_alpha_acc)
 
                     if self.use_j_alpha is True:
-                        j_alpha_loss = Get_Gene_Loss(fc_up_flat,embedding_layer_j_alpha,X_j_alpha_OH)
+                        j_alpha_loss,j_alpha_acc = Get_Gene_Loss(fc_up_flat,embedding_layer_j_alpha,X_j_alpha_OH)
                         gene_loss.append(j_alpha_loss)
+                        accuracies.append(j_alpha_acc)
 
 
                     recon_losses = recon_losses + gene_loss
