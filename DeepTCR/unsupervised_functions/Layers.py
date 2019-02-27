@@ -1,4 +1,5 @@
 import tensorflow as tf
+from DeepTCR.supervised_functions.common_layers import *
 
 #Layers for VAE
 def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='Convolutional_Features'):
@@ -118,3 +119,16 @@ def model_loss(logits_real,logits_fake,features_real,features_fake):
     g_loss = - tf.reduce_mean(logits_fake) + fm_loss
 
     return d_loss,g_loss
+
+def discriminator(features,indices,gene_features,name='discriminator',reuse=False,use_distances=False):
+    with tf.variable_scope(name,reuse=reuse):
+        distances = rbf_layer(indices,12)
+        if use_distances is True:
+            features = tf.concat((features,distances),axis=1)
+
+        if not isinstance(gene_features, list):
+            features = tf.concat((features, gene_features), axis=1)
+
+        logits = tf.layers.dense(features,1)
+        return logits,features
+

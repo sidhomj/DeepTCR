@@ -81,3 +81,12 @@ def Get_Ortho_Loss_dep(x,alpha=1e-4):
     loss = alpha*tf.reduce_sum(loss)
     return loss
 
+def rbf_layer(x,units,name='rbf_layer',reuse=False):
+    with tf.variable_scope(name,reuse=reuse):
+        y = tf.layers.dense(x, units, use_bias=False)
+        mu = tf.get_variable(name='mu', shape=y.shape[1])
+        distances = tf.exp(-tf.square(mu - y))
+        return distances
+
+
+

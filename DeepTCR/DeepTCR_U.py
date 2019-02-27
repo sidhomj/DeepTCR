@@ -356,7 +356,7 @@ class DeepTCR_U(object):
         self.j_alpha_num = j_alpha_num
         print('Data Loaded')
 
-    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=True):
+    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=False):
         """
         Train Variational Autoencoder (VAE)
 
@@ -654,7 +654,7 @@ class DeepTCR_U(object):
         self.features = self.vae_features
         print('Training Done')
 
-    def Train_GAN(self,Load_Prev_Data=False,batch_size=10000,it_min=50,latent_dim=256,suppress_output=False,ortho_norm=True):
+    def Train_GAN(self,Load_Prev_Data=False,batch_size=10000,it_min=50,latent_dim=256,suppress_output=False,ortho_norm=False,use_distances=False):
         """
         Train Generative Adversarial Network (GAN)
 
@@ -744,27 +744,17 @@ class DeepTCR_U(object):
 
                     latent_real = tf.concat(latent_real,axis=1)
 
-                    # latent_indices_real = []
-                    # if self.use_alpha is True:
-                    #     latent_indices_real.append(indices_real_alpha)
-                    # if self.use_beta is True:
-                    #     latent_indices_real.append(indices_real_beta)
-                    #
-                    # latent_indices_real = tf.concat(latent_indices_real,axis=1)
-                    #
-                    # distances_real = latent_indices_real[:,tf.newaxis,:] - latent_indices_real[:,:,tf.newaxis]
-                    # distances_real = tf.layers.flatten(distances_real)
-                    #
-                    # latent_real = tf.concat((latent_real,distances_real),axis=1)
+                    latent_indices_real = []
+                    if self.use_alpha is True:
+                        latent_indices_real.append(indices_real_alpha)
+                    if self.use_beta is True:
+                        latent_indices_real.append(indices_real_beta)
 
+                    latent_indices_real = tf.concat(latent_indices_real,axis=1)
 
-                    if not isinstance(gene_features, list):
-                        latent_real = tf.concat((latent_real, gene_features), axis=1)
-
-
+                    logits_real,latent_real = discriminator(latent_real,latent_indices_real,gene_features,use_distances=use_distances)
                     latent_real = tf.identity(latent_real,'latent_real')
                     ortho_loss = Get_Ortho_Loss(latent_real)
-                    logits_real = tf.layers.dense(latent_real,1,name='logits_real')
 
                     if self.use_alpha is True:
                         inputs_z_alpha = tf.placeholder(tf.float32, shape=[None, z_dim])
@@ -810,24 +800,16 @@ class DeepTCR_U(object):
                         latent_fake.append(latent_fake_beta)
                     latent_fake = tf.concat(latent_fake,axis=1)
 
-                    # latent_indices_fake = []
-                    # if self.use_alpha is True:
-                    #     latent_indices_fake.append(indices_fake_alpha)
-                    # if self.use_beta is True:
-                    #     latent_indices_fake.append(indices_fake_beta)
-                    #
-                    # latent_indices_fake = tf.concat(latent_indices_fake,axis=1)
-                    # distances_fake = latent_indices_fake[:,tf.newaxis,:] - latent_indices_fake[:,:,tf.newaxis]
-                    # distances_fake = tf.layers.flatten(distances_fake)
-                    #
-                    # latent_fake = tf.concat((latent_fake,distances_fake),axis=1)
+                    latent_indices_fake = []
+                    if self.use_alpha is True:
+                        latent_indices_fake.append(indices_fake_alpha)
+                    if self.use_beta is True:
+                        latent_indices_fake.append(indices_fake_beta)
 
+                    latent_indices_fake = tf.concat(latent_indices_fake,axis=1)
 
-                    if not isinstance(gene_features, list):
-                        latent_fake = tf.concat((latent_fake, gene_features), axis=1)
-
+                    logits_fake,latent_fake = discriminator(latent_fake,latent_indices_fake,gene_features,reuse=True,use_distances=use_distances)
                     latent_fake = tf.identity(latent_fake, 'latent_fake')
-                    logits_fake = tf.layers.dense(latent_fake, 1, name='logits_fake')
 
                     d_loss, g_loss = model_loss(logits_real, logits_fake,latent_real,latent_fake)
 
