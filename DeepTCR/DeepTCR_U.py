@@ -718,6 +718,8 @@ class DeepTCR_U(object):
                     gene_features = Get_Gene_Features(self,embedding_dim_genes,gene_features)
 
                     training = tf.placeholder_with_default(False, shape=())
+                    training_distances = tf.placeholder_with_default(False, shape=())
+
                     prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
 
                     # AA Embedding
@@ -754,6 +756,9 @@ class DeepTCR_U(object):
 
                     num_desc_fc = 1
                     logits_real,latent_real = discriminator(latent_real,latent_indices_real,gene_features,use_distances=use_distances,num_fc=num_desc_fc)
+                    mu = tf.trainable_variables()[6]
+                    epsilon = tf.trainable_variables()[7]
+
                     latent_real = tf.identity(latent_real,'latent_real')
                     ortho_loss = Get_Ortho_Loss(latent_real)
 
@@ -838,6 +843,7 @@ class DeepTCR_U(object):
                 g_loss_list = []
                 step = 0
                 find=False
+                train_distances=False
                 for e in range(epochs):
                     if suppress_output is False:
                         print('Epoch: {}'.format(e))

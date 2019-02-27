@@ -9,9 +9,7 @@ DTCRU = DeepTCR_U('Dash')
 # DTCRU.Get_Data(directory='../Data/Dash/Traditional/Human',Load_Prev_Data=False,aggregate_by_aa=False,
 #                aa_column_alpha=0,aa_column_beta=1,count_column=2,v_alpha_column=3,j_alpha_column=4,v_beta_column=5,j_beta_column=6)
 
-DTCRU.Get_Data(directory='../Data/Dash/Traditional/Human',Load_Prev_Data=True,aggregate_by_aa=False,
-               aa_column_alpha=0,aa_column_beta=1,count_column=2)
-
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=True,aggregate_by_aa=False,aa_column_beta=1,count_column=2)
 
 #Get Feature from VAE/GAN
 #DTCRU.Train_VAE(accuracy_min=0.9,Load_Prev_Data=False)
