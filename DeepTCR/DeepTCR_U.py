@@ -1272,6 +1272,8 @@ class DeepTCR_U(object):
         self.var_beta = var_list_beta
         print('Clustering Done')
 
+    def Inference(self):
+
 
 
 
