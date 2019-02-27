@@ -13,16 +13,19 @@ DTCRU.Get_Data(directory='../Data/Dash/Traditional/Human',Load_Prev_Data=True,ag
                aa_column_alpha=0,aa_column_beta=1,count_column=2)
 
 
+#Choose Method to Analyze
+method_dim = 'GAN' #Set to 'VAE' or 'GAN'
+
 #Get Feature from VAE/GAN
-#DTCRU.Train_VAE(accuracy_min=0.9,Load_Prev_Data=False)
-DTCRU.Train_GAN(Load_Prev_Data=False,latent_dim=256,ortho_norm=False,use_distances=False)
+if method_dim is 'GAN':
+    DTCRU.Train_GAN(Load_Prev_Data=False,latent_dim=256,ortho_norm=False,use_distances=False)
+else:
+    DTCRU.Train_VAE(accuracy_min=0.9,Load_Prev_Data=False)
 
 #Collect data for plots
 x = []
 y = []
 
-#Choose Method to Analyze
-method_dim = 'GAN' #Set to 'VAE' or 'GAN'
 num_steps = 10
 max = 30
 
@@ -70,25 +73,23 @@ df_out['Percent Clustered'] = 100*np.asarray(x)
 df_out['Percent Correctly Clustered'] = 100*np.asarray(y)
 df_out['Number of Clusters'] = num_clusters
 df_out['Length Variance of Clusters'] = variance
-df_out.to_csv(method_dim+'.csv',index=False)
+df_out.to_csv(method_dim+'_Dash.csv',index=False)
 
 #Plot Performance
 sns.regplot(data=df_out,x='Percent Clustered',y='Percent Correctly Clustered',fit_reg=False)
 
 #Compare VAE/GAN Performance and Clustering Characteristics
-df_gan = pd.read_csv('GAN.csv')
-df_vae = pd.read_csv('VAE.csv')
 
 #Performance Metrics for Both Methods
-df_gan = pd.read_csv('GAN.csv')
-df_vae = pd.read_csv('VAE.csv')
+df_gan = pd.read_csv('GAN_Dash.csv')
+df_vae = pd.read_csv('VAE_Dash.csv')
 plt.figure()
 sns.set(font_scale=1.0)
 sns.lineplot(data=df_gan,x='Percent Clustered',y='Percent Correctly Clustered',label='GAN')
 sns.lineplot(data=df_vae,x='Percent Clustered',y='Percent Correctly Clustered',label = 'VAE')
 plt.ylim(0,100)
 plt.legend()
-plt.savefig('Specificity_Clustering.tif')
+plt.savefig('Specificity_Clustering_Dash.tif')
 
 #Cluster Characteristics for Both Methods
 fig, (ax1,ax2) = plt.subplots(2,1,figsize=(15,10))
@@ -98,6 +99,6 @@ sns.lineplot(data=df_vae,x='Percent Clustered',y='Number of Clusters',label='VAE
 sns.lineplot(data=df_gan,x='Percent Clustered',y='Length Variance of Clusters',label='GAN',ax=ax2)
 sns.lineplot(data=df_vae,x='Percent Clustered',y='Length Variance of Clusters',label='VAE',ax=ax2)
 ax1.set_xlabel('')
-plt.savefig('Cluster_Characteristics.tif')
+plt.savefig('Cluster_Characteristics_Dash.tif')
 
 
