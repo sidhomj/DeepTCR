@@ -125,12 +125,8 @@ class DeepTCR_U(object):
         aa_column_beta: int
             Column where beta chain amino acid data is stored.(0-indexed)
 
-        If both column integers are left to None, column with a header containing 'acid' is used as
-            the amino acid column.
-
         count_column: int
-            Column where counts are stored. If set to None, first column with data in integer datatype is used as the
-            counts column.
+            Column where counts are stored.
 
         sep: str
             Type of delimiter used in file with TCRSeq data.
@@ -138,6 +134,22 @@ class DeepTCR_U(object):
         aggregate_by_aa: bool
             Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
             of the same amino acid sequence given it comes from different nucleotide clones.
+
+        v_alpha_column: int
+            Column where v_alpha gene information is stored.
+
+        j_alpha_column: int
+            Column where j_alpha gene information is stored.
+
+        v_beta_column: int
+            Column where v_beta gene information is stored.
+
+        d_beta_column: int
+            Column where d_beta gene information is stored.
+
+        j_beta_column: int
+            Column where j_beta gene information is stored.
+
 
         Returns
         ---------------------------------------
