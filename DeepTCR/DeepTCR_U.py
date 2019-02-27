@@ -168,7 +168,6 @@ class DeepTCR_U(object):
                 self.use_j_beta = True
 
 
-
             #Determine classes based on directory names
             if classes is None:
                 classes = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory,d))]
