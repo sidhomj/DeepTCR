@@ -372,7 +372,7 @@ class DeepTCR_U(object):
         self.j_alpha_num = j_alpha_num
         print('Data Loaded')
 
-    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=False):
+    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=False,trainable_embedding=True):
         """
         Train Variational Autoencoder (VAE)
 
@@ -431,15 +431,26 @@ class DeepTCR_U(object):
                     training = tf.placeholder_with_default(False, shape=())
                     prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
 
-                    # AA Embedding
-                    with tf.variable_scope('AA_Embedding'):
-                        embedding_dim_aa = 64
-                        embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq', shape=[21, embedding_dim_aa])
-                        embedding_layer_seq = tf.expand_dims(tf.expand_dims(embedding_layer_seq, axis=0), axis=0)
+                    if trainable_embedding is True:
+                        # AA Embedding
+                        with tf.variable_scope('AA_Embedding'):
+                            embedding_dim_aa = 64
+                            embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq',
+                                                                  shape=[21, embedding_dim_aa])
+                            embedding_layer_seq = tf.expand_dims(tf.expand_dims(embedding_layer_seq, axis=0), axis=0)
+                            if self.use_alpha is True:
+                                inputs_seq_embed_alpha = tf.squeeze(
+                                    tf.tensordot(X_Seq_alpha_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                            if self.use_beta is True:
+                                inputs_seq_embed_beta = tf.squeeze(
+                                    tf.tensordot(X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+
+                    else:
                         if self.use_alpha is True:
-                            inputs_seq_embed_alpha = tf.squeeze(tf.tensordot(X_Seq_alpha_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                            inputs_seq_embed_alpha = X_Seq_alpha_OH
+
                         if self.use_beta is True:
-                            inputs_seq_embed_beta = tf.squeeze(tf.tensordot(X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                            inputs_seq_embed_beta = X_Seq_beta_OH
 
 
                     # Convolutional Features
@@ -484,13 +495,15 @@ class DeepTCR_U(object):
                     recon_losses = []
                     accuracies = []
                     if self.use_beta is True:
-                        upsample1_beta = tf.layers.conv2d_transpose(fc_up, 12, (1, 3), (1, 2), activation=tf.nn.relu)
-                        upsample2_beta = tf.layers.conv2d_transpose(upsample1_beta, 32, (1, 3), (1, 2), activation=tf.nn.relu)
-                        upsample3_beta = tf.layers.conv2d_transpose(upsample2_beta, embedding_dim_aa, (1, 4), (1, 2),activation=tf.nn.relu)
+                        upsample1_beta = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
+                        upsample2_beta = tf.layers.conv2d_transpose(upsample1_beta, 64, (1, 3), (1, 2), activation=tf.nn.relu)
 
-
-                        embedding_layer_seq_back = tf.transpose(embedding_layer_seq, perm=(0, 1, 3, 2))
-                        logits_AE_beta = tf.squeeze(tf.tensordot(upsample3_beta, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
+                        if trainable_embedding is True:
+                            upsample3_beta = tf.layers.conv2d_transpose(upsample2_beta, embedding_dim_aa, (1, 4),(1, 2), activation=tf.nn.relu)
+                            embedding_layer_seq_back = tf.transpose(embedding_layer_seq, perm=(0, 1, 3, 2))
+                            logits_AE_beta = tf.squeeze(tf.tensordot(upsample3_beta, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
+                        else:
+                            logits_AE_beta = tf.layers.conv2d_transpose(upsample2_beta, 21, (1, 4),(1, 2), activation=tf.nn.relu)
 
                         recon_cost_beta = Recon_Loss(X_Seq_beta, logits_AE_beta)
                         recon_losses.append(recon_cost_beta)
@@ -504,14 +517,15 @@ class DeepTCR_U(object):
                         accuracies.append(accuracy_beta)
 
                     if self.use_alpha is True:
-                        upsample1_alpha = tf.layers.conv2d_transpose(fc_up, 12, (1, 3), (1, 2), activation=tf.nn.relu)
-                        upsample2_alpha = tf.layers.conv2d_transpose(upsample1_alpha, 32, (1, 3), (1, 2),activation=tf.nn.relu)
-                        upsample3_alpha = tf.layers.conv2d_transpose(upsample2_alpha, embedding_dim_aa, (1, 4), (1, 2),activation=tf.nn.relu)
+                        upsample1_alpha = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
+                        upsample2_alpha = tf.layers.conv2d_transpose(upsample1_alpha, 64, (1, 3), (1, 2),activation=tf.nn.relu)
 
-
-                        embedding_layer_seq_back = tf.transpose(embedding_layer_seq, perm=(0, 1, 3, 2))
-                        logits_AE_alpha = tf.squeeze(tf.tensordot(upsample3_alpha, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
-
+                        if trainable_embedding is True:
+                            upsample3_alpha = tf.layers.conv2d_transpose(upsample2_alpha, embedding_dim_aa, (1, 4), (1, 2),activation=tf.nn.relu)
+                            embedding_layer_seq_back = tf.transpose(embedding_layer_seq, perm=(0, 1, 3, 2))
+                            logits_AE_alpha = tf.squeeze(tf.tensordot(upsample3_alpha, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
+                        else:
+                            logits_AE_alpha = tf.layers.conv2d_transpose(upsample2_alpha, 21, (1, 4), (1, 2),activation=tf.nn.relu)
 
                         recon_cost_alpha = Recon_Loss(X_Seq_alpha, logits_AE_alpha)
                         recon_losses.append(recon_cost_alpha)

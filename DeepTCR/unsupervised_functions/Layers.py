@@ -5,17 +5,17 @@ from DeepTCR.supervised_functions.common_layers import *
 def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='Convolutional_Features'):
     with tf.variable_scope(name,reuse=reuse):
         kernel = 3
-        units = 12
+        units = 32
         conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')
         conv = tf.nn.leaky_relu(conv)
         conv = tf.layers.dropout(conv,prob)
 
-        units = 32
+        units = 64
         conv = tf.layers.conv2d(conv, units, (1, kernel), (1, kernel), padding='same')
         conv = tf.nn.leaky_relu(conv)
         conv = tf.layers.dropout(conv, prob)
 
-        units = 64
+        units = 128
         conv = tf.layers.conv2d(conv, units, (1, kernel), (1, kernel), padding='same')
         conv = tf.nn.leaky_relu(conv)
         conv = tf.layers.dropout(conv, prob)
@@ -34,7 +34,7 @@ def Recon_Loss(inputs,logits):
 
 def Latent_Loss(z_log_var,z_mean):
     #Calculate Per Sample Variational Loss
-    latent_loss = -1e-9 *tf.reduce_sum(1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1)
+    latent_loss = -1e-6 *tf.reduce_sum(1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1)
     return latent_loss
 
 def Get_Gene_Loss(fc,embedding_layer,X_OH):
