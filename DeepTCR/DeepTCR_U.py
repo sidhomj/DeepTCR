@@ -372,7 +372,8 @@ class DeepTCR_U(object):
         self.j_alpha_num = j_alpha_num
         print('Data Loaded')
 
-    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=False,trainable_embedding=True):
+    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=False,
+                  trainable_embedding=True,seq_features_latent=False):
         """
         Train Variational Autoencoder (VAE)
 
@@ -469,12 +470,15 @@ class DeepTCR_U(object):
                     if Seq_Features:
                         Seq_Features = tf.concat(Seq_Features,axis=1)
 
+                    Seq_Features_Out = Seq_Features
+
                     if not isinstance(Seq_Features,list):
                         if not isinstance(gene_features, list):
                             Seq_Features = tf.concat((Seq_Features, gene_features), axis=1)
                     else:
                         Seq_Features = gene_features
 
+                    ortho_loss = Get_Ortho_Loss(Seq_Features,alpha=1.0)
 
                     fc = tf.layers.dense(Seq_Features, 256)
                     fc = tf.layers.dense(fc, 128)
@@ -484,7 +488,6 @@ class DeepTCR_U(object):
                     latent_cost = Latent_Loss(z_log_var,z_mean)
 
                     z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)
-                    ortho_loss = Get_Ortho_Loss(z)
                     z = tf.identity(z, name='z')
 
                     fc_up = tf.layers.dense(z, 128)
@@ -586,7 +589,7 @@ class DeepTCR_U(object):
                     latent_cost = tf.reduce_sum(latent_cost)
 
                     if ortho_norm is True:
-                        opt_ae = tf.train.AdamOptimizer().minimize(total_cost+ortho_loss)
+                        opt_ae = tf.train.AdamOptimizer().minimize(total_cost + ortho_loss)
                     else:
                         opt_ae = tf.train.AdamOptimizer().minimize(total_cost + ortho_loss)
 
@@ -667,7 +670,12 @@ class DeepTCR_U(object):
                     if self.use_j_alpha is True:
                         feed_dict[X_j_alpha] = vars[6]
 
-                    features_ind, accuracy_check = sess.run([z_mean, accuracy], feed_dict=feed_dict)
+                    if seq_features_latent is True:
+                        get = Seq_Features_Out
+                    else:
+                        get = z_mean
+
+                    features_ind, accuracy_check = sess.run([get, accuracy], feed_dict=feed_dict)
                     features_list.append(features_ind)
                     accuracy_list.append(accuracy_check)
 
@@ -801,8 +809,8 @@ class DeepTCR_U(object):
 
                     latent_real_nd = tf.identity(latent_real_nd,'latent_real_nd')
                     latent_real_d = tf.identity(latent_real_d,'latent_real_d')
-                    ortho_loss_nd = Get_Ortho_Loss(latent_real_nd,alpha=10)
-                    ortho_loss_d = Get_Ortho_Loss(latent_real_d,alpha=10)
+                    ortho_loss_nd = Get_Ortho_Loss(latent_real_nd,alpha=.1)
+                    ortho_loss_d = Get_Ortho_Loss(latent_real_d,alpha=1.0)
 
                     if self.use_alpha is True:
                         inputs_z_alpha = tf.placeholder(tf.float32, shape=[None, z_dim])
