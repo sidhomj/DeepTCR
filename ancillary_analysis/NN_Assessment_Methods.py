@@ -2,7 +2,6 @@ from DeepTCR.DeepTCR_U import DeepTCR_U
 from scipy.spatial.distance import pdist, squareform
 from NN_Assessment_utils import *
 import numpy as np
-from kmer_search import kmer_search
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
