@@ -775,9 +775,9 @@ class DeepTCR_U(object):
                             inputs_seq_embed_beta = tf.squeeze(tf.tensordot(X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
 
                     if self.use_alpha is True:
-                        latent_real_alpha,indices_real_alpha = Convolutional_Features_GAN(inputs_seq_embed_alpha,training=training,prob=prob,units=latent_dim,name='alpha_conv')
+                        latent_real_alpha,indices_real_alpha,w_alpha = Convolutional_Features_GAN(inputs_seq_embed_alpha,training=training,prob=prob,units=latent_dim,name='alpha_conv')
                     if self.use_beta is True:
-                        latent_real_beta,indices_real_beta = Convolutional_Features_GAN(inputs_seq_embed_beta,training=training,prob=prob,units=latent_dim,name='beta_conv')
+                        latent_real_beta,indices_real_beta,w_beta = Convolutional_Features_GAN(inputs_seq_embed_beta,training=training,prob=prob,units=latent_dim,name='beta_conv')
 
 
                     latent_real = []
@@ -797,22 +797,22 @@ class DeepTCR_U(object):
                     latent_indices_real = tf.concat(latent_indices_real,axis=1)
 
                     num_desc_fc = 1
-                    logits_real,latent_real = discriminator(latent_real,latent_indices_real,gene_features,use_distances=use_distances,num_fc=num_desc_fc)
-                    mu = tf.trainable_variables()[6]
-                    epsilon = tf.trainable_variables()[7]
+                    logits_real_nd,logits_real_d,latent_real_nd,latent_real_d = discriminator(latent_real,latent_indices_real,gene_features,num_fc=num_desc_fc)
 
-                    latent_real = tf.identity(latent_real,'latent_real')
-                    ortho_loss = Get_Ortho_Loss(latent_real)
+                    latent_real_nd = tf.identity(latent_real_nd,'latent_real_nd')
+                    latent_real_d = tf.identity(latent_real_d,'latent_real_d')
+                    ortho_loss_nd = Get_Ortho_Loss(latent_real_nd)
+                    ortho_loss_d = Get_Ortho_Loss(latent_real_d)
 
                     if self.use_alpha is True:
                         inputs_z_alpha = tf.placeholder(tf.float32, shape=[None, z_dim])
                         gen_seq_alpha = generator(inputs_z_alpha, training=training, embedding_dim_aa=embedding_dim_aa, prob=prob,name='generator_alpha')
-                        latent_fake_alpha, indices_fake_alpha = Convolutional_Features_GAN(gen_seq_alpha, reuse=True, prob=prob,training=training, units=latent_dim,name='alpha_conv')
+                        latent_fake_alpha, indices_fake_alpha,_ = Convolutional_Features_GAN(gen_seq_alpha, reuse=True, prob=prob,training=training, units=latent_dim,name='alpha_conv')
 
                     if self.use_beta is True:
                         inputs_z_beta = tf.placeholder(tf.float32, shape=[None, z_dim])
                         gen_seq_beta = generator(inputs_z_beta, training=training, embedding_dim_aa=embedding_dim_aa,prob=prob, name='generator_beta')
-                        latent_fake_beta, indices_fake_beta = Convolutional_Features_GAN(gen_seq_beta, reuse=True,prob=prob, training=training,units=latent_dim,name='beta_conv')
+                        latent_fake_beta, indices_fake_beta,_ = Convolutional_Features_GAN(gen_seq_beta, reuse=True,prob=prob, training=training,units=latent_dim,name='beta_conv')
 
                     gene_features = []
                     if self.use_v_alpha is True:
@@ -856,20 +856,26 @@ class DeepTCR_U(object):
 
                     latent_indices_fake = tf.concat(latent_indices_fake,axis=1)
 
-                    logits_fake,latent_fake = discriminator(latent_fake,latent_indices_fake,gene_features,reuse=True,use_distances=use_distances,num_fc=num_desc_fc)
-                    latent_fake = tf.identity(latent_fake, 'latent_fake')
+                    logits_fake_nd,logits_fake_d,latent_fake_nd,latent_fake_d = discriminator(latent_fake,latent_indices_fake,gene_features,reuse=True,num_fc=num_desc_fc)
+                    latent_fake_nd = tf.identity(latent_fake_nd, 'latent_fake_nd')
+                    latent_fake_d = tf.identity(latent_fake_d, 'latent_fake_d')
 
-                    d_loss, g_loss = model_loss(logits_real, logits_fake,latent_real,latent_fake)
+                    d_loss_nd, g_loss_nd = model_loss(logits_real_nd, logits_fake_nd,latent_real_nd,latent_fake_nd)
+                    d_loss_d, g_loss_d = model_loss(logits_real_d, logits_fake_d,latent_real_d,latent_fake_d)
 
                     var_list = tf.trainable_variables()
                     var_train = [x for x in var_list if not x.name.startswith('generator')]
                     if ortho_norm is True:
-                        opt_d = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(d_loss+ortho_loss, var_list=var_train)
+                        opt_d_nd = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(d_loss_nd+ortho_loss_nd, var_list=var_train)
+                        opt_d_d = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(d_loss_d+ortho_loss_d, var_list=var_train)
+
                     else:
-                        opt_d = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(d_loss, var_list=var_train)
+                        opt_d_nd = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(d_loss_nd, var_list=var_train)
+                        opt_d_d = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(d_loss_d, var_list=var_train)
 
                     var_train = [x for x in var_list if x.name.startswith('generator')]
-                    opt_g = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(g_loss, var_list=var_train)
+                    opt_g_nd = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(g_loss_nd, var_list=var_train)
+                    opt_g_d = tf.train.RMSPropOptimizer(learning_rate=0.0002).minimize(g_loss_d, var_list=var_train)
 
 
                     saver = tf.train.Saver()
@@ -885,7 +891,6 @@ class DeepTCR_U(object):
                 g_loss_list = []
                 step = 0
                 find=False
-                train_distances=False
                 for e in range(epochs):
                     if suppress_output is False:
                         print('Epoch: {}'.format(e))
@@ -922,12 +927,12 @@ class DeepTCR_U(object):
                         if self.use_j_alpha is True:
                             feed_dict[X_j_alpha] = vars[6]
 
-                        d_loss_i,__= sess.run([d_loss, opt_d], feed_dict=feed_dict)
+                        d_loss_i,__= sess.run([d_loss_nd, opt_d_nd], feed_dict=feed_dict)
                         d_loss_list.append(d_loss_i)
                         if suppress_output is False:
                             print("D_Loss = {} ".format(d_loss_i), end='', flush=True)
 
-                        g_loss_i, _ = sess.run([g_loss, opt_g], feed_dict=feed_dict)
+                        g_loss_i, _ = sess.run([g_loss_nd, opt_g_nd], feed_dict=feed_dict)
                         g_loss_list.append(g_loss_i)
                         if suppress_output is False:
                             print("G_Loss = {}".format(g_loss_i))
@@ -947,6 +952,72 @@ class DeepTCR_U(object):
                     if find is True:
                         break
 
+                if use_distances is True:
+                    d_loss_list = []
+                    g_loss_list = []
+                    step = 0
+                    find=False
+                    for e in range(epochs):
+                        if suppress_output is False:
+                            print('Epoch: {}'.format(e))
+
+                        Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num]
+
+
+                        for vars in get_batches(Vars,batch_size=batch_size,random=True):
+                            step +=1
+
+                            feed_dict = {training:True,prob:drop_out_rate}
+                            input_batch = np.random.normal(size=(batch_size, z_dim))
+                            if self.use_alpha is True:
+                                feed_dict[X_Seq_alpha] = vars[0]
+                                batch_z_alpha = input_batch
+                                feed_dict[inputs_z_alpha] = batch_z_alpha
+                            if self.use_beta is True:
+                                feed_dict[X_Seq_beta] = vars[1]
+                                batch_z_beta = input_batch
+                                feed_dict[inputs_z_beta] = batch_z_beta
+
+                            if self.use_v_beta is True:
+                                feed_dict[X_v_beta] = vars[2]
+
+                            if self.use_d_beta is True:
+                                feed_dict[X_d_beta] = vars[3]
+
+                            if self.use_j_beta is True:
+                                feed_dict[X_j_beta] = vars[4]
+
+                            if self.use_v_alpha is True:
+                                feed_dict[X_v_alpha] = vars[5]
+
+                            if self.use_j_alpha is True:
+                                feed_dict[X_j_alpha] = vars[6]
+
+
+                            d_loss_i,__= sess.run([d_loss_d, opt_d_d], feed_dict=feed_dict)
+                            d_loss_list.append(d_loss_i)
+                            if suppress_output is False:
+                                print("D_Loss = {} ".format(d_loss_i), end='', flush=True)
+
+                            g_loss_i, _ = sess.run([g_loss_d, opt_g_d], feed_dict=feed_dict)
+                            g_loss_list.append(g_loss_i)
+                            if suppress_output is False:
+                                print("G_Loss = {}".format(g_loss_i))
+
+                            if step > it_min:
+                                if np.mean(d_loss_list[-10:]) < 1.0:
+                                    a, b, c = -30, -20, -10
+                                    if (np.mean(g_loss_list[a:b]) - np.mean(g_loss_list[c:])) / np.mean(g_loss_list[a:b]) < 0.01:
+                                        find = True
+                                        break
+
+                                    if np.mean(g_loss_list[-10:]) > 2.0:
+                                        find = True
+                                        break
+
+
+                        if find is True:
+                            break
 
                 latent_features = []
                 Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,
@@ -974,7 +1045,10 @@ class DeepTCR_U(object):
                     if self.use_j_alpha is True:
                         feed_dict[X_j_alpha] = vars[6]
 
-                    latent_i = sess.run(latent_real,feed_dict=feed_dict)
+                    if use_distances is False:
+                        latent_i = sess.run(latent_real_nd,feed_dict=feed_dict)
+                    else:
+                        latent_i = sess.run(latent_real_d,feed_dict=feed_dict)
                     latent_features.append(latent_i)
                 features = np.vstack(latent_features)
 

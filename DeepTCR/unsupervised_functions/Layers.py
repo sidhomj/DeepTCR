@@ -57,11 +57,12 @@ def Convolutional_Features_GAN(inputs,reuse=False,training=False,prob=0.0,kernel
     with tf.variable_scope(name,reuse=reuse):
         conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')
         conv = tf.nn.leaky_relu(conv)
+        w = tf.trainable_variables()[-2]
 
         indices = tf.cast(tf.argmax(conv, axis=2), tf.float32)
         conv = tf.layers.max_pooling2d(conv,(1,conv.shape[2]),(1,conv.shape[2]))
 
-        return tf.layers.flatten(conv),tf.layers.flatten(indices)
+        return tf.layers.flatten(conv),tf.layers.flatten(indices),w
 
 def generator(z,embedding_dim_aa=64,prob=0.0,training=True,name='generator',reuse=False):
     with tf.variable_scope(name,reuse=reuse):
@@ -125,12 +126,9 @@ def model_loss(logits_real,logits_fake,features_real,features_fake):
 
     return d_loss,g_loss
 
-def discriminator(features,indices,gene_features,name='discriminator',reuse=False,use_distances=False,num_fc=None):
+def discriminator(features,indices,gene_features,name='discriminator',reuse=False,num_fc=None):
     with tf.variable_scope(name,reuse=reuse):
-        distances = rbf_layer(indices,64)
-        if use_distances is True:
-            features = tf.concat((features,distances),axis=1)
-
+        distances = rbf_layer(indices,12)
         if not isinstance(gene_features, list):
             features = tf.concat((features, gene_features), axis=1)
 
@@ -138,6 +136,9 @@ def discriminator(features,indices,gene_features,name='discriminator',reuse=Fals
             for n in range(num_fc):
                 features = tf.layers.dense(features,256,tf.nn.relu)
 
-        logits = tf.layers.dense(features,1)
-        return logits,features
+        logits_nd = tf.layers.dense(features,1)
+
+        features_d = tf.concat((features, distances), axis=1)
+        logits_d = tf.layers.dense(features_d,1)
+        return logits_nd,logits_d,features,features_d
 
