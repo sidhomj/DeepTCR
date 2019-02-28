@@ -801,8 +801,8 @@ class DeepTCR_U(object):
 
                     latent_real_nd = tf.identity(latent_real_nd,'latent_real_nd')
                     latent_real_d = tf.identity(latent_real_d,'latent_real_d')
-                    ortho_loss_nd = Get_Ortho_Loss(latent_real_nd)
-                    ortho_loss_d = Get_Ortho_Loss(latent_real_d)
+                    ortho_loss_nd = Get_Ortho_Loss(latent_real_nd,alpha=10)
+                    ortho_loss_d = Get_Ortho_Loss(latent_real_d,alpha=10)
 
                     if self.use_alpha is True:
                         inputs_z_alpha = tf.placeholder(tf.float32, shape=[None, z_dim])
