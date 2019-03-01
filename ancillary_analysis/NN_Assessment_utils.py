@@ -15,6 +15,9 @@ from Bio import pairwise2
 import numpy as np
 from Bio.pairwise2 import format_alignment
 from multiprocessing import Pool
+import colorsys
+import matplotlib.patches as mpatches
+
 
 
 def KNN(distances,labels,k=1):
@@ -69,7 +72,12 @@ def KNN(distances,labels,k=1):
 
 def Assess_Performance(DTCRU, distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distances_seqalign,dir_results,use_genes_label='use_genes'):
     labels = DTCRU.label_id
-    k_values = list(range(1, 500, 10))
+    k_values = list(range(1, 500, 25))
+    rep = 5
+    temp = []
+    for v in k_values:
+        temp.extend(rep*[v])
+    k_values = temp
     class_list = []
     recall_list = []
     precision_list = []
@@ -138,7 +146,7 @@ def Assess_Performance(DTCRU, distances_vae_seq, distances_vae_seq_gene, distanc
         f1_score_list.extend(f1_score)
         auc_list.extend(auc)
         accuracy_list.extend(acc)
-        algorithm.extend(len(classes)*['Seq-Align'])
+        algorithm.extend(len(classes)*['Global Seq-Align'])
         k_list.extend(len(classes)*[k])
         use_genes_list.extend(len(classes)*[use_genes_label])
 
@@ -152,25 +160,51 @@ def Assess_Performance(DTCRU, distances_vae_seq, distances_vae_seq_gene, distanc
     df_out['Algorithm'] = algorithm
     df_out['k'] = k_list
     df_out['Gene_Usage'] = use_genes_list
+    if not os.path.exists(dir_results):
+        os.makedirs(dir_results)
     df_out.to_csv(os.path.join(dir_results,'df.csv'),index=False)
 
     return df_out
 
-def Plot_Performance(df):
-    measurements = ['Recall', 'Precision', 'F1_Score']
-    fig, ax = plt.subplots(1, 3)
-    ax = np.ndarray.flatten(ax)
-    for a, m in zip(ax, measurements):
-        sns.lineplot(x='k', y=m, data=df, hue='Algorithm', ci=None, ax=a)
+def Plot_Performance(df,dir_results):
+    subdir = 'Performance'
+    if not os.path.exists(os.path.join(dir_results,subdir)):
+        os.makedirs(os.path.join(dir_results,subdir))
 
-def Plot_Latent(labels,methods):
-    names = ['GAN', 'VAE', 'Hamming', 'K-mer']
-    fig, ax = plt.subplots(2, 2)
-    ax = np.ndarray.flatten(ax)
-    for a, m, n in zip(ax, methods, names):
+    measurements = ['Recall', 'Precision', 'F1_Score']
+    types = np.unique(df['Classes'].tolist())
+    for m in measurements:
+        for t in types:
+            sns.catplot(x='k',y=m,data=df[df['Classes']==t],kind='point',hue='Algorithm',capsize=0.2)
+            plt.title(t)
+            plt.subplots_adjust(top=0.9)
+            plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'.tif'))
+
+def Plot_Latent(labels,methods,dir_results):
+    subdir = 'Latent'
+    if not os.path.exists(os.path.join(dir_results,subdir)):
+        os.makedirs(os.path.join(dir_results,subdir))
+
+    N = len(np.unique(labels))
+    HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
+    np.random.shuffle(HSV_tuples)
+    RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
+    color_dict = dict(zip(np.unique(labels), RGB_tuples))
+
+    patches = []
+    for item in color_dict.items():
+        patches.append(mpatches.Patch(color=item[1], label=item[0]))
+
+    c = [color_dict[x] for x in labels]
+    names = ['VAE-Seq', 'VAE-Seq-Gene', 'Hamming', 'K-mer','Global Seq-Align']
+    for m, n in zip(methods, names):
         X_2 = umap.UMAP(metric='precomputed').fit_transform(m)
-        a.scatter(X_2[:, 0], X_2[:, 1], c=labels)
-        a.set_title(n)
+        plt.figure()
+        plt.scatter(X_2[:, 0], X_2[:, 1], c=c,s=100,alpha=0.75,label=labels)
+        plt.title(n)
+        plt.legend(handles=patches)
+        plt.savefig(os.path.join(dir_results,subdir,n+'_latent.tif'))
+
 
 def kmer_search(sequences):
     all = []

@@ -8,6 +8,8 @@ from sklearn.preprocessing import LabelEncoder
 import pickle
 import umap
 import time
+from multiprocessing import Pool
+
 
 #Instantiate training object
 DTCRU = DeepTCR_U('Metrics')
@@ -15,17 +17,20 @@ DTCRU = DeepTCR_U('Metrics')
 "Sidhom"
 dir_results = 'Sidhom_Figures'
 
+p = Pool(40)
 #VAE_- Sequencs Alone
 DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
-               v_beta_column=None,d_beta_column=None,j_beta_column=None)
+               v_beta_column=None,d_beta_column=None,j_beta_column=None,p=p)
 DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False)
 distances_vae_seq = squareform(pdist(DTCRU.features, metric='euclidean'))
 
 #VAE_- Gene+Sequencs
 DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
-               v_beta_column=7,d_beta_column=14,j_beta_column=21)
+               v_beta_column=7,d_beta_column=14,j_beta_column=21,p=p)
 DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False,seq_features_latent=True)
 distances_vae_seq_gene = squareform(pdist(DTCRU.features, metric='euclidean'))
+p.close()
+p.join()
 
 #Hamming
 distances_hamming = squareform(pdist(np.squeeze(DTCRU.X_Seq_beta, 1), metric='hamming'))
@@ -46,16 +51,13 @@ with open('Sidhom_seqalign.pkl','rb') as f:
     distance_seqalign,total_time = pickle.load(f)
 
 df = Assess_Performance(DTCRU,distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distance_seqalign,dir_results)
-agg_dict = {'Recall':'mean','Precision':'mean','F1_Score':'mean','Accuracy':'mean','AUC':'mean'}
-df_sum = df.groupby(['Algorithm']).agg(agg_dict)
 
 #Plot Performance
-Plot_Performance(df)
+Plot_Performance(df,dir_results)
 
 #Plot Latent Space
-labels = LabelEncoder().fit_transform(DTCRU.label_id)
-methods = [distances_gan, distances_vae, distances_hamming, distances_kmer]
-Plot_Latent(labels,methods)
+methods = [distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distance_seqalign]
+Plot_Latent(DTCRU.label_id,methods,dir_results)
 
 import pickle
 with open('distances.pkl','wb') as f:

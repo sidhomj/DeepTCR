@@ -74,7 +74,7 @@ class DeepTCR_U(object):
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
                     v_alpha_column=None,j_alpha_column=None,
-                    v_beta_column=None,j_beta_column=None,d_beta_column=None):
+                    v_beta_column=None,j_beta_column=None,d_beta_column=None,p=None):
         """
         Get Data for Unsupervised Deep Learning Methods.
 
@@ -189,7 +189,8 @@ class DeepTCR_U(object):
             self.lb.fit(classes)
             self.classes = self.lb.classes_
 
-            p = Pool(n_jobs)
+            if p is None:
+                p = Pool(n_jobs)
 
             if sep == '\t':
                 ext = '*.tsv'
@@ -282,8 +283,9 @@ class DeepTCR_U(object):
                 X_Seq_beta = np.expand_dims(sequences_num, 1)
 
 
-            p.close()
-            p.join()
+            if p is None:
+                p.close()
+                p.join()
 
             if self.use_alpha is False:
                 X_Seq_alpha = np.zeros(shape=[len(label_id)])
