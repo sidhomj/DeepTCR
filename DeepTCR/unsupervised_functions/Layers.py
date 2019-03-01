@@ -52,7 +52,7 @@ def Get_Gene_Loss(fc,embedding_layer,X_OH):
 
 #Layers for GAN
 
-def Convolutional_Features_GAN(inputs,reuse=False,training=False,prob=0.0,kernel=3,units=256,name='Convolutional_Features'):
+def Convolutional_Features_GAN(inputs,reuse=False,training=False,prob=0.0,kernel=20,units=256,name='Convolutional_Features'):
 
     with tf.variable_scope(name,reuse=reuse):
         conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')

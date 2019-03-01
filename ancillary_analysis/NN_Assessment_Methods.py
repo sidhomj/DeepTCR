@@ -9,7 +9,7 @@ import pickle
 import umap
 import time
 from multiprocessing import Pool
-
+from sklearn.manifold import MDS
 
 #Instantiate training object
 DTCRU = DeepTCR_U('Metrics')
@@ -22,12 +22,14 @@ p = Pool(40)
 DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
                v_beta_column=None,d_beta_column=None,j_beta_column=None,p=p)
 DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False)
+features_vae_seq = DTCRU.features
 distances_vae_seq = squareform(pdist(DTCRU.features, metric='euclidean'))
 
 #VAE_- Gene+Sequencs
 DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
                v_beta_column=7,d_beta_column=14,j_beta_column=21,p=p)
 DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False,seq_features_latent=True)
+features_vae_seq_gene = DTCRU.features
 distances_vae_seq_gene = squareform(pdist(DTCRU.features, metric='euclidean'))
 p.close()
 p.join()
@@ -41,22 +43,74 @@ distances_kmer = squareform(pdist(kmer_features, metric='euclidean'))
 
 #Seq-Align
 # start = time.time()
-# distance_seqalign = pairwise_alignment(DTCRU.beta_sequences)
+# distances_seqalign = pairwise_alignment(DTCRU.beta_sequences)
 # end = time.time()
 # total_time = end-start
 # with open('Sidhom_seqalign.pkl','wb') as f:
-#     pickle.dump([distance_seqalign,total_time],f)
+#     pickle.dump([distances_seqalign,total_time],f)
 
 with open('Sidhom_seqalign.pkl','rb') as f:
-    distance_seqalign,total_time = pickle.load(f)
+    distances_seqalign,total_time = pickle.load(f)
+#make symmetric
+distances_seqalign = distances_seqalign + distances_seqalign.T
 
-df = Assess_Performance(DTCRU,distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distance_seqalign,dir_results)
+#
+# methods = [distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distances_seqalign]
+# names = ['VAE-Seq','VAE-Seq-Gene','Hamming','K-mer','Global Seq-Align']
+#
+# import pandas as pd
+# from scipy.stats import wasserstein_distance
+# df_distances = pd.DataFrame()
+# intra = []
+# inter = []
+# w = []
+# for distances,n in zip(methods,names):
+#     labels = DTCRU.label_id
+#     intra_distances = []
+#     inter_distances = []
+#     for c in np.unique(labels):
+#         idx = labels==c
+#         d = distances[idx,:]
+#         d = d[:,idx]
+#         intra_distances.append(np.ndarray.flatten(d))
+#         d=distances[idx,:]
+#         d = d[:,~idx]
+#         inter_distances.append(np.ndarray.flatten(d))
+#
+#     intra_distances = np.hstack(intra_distances)
+#     inter_distances = np.hstack(inter_distances)
+#     w.append(wasserstein_distance(intra_distances, inter_distances))
+#
+#     intra.append(np.average(intra_distances))
+#     inter.append(np.average(inter_distances))
+#
+# df_distances['Methods'] = names
+# df_distances['Intra'] = intra
+# df_distances['Inter'] = inter
+# df_distances['Waserstein'] = w
+#
+#
+#
+#
+# from scipy.stats import kstest
+#
+# kstest(intra_distances,inter_distances)
+#
+# plt.figure()
+# plt.hist(inter_distances,50,alpha=0.5)
+# plt.hist(intra_distances,50,alpha=0.5)
+# plt.legend()
+#
+# break
+# distances[]
 
-#Plot Performance
+df = Assess_Performance_KNN(DTCRU,distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distances_seqalign,dir_results)
+
+# #Plot Performance
 Plot_Performance(df,dir_results)
 
 #Plot Latent Space
-methods = [distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distance_seqalign]
+methods = [distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distances_seqalign]
 Plot_Latent(DTCRU.label_id,methods,dir_results)
 
 import pickle

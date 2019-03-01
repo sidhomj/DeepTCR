@@ -17,7 +17,8 @@ from Bio.pairwise2 import format_alignment
 from multiprocessing import Pool
 import colorsys
 import matplotlib.patches as mpatches
-
+from sklearn import svm
+from scipy.stats import wasserstein_distance
 
 
 def KNN(distances,labels,k=1):
@@ -70,7 +71,56 @@ def KNN(distances,labels,k=1):
 
     return lb.classes_,recall, precision,f_score,auc_score,acc_score
 
-def Assess_Performance(DTCRU, distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distances_seqalign,dir_results,use_genes_label='use_genes'):
+def SVM(features,labels):
+    lb = LabelEncoder()
+    labels = lb.fit_transform(labels)
+
+    skf = StratifiedKFold(n_splits=5, random_state=None, shuffle=True)
+    clf = svm.SVC(probability=True)
+
+    pred_list = []
+    pred_prob_list = []
+    labels_list = []
+    for train_idx, test_idx in skf.split(features,labels):
+        features_train = features[train_idx, :]
+
+        features_test = features[test_idx, :]
+
+        labels_train = labels[train_idx]
+        labels_test = labels[test_idx]
+
+        clf.fit(features_train,labels_train)
+        pred = clf.predict(features_test)
+        pred_prob = clf.predict_proba(features_test)
+
+        labels_list.extend(labels_test)
+        pred_list.extend(pred)
+        pred_prob_list.extend(pred_prob)
+
+    pred = np.asarray(pred_list)
+    pred_prob = np.asarray(pred_prob_list)
+    labels = np.asarray(labels_list)
+
+    OH = OneHotEncoder(sparse=False)
+    labels = OH.fit_transform(labels.reshape(-1, 1))
+    pred = OH.transform(pred.reshape(-1, 1))
+
+    recall = []
+    precision = []
+    f_score = []
+    auc_score = []
+    acc_score = []
+    for ii, c in enumerate(lb.classes_):
+        recall.append(recall_score(y_true=labels[:, ii], y_pred=pred[:, ii]))
+        precision.append(precision_score(y_true=labels[:, ii], y_pred=pred[:, ii]))
+        f_score.append(f1_score(y_true=labels[:, ii], y_pred=pred[:, ii]))
+        auc_score.append(roc_auc_score(labels[:, ii], pred_prob[:, ii]))
+        acc_score.append(accuracy_score(y_true=labels[:, ii], y_pred=pred[:, ii]))
+
+    return lb.classes_, recall, precision, f_score, auc_score, acc_score
+
+
+def Assess_Performance_KNN(DTCRU, distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distances_seqalign,dir_results,use_genes_label='use_genes'):
     labels = DTCRU.label_id
     k_values = list(range(1, 500, 25))
     rep = 5
@@ -166,6 +216,88 @@ def Assess_Performance(DTCRU, distances_vae_seq, distances_vae_seq_gene, distanc
 
     return df_out
 
+def Assess_Performance_SVM(DTCRU, features_vae_seq, features_vae_seq_gene, features_hamming, features_kmer,features_seqalign,dir_results,use_genes_label='use_genes'):
+    labels = DTCRU.label_id
+    class_list = []
+    recall_list = []
+    precision_list = []
+    f1_score_list = []
+    accuracy_list = []
+    auc_list = []
+    algorithm = []
+    use_genes_list=[]
+
+    # Collect performance metrics for various methods
+    # VAE Seq
+    classes, recall, precision, f1_score, auc,acc = SVM(features_vae_seq, labels)
+    class_list.extend(classes)
+    recall_list.extend(recall)
+    precision_list.extend(precision)
+    f1_score_list.extend(f1_score)
+    accuracy_list.extend(acc)
+    auc_list.extend(auc)
+    algorithm.extend(len(classes) * ['VAE_Seq'])
+    use_genes_list.extend(len(classes)*[use_genes_label])
+
+    # VAE Seq Gene
+    classes, recall, precision, f1_score, auc,acc = SVM(features_vae_seq_gene, labels)
+    class_list.extend(classes)
+    recall_list.extend(recall)
+    precision_list.extend(precision)
+    f1_score_list.extend(f1_score)
+    accuracy_list.extend(acc)
+    auc_list.extend(auc)
+    algorithm.extend(len(classes) * ['VAE_Seq_Gene'])
+    use_genes_list.extend(len(classes)*[use_genes_label])
+
+    # Hamming Distance
+    classes, recall, precision, f1_score, auc,acc = SVM(features_hamming, labels)
+    class_list.extend(classes)
+    recall_list.extend(recall)
+    precision_list.extend(precision)
+    f1_score_list.extend(f1_score)
+    auc_list.extend(auc)
+    accuracy_list.extend(acc)
+    algorithm.extend(len(classes) * ['Hamming'])
+    use_genes_list.extend(len(classes)*[use_genes_label])
+
+    # Kmer search
+    classes, recall, precision, f1_score, auc,acc = SVM(features_kmer, labels)
+    class_list.extend(classes)
+    recall_list.extend(recall)
+    precision_list.extend(precision)
+    f1_score_list.extend(f1_score)
+    auc_list.extend(auc)
+    accuracy_list.extend(acc)
+    algorithm.extend(len(classes) * ['K-Mer'])
+    use_genes_list.extend(len(classes)*[use_genes_label])
+
+    #Sequence Alignment
+    classes,recall, precision, f1_score,auc,acc = SVM(features_seqalign,labels)
+    class_list.extend(classes)
+    recall_list.extend(recall)
+    precision_list.extend(precision)
+    f1_score_list.extend(f1_score)
+    auc_list.extend(auc)
+    accuracy_list.extend(acc)
+    algorithm.extend(len(classes)*['Global Seq-Align'])
+    use_genes_list.extend(len(classes)*[use_genes_label])
+
+    df_out = pd.DataFrame()
+    df_out['Classes'] = class_list
+    df_out['Recall'] = recall_list
+    df_out['Precision'] = precision_list
+    df_out['F1_Score'] = f1_score_list
+    df_out['Accuracy'] = accuracy_list
+    df_out['AUC'] = auc_list
+    df_out['Algorithm'] = algorithm
+    df_out['Gene_Usage'] = use_genes_list
+    if not os.path.exists(dir_results):
+        os.makedirs(dir_results)
+    df_out.to_csv(os.path.join(dir_results,'df.csv'),index=False)
+
+    return df_out
+
 def Plot_Performance(df,dir_results):
     subdir = 'Performance'
     if not os.path.exists(os.path.join(dir_results,subdir)):
@@ -197,14 +329,30 @@ def Plot_Latent(labels,methods,dir_results):
 
     c = [color_dict[x] for x in labels]
     names = ['VAE-Seq', 'VAE-Seq-Gene', 'Hamming', 'K-mer','Global Seq-Align']
+    wasserstein_distances_out = []
+    X_2_list = []
     for m, n in zip(methods, names):
         X_2 = umap.UMAP(metric='precomputed').fit_transform(m)
+        X_2_list.append(X_2)
+        H,edges = np.histogramdd(X_2,normed=True)
+        w_distances = []
+        for type in np.unique(labels):
+            idx = labels==type
+            d_1,_ = np.histogramdd(X_2[idx],bins=edges,normed=True)
+            d_2,_ = np.histogramdd(X_2[~idx],bins=edges,normed=True)
+            w_distances.append(wasserstein_distance(np.ndarray.flatten(d_1),np.ndarray.flatten(d_2)))
+
+        wasserstein_distances_out.append(w_distances)
+
         plt.figure()
         plt.scatter(X_2[:, 0], X_2[:, 1], c=c,s=100,alpha=0.75,label=labels)
         plt.title(n)
         plt.legend(handles=patches)
         plt.savefig(os.path.join(dir_results,subdir,n+'_latent.tif'))
 
+        import pickle
+        with open('X_2.pkl','wb') as f:
+            pickle.dump([X_2_list,labels],f)
 
 def kmer_search(sequences):
     all = []
@@ -252,6 +400,26 @@ def pairwise_alignment(sequences):
             i+=1
 
     return matrix
+
+def Class_Distances(distances,labels):
+    intra_distances = []
+    inter_distances = []
+    for c in np.unique(labels):
+        idx = labels == c
+        d = distances[idx, :]
+        d = d[:, idx]
+        intra_distances.append(np.ndarray.flatten(d))
+        d = distances[idx, :]
+        d = d[:, ~idx]
+        inter_distances.append(np.ndarray.flatten(d))
+
+    intra_distances = np.hstack(intra_distances)
+    inter_distances = np.hstack(inter_distances)
+
+    plt.figure()
+    plt.hist(inter_distances, 100, alpha=0.5,label='Within-Class Distances')
+    plt.hist(intra_distances, 100, alpha=0.5,label='Out-of-Class Distances')
+    plt.legend()
 
 
 
