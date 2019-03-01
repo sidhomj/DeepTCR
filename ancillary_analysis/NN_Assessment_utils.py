@@ -67,18 +67,9 @@ def KNN(distances,labels,k=1):
 
     return lb.classes_,recall, precision,f_score,auc_score,acc_score
 
-def VAE_GAN_Distances(DTCRU,Load_Prev_Data=False):
-    # Train VAE/GAN
-    DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=Load_Prev_Data,ortho_norm=True,seq_features_latent=True)
-    distances_vae = squareform(pdist(DTCRU.features, metric='euclidean'))
-    DTCRU.Train_GAN(Load_Prev_Data=Load_Prev_Data,ortho_norm=True,use_distances=False)
-    distances_gan = squareform(pdist(DTCRU.features, metric='euclidean'))
-    return distances_vae, distances_gan
-
-def Assess_Performance(DTCRU, distances_vae, distances_gan, distances_hamming, distances_kmer,distances_seqalign,dir_results,use_genes_label='use_genes'):
+def Assess_Performance(DTCRU, distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distances_seqalign,dir_results,use_genes_label='use_genes'):
     labels = DTCRU.label_id
     k_values = list(range(1, 500, 10))
-    #k_values = 100*[300]
     class_list = []
     recall_list = []
     precision_list = []
@@ -91,30 +82,29 @@ def Assess_Performance(DTCRU, distances_vae, distances_gan, distances_hamming, d
 
     for k in k_values:
         # Collect performance metrics for various methods
-        # VAE
-        classes, recall, precision, f1_score, auc,acc = KNN(distances_vae, labels, k=k)
+        # VAE Seq
+        classes, recall, precision, f1_score, auc,acc = KNN(distances_vae_seq, labels, k=k)
         class_list.extend(classes)
         recall_list.extend(recall)
         precision_list.extend(precision)
         f1_score_list.extend(f1_score)
         accuracy_list.extend(acc)
         auc_list.extend(auc)
-        algorithm.extend(len(classes) * ['VAE'])
+        algorithm.extend(len(classes) * ['VAE_Seq'])
         k_list.extend(len(classes) * [k])
         use_genes_list.extend(len(classes)*[use_genes_label])
 
-        # Train GAN
-        classes, recall, precision, f1_score, auc,acc = KNN(distances_gan, labels, k=k)
+        # VAE Seq Gene
+        classes, recall, precision, f1_score, auc,acc = KNN(distances_vae_seq_gene, labels, k=k)
         class_list.extend(classes)
         recall_list.extend(recall)
         precision_list.extend(precision)
         f1_score_list.extend(f1_score)
         accuracy_list.extend(acc)
         auc_list.extend(auc)
-        algorithm.extend(len(classes) * ['GAN'])
+        algorithm.extend(len(classes) * ['VAE_Seq_Gene'])
         k_list.extend(len(classes) * [k])
         use_genes_list.extend(len(classes)*[use_genes_label])
-
 
         # Hamming Distance
         classes, recall, precision, f1_score, auc,acc = KNN(distances_hamming, labels, k=k)
@@ -127,7 +117,6 @@ def Assess_Performance(DTCRU, distances_vae, distances_gan, distances_hamming, d
         algorithm.extend(len(classes) * ['Hamming'])
         k_list.extend(len(classes) * [k])
         use_genes_list.extend(len(classes)*[use_genes_label])
-
 
         # Kmer search
         classes, recall, precision, f1_score, auc,acc = KNN(distances_kmer, labels, k=k)

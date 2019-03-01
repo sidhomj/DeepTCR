@@ -14,18 +14,18 @@ DTCRU = DeepTCR_U('Metrics')
 
 "Sidhom"
 dir_results = 'Sidhom_Figures'
-DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
-               v_beta_column=None,d_beta_column=None,j_beta_column=None)
 
 #VAE_- Sequencs Alone
-distances_vae,distances_gan = VAE_GAN_Distances(DTCRU,Load_Prev_Data=True)
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
+               v_beta_column=None,d_beta_column=None,j_beta_column=None)
+DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False)
+distances_vae_seq = squareform(pdist(DTCRU.features, metric='euclidean'))
 
+#VAE_- Gene+Sequencs
 DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
                v_beta_column=7,d_beta_column=14,j_beta_column=21)
-
-
-DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
-               v_beta_column=7,d_beta_column=14,j_beta_column=21)
+DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False,seq_features_latent=True)
+distances_vae_seq_gene = squareform(pdist(DTCRU.features, metric='euclidean'))
 
 #Hamming
 distances_hamming = squareform(pdist(np.squeeze(DTCRU.X_Seq_beta, 1), metric='hamming'))
@@ -45,7 +45,7 @@ distances_kmer = squareform(pdist(kmer_features, metric='euclidean'))
 with open('Sidhom_seqalign.pkl','rb') as f:
     distance_seqalign,total_time = pickle.load(f)
 
-df = Assess_Performance(DTCRU,distances_vae, distances_gan, distances_hamming, distances_kmer,distance_seqalign,dir_results)
+df = Assess_Performance(DTCRU,distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distance_seqalign,dir_results)
 agg_dict = {'Recall':'mean','Precision':'mean','F1_Score':'mean','Accuracy':'mean','AUC':'mean'}
 df_sum = df.groupby(['Algorithm']).agg(agg_dict)
 
