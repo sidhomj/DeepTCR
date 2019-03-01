@@ -75,7 +75,7 @@ def VAE_GAN_Distances(DTCRU,Load_Prev_Data=False):
     distances_gan = squareform(pdist(DTCRU.features, metric='euclidean'))
     return distances_vae, distances_gan
 
-def Assess_Performance(DTCRU, distances_vae, distances_gan, distances_hamming, distances_kmer,dir_results,use_genes_label='use_genes'):
+def Assess_Performance(DTCRU, distances_vae, distances_gan, distances_hamming, distances_kmer,distances_seqalign,dir_results,use_genes_label='use_genes'):
     labels = DTCRU.label_id
     k_values = list(range(1, 500, 10))
     #k_values = 100*[300]
@@ -141,16 +141,17 @@ def Assess_Performance(DTCRU, distances_vae, distances_gan, distances_hamming, d
         k_list.extend(len(classes) * [k])
         use_genes_list.extend(len(classes)*[use_genes_label])
 
-
-        # #Sequence Alignment
-        # classes,recall, precision, f1_score = KNN(seq_align_distances,labels[idx],k=k)
-        #
-        # class_list.extend(classes)
-        # recall_list.extend(recall)
-        # precision_list.extend(precision)
-        # f1_score_list.extend(f1_score)
-        # algorithm.extend(len(classes)*['Seq-Align'])
-        # k_list.extend(len(classes)*[k])
+        #Sequence Alignment
+        classes,recall, precision, f1_score,auc,acc = KNN(distances_seqalign,labels,k=k)
+        class_list.extend(classes)
+        recall_list.extend(recall)
+        precision_list.extend(precision)
+        f1_score_list.extend(f1_score)
+        auc_list.extend(auc)
+        accuracy_list.extend(acc)
+        algorithm.extend(len(classes)*['Seq-Align'])
+        k_list.extend(len(classes)*[k])
+        use_genes_list.extend(len(classes)*[use_genes_label])
 
     df_out = pd.DataFrame()
     df_out['Classes'] = class_list

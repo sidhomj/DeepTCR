@@ -5,7 +5,9 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
+import pickle
 import umap
+import time
 
 #Instantiate training object
 DTCRU = DeepTCR_U('Metrics')
@@ -26,9 +28,17 @@ kmer_features = kmer_search(DTCRU.beta_sequences)
 distances_kmer = squareform(pdist(kmer_features, metric='euclidean'))
 
 #Seq-Align
+# start = time.time()
+# distance_seqalign = pairwise_alignment(DTCRU.beta_sequences)
+# end = time.time()
+# total_time = end-start
+# with open('Sidhom_seqalign.pkl','wb') as f:
+#     pickle.dump([distance_seqalign,total_time],f)
 
+with open('Sidhom_seqalign.pkl','rb') as f:
+    distance_seqalign,total_time = pickle.load(f)
 
-df = Assess_Performance(DTCRU,distances_vae, distances_gan, distances_hamming, distances_kmer,dir_results)
+df = Assess_Performance(DTCRU,distances_vae, distances_gan, distances_hamming, distances_kmer,distance_seqalign,dir_results)
 agg_dict = {'Recall':'mean','Precision':'mean','F1_Score':'mean','Accuracy':'mean','AUC':'mean'}
 df_sum = df.groupby(['Algorithm']).agg(agg_dict)
 
