@@ -15,10 +15,17 @@ DTCRU = DeepTCR_U('Metrics')
 "Sidhom"
 dir_results = 'Sidhom_Figures'
 DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
+               v_beta_column=None,d_beta_column=None,j_beta_column=None)
+
+#VAE_- Sequencs Alone
+distances_vae,distances_gan = VAE_GAN_Distances(DTCRU,Load_Prev_Data=True)
+
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
                v_beta_column=7,d_beta_column=14,j_beta_column=21)
 
-#VAE_GAN
-distances_vae,distances_gan = VAE_GAN_Distances(DTCRU,Load_Prev_Data=True)
+
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
+               v_beta_column=7,d_beta_column=14,j_beta_column=21)
 
 #Hamming
 distances_hamming = squareform(pdist(np.squeeze(DTCRU.X_Seq_beta, 1), metric='hamming'))

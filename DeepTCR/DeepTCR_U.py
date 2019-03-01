@@ -372,7 +372,7 @@ class DeepTCR_U(object):
         self.j_alpha_num = j_alpha_num
         print('Data Loaded')
 
-    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=False,
+    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=True,
                   trainable_embedding=True,seq_features_latent=False):
         """
         Train Variational Autoencoder (VAE)
@@ -768,7 +768,6 @@ class DeepTCR_U(object):
                     gene_features = Get_Gene_Features(self,embedding_dim_genes,gene_features)
 
                     training = tf.placeholder_with_default(False, shape=())
-                    training_distances = tf.placeholder_with_default(False, shape=())
 
                     prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
 

@@ -165,41 +165,11 @@ def Assess_Performance(DTCRU, distances_vae, distances_gan, distances_hamming, d
     df_out['Gene_Usage'] = use_genes_list
     df_out.to_csv(os.path.join(dir_results,'df.csv'),index=False)
 
-    classes = DTCRU.lb.classes_
-    measurements = ['Recall', 'Precision', 'F1_Score', 'Accuracy','AUC']
-
-    if not os.path.exists(dir_results):
-        os.makedirs(dir_results)
-
-    # i = 0
-    # for c in classes:
-    #     for m in measurements:
-    #         idx = df_out['Classes'] == c
-    #         plt.figure()
-    #         sns.set(font_scale=1.2)
-    #         sns.set_style('white')
-    #         sns.lineplot(data=df_out[idx], x='k', y=m, hue='Algorithm')
-    #         plt.title(c)
-    #         plt.xticks(k_values)
-    #         plt.savefig(os.path.join(dir_results, str(i) + '.tif'))
-    #         plt.close()
-    #         i += 1
-
     return df_out
 
 def Plot_Performance(df):
-    fig, ax = plt.subplots(2, 2)
-    measurements = ['Recall', 'Precision', 'F1_Score', 'Accuracy']
-    ax = np.ndarray.flatten(ax)
-    for a, m in zip(ax, measurements):
-        sns.boxplot(x='Algorithm', y=m, data=df, ax=a, hue='Classes')
-
-    fig, ax = plt.subplots(2, 2)
-    ax = np.ndarray.flatten(ax)
-    for a, m in zip(ax, measurements):
-        sns.boxplot(x='Algorithm', y=m, data=df, ax=a)
-
-    fig, ax = plt.subplots(2, 2)
+    measurements = ['Recall', 'Precision', 'F1_Score']
+    fig, ax = plt.subplots(1, 3)
     ax = np.ndarray.flatten(ax)
     for a, m in zip(ax, measurements):
         sns.lineplot(x='k', y=m, data=df, hue='Algorithm', ci=None, ax=a)
