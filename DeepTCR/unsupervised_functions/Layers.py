@@ -7,6 +7,7 @@ def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='C
         kernel = 3
         units = 32
         conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')
+        indices = tf.squeeze(tf.cast(tf.argmax(conv, axis=2), tf.float32),1)
         conv = tf.nn.leaky_relu(conv)
         conv = tf.layers.dropout(conv,prob)
 
@@ -20,7 +21,7 @@ def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='C
         conv = tf.nn.leaky_relu(conv)
         conv = tf.layers.dropout(conv, prob)
 
-        return tf.layers.flatten(conv)
+        return tf.layers.flatten(conv),indices
 
 def Recon_Loss(inputs,logits):
     #Calculate Per Sample Reconstruction Loss

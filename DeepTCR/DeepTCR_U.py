@@ -375,7 +375,7 @@ class DeepTCR_U(object):
         print('Data Loaded')
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=True,
-                  trainable_embedding=True,seq_features_latent=False):
+                  trainable_embedding=True,seq_features_latent=False,use_only_gene=False):
         """
         Train Variational Autoencoder (VAE)
 
@@ -458,9 +458,9 @@ class DeepTCR_U(object):
 
                     # Convolutional Features
                     if self.use_alpha is True:
-                        Seq_Features_alpha = Convolutional_Features_AE(inputs_seq_embed_alpha, training=training, prob=prob,name='alpha_conv')
+                        Seq_Features_alpha,indices_alpha = Convolutional_Features_AE(inputs_seq_embed_alpha, training=training, prob=prob,name='alpha_conv')
                     if self.use_beta is True:
-                        Seq_Features_beta = Convolutional_Features_AE(inputs_seq_embed_beta, training=training, prob=prob,name='beta_conv')
+                        Seq_Features_beta,indices_beta = Convolutional_Features_AE(inputs_seq_embed_beta, training=training, prob=prob,name='beta_conv')
 
 
                     Seq_Features = []
@@ -478,6 +478,9 @@ class DeepTCR_U(object):
                         if not isinstance(gene_features, list):
                             Seq_Features = tf.concat((Seq_Features, gene_features), axis=1)
                     else:
+                        Seq_Features = gene_features
+
+                    if use_only_gene is True:
                         Seq_Features = gene_features
 
                     ortho_loss = Get_Ortho_Loss(Seq_Features,alpha=1.0)
@@ -649,6 +652,9 @@ class DeepTCR_U(object):
 
                 features_list = []
                 accuracy_list = []
+                alpha_indices_list = []
+                beta_indices_list = []
+
                 Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,self.v_alpha_num, self.j_alpha_num]
 
                 for vars in get_batches(Vars, batch_size=batch_size, random=False):
@@ -681,6 +687,18 @@ class DeepTCR_U(object):
                     features_list.append(features_ind)
                     accuracy_list.append(accuracy_check)
 
+                    if self.use_alpha is True:
+                        alpha_indices_list.append(sess.run(indices_alpha,feed_dict=feed_dict))
+
+                    if self.use_beta is True:
+                        beta_indices_list.append(sess.run(indices_beta,feed_dict=feed_dict))
+
+
+                if self.use_alpha is True:
+                    alpha_indices_list = np.vstack(alpha_indices_list)
+
+                if self.use_beta is True:
+                    beta_indices_list = np.vstack(beta_indices_list)
 
                 features = np.vstack(features_list)
                 accuracy_list = np.hstack(accuracy_list)
@@ -704,6 +722,8 @@ class DeepTCR_U(object):
         keep = np.asarray(keep)
         self.vae_features = self.features[:,keep]
         self.features = self.vae_features
+        self.alpha_indices = alpha_indices_list
+        self.beta_indices = beta_indices_list
         print('Training Done')
 
     def Train_GAN(self,Load_Prev_Data=False,batch_size=10000,it_min=50,latent_dim=256,suppress_output=False,ortho_norm=False,use_distances=False):
