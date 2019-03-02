@@ -216,6 +216,7 @@ class DeepTCR_U(object):
             label_id = []
             file_id = []
             freq = []
+            counts=[]
             file_list = []
             for type in self.classes:
                 files_read = glob.glob(os.path.join(directory, type, ext))
@@ -262,6 +263,7 @@ class DeepTCR_U(object):
                     file_id += [file.split('/')[-1]] * len(df)
                     file_list.append(file.split('/')[-1])
                     freq += df['Frequency'].tolist()
+                    counts += df['counts'].tolist()
 
             alpha_sequences = np.asarray(alpha_sequences)
             beta_sequences = np.asarray(beta_sequences)
@@ -273,6 +275,7 @@ class DeepTCR_U(object):
             label_id = np.asarray(label_id)
             file_id = np.asarray(file_id)
             freq = np.asarray(freq)
+            counts = np.asarray(counts)
 
             #transform sequences into numerical space
             if aa_column_alpha is not None:
@@ -343,7 +346,7 @@ class DeepTCR_U(object):
                 j_alpha = np.asarray([None]*len(label_id))
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
-                pickle.dump([X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,
+                pickle.dump([X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,
                              self.lb,file_list,self.use_alpha,self.use_beta,
                              self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,
                              v_beta, d_beta,j_beta,v_alpha,j_alpha,
@@ -352,7 +355,7 @@ class DeepTCR_U(object):
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
-                X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,\
+                X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,\
                 self.lb,file_list,self.use_alpha,self.use_beta,\
                     self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,\
                     v_beta, d_beta,j_beta,v_alpha,j_alpha,\
@@ -366,6 +369,7 @@ class DeepTCR_U(object):
         self.label_id = label_id
         self.file_id = file_id
         self.freq = freq
+        self.counts = counts
         self.file_list = file_list
         self.v_beta = v_beta
         self.v_beta_num = v_beta_num
@@ -1498,7 +1502,7 @@ class DeepTCR_U(object):
             plt.scatter(X_2[:, 0], X_2[:, 1], c=row_colors, s=s)
             plt.legend(handles=patches)
 
-    def Structural_Entropy(self,color_dict=None,plot=True):
+    def Structural_Entropy(self,plot=True):
         """
         Structural Entropy Analysis
         This method computes and assesses the structural entropy/diversity of the repertoire
@@ -1515,71 +1519,33 @@ class DeepTCR_U(object):
             dataframe that stores the structural entropies for each sample
         """
 
-        #Get Global Edges
-        density = True
-        from sklearn.decomposition import PCA
+        features = MinMaxScaler().fit_transform(self.features)
 
-        pca = PCA(n_components=2)
-        #features = pca.fit_transform(self.features)
-        features = self.features
-        #features = umap.UMAP(n_components=2).fit_transform(self.features)
+        sample_id = self.file_list
+        entropy_list = []
+        label_list = []
+        for id in sample_id:
+            sel = np.squeeze(self.file_id == id)
+            features_sel = features[sel]
+            counts_sel = self.counts[sel]
+            temp = []
+            for ii, f in enumerate(features_sel, 0):
+                temp.append(np.vstack([f] * counts_sel[ii]))
+            features_sel = np.vstack(temp)
 
-        #features = pca.fit_transform(self.features)
-        pseudo_count = np.round(self.freq / np.min(self.freq))
-        pseudo_features = []
-        for ii,f in enumerate(features,0):
-            pseudo_features.append(np.vstack([f]*int(pseudo_count[ii])))
-        features = np.vstack(pseudo_features)
+            d = pdist(features_sel)
+            entropy_list.append(entropy(d))
+            label_list.append(self.label_id[sel][0])
 
-        pseudo_labels =[]
-        for ii,f in enumerate(self.label_id):
-            pseudo_labels.append(np.vstack([f]*int(pseudo_count[ii])))
-        labels = np.vstack(pseudo_labels)
+        df = pd.DataFrame()
+        df['Entropy'] = entropy_list
+        df.index = sample_id
+        df['Label'] = label_list
+        df['File'] = sample_id
+        self.Entropy_DF = df
 
-        pseudo_file = []
-        for ii,f in enumerate(self.file_id):
-            pseudo_file.append(np.vstack([f]*int(pseudo_count[ii])))
-        file_id = np.vstack(pseudo_file)
-
-        # for type in np.unique(self.label_id):
-        #     idx = np.squeeze(labels==type)
-        #     sns.jointplot(features[idx,0],features[idx,1],kind='hex')
-        #     plt.title(type)
-
-
-        features = MinMaxScaler().fit_transform(features)
-        distances = pdist(features)
-        self.distances = distances
-        #sns.distplot(distances)
-        # H, edges = np.histogramdd(features,density=density,bins=3)
-        #
-        # # Get histograms and compute entropies for all samples
-        # sample_id = self.file_list
-        # sample_histograms = []
-        # file_label = []
-        # sample_entropies = []
-        #
-        # for id in sample_id:
-        #     sel = np.squeeze(file_id == id)
-        #     sel_idx = features[sel]
-        #
-        #     hist = np.histogramdd(sel_idx,bins=edges,density=density)[0]
-        #     sample_histograms.append(hist)
-        #     file_label.append(np.unique(labels[sel])[0])
-        #     sample_entropies.append(entropy(np.ndarray.flatten(hist)))
-        #
-        # df = pd.DataFrame()
-        # df['Entropy'] = sample_entropies
-        # df.index = sample_id
-        # df['Label'] = file_label
-        # self.Entropy_DF = df
-        # self.Overall_Entropy = entropy(np.ndarray.flatten(H))
-        #
-        # if plot is True:
-        #     plt.figure()
-        #     sns.boxplot(data=df,x='Label',y='Entropy')
-
-
+        if plot is True:
+            sns.boxplot(data=df,x='Label',y='Entropy')
 
 
 
