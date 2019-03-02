@@ -16,10 +16,11 @@ import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage,fcluster
 from sklearn.preprocessing import StandardScaler
 from scipy.stats import wasserstein_distance, entropy
-from scipy.spatial.distance import pdist
+from scipy.spatial.distance import pdist, squareform
 import umap
 import matplotlib.patches as mpatches
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.metrics import pairwise_distances
 
 
 class DeepTCR_U(object):
@@ -1527,13 +1528,19 @@ class DeepTCR_U(object):
         for id in sample_id:
             sel = np.squeeze(self.file_id == id)
             features_sel = features[sel]
-            counts_sel = self.counts[sel]
-            temp = []
-            for ii, f in enumerate(features_sel, 0):
-                temp.append(np.vstack([f] * counts_sel[ii]))
-            features_sel = np.vstack(temp)
+            counts_sel = np.round(self.counts[sel]/np.min(self.counts[sel]))
+            d = squareform(pdist(features_sel))
 
-            d = pdist(features_sel)
+            temp = []
+            for ii, f in enumerate(d, 0):
+                temp.append(np.vstack([f] * int(counts_sel[ii])))
+            d = np.vstack(temp)
+            temp=[]
+            for ii,f in enumerate(d.T,0):
+                temp.append(np.vstack([f]*int(counts_sel[ii])))
+            d = np.vstack(temp)
+            d = squareform(d)
+
             entropy_list.append(entropy(d))
             label_list.append(self.label_id[sel][0])
 
