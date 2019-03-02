@@ -704,12 +704,24 @@ class DeepTCR_U(object):
                 accuracy_list = np.hstack(accuracy_list)
                 print('Reconstruction Accuracy: {:.5f}'.format(np.nanmean(accuracy_list)))
 
+                embedding_layers = [embedding_layer_v_alpha,embedding_layer_j_alpha,embedding_layer_v_beta,embedding_layer_d_beta,embedding_layer_j_beta]
+                embedding_names = ['v_alpha','j_alpha','v_beta','d_beta','j_beta']
+                name_keep = []
+                embedding_keep = []
+                for n,layer in zip(embedding_names,embedding_layers):
+                    if layer is not None:
+                        embedding_keep.append(layer.eval())
+                        name_keep.append(n)
+
+                embed_dict = dict(zip(name_keep,embedding_keep))
+
+
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
-                pickle.dump(features, f,protocol=4)
+                pickle.dump([features,embed_dict], f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'rb') as f:
-                features = pickle.load(f)
+                features,embed_dict = pickle.load(f)
 
 
         self.features = features
@@ -724,6 +736,7 @@ class DeepTCR_U(object):
         self.features = self.vae_features
         self.alpha_indices = alpha_indices_list
         self.beta_indices = beta_indices_list
+        self.embed_dict = embed_dict
         print('Training Done')
 
     def Train_GAN(self,Load_Prev_Data=False,batch_size=10000,it_min=50,latent_dim=256,suppress_output=False,ortho_norm=False,use_distances=False):
