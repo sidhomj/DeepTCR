@@ -17,21 +17,16 @@ DTCRU = DeepTCR_U('Clustering_Metrics')
 p = Pool(40)
 
 # #VAE_- Sequencs Alone
-# DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
-#                v_beta_column=None,d_beta_column=None,j_beta_column=None,p=p)
-
-DTCRU.Get_Data(directory='../Data/Dash/One_V_All/Human/BMLF',Load_Prev_Data=False,aggregate_by_aa=True,
-               aa_column_alpha=0,aa_column_beta=1,count_column=2,v_alpha_column=None,j_alpha_column=None,v_beta_column=None,j_beta_column=None)
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
+               v_beta_column=None,d_beta_column=None,j_beta_column=None,p=p)
 
 DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False)
 distances_vae_seq = pdist(DTCRU.features, metric='euclidean')
 
 
 #VAE_- Gene+Sequencs
-# DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
-#                v_beta_column=7,d_beta_column=14,j_beta_column=21,p=p)
-DTCRU.Get_Data(directory='../Data/Dash/One_V_All/Human/BMLF',Load_Prev_Data=False,aggregate_by_aa=True,
-               aa_column_alpha=0,aa_column_beta=1,count_column=2,v_alpha_column=3,j_alpha_column=None,v_beta_column=5,j_beta_column=None)
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
+               v_beta_column=7,d_beta_column=14,j_beta_column=21,p=p)
 
 DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False,seq_features_latent=True)
 distances_vae_seq_gene = pdist(DTCRU.features, metric='euclidean')
