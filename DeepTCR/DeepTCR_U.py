@@ -487,21 +487,22 @@ class DeepTCR_U(object):
                         z_mean_seq = tf.layers.dense(Seq_Features, latent_dim, activation=None, name='z_mean_seq')
                         z_log_var_seq = tf.layers.dense(Seq_Features, latent_dim, activation=tf.nn.softplus, name='z_log_var_seq')
                         latent_costs.append(Latent_Loss(z_log_var_seq,z_mean_seq))
-
-                        Seq_Features_Out = z_mean_seq
+                        Seq_Features = z_mean_seq
 
                     if not isinstance(Seq_Features,list):
                         if not isinstance(gene_features, list):
-                            Seq_Features = tf.concat((Seq_Features_Out, gene_features), axis=1)
+                            Features = tf.concat((Seq_Features, gene_features), axis=1)
+                        else:
+                            Features = Seq_Features
+
+                        if use_only_gene is True:
+                            Features = gene_features
                     else:
-                        Seq_Features = gene_features
+                        Features = gene_features
 
-                    if use_only_gene is True:
-                        Seq_Features = gene_features
+                    ortho_loss = Get_Ortho_Loss(Features,alpha=1.0)
 
-                    ortho_loss = Get_Ortho_Loss(Seq_Features,alpha=1.0)
-
-                    fc = tf.layers.dense(Seq_Features, 256)
+                    fc = tf.layers.dense(Features, 256)
                     fc = tf.layers.dense(fc, 128)
 
                     z_mean = tf.layers.dense(fc, latent_dim, activation=None, name='z_mean')
@@ -602,7 +603,6 @@ class DeepTCR_U(object):
                     for u in latent_costs:
                         latent_cost += u
 
-
                     total_cost = [recon_losses,latent_cost[:,tf.newaxis]]
                     total_cost = tf.concat(total_cost,1)
                     total_cost = tf.reduce_sum(total_cost,1)
@@ -614,11 +614,10 @@ class DeepTCR_U(object):
                     accuracy = accuracy/num_acc
                     latent_cost = tf.reduce_sum(latent_cost)
 
-
                     if ortho_norm is True:
                         opt_ae = tf.train.AdamOptimizer().minimize(total_cost + ortho_loss)
                     else:
-                        opt_ae = tf.train.AdamOptimizer().minimize(total_cost + ortho_loss)
+                        opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
 
                     saver = tf.train.Saver()
 
@@ -701,7 +700,7 @@ class DeepTCR_U(object):
                         feed_dict[X_j_alpha] = vars[6]
 
                     if seq_features_latent is True:
-                        get = Seq_Features_Out
+                        get = Seq_Features
                     else:
                         get = z_mean
 
@@ -724,7 +723,7 @@ class DeepTCR_U(object):
 
                 features = np.vstack(features_list)
                 # if seq_features_latent is True:
-                #     features = MinMaxScaler().fit_transform(features)
+                #features = MinMaxScaler().fit_transform(features)
 
                 accuracy_list = np.hstack(accuracy_list)
                 print('Reconstruction Accuracy: {:.5f}'.format(np.nanmean(accuracy_list)))

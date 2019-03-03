@@ -16,23 +16,28 @@ DTCRU = DeepTCR_U('Clustering_Metrics')
 
 p = Pool(40)
 
+#VAE_- Genes
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
+               v_beta_column=7,d_beta_column=14,j_beta_column=21,p=p)
+
+DTCRU.Train_VAE(accuracy_min=0.8, Load_Prev_Data=False,use_only_gene=True)
+distances_vae_gene = pdist(DTCRU.features, metric='euclidean')
+
+DTCRU = DeepTCR_U('Clustering_Metrics')
 # #VAE_- Sequencs Alone
 DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
                v_beta_column=None,d_beta_column=None,j_beta_column=None,p=p)
 
-DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False)
+DTCRU.Train_VAE(accuracy_min=0.8, Load_Prev_Data=False)
 distances_vae_seq = pdist(DTCRU.features, metric='euclidean')
 
-
+DTCRU = DeepTCR_U('Clustering_Metrics')
 #VAE_- Gene+Sequencs
 DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
                v_beta_column=7,d_beta_column=14,j_beta_column=21,p=p)
 
-DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False,seq_features_latent=True)
+DTCRU.Train_VAE(accuracy_min=0.8, Load_Prev_Data=False,seq_features_latent=True)
 distances_vae_seq_gene = pdist(DTCRU.features, metric='euclidean')
-
-p.close()
-p.join()
 
 
 #Hamming
@@ -42,23 +47,16 @@ distances_hamming = pdist(np.squeeze(DTCRU.X_Seq_beta, 1), metric='hamming')
 kmer_features = kmer_search(DTCRU.beta_sequences)
 distances_kmer = pdist(kmer_features, metric='euclidean')
 
-#Seq-Align
-# start = time.time()
-# distances_seqalign = pairwise_alignment(DTCRU.beta_sequences)
-# end = time.time()
-# total_time = end-start
-# with open('Sidhom_seqalign.pkl','wb') as f:
-#     pickle.dump([distances_seqalign,total_time],f)
 
-with open('Sidhom_seqalign.pkl','rb') as f:
-    distances_seqalign,total_time = pickle.load(f)
-#make symmetric
-distances_seqalign = squareform(distances_seqalign + distances_seqalign.T)
 
-distances_list = [distances_vae_seq,distances_vae_seq_gene,distances_hamming,distances_kmer,distances_seqalign]
-names = ['VAE-Seq','VAE-Seq-Gene','Hamming','K-mer','Global_Seq-Align']
+p.close()
+p.join()
 
-dir_results = 'Length_Results_Dash'
+
+distances_list = [distances_vae_seq,distances_vae_seq_gene,distances_vae_gene,distances_hamming,distances_kmer]
+names = ['VAE-Seq','VAE-Seq-Gene','VAE-Gene','Hamming','K-mer']
+
+dir_results = 'Length_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
