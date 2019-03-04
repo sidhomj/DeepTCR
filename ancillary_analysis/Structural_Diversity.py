@@ -19,7 +19,7 @@ classes_all = np.array(['F2', 'M38', 'M45', 'NP', 'PA', 'PB1', 'm139'])
 p = Pool(40)
 num = [1,2,3,4,5,6,7]
 num = [1,3,7]
-reps = [2,2,1]
+reps = [5,5,1]
 
 num_list=[]
 method_list = []
@@ -89,6 +89,7 @@ for n,rep in zip(num,reps):
     distances_kmer_l.append(np.hstack(distances_kmer_l_temp))
 
 #Plot distances
+
 plt.figure()
 for ii,n in enumerate(num,0):
     sns.distplot(distances_vae_seq_gene_l[ii],label=str(n),norm_hist=True)

@@ -33,9 +33,9 @@ def Recon_Loss(inputs,logits):
     recon_loss = tf.reduce_mean(w*recon_loss,axis=1)
     return recon_loss
 
-def Latent_Loss(z_log_var,z_mean):
+def Latent_Loss(z_log_var,z_mean,alpha=0.0):
     #Calculate Per Sample Variational Loss
-    latent_loss = -1e-3 *tf.reduce_sum(1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1)
+    latent_loss = -alpha *tf.reduce_sum(1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1)
     return latent_loss
 
 def Get_Gene_Loss(fc,embedding_layer,X_OH):

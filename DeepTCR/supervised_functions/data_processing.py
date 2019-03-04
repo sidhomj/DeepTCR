@@ -90,7 +90,7 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
         column_names.append('counts')
     else:
         df['counts'] = 1
-        cols_to_keep.append(-1)
+        cols_to_keep.append(np.where(df.columns=='counts')[0][0])
         column_names.append('counts')
 
     if v_alpha_column is not None:

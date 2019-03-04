@@ -120,7 +120,7 @@ def SVM(features,labels):
     return lb.classes_, recall, precision, f_score, auc_score, acc_score
 
 
-def Assess_Performance_KNN(DTCRU, distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distances_seqalign,dir_results,use_genes_label='use_genes'):
+def Assess_Performance_KNN_dep(DTCRU, distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distances_seqalign,dir_results,use_genes_label='use_genes'):
     labels = DTCRU.label_id
     k_values = list(range(1, 500, 25))
     rep = 5
@@ -216,6 +216,64 @@ def Assess_Performance_KNN(DTCRU, distances_vae_seq, distances_vae_seq_gene, dis
 
     return df_out
 
+def Assess_Performance_KNN(distances,names,labels,dir_results,k_values=list(range(1, 500, 25)),rep=5):
+    temp = []
+    for v in k_values:
+        temp.extend(rep*[v])
+    k_values = temp
+    class_list = []
+    algorithm = []
+    k_list = []
+    metric_list = []
+    val_list = []
+
+    #convert distances to squareform if need be
+    temp = []
+    for d in distances:
+        if len(d.shape)==1:
+            d = squareform(d)
+        temp.append(d)
+    distances = temp
+
+    for k in k_values:
+        for n,d in zip(names,distances):
+            classes, recall, precision, f1_score, auc, acc = KNN(d, labels, k=k)
+            val = []
+            val.extend(recall)
+            val.extend(precision)
+            val.extend(f1_score)
+            val.extend(acc)
+            val.extend(auc)
+
+            metric = []
+            metric.extend(['Recall']*len(classes))
+            metric.extend(['Precision']*len(classes))
+            metric.extend(['F1_Score']*len(classes))
+            metric.extend(['Accuracy']*len(classes))
+            metric.extend(['AUC']*len(classes))
+
+            metric_list.extend(metric)
+            val_list.extend(val)
+
+            for i in range(5):
+                class_list.extend(classes)
+                algorithm.extend(len(classes) * [n])
+                k_list.extend(len(classes) * [k])
+
+
+
+    df_out = pd.DataFrame()
+    df_out['Classes'] = class_list
+    df_out['Metric'] = metric_list
+    df_out['Value'] = val_list
+    df_out['Algorithm'] = algorithm
+    df_out['k'] = k_list
+    if not os.path.exists(dir_results):
+        os.makedirs(dir_results)
+    df_out.to_csv(os.path.join(dir_results,'df.csv'),index=False)
+
+    return df_out
+
 def Assess_Performance_SVM(DTCRU, features_vae_seq, features_vae_seq_gene, features_hamming, features_kmer,features_seqalign,dir_results,use_genes_label='use_genes'):
     labels = DTCRU.label_id
     class_list = []
@@ -303,12 +361,14 @@ def Plot_Performance(df,dir_results):
     if not os.path.exists(os.path.join(dir_results,subdir)):
         os.makedirs(os.path.join(dir_results,subdir))
 
-    measurements = ['Recall', 'Precision', 'F1_Score']
+    measurements = np.unique(df['Metric'].tolist())
     types = np.unique(df['Classes'].tolist())
     for m in measurements:
         for t in types:
-            sns.catplot(x='k',y=m,data=df[df['Classes']==t],kind='point',hue='Algorithm',capsize=0.2)
+            df_temp = df[(df['Classes']==t) & (df['Metric']==m)]
+            sns.catplot(data=df_temp,x='k',y='Value',kind='point',hue='Algorithm',capsize=0.2)
             plt.title(t)
+            plt.ylabel(m)
             plt.subplots_adjust(top=0.9)
             plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'.tif'))
 
