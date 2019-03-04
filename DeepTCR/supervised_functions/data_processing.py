@@ -84,7 +84,6 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
         column_names.append('beta')
         sequence_columns.append('beta')
 
-
     if count_column is not None:
         cols_to_keep.append(count_column)
         column_names.append('counts')
