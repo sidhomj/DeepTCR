@@ -19,32 +19,32 @@ DTCRU = DeepTCR_U('Clustering_Metrics')
 p = Pool(40)
 
 #VAE_- Genes
-# DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
-#                v_beta_column=7,d_beta_column=14,j_beta_column=21,p=p)
-DTCRU.Get_Data(directory='../Data/Dash/Traditional/Mouse',Load_Prev_Data=False,aggregate_by_aa=False,
-               aa_column_alpha=None,aa_column_beta=None,count_column=None,v_alpha_column=None,j_alpha_column=None,v_beta_column=5,j_beta_column=6)
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
+               v_beta_column=7,d_beta_column=14,j_beta_column=21,p=p)
+# DTCRU.Get_Data(directory='../Data/Dash/Traditional/Mouse',Load_Prev_Data=False,aggregate_by_aa=True,
+#                aa_column_alpha=None,aa_column_beta=1,count_column=2,v_alpha_column=None,j_alpha_column=None,v_beta_column=5,j_beta_column=6)
 
 DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False,use_only_gene=True)
 distances_vae_gene = pdist(DTCRU.features, metric='euclidean')
 
 DTCRU = DeepTCR_U('Clustering_Metrics')
 # #VAE_- Sequencs Alone
-# DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
-#                v_beta_column=None,d_beta_column=None,j_beta_column=None,p=p)
-DTCRU.Get_Data(directory='../Data/Dash/Traditional/Mouse',Load_Prev_Data=False,aggregate_by_aa=True,
-               aa_column_alpha=None,aa_column_beta=1,count_column=2,v_alpha_column=None,j_alpha_column=None,v_beta_column=None,j_beta_column=None)
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
+               v_beta_column=None,d_beta_column=None,j_beta_column=None,p=p)
+# DTCRU.Get_Data(directory='../Data/Dash/Traditional/Mouse',Load_Prev_Data=False,aggregate_by_aa=True,
+#                aa_column_alpha=None,aa_column_beta=1,count_column=2,v_alpha_column=None,j_alpha_column=None,v_beta_column=None,j_beta_column=None)
 
 DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False)
 distances_vae_seq = pdist(DTCRU.features, metric='euclidean')
 
 DTCRU = DeepTCR_U('Clustering_Metrics')
 #VAE_- Gene+Sequencs
-# DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
-#                v_beta_column=7,d_beta_column=14,j_beta_column=21,p=p)
-DTCRU.Get_Data(directory='../Data/Dash/Traditional/Mouse',Load_Prev_Data=False,aggregate_by_aa=True,
-               aa_column_alpha=None,aa_column_beta=1,count_column=2,v_alpha_column=None,j_alpha_column=None,v_beta_column=5,j_beta_column=6)
+DTCRU.Get_Data(directory='../Data/Sidhom',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=None,
+               v_beta_column=7,d_beta_column=14,j_beta_column=21,p=p)
+# DTCRU.Get_Data(directory='../Data/Dash/Traditional/Mouse',Load_Prev_Data=False,aggregate_by_aa=True,
+#                aa_column_alpha=None,aa_column_beta=1,count_column=2,v_alpha_column=None,j_alpha_column=None,v_beta_column=5,j_beta_column=6)
 
-DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False,seq_features_latent=True)
+DTCRU.Train_VAE(accuracy_min=0.9, Load_Prev_Data=False,seq_features_latent=False)
 distances_vae_seq_gene = pdist(DTCRU.features, metric='euclidean')
 
 
@@ -68,7 +68,7 @@ if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.label_id,dir_results)
-Plot_Performance(df_metrics,dir_results)
+Plot_Performance(df_metrics,dir_results,measurements=['AUC'])
 
 SRCC = []
 for n,distances in zip(names,distances_list):

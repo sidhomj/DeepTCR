@@ -21,7 +21,7 @@ from sklearn import svm
 from scipy.stats import wasserstein_distance
 
 
-def KNN(distances,labels,k=1):
+def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC','Accuracy']):
     lb = LabelEncoder()
     labels = lb.fit_transform(labels)
 
@@ -57,166 +57,43 @@ def KNN(distances,labels,k=1):
     labels = OH.fit_transform(labels.reshape(-1,1))
     pred = OH.transform(pred.reshape(-1,1))
 
-    recall = []
-    precision = []
-    f_score = []
-    auc_score = []
-    acc_score = []
-    for ii,c in enumerate(lb.classes_):
-        recall.append(recall_score(y_true=labels[:,ii],y_pred=pred[:,ii]))
-        precision.append(precision_score(y_true=labels[:,ii],y_pred=pred[:,ii]))
-        f_score.append(f1_score(y_true=labels[:, ii], y_pred=pred[:,ii]))
-        auc_score.append(roc_auc_score(labels[:, ii],pred_prob[:,ii]))
-        acc_score.append(accuracy_score(y_true=labels[:,ii],y_pred=pred[:,ii]))
-
-    return lb.classes_,recall, precision,f_score,auc_score,acc_score
-
-def SVM(features,labels):
-    lb = LabelEncoder()
-    labels = lb.fit_transform(labels)
-
-    skf = StratifiedKFold(n_splits=5, random_state=None, shuffle=True)
-    clf = svm.SVC(probability=True)
-
-    pred_list = []
-    pred_prob_list = []
-    labels_list = []
-    for train_idx, test_idx in skf.split(features,labels):
-        features_train = features[train_idx, :]
-
-        features_test = features[test_idx, :]
-
-        labels_train = labels[train_idx]
-        labels_test = labels[test_idx]
-
-        clf.fit(features_train,labels_train)
-        pred = clf.predict(features_test)
-        pred_prob = clf.predict_proba(features_test)
-
-        labels_list.extend(labels_test)
-        pred_list.extend(pred)
-        pred_prob_list.extend(pred_prob)
-
-    pred = np.asarray(pred_list)
-    pred_prob = np.asarray(pred_prob_list)
-    labels = np.asarray(labels_list)
-
-    OH = OneHotEncoder(sparse=False)
-    labels = OH.fit_transform(labels.reshape(-1, 1))
-    pred = OH.transform(pred.reshape(-1, 1))
-
-    recall = []
-    precision = []
-    f_score = []
-    auc_score = []
-    acc_score = []
-    for ii, c in enumerate(lb.classes_):
-        recall.append(recall_score(y_true=labels[:, ii], y_pred=pred[:, ii]))
-        precision.append(precision_score(y_true=labels[:, ii], y_pred=pred[:, ii]))
-        f_score.append(f1_score(y_true=labels[:, ii], y_pred=pred[:, ii]))
-        auc_score.append(roc_auc_score(labels[:, ii], pred_prob[:, ii]))
-        acc_score.append(accuracy_score(y_true=labels[:, ii], y_pred=pred[:, ii]))
-
-    return lb.classes_, recall, precision, f_score, auc_score, acc_score
-
-
-def Assess_Performance_KNN_dep(DTCRU, distances_vae_seq, distances_vae_seq_gene, distances_hamming, distances_kmer,distances_seqalign,dir_results,use_genes_label='use_genes'):
-    labels = DTCRU.label_id
-    k_values = list(range(1, 500, 25))
-    rep = 5
-    temp = []
-    for v in k_values:
-        temp.extend(rep*[v])
-    k_values = temp
-    class_list = []
-    recall_list = []
-    precision_list = []
-    f1_score_list = []
-    accuracy_list = []
-    auc_list = []
-    algorithm = []
+    metric = []
+    value = []
+    classes=[]
     k_list = []
-    use_genes_list=[]
+    for ii,c in enumerate(lb.classes_):
+        if 'Recall' in metrics:
+            value.append(recall_score(y_true=labels[:,ii],y_pred=pred[:,ii]))
+            metric.append('Recall')
+            classes.append(c)
+            k_list.append(k)
+        if 'Precision' in metrics:
+            value.append(precision_score(y_true=labels[:,ii],y_pred=pred[:,ii]))
+            metric.append('Precision')
+            classes.append(c)
+            k_list.append(k)
+        if 'F1_Score' in metrics:
+            value.append(f1_score(y_true=labels[:, ii], y_pred=pred[:,ii]))
+            metric.append('F1_Score')
+            classes.append(c)
+            k_list.append(k)
+        if 'AUC' in metrics:
+            value.append(roc_auc_score(labels[:, ii],pred_prob[:,ii]))
+            metric.append('AUC')
+            classes.append(c)
+            k_list.append(k)
+        if 'Accuracy' in metrics:
+            value.append(accuracy_score(y_true=labels[:,ii],y_pred=pred[:,ii]))
+            metric.append('Accuracy')
+            classes.append(c)
+            k_list.append(k)
 
-    for k in k_values:
-        # Collect performance metrics for various methods
-        # VAE Seq
-        classes, recall, precision, f1_score, auc,acc = KNN(distances_vae_seq, labels, k=k)
-        class_list.extend(classes)
-        recall_list.extend(recall)
-        precision_list.extend(precision)
-        f1_score_list.extend(f1_score)
-        accuracy_list.extend(acc)
-        auc_list.extend(auc)
-        algorithm.extend(len(classes) * ['VAE_Seq'])
-        k_list.extend(len(classes) * [k])
-        use_genes_list.extend(len(classes)*[use_genes_label])
 
-        # VAE Seq Gene
-        classes, recall, precision, f1_score, auc,acc = KNN(distances_vae_seq_gene, labels, k=k)
-        class_list.extend(classes)
-        recall_list.extend(recall)
-        precision_list.extend(precision)
-        f1_score_list.extend(f1_score)
-        accuracy_list.extend(acc)
-        auc_list.extend(auc)
-        algorithm.extend(len(classes) * ['VAE_Seq_Gene'])
-        k_list.extend(len(classes) * [k])
-        use_genes_list.extend(len(classes)*[use_genes_label])
 
-        # Hamming Distance
-        classes, recall, precision, f1_score, auc,acc = KNN(distances_hamming, labels, k=k)
-        class_list.extend(classes)
-        recall_list.extend(recall)
-        precision_list.extend(precision)
-        f1_score_list.extend(f1_score)
-        auc_list.extend(auc)
-        accuracy_list.extend(acc)
-        algorithm.extend(len(classes) * ['Hamming'])
-        k_list.extend(len(classes) * [k])
-        use_genes_list.extend(len(classes)*[use_genes_label])
+    return classes,metric,value,k_list
 
-        # Kmer search
-        classes, recall, precision, f1_score, auc,acc = KNN(distances_kmer, labels, k=k)
-        class_list.extend(classes)
-        recall_list.extend(recall)
-        precision_list.extend(precision)
-        f1_score_list.extend(f1_score)
-        auc_list.extend(auc)
-        accuracy_list.extend(acc)
-        algorithm.extend(len(classes) * ['K-Mer'])
-        k_list.extend(len(classes) * [k])
-        use_genes_list.extend(len(classes)*[use_genes_label])
-
-        #Sequence Alignment
-        classes,recall, precision, f1_score,auc,acc = KNN(distances_seqalign,labels,k=k)
-        class_list.extend(classes)
-        recall_list.extend(recall)
-        precision_list.extend(precision)
-        f1_score_list.extend(f1_score)
-        auc_list.extend(auc)
-        accuracy_list.extend(acc)
-        algorithm.extend(len(classes)*['Global Seq-Align'])
-        k_list.extend(len(classes)*[k])
-        use_genes_list.extend(len(classes)*[use_genes_label])
-
-    df_out = pd.DataFrame()
-    df_out['Classes'] = class_list
-    df_out['Recall'] = recall_list
-    df_out['Precision'] = precision_list
-    df_out['F1_Score'] = f1_score_list
-    df_out['Accuracy'] = accuracy_list
-    df_out['AUC'] = auc_list
-    df_out['Algorithm'] = algorithm
-    df_out['k'] = k_list
-    df_out['Gene_Usage'] = use_genes_list
-    if not os.path.exists(dir_results):
-        os.makedirs(dir_results)
-    df_out.to_csv(os.path.join(dir_results,'df.csv'),index=False)
-
-    return df_out
-
-def Assess_Performance_KNN(distances,names,labels,dir_results,k_values=list(range(1, 500, 25)),rep=5):
+def Assess_Performance_KNN(distances,names,labels,dir_results,k_values=list(range(1, 500, 25)),rep=5,
+                           metrics=['Recall','Precision','F1_Score','AUC','Accuracy']):
     temp = []
     for v in k_values:
         temp.extend(rep*[v])
@@ -237,29 +114,12 @@ def Assess_Performance_KNN(distances,names,labels,dir_results,k_values=list(rang
 
     for k in k_values:
         for n,d in zip(names,distances):
-            classes, recall, precision, f1_score, auc, acc = KNN(d, labels, k=k)
-            val = []
-            val.extend(recall)
-            val.extend(precision)
-            val.extend(f1_score)
-            val.extend(acc)
-            val.extend(auc)
-
-            metric = []
-            metric.extend(['Recall']*len(classes))
-            metric.extend(['Precision']*len(classes))
-            metric.extend(['F1_Score']*len(classes))
-            metric.extend(['Accuracy']*len(classes))
-            metric.extend(['AUC']*len(classes))
-
+            classes, metric,value,k_l = KNN(d, labels, k=k,metrics=metrics)
             metric_list.extend(metric)
-            val_list.extend(val)
-
-            for i in range(5):
-                class_list.extend(classes)
-                algorithm.extend(len(classes) * [n])
-                k_list.extend(len(classes) * [k])
-
+            val_list.extend(value)
+            class_list.extend(classes)
+            k_list.extend(k_l)
+            algorithm.extend(len(classes) * [n])
 
 
     df_out = pd.DataFrame()
@@ -274,94 +134,14 @@ def Assess_Performance_KNN(distances,names,labels,dir_results,k_values=list(rang
 
     return df_out
 
-def Assess_Performance_SVM(DTCRU, features_vae_seq, features_vae_seq_gene, features_hamming, features_kmer,features_seqalign,dir_results,use_genes_label='use_genes'):
-    labels = DTCRU.label_id
-    class_list = []
-    recall_list = []
-    precision_list = []
-    f1_score_list = []
-    accuracy_list = []
-    auc_list = []
-    algorithm = []
-    use_genes_list=[]
-
-    # Collect performance metrics for various methods
-    # VAE Seq
-    classes, recall, precision, f1_score, auc,acc = SVM(features_vae_seq, labels)
-    class_list.extend(classes)
-    recall_list.extend(recall)
-    precision_list.extend(precision)
-    f1_score_list.extend(f1_score)
-    accuracy_list.extend(acc)
-    auc_list.extend(auc)
-    algorithm.extend(len(classes) * ['VAE_Seq'])
-    use_genes_list.extend(len(classes)*[use_genes_label])
-
-    # VAE Seq Gene
-    classes, recall, precision, f1_score, auc,acc = SVM(features_vae_seq_gene, labels)
-    class_list.extend(classes)
-    recall_list.extend(recall)
-    precision_list.extend(precision)
-    f1_score_list.extend(f1_score)
-    accuracy_list.extend(acc)
-    auc_list.extend(auc)
-    algorithm.extend(len(classes) * ['VAE_Seq_Gene'])
-    use_genes_list.extend(len(classes)*[use_genes_label])
-
-    # Hamming Distance
-    classes, recall, precision, f1_score, auc,acc = SVM(features_hamming, labels)
-    class_list.extend(classes)
-    recall_list.extend(recall)
-    precision_list.extend(precision)
-    f1_score_list.extend(f1_score)
-    auc_list.extend(auc)
-    accuracy_list.extend(acc)
-    algorithm.extend(len(classes) * ['Hamming'])
-    use_genes_list.extend(len(classes)*[use_genes_label])
-
-    # Kmer search
-    classes, recall, precision, f1_score, auc,acc = SVM(features_kmer, labels)
-    class_list.extend(classes)
-    recall_list.extend(recall)
-    precision_list.extend(precision)
-    f1_score_list.extend(f1_score)
-    auc_list.extend(auc)
-    accuracy_list.extend(acc)
-    algorithm.extend(len(classes) * ['K-Mer'])
-    use_genes_list.extend(len(classes)*[use_genes_label])
-
-    #Sequence Alignment
-    classes,recall, precision, f1_score,auc,acc = SVM(features_seqalign,labels)
-    class_list.extend(classes)
-    recall_list.extend(recall)
-    precision_list.extend(precision)
-    f1_score_list.extend(f1_score)
-    auc_list.extend(auc)
-    accuracy_list.extend(acc)
-    algorithm.extend(len(classes)*['Global Seq-Align'])
-    use_genes_list.extend(len(classes)*[use_genes_label])
-
-    df_out = pd.DataFrame()
-    df_out['Classes'] = class_list
-    df_out['Recall'] = recall_list
-    df_out['Precision'] = precision_list
-    df_out['F1_Score'] = f1_score_list
-    df_out['Accuracy'] = accuracy_list
-    df_out['AUC'] = auc_list
-    df_out['Algorithm'] = algorithm
-    df_out['Gene_Usage'] = use_genes_list
-    if not os.path.exists(dir_results):
-        os.makedirs(dir_results)
-    df_out.to_csv(os.path.join(dir_results,'df.csv'),index=False)
-
-    return df_out
-
-def Plot_Performance(df,dir_results):
+def Plot_Performance(df,dir_results,measurements=None):
     subdir = 'Performance'
     if not os.path.exists(os.path.join(dir_results,subdir)):
         os.makedirs(os.path.join(dir_results,subdir))
 
-    measurements = np.unique(df['Metric'].tolist())
+    if measurements is None:
+        measurements = np.unique(df['Metric'].tolist())
+
     types = np.unique(df['Classes'].tolist())
     for m in measurements:
         for t in types:
