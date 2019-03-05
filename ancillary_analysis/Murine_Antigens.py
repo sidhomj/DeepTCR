@@ -9,6 +9,8 @@ import seaborn as sns
 from NN_Assessment_utils import *
 import pickle
 import os
+import umap
+
 from scipy.cluster.hierarchy import linkage,fcluster
 
 #Instantiate training object
@@ -49,9 +51,32 @@ distances_seqalign = squareform(distances_seqalign)
 distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene,distances_hamming,distances_kmer,distances_seqalign]
 names = ['VAE-Seq','VAE-Gene','VAE-Seq-Gene','Hamming','K-mer','Global-Seq-Align']
 
-dir_results = 'Length_Results'
+dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
+
+#Create UMAPs to visualize distance matrices
+intra_distances_matrix = np.zeros(shape=[DTCRU.label_id.shape[0],DTCRU.label_id.shape[0]])
+inter_distances_matrix = np.zeros(shape=[DTCRU.label_id.shape[0],DTCRU.label_id.shape[0]])
+for ii,i in enumerate(DTCRU.label_id,0):
+    for jj,j in enumerate(DTCRU.label_id,0):
+        if ii != jj:
+            if i==j:
+                intra_distances_matrix[ii,jj] = 1
+            else:
+                inter_distances_matrix[ii,jj] = 1
+
+for n,distances in zip(names,distances_list):
+    distances = squareform(distances)
+    intra_distances = distances[intra_distances_matrix.astype(bool)]
+    inter_distances = distances[inter_distances_matrix.astype(bool)]
+
+    plt.figure()
+    sns.distplot(intra_distances,label='In-Class Distances',norm_hist=True,hist=False)
+    sns.distplot(inter_distances,label='Out-Of-Class Distances',norm_hist=True,hist=False)
+    plt.legend()
+    plt.title(n)
+
 
 metrics = ['AUC']
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.label_id,dir_results)
@@ -63,15 +88,11 @@ order = ['Global-Seq-Align','K-mer','Hamming','VAE-Seq','VAE-Gene','VAE-Seq-Gene
 for m in np.unique(df_agg['Metric']):
     #fig, ax = plt.subplots(figsize=(5,5))
     sns.catplot(data=df_agg[df_agg['Metric']==m],x='Algorithm',y='Value',order=order,kind='violin')
-    #sns.catplot(data=df_agg[df_agg['Metric']==m],x='Algorithm',y='Value',order=order,kind='swarm',color=".25",ax=ax)
     plt.ylabel(m)
-    #ax.set_ylabel(m)
     plt.xticks(rotation=45)
-    #plt.setp(ax.xaxis.get_majorticklabels(),rotation=45)
     plt.subplots_adjust(bottom=0.3)
-    #fig.subplots_adjust(bottom=0.3)
 
-method = 'F1_Score'
+method = 'AUC'
 from scipy.stats import ttest_rel
 df_test = df_metrics[df_metrics['Metric']==method]
 idx_1 = df_test['Algorithm'] == 'VAE-Gene'
@@ -79,8 +100,6 @@ idx_2 = df_test['Algorithm'] == 'VAE-Seq-Gene'
 t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
 print(p_val)
 
-
-df_metrics['Value']
 
 #Assess Length Dependency of various methods
 SRCC = []
@@ -106,6 +125,7 @@ for n,distances in zip(names,distances_list):
     plt.figure()
     sns.distplot(distances,hist=False,kde=True)
     plt.title(n)
+
 
 
 # temp = []

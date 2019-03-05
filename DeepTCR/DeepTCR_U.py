@@ -482,13 +482,6 @@ class DeepTCR_U(object):
                     if Seq_Features:
                         Seq_Features = tf.concat(Seq_Features,axis=1)
 
-                    latent_costs = []
-                    # if not isinstance(Seq_Features,list):
-                    #     z_mean_seq = tf.layers.dense(Seq_Features, latent_dim, activation=None, name='z_mean_seq')
-                    #     z_log_var_seq = tf.layers.dense(Seq_Features, latent_dim, activation=tf.nn.softplus, name='z_log_var_seq')
-                    #     latent_costs.append(Latent_Loss(z_log_var_seq,z_mean_seq))
-                    #     Seq_Features = z_mean_seq
-
                     if not isinstance(Seq_Features,list):
                         if not isinstance(gene_features, list):
                             Features = tf.concat((Seq_Features, gene_features), axis=1)
@@ -510,6 +503,7 @@ class DeepTCR_U(object):
 
                     z_mean = tf.layers.dense(fc, latent_dim, activation=None, name='z_mean')
                     z_log_var = tf.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
+                    latent_costs = []
                     latent_costs.append(Latent_Loss(z_log_var,z_mean))
 
                     z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)

@@ -18,7 +18,7 @@ import colorsys
 import matplotlib.patches as mpatches
 from scipy.stats import wasserstein_distance
 
-def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC','Accuracy']):
+def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC']):
     lb = LabelEncoder()
     labels = lb.fit_transform(labels)
 
@@ -79,18 +79,12 @@ def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC','Acc
             metric.append('AUC')
             classes.append(c)
             k_list.append(k)
-        if 'Accuracy' in metrics:
-            value.append(accuracy_score(y_true=labels[:,ii],y_pred=pred[:,ii]))
-            metric.append('Accuracy')
-            classes.append(c)
-            k_list.append(k)
-
 
 
     return classes,metric,value,k_list
 
 def Assess_Performance_KNN(distances,names,labels,dir_results,k_values=list(range(1, 500, 25)),rep=5,
-                           metrics=['Recall','Precision','F1_Score','AUC','Accuracy']):
+                           metrics=['Recall','Precision','F1_Score','AUC']):
     temp = []
     for v in k_values:
         temp.extend(rep*[v])
