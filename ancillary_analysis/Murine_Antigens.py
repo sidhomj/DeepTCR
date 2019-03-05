@@ -10,7 +10,6 @@ from NN_Assessment_utils import *
 import pickle
 import os
 import umap
-
 from scipy.cluster.hierarchy import linkage,fcluster
 
 #Instantiate training object
@@ -18,6 +17,7 @@ DTCRU = DeepTCR_U('Clustering_Metrics')
 #Load Data
 DTCRU.Get_Data(directory='../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
+#Get distances from various methods
 #VAE_- Genes
 DTCRU.Train_VAE(Load_Prev_Data=False,use_only_gene=True)
 distances_vae_gene = pdist(DTCRU.features, metric='euclidean')
@@ -55,10 +55,7 @@ dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
-
-
-
-metrics = ['AUC']
+#Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.label_id,dir_results)
 Plot_Performance(df_metrics,dir_results)
 
