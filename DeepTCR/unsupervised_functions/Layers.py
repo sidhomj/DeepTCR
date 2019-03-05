@@ -39,7 +39,7 @@ def Latent_Loss(z_log_var,z_mean,alpha=1e-3):
     return latent_loss
 
 def Get_Gene_Loss(fc,embedding_layer,X_OH):
-    upsample1 = tf.layers.dense(fc, 124, tf.nn.relu)
+    upsample1 = tf.layers.dense(fc, 128, tf.nn.relu)
     upsample2 = tf.layers.dense(upsample1, 64, tf.nn.relu)
     upsample3 = tf.layers.dense(upsample2, embedding_layer.shape[1], tf.nn.relu)
     logits = tf.matmul(upsample3, tf.transpose(embedding_layer))

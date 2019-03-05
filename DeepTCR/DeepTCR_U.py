@@ -384,8 +384,8 @@ class DeepTCR_U(object):
         self.j_alpha_num = j_alpha_num
         print('Data Loaded')
 
-    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=True,
-                  trainable_embedding=True,seq_features_latent=False,use_only_gene=False,use_only_seq=False):
+    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=False,
+                  trainable_embedding=True,seq_features_latent=False,use_only_gene=False,use_only_seq=False,epochs_min=10,stop_criterion=0.001):
         """
         Train Variational Autoencoder (VAE)
 
@@ -632,6 +632,7 @@ class DeepTCR_U(object):
 
             with tf.Session(graph=graph_model_AE,config=config) as sess:
                 sess.run(tf.global_variables_initializer())
+                recon_loss_list = []
                 for e in range(epochs):
                     accuracy_list = []
                     Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num]
@@ -660,6 +661,7 @@ class DeepTCR_U(object):
                         train_loss, recon_loss, latent_loss, accuracy_check, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
                         accuracy_list.append(accuracy_check)
                         iteration += 1
+                        recon_loss_list.append(recon_loss)
 
                     if suppress_output is False:
                         print("Epoch = {}/{}".format(e, epochs),
@@ -672,6 +674,12 @@ class DeepTCR_U(object):
                     if accuracy_min is not None:
                         if np.mean(accuracy_list[-10:]) > accuracy_min:
                             break
+
+                    if e > epochs_min:
+                        a, b, c = -50, -45, -5
+                        if (np.mean(recon_loss_list[a:b]) - np.mean(recon_loss_list[c:])) / np.mean(recon_loss_list[a:b]) < stop_criterion:
+                            break
+
 
 
                 features_list = []

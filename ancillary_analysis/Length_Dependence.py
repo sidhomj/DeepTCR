@@ -12,7 +12,6 @@ import os
 from scipy.cluster.hierarchy import linkage,fcluster
 
 
-
 #Instantiate training object
 DTCRU = DeepTCR_U('Clustering_Metrics')
 
