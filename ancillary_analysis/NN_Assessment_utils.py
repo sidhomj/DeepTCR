@@ -131,16 +131,16 @@ def Assess_Performance_KNN(distances,names,labels,dir_results,k_values=list(rang
 
     return df_out
 
-def Plot_Performance(df,dir_results,measurements=None):
+def Plot_Performance(df,dir_results,metrics=None):
     subdir = 'Performance'
     if not os.path.exists(os.path.join(dir_results,subdir)):
         os.makedirs(os.path.join(dir_results,subdir))
 
-    if measurements is None:
-        measurements = np.unique(df['Metric'].tolist())
+    if metrics is None:
+        metrics = np.unique(df['Metric'].tolist())
 
     types = np.unique(df['Classes'].tolist())
-    for m in measurements:
+    for m in metrics:
         for t in types:
             df_temp = df[(df['Classes']==t) & (df['Metric']==m)]
             sns.catplot(data=df_temp,x='k',y='Value',kind='point',hue='Algorithm',capsize=0.2)
