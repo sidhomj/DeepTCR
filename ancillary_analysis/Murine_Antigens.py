@@ -55,27 +55,7 @@ dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
-#Create UMAPs to visualize distance matrices
-intra_distances_matrix = np.zeros(shape=[DTCRU.label_id.shape[0],DTCRU.label_id.shape[0]])
-inter_distances_matrix = np.zeros(shape=[DTCRU.label_id.shape[0],DTCRU.label_id.shape[0]])
-for ii,i in enumerate(DTCRU.label_id,0):
-    for jj,j in enumerate(DTCRU.label_id,0):
-        if ii != jj:
-            if i==j:
-                intra_distances_matrix[ii,jj] = 1
-            else:
-                inter_distances_matrix[ii,jj] = 1
 
-for n,distances in zip(names,distances_list):
-    distances = squareform(distances)
-    intra_distances = distances[intra_distances_matrix.astype(bool)]
-    inter_distances = distances[inter_distances_matrix.astype(bool)]
-
-    plt.figure()
-    sns.distplot(intra_distances,label='In-Class Distances',norm_hist=True,hist=False)
-    sns.distplot(inter_distances,label='Out-Of-Class Distances',norm_hist=True,hist=False)
-    plt.legend()
-    plt.title(n)
 
 
 metrics = ['AUC']
