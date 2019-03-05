@@ -33,7 +33,7 @@ def Recon_Loss(inputs,logits):
     recon_loss = tf.reduce_mean(w*recon_loss,axis=1)
     return recon_loss
 
-def Latent_Loss(z_log_var,z_mean,alpha=0.0):
+def Latent_Loss(z_log_var,z_mean,alpha=1e-3):
     #Calculate Per Sample Variational Loss
     latent_loss = -alpha *tf.reduce_sum(1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1)
     return latent_loss

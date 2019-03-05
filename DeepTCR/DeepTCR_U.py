@@ -385,7 +385,7 @@ class DeepTCR_U(object):
         print('Data Loaded')
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=True,
-                  trainable_embedding=True,seq_features_latent=False,use_only_gene=False):
+                  trainable_embedding=True,seq_features_latent=False,use_only_gene=False,use_only_seq=False):
         """
         Train Variational Autoencoder (VAE)
 
@@ -493,6 +493,9 @@ class DeepTCR_U(object):
                         if not isinstance(gene_features, list):
                             Features = tf.concat((Seq_Features, gene_features), axis=1)
                         else:
+                            Features = Seq_Features
+
+                        if use_only_seq is True:
                             Features = Seq_Features
 
                         if use_only_gene is True:

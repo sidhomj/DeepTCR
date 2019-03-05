@@ -13,13 +13,10 @@ import umap
 import itertools
 from Bio import pairwise2
 import numpy as np
-from Bio.pairwise2 import format_alignment
 from multiprocessing import Pool
 import colorsys
 import matplotlib.patches as mpatches
-from sklearn import svm
 from scipy.stats import wasserstein_distance
-
 
 def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC','Accuracy']):
     lb = LabelEncoder()
