@@ -112,3 +112,11 @@ df_out['Methods'] = names
 df_out['SRCC'] = SRCC
 df_out.to_csv(os.path.join(dir_results,'out.csv'),index=False)
 
+#Assess relationship of VDJ usage
+features = DTCRU.embed_dict['v_beta']
+labels = DTCRU.lb_v_beta.classes_
+
+df = pd.DataFrame(features)
+df.index = labels
+sns.clustermap(standard_scale=1,cmap='bwr',data=df)
+
