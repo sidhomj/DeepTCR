@@ -53,6 +53,9 @@ dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
+#Sample-Level Comparisons
+DTCRU.Cluster()
+
 
 # #Assess Clustering Quality of Various Methods
 # df_cq = Clustering_Quality(distances_list,names,DTCRU.label_id)

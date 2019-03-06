@@ -21,6 +21,8 @@ import umap
 import matplotlib.patches as mpatches
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.metrics import pairwise_distances
+from sklearn.cluster import DBSCAN
+
 
 
 class DeepTCR_U(object):
@@ -921,7 +923,7 @@ class DeepTCR_U(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results,filename))
 
-    def Cluster(self,t=100,criterion='distance',on=None,write_to_sheets=False,method='ward',metric='euclidean'):
+    def Cluster(self,t=100,criterion='distance',write_to_sheets=False,method='ward',metric='euclidean'):
         """
         Clustering Sequences by Latent Features
 
@@ -943,11 +945,6 @@ class DeepTCR_U(object):
             To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
             Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
             of each cluster to each sample.
-
-        on: str
-            Specificy which feature space to cluster on. Options are 'VAE','GAN','Both',None. If nothing is specified, the
-            features from the last algorithm ran are used. If 'Both' is specified, a clustering solution is applied that merges
-            the feature space from both unsupervised algorithms before clustering.
 
         method: str
             method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
@@ -972,20 +969,14 @@ class DeepTCR_U(object):
         SS = StandardScaler()
 
         # Normalize Features
-        if on is None:
-            features = SS.fit_transform(self.features)
-        elif on is 'VAE':
-            features = SS.fit_transform(self.vae_features)
-        elif on is 'GAN':
-            features = SS.fit_transform(self.gan_features)
-        elif on is 'Both':
-            vae_features = SS.fit_transform(self.vae_features)
-            gan_features = SS.fit_transform(self.gan_features)
-            features = np.concatenate((vae_features,gan_features),axis=1)
+        features = SS.fit_transform(self.features)
 
         # # Hierarchical Clustering
-        Z = linkage(features, method=method, metric=metric)
-        IDX = fcluster(Z, t, criterion=criterion)
+        # Z = linkage(features, method=method, metric=metric)
+        # IDX = fcluster(Z, t, criterion=criterion)
+
+        #DBSAN
+        IDX = DBSCAN(eps=5).fit_predict(features)
 
         DFs = []
         DF_Sum = pd.DataFrame()
@@ -1086,6 +1077,45 @@ class DeepTCR_U(object):
         """
 
         if Load_Prev_Data is False:
+
+
+
+            features = MinMaxScaler().fit_transform(self.features)
+            counts = np.round(self.counts)/np.min(self.counts)
+            temp= []
+            for ii,l in enumerate(self.label_id,0):
+                temp.extend(int(counts[ii])*[l])
+            labels = np.asarray(temp)
+
+
+            d = squareform(pdist(features))
+
+            temp = []
+            for ii, f in enumerate(d, 0):
+                temp.append(np.vstack([f] * int(counts[ii])))
+            d = np.vstack(temp)
+
+            temp = []
+            for ii, f in enumerate(d.T, 0):
+                temp.append(np.vstack([f] * int(counts[ii])))
+            d = np.vstack(temp)
+
+            samples = np.unique(self.label_id)
+
+            d_sample = np.zeros(shape=[len(self.file_list),len(self.file_list)])
+            for ii,i in enumerate(self.file_list,0):
+                break
+                for jj,j in enumerate(self.file_list,0):
+                    sel_x = labels == i
+                    sel_y = labels == j
+                    d_temp = d[sel_x,:]
+
+                    break
+
+
+
+
+
             # Get Global Edges
             density = True
             features = umap.UMAP(n_components=6).fit_transform(self.features)
