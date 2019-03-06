@@ -91,3 +91,4 @@ idx_1 = df_test['Algorithm'] == 'K-mer'
 idx_2 = df_test['Algorithm'] == 'Global-Seq-Align'
 t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
 print(p_val)
+
