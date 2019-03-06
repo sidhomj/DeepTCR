@@ -269,7 +269,8 @@ def Clustering_Quality(distances,m,l):
         temp.append(d)
     distances = temp
 
-    n_clusters = np.concatenate([np.arange(5, 21, 1), np.arange(20, 101, 10)])
+    #n_clusters = np.concatenate([np.arange(5, 21, 1), np.arange(20, 101, 10)])
+    n_clusters = np.arange(5,101,1)
     cluster_metrics = list()
     for n in n_clusters:
         print(n)
@@ -285,7 +286,7 @@ def Clustering_Quality(distances,m,l):
                                     skmetrics.silhouette_score(distances[i], sc.labels_, metric='precomputed'),
                                     variance_ratio_criteria(distances[i], sc.labels_)])
 
-    df = pd.DataFrame(cluster_metrics, columns=['Measure', 'n_clusters', 'Homogeneity', 'Completeness', 'V-measure',
+    df = pd.DataFrame(cluster_metrics, columns=['Algorithm', 'n_clusters', 'Homogeneity', 'Completeness', 'V-measure',
                                                'Adjusted Rand Index', 'Adjusted Mutual Information',
                                                'Silhouette Coefficient', 'Variance Ratio Criteria'])
 

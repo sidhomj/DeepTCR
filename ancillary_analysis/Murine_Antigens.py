@@ -55,6 +55,10 @@ if not os.path.exists(dir_results):
 
 #Assess Clustering Quality of Various Methods
 df_cq = Clustering_Quality(distances_list,names,DTCRU.label_id)
+sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=100,hue='Algorithm',alpha=0.75)
+plt.xlabel('Variance Ratio Criteria',fontsize=14)
+plt.ylabel('Adjusted Mutual Information',fontsize=14)
+
 
 #Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.label_id,dir_results)
@@ -64,7 +68,6 @@ df_agg = df_metrics.groupby(['Algorithm','Metric','Classes','k']).agg({'Value':'
 df_agg.reset_index(inplace=True)
 order = ['Global-Seq-Align','K-mer','Hamming','VAE-Seq','VAE-Gene','VAE-Seq-Gene']
 for m in np.unique(df_agg['Metric']):
-    #fig, ax = plt.subplots(figsize=(5,5))
     sns.catplot(data=df_agg[df_agg['Metric']==m],x='Algorithm',y='Value',order=order,kind='violin')
     plt.ylabel(m)
     plt.xticks(rotation=45)
