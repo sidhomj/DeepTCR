@@ -2,15 +2,13 @@ from DeepTCR.DeepTCR_U import DeepTCR_U
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from multiprocessing import Pool
 from scipy.spatial.distance import pdist, squareform
 from scipy.stats import spearmanr, chi2_contingency
 import seaborn as sns
 from NN_Assessment_utils import *
 import pickle
 import os
-import umap
-from scipy.cluster.hierarchy import linkage,fcluster
+
 
 #Instantiate training object
 DTCRU = DeepTCR_U('Clustering_Metrics')
@@ -54,6 +52,9 @@ names = ['VAE-Seq','VAE-Gene','VAE-Seq-Gene','Hamming','K-mer','Global-Seq-Align
 dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
+
+#Assess Clustering Quality of Various Methods
+df_cq = Clustering_Quality(distances_list,names,DTCRU.label_id)
 
 #Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.label_id,dir_results)

@@ -17,6 +17,8 @@ from multiprocessing import Pool
 import colorsys
 import matplotlib.patches as mpatches
 from scipy.stats import wasserstein_distance
+from sklearn.cluster import AgglomerativeClustering
+from sklearn import metrics as skmetrics
 
 def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC']):
     lb = LabelEncoder()
@@ -252,6 +254,39 @@ def Class_Distances(distances,labels):
     plt.hist(intra_distances, 100, alpha=0.5,label='Out-of-Class Distances')
     plt.legend()
 
+def variance_ratio_criteria(d, l):
+    idx = l[:, np.newaxis] == l[np.newaxis, :]
+    n_clusters = len(np.unique(l))
+    n_data = d.shape[0]
+    return (np.sum(d[~idx]) / np.sum(d[idx])) * ((n_data - n_clusters) / (n_clusters - 1))
 
 
+def Clustering_Quality(distances,m,l):
+    temp = []
+    for d in distances:
+        if len(d.shape) == 1:
+            d = squareform(d)
+        temp.append(d)
+    distances = temp
 
+    n_clusters = np.concatenate([np.arange(5, 21, 1), np.arange(20, 101, 10)])
+    cluster_metrics = list()
+    for n in n_clusters:
+        print(n)
+        for i in range(len(distances)):
+            sc = AgglomerativeClustering(n_clusters=n, affinity='precomputed', linkage='complete').fit(distances[i])
+
+            cluster_metrics.append([m[i], n,
+                                    skmetrics.homogeneity_score(l, sc.labels_),
+                                    skmetrics.completeness_score(l, sc.labels_),
+                                    skmetrics.v_measure_score(l, sc.labels_),
+                                    skmetrics.adjusted_rand_score(l, sc.labels_),
+                                    skmetrics.adjusted_mutual_info_score(l, sc.labels_, average_method='arithmetic'),
+                                    skmetrics.silhouette_score(distances[i], sc.labels_, metric='precomputed'),
+                                    variance_ratio_criteria(distances[i], sc.labels_)])
+
+    df = pd.DataFrame(cluster_metrics, columns=['Measure', 'n_clusters', 'Homogeneity', 'Completeness', 'V-measure',
+                                               'Adjusted Rand Index', 'Adjusted Mutual Information',
+                                               'Silhouette Coefficient', 'Variance Ratio Criteria'])
+
+    return df
