@@ -140,10 +140,16 @@ def Plot_Performance(df,dir_results,metrics=None):
         for t in types:
             df_temp = df[(df['Classes']==t) & (df['Metric']==m)]
             sns.catplot(data=df_temp,x='k',y='Value',kind='point',hue='Algorithm',capsize=0.2)
-            plt.title(t)
+            plt.title(t,fontsize=24)
             plt.ylabel(m)
             plt.subplots_adjust(top=0.9)
-            plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'.tif'))
+            plt.xticks(rotation=90,fontsize=12)
+            plt.yticks(fontsize=12)
+            plt.xlabel('k',fontsize=18)
+            plt.ylabel(m,fontsize=18)
+            plt.subplots_adjust(bottom=0.15)
+            plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'.eps'))
+
 
 def Plot_Latent(labels,methods,dir_results):
     subdir = 'Latent'

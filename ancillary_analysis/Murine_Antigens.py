@@ -53,34 +53,44 @@ dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
-#Assess Clustering Quality of Various Methods
-df_cq = Clustering_Quality(distances_list,names,DTCRU.label_id)
-sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=100,hue='Algorithm',alpha=0.75)
-plt.xlabel('Variance Ratio Criteria',fontsize=14)
-plt.ylabel('Adjusted Mutual Information',fontsize=14)
+
+# #Assess Clustering Quality of Various Methods
+# df_cq = Clustering_Quality(distances_list,names,DTCRU.label_id)
+# sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=100,hue='Algorithm',alpha=0.75)
+# plt.xlabel('Variance Ratio Criterion',fontsize=14)
+# plt.ylabel('Adjusted Mutual Information',fontsize=14)
+# plt.xticks(fontsize=12)
+# plt.yticks(fontsize=12)
+# plt.subplots_adjust(bottom=0.15)
+# plt.title('Clustering Quality',fontsize=24)
+# plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 
 
 #Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.label_id,dir_results)
 Plot_Performance(df_metrics,dir_results)
 
-df_agg = df_metrics.groupby(['Algorithm','Metric','Classes','k']).agg({'Value':'max'})
-df_agg.reset_index(inplace=True)
-order = ['Global-Seq-Align','K-mer','Hamming','VAE-Seq','VAE-Gene','VAE-Seq-Gene']
-for m in np.unique(df_agg['Metric']):
-    sns.catplot(data=df_agg[df_agg['Metric']==m],x='Algorithm',y='Value',order=order,kind='violin')
+subdir = 'Performance_Summary'
+if not os.path.exists(os.path.join(dir_results,subdir)):
+    os.makedirs(os.path.join(dir_results,subdir))
+
+for m in np.unique(df_metrics['Metric']):
+    sns.catplot(data=df_metrics[df_metrics['Metric']==m],x='Algorithm',y='Value',kind='violin')
     plt.ylabel(m)
     plt.xticks(rotation=45)
-    plt.subplots_adjust(bottom=0.3)
+    plt.xlabel('')
+    plt.subplots_adjust(bottom=0.25)
+    plt.ylabel(m,fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.savefig(os.path.join(dir_results,subdir,m+'.eps'))
 
-method = 'AUC'
+method = 'F1_Score'
 from scipy.stats import ttest_rel
 df_test = df_metrics[df_metrics['Metric']==method]
-idx_1 = df_test['Algorithm'] == 'VAE-Gene'
-idx_2 = df_test['Algorithm'] == 'VAE-Seq-Gene'
+idx_1 = df_test['Algorithm'] == 'K-mer'
+idx_2 = df_test['Algorithm'] == 'Hamming'
 t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
 print(p_val)
-
 
 #Assess Length Dependency of various methods
 SRCC = []
@@ -102,20 +112,3 @@ df_out['Methods'] = names
 df_out['SRCC'] = SRCC
 df_out.to_csv(os.path.join(dir_results,'out.csv'),index=False)
 
-for n,distances in zip(names,distances_list):
-    plt.figure()
-    sns.distplot(distances,hist=False,kde=True)
-    plt.title(n)
-
-
-
-# temp = []
-# distances=distances_list
-# for d in distances:
-#     if len(d.shape) == 1:
-#         d = squareform(d)
-#     temp.append(d)
-# distances = temp
-#
-# with open('distances.pkl','wb') as f:
-#     pickle.dump([distances,names,DTCRU.label_id],f)
