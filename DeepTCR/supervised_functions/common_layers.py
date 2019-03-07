@@ -76,7 +76,7 @@ def Get_Ortho_Loss(x,alpha=1e-3):
     loss = alpha * tf.reduce_sum(tf.multiply(x_norm, x_norm))
     return loss
 
-def Get_Ortho_Loss_dep(x,alpha=1e-4):
+def Get_Ortho_Loss_dep(x,alpha=1.0):
     loss = tf.abs(tf.matmul(x,x,transpose_b=True) - tf.eye(tf.shape(x)[-2]))
     loss = alpha*tf.reduce_sum(loss)
     return loss

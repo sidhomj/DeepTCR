@@ -1,4 +1,9 @@
 import numpy as np
+from sklearn.cluster import DBSCAN
+from sklearn import metrics as skmetrics
+import sklearn
+from scipy.spatial.distance import pdist, squareform
+from scipy.cluster.hierarchy import linkage,fcluster
 
 
 def get_batches(Vars, batch_size=10,random=False):
@@ -25,6 +30,34 @@ def get_batches(Vars, batch_size=10,random=False):
 
         yield Vars_Out
 
+def hierarchical_optimization(distances,features,method,criterion):
+    Z = linkage(squareform(distances), method=method)
+    t_list = np.arange(0, 100, 1)
+    sil = []
+    for t in t_list:
+        IDX = fcluster(Z, t, criterion=criterion)
+        if len(np.unique(IDX[IDX >= 0])) == 1:
+            sil.append(0.0)
+            continue
+        sel = IDX >= 0
+        sil.append(skmetrics.silhouette_score(features[sel, :], IDX[sel]))
 
+    IDX = fcluster(Z, t_list[np.argmax(sil)], criterion=criterion)
+    return IDX
 
+def dbscan_optimization(distances, features):
+    eps_list = np.arange(0.0, 20, 0.1)[1:]
+    sil = []
+    for ii,eps in enumerate(eps_list,0):
+        IDX = DBSCAN(eps=eps, metric='precomputed').fit_predict(distances)
+        IDX[IDX == -1] = np.max(IDX + 1)
+        if len(np.unique(IDX[IDX >= 0])) == 1:
+                sil.append(0.0)
+                continue
+        sel = IDX >= 0
+        sil.append(skmetrics.silhouette_score(features[sel, :], IDX[sel]))
+
+    IDX = DBSCAN(eps=eps_list[np.argmax(sil)], metric='precomputed').fit_predict(distances)
+
+    return IDX
 
