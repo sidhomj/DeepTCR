@@ -22,7 +22,7 @@ import matplotlib.patches as mpatches
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.metrics import pairwise_distances
 from sklearn.cluster import DBSCAN
-
+from sklearn import metrics as skmetrics
 
 
 class DeepTCR_U(object):
@@ -923,7 +923,7 @@ class DeepTCR_U(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results,filename))
 
-    def Cluster(self,t=100,criterion='distance',write_to_sheets=False,method='ward',metric='euclidean'):
+    def Cluster(self,clustering_method='hierarchical',criterion='distance',method='ward'):
         """
         Clustering Sequences by Latent Features
 
@@ -966,17 +966,35 @@ class DeepTCR_U(object):
         ---------------------------------------
 
         """
-        SS = StandardScaler()
-
         # Normalize Features
-        features = SS.fit_transform(self.features)
+        features = self.features
+        distances = squareform(pdist(features))
 
-        # # Hierarchical Clustering
-        # Z = linkage(features, method=method, metric=metric)
-        # IDX = fcluster(Z, t, criterion=criterion)
+        if clustering_method == 'hierarchical':
+            Z = linkage(squareform(distances), method=method)
+            t_list = np.arange(0,100,1)
+            sil = []
+            for t in t_list:
+                IDX = fcluster(Z, t, criterion=criterion)
+                if len(np.unique(IDX[IDX >= 0])) == 1:
+                    break
+                sel = IDX >= 0
+                sil.append(skmetrics.silhouette_score(features[sel, :], IDX[sel]))
 
-        #DBSAN
-        IDX = DBSCAN(eps=5).fit_predict(features)
+            IDX = fcluster(Z,t_list[np.argmax(sil)],criterion=criterion)
+
+        elif clustering_method == 'dbscan':
+            eps_list = np.arange(0.0, 20, 0.1)[1:]
+            sil = []
+            for eps in eps_list:
+                IDX = DBSCAN(eps=eps, metric='precomputed').fit_predict(distances)
+                IDX[IDX == -1] = np.max(IDX + 1)
+                if len(np.unique(IDX[IDX >= 0])) == 1:
+                    break
+                sel = IDX >= 0
+                sil.append(skmetrics.silhouette_score(features[sel, :], IDX[sel]))
+
+            IDX = DBSCAN(eps=eps_list[np.argmax(sil)], metric='precomputed').fit_predict(distances)
 
         DFs = []
         DF_Sum = pd.DataFrame()
