@@ -23,6 +23,8 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.metrics import pairwise_distances
 from sklearn.cluster import DBSCAN
 from sklearn import metrics as skmetrics
+import sklearn
+import phenograph
 
 
 class DeepTCR_U(object):
@@ -387,7 +389,7 @@ class DeepTCR_U(object):
         print('Data Loaded')
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=False,
-                  trainable_embedding=True,seq_features_latent=False,use_only_gene=False,use_only_seq=False,epochs_min=10,stop_criterion=0.001):
+                  trainable_embedding=True,seq_features_latent=False,use_only_gene=False,use_only_seq=False,epochs_min=10,stop_criterion=0.0001):
         """
         Train Variational Autoencoder (VAE)
 
@@ -498,11 +500,9 @@ class DeepTCR_U(object):
                     else:
                         Features = gene_features
 
-                    ortho_loss = Get_Ortho_Loss(Features,alpha=1.0)
 
                     fc = tf.layers.dense(Features, 256)
                     fc = tf.layers.dense(fc, 128)
-
                     z_mean = tf.layers.dense(fc, latent_dim, activation=None, name='z_mean')
                     z_log_var = tf.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
                     latent_costs = []
@@ -510,6 +510,9 @@ class DeepTCR_U(object):
 
                     z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)
                     z = tf.identity(z, name='z')
+                    ortho_loss = 1e-1*tf.reduce_mean(tf.norm(z,ord=1,axis=1))
+                    #ortho_loss = Get_Ortho_Loss_dep(tf.trainable_variables()[-4])
+                    #ortho_loss = Get_Ortho_Loss(z)
 
                     fc_up = tf.layers.dense(z, 128)
                     fc_up = tf.layers.dense(fc_up, 256)
@@ -614,7 +617,7 @@ class DeepTCR_U(object):
                     latent_cost = tf.reduce_sum(latent_cost)
 
                     if ortho_norm is True:
-                        opt_ae = tf.train.AdamOptimizer().minimize(total_cost + ortho_loss)
+                        opt_ae = tf.train.AdamOptimizer().minimize(total_cost+ortho_loss)
                     else:
                         opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
 
@@ -654,7 +657,7 @@ class DeepTCR_U(object):
                         if self.use_j_alpha is True:
                             feed_dict[X_j_alpha] = vars[6]
 
-                        train_loss, recon_loss, latent_loss, accuracy_check, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
+                        train_loss, recon_loss, latent_loss, accuracy_check, _,ortho_loss_i = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae,ortho_loss], feed_dict=feed_dict)
                         accuracy_list.append(accuracy_check)
                         iteration += 1
                         recon_loss_list.append(recon_loss)
@@ -664,7 +667,8 @@ class DeepTCR_U(object):
                               "Total Loss: {:.5f}:".format(train_loss),
                               "Recon Loss: {:.5f}:".format(recon_loss),
                               "Latent Loss: {:5f}:".format(latent_loss),
-                              "AE Accuracy: {:.5f}".format(accuracy_check))
+                              "AE Accuracy: {:.5f}".format(accuracy_check),
+                              'Ortho Loss: {:.5f}'.format(ortho_loss_i))
 
 
                     if accuracy_min is not None:
@@ -686,6 +690,7 @@ class DeepTCR_U(object):
                 Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,self.v_alpha_num, self.j_alpha_num]
 
                 for vars in get_batches(Vars, batch_size=batch_size, random=False):
+                    feed_dict = {training: False}
                     if self.use_alpha is True:
                         feed_dict[X_Seq_alpha] = vars[0]
                     if self.use_beta is True:
@@ -765,8 +770,8 @@ class DeepTCR_U(object):
         keep = np.asarray(keep)
         self.vae_features = self.features[:,keep]
         self.features = self.vae_features
-        self.alpha_indices = alpha_indices_list
-        self.beta_indices = beta_indices_list
+        # self.alpha_indices = alpha_indices_list
+        # self.beta_indices = beta_indices_list
         self.embed_dict = embed_dict
         print('Training Done')
 
@@ -923,7 +928,7 @@ class DeepTCR_U(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results,filename))
 
-    def Cluster(self,criterion='distance',method='ward',write_to_sheets=False):
+    def Cluster(self,clustering_method = 'dbscan',criterion='distance',method='ward',write_to_sheets=False,sample=None):
         """
         Clustering Sequences by Latent Features
 
@@ -968,19 +973,26 @@ class DeepTCR_U(object):
         """
         # Normalize Features
         features = self.features
-        distances = squareform(pdist(features))
 
-        Z = linkage(squareform(distances), method=method)
-        t_list = np.arange(0,100,1)
-        sil = []
-        for t in t_list:
-            IDX = fcluster(Z, t, criterion=criterion)
-            if len(np.unique(IDX[IDX >= 0])) == 1:
-                break
-            sel = IDX >= 0
-            sil.append(skmetrics.silhouette_score(features[sel, :], IDX[sel]))
+        if sample is not None:
+            idx_sel = np.random.choice(range(len(features)),sample,replace=False)
+            features_sel = features[idx_sel]
+            distances = squareform(pdist(features_sel))
 
-        IDX = fcluster(Z,t_list[np.argmax(sil)],criterion=criterion)
+            if clustering_method == 'hierarchical':
+                IDX = hierarchical_optimization(distances,features_sel,method=method,criterion=criterion)
+            elif clustering_method == 'dbscan':
+                IDX = dbscan_optimization(distances,features_sel)
+
+            knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=40).fit(features_sel, IDX)
+            IDX = knn_class.predict(features)
+        else:
+            distances = squareform(pdist(features))
+            if clustering_method == 'hierarchical':
+                IDX = hierarchical_optimization(distances,features,method=method,criterion=criterion)
+            elif clustering_method =='dbscan':
+                IDX = dbscan_optimization(distances,features)
+
 
         DFs = []
         DF_Sum = pd.DataFrame()
@@ -1050,6 +1062,95 @@ class DeepTCR_U(object):
         self.var_alpha = var_list_alpha
         self.var_beta = var_list_beta
         print('Clustering Done')
+
+    def Phenograph_Cluster(self):
+
+        import phenograph
+        IDX,_,_ = phenograph.cluster(self.features,k=30)
+        #IDX[IDX == -1] = np.max(IDX + 1)
+
+        DFs = []
+        DF_Sum = pd.DataFrame()
+        DF_Sum['File'] = self.file_list
+        DF_Sum.set_index('File', inplace=True)
+        var_list_alpha = []
+        var_list_beta = []
+        for i in np.unique(IDX):
+            if i != -1:
+                sel = IDX == i
+                seq_alpha = self.alpha_sequences[sel]
+                seq_beta = self.beta_sequences[sel]
+                label = self.label_id[sel]
+                file = self.file_id[sel]
+                freq = self.freq[sel]
+
+                if self.use_alpha is True:
+                    len_sel = [len(x) for x in seq_alpha]
+                    var = max(len_sel) - min(len_sel)
+                    var_list_alpha.append(var)
+                else:
+                    var_list_alpha.append(0)
+
+
+                if self.use_beta is True:
+                    len_sel = [len(x) for x in seq_beta]
+                    var = max(len_sel) - min(len_sel)
+                    var_list_beta.append(var)
+                else:
+                    var_list_beta.append(0)
+
+
+                df = pd.DataFrame()
+                df['Alpha_Sequences'] = seq_alpha
+                df['Beta_Sequences'] = seq_beta
+                df['Labels'] = label
+                df['File'] = file
+                df['Frequency'] = freq
+                df['V_alpha'] = self.v_alpha[sel]
+                df['J_alpha'] = self.j_alpha[sel]
+                df['V_beta'] = self.v_beta[sel]
+                df['D_beta'] = self.d_beta[sel]
+                df['J_beta'] = self.j_beta[sel]
+
+                df_sum = df.groupby(by='File', sort=False).agg({'Frequency': 'sum'})
+
+                DF_Sum['Cluster_' + str(i)] = df_sum
+
+                DFs.append(df)
+
+        DF_Sum.fillna(0.0, inplace=True)
+
+        labels = []
+        num_clusters = []
+        entropy_list = []
+        for file in self.file_list:
+            # IDX,_,_ = phenograph.cluster(self.features[self.file_id==file])
+            # df_temp = pd.DataFrame()
+            # df_temp['IDX'] = IDX
+            # df_temp['Freq'] = self.freq[self.file_id==file]
+            # df_temp = df_temp.groupby(['IDX']).agg({'Freq':'sum'})
+            # num_clusters.append(len(df_temp))
+            # entropy_list.append(entropy(df_temp)[0])
+
+            v = np.array(DF_Sum.loc[file].tolist())
+            v = v[v>0.0]
+            entropy_list.append(entropy(v))
+            num_clusters.append(len(v))
+            labels.append(self.label_id[self.file_id==file][0])
+
+        df_out = pd.DataFrame()
+        df_out['Label'] =labels
+        df_out['Entropy'] = entropy_list
+        df_out['Num of Clusters'] = num_clusters
+
+        sns.boxplot(data=df_out,x='Label',y='Num of Clusters',order=['CONTROL','9H10','RT','RT+9H10'])
+        sns.boxplot(data=df_out,x='Label',y='Num of Clusters')
+
+        sns.boxplot(data=df_out,x='Label',y='Entropy',order=['CONTROL','9H10','RT','RT+9H10'])
+        sns.boxplot(data=df_out,x='Label',y='Entropy')
+        from scipy.stats import mannwhitneyu,ttest_ind
+        mannwhitneyu(df_out[df_out['Label']=='NonResponder']['Entropy'],df_out[df_out['Label']=='Responder']['Entropy'])
+        ttest_ind(df_out[df_out['Label']=='NonResponder']['Entropy'],df_out[df_out['Label']=='Responder']['Entropy'])
 
     def Sample_Pairwise_Distances(self,Load_Prev_Data=False,plot=False,color_dict=None,s=100,n_neighbors=15):
         """
@@ -1231,6 +1332,63 @@ class DeepTCR_U(object):
 
         if plot is True:
             sns.boxplot(data=df,x='Label',y='Entropy')
+
+    def Structural_Diversity(self):
+        IDX, _, _ = phenograph.cluster(self.features, k=30)
+        # IDX[IDX == -1] = np.max(IDX + 1)
+
+        DFs = []
+        DF_Sum = pd.DataFrame()
+        DF_Sum['File'] = self.file_list
+        DF_Sum.set_index('File', inplace=True)
+        var_list_alpha = []
+        var_list_beta = []
+        for i in np.unique(IDX):
+            if i != -1:
+                sel = IDX == i
+                seq_alpha = self.alpha_sequences[sel]
+                seq_beta = self.beta_sequences[sel]
+                label = self.label_id[sel]
+                file = self.file_id[sel]
+                freq = self.freq[sel]
+
+                df = pd.DataFrame()
+                df['Alpha_Sequences'] = seq_alpha
+                df['Beta_Sequences'] = seq_beta
+                df['Labels'] = label
+                df['File'] = file
+                df['Frequency'] = freq
+                df['V_alpha'] = self.v_alpha[sel]
+                df['J_alpha'] = self.j_alpha[sel]
+                df['V_beta'] = self.v_beta[sel]
+                df['D_beta'] = self.d_beta[sel]
+                df['J_beta'] = self.j_beta[sel]
+
+                df_sum = df.groupby(by='File', sort=False).agg({'Frequency': 'sum'})
+
+                DF_Sum['Cluster_' + str(i)] = df_sum
+
+                DFs.append(df)
+
+        DF_Sum.fillna(0.0, inplace=True)
+
+        labels = []
+        num_clusters = []
+        entropy_list = []
+        for file in self.file_list:
+            v = np.array(DF_Sum.loc[file].tolist())
+            v = v[v > 0.0]
+            entropy_list.append(entropy(v))
+            num_clusters.append(len(v))
+            labels.append(self.label_id[self.file_id == file][0])
+
+        df_out = pd.DataFrame()
+        df_out['Label'] = labels
+        df_out['Entropy'] = entropy_list
+        df_out['Num of Clusters'] = num_clusters
+
+        self.Structural_Diversity_DF = df_out
+
 
 
 

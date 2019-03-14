@@ -17,15 +17,15 @@ DTCRU.Get_Data(directory='../Data/Murine_Antigens',Load_Prev_Data=False,aggregat
 
 #Get distances from various methods
 #VAE_- Genes
-DTCRU.Train_VAE(Load_Prev_Data=False,use_only_gene=True)
+DTCRU.Train_VAE(Load_Prev_Data=False,use_only_gene=True,ortho_norm=True)
 distances_vae_gene = pdist(DTCRU.features, metric='euclidean')
 
-# #VAE_- Sequencs Alone
-DTCRU.Train_VAE(Load_Prev_Data=False,use_only_seq=True)
+# #VAE_- Sequencs Alone+
+DTCRU.Train_VAE(Load_Prev_Data=False,use_only_seq=True,ortho_norm=True)
 distances_vae_seq = pdist(DTCRU.features, metric='euclidean')
 
 #VAE_- Gene+Sequencs
-DTCRU.Train_VAE(Load_Prev_Data=False)
+DTCRU.Train_VAE(Load_Prev_Data=False,ortho_norm=True)
 distances_vae_seq_gene = pdist(DTCRU.features, metric='euclidean')
 
 #Hamming
@@ -49,24 +49,21 @@ distances_seqalign = squareform(distances_seqalign)
 distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene,distances_hamming,distances_kmer,distances_seqalign]
 names = ['VAE-Seq','VAE-Gene','VAE-Seq-Gene','Hamming','K-mer','Global-Seq-Align']
 
-dir_results = 'Murine_Results'
+dir_results = 'Murine_Results_ortho'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
-#Sample-Level Comparisons
-DTCRU.Cluster()
 
-
-# #Assess Clustering Quality of Various Methods
-# df_cq = Clustering_Quality(distances_list,names,DTCRU.label_id)
-# sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=100,hue='Algorithm',alpha=0.75)
-# plt.xlabel('Variance Ratio Criterion',fontsize=14)
-# plt.ylabel('Adjusted Mutual Information',fontsize=14)
-# plt.xticks(fontsize=12)
-# plt.yticks(fontsize=12)
-# plt.subplots_adjust(bottom=0.15)
-# plt.title('Clustering Quality',fontsize=24)
-# plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
+#Assess Clustering Quality of Various Methods
+df_cq = Clustering_Quality(distances_list,names,DTCRU.label_id)
+sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=100,hue='Algorithm',alpha=0.75)
+plt.xlabel('Variance Ratio Criterion',fontsize=14)
+plt.ylabel('Adjusted Mutual Information',fontsize=14)
+plt.xticks(fontsize=12)
+plt.yticks(fontsize=12)
+plt.subplots_adjust(bottom=0.15)
+plt.title('Clustering Quality',fontsize=24)
+plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 
 
 #Assess performance metrtics via K-Nearest Neighbors

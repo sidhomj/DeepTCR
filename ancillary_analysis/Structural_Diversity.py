@@ -9,7 +9,6 @@ from scipy.spatial.distance import pdist, squareform
 from NN_Assessment_utils import *
 
 
-
 #Instantiate training object
 DTCRU = DeepTCR_U('Reperoire_Distances')
 
@@ -19,7 +18,7 @@ classes_all = np.array(['F2', 'M38', 'M45', 'NP', 'PA', 'PB1', 'm139'])
 p = Pool(40)
 num = [1,2,3,4,5,6,7]
 num = [1,3,7]
-reps = [5,5,1]
+reps = [1,1,1]
 
 num_list=[]
 method_list = []

@@ -71,9 +71,10 @@ def Get_Gene_Features(self,embedding_dim_genes,gene_features):
             X_j_alpha,X_j_alpha_OH,embedding_layer_j_alpha,\
             gene_features
 
-def Get_Ortho_Loss(x,alpha=1e-3):
-    x_norm = tf.nn.l2_normalize(x, 0)
-    loss = alpha * tf.reduce_sum(tf.multiply(x_norm, x_norm))
+def Get_Ortho_Loss(x,alpha=1e-6):
+    loss = tf.abs(tf.matmul(x,x,transpose_b=True) - tf.eye(tf.shape(x)[-2]))
+    indices = tf.constant(list(range(x.shape[1])))
+    loss = alpha * tf.reduce_sum(tf.abs(tf.transpose(tf.gather(tf.transpose(loss),indices))))
     return loss
 
 def Get_Ortho_Loss_dep(x,alpha=1.0):
@@ -92,3 +93,16 @@ def rbf_layer(x,units,name='rbf_layer',reuse=False):
 
 
 
+# x_1=np.array([[1,2,3],[1,2,3]]).T
+# x_2=np.array([[3,2,1],[1,2,3]]).T
+# #
+# x_1=np.array([[0,1],[1,0],[0,0]])
+# x_1=np.array([[0,1,0],[1,0,0],[0,0,1]])
+#
+#
+# np.sum(np.matmul(x_1,x_1.T)-np.eye(x_1.shape[0]))
+# x_2=np.array([[3,2,1],[1,2,3]]).T
+#
+# input = np.array([[1,1,1]])
+#
+# np.einsum('ij,ij->j',x_2,x_2)

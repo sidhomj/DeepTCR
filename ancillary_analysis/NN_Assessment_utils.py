@@ -19,6 +19,7 @@ import matplotlib.patches as mpatches
 from scipy.stats import wasserstein_distance
 from sklearn.cluster import AgglomerativeClustering
 from sklearn import metrics as skmetrics
+import phenograph_local
 
 def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC']):
     lb = LabelEncoder()
@@ -266,7 +267,6 @@ def variance_ratio_criteria(d, l):
     n_data = d.shape[0]
     return (np.sum(d[~idx]) / np.sum(d[idx])) * ((n_data - n_clusters) / (n_clusters - 1))
 
-
 def Clustering_Quality(distances,m,l):
     temp = []
     for d in distances:
@@ -297,3 +297,16 @@ def Clustering_Quality(distances,m,l):
                                                'Silhouette Coefficient', 'Variance Ratio Criteria'])
 
     return df
+
+
+def phenograph_clustering(d):
+    nbrs = NearestNeighbors(n_neighbors=30, metric='precomputed').fit(d)
+    d, idx = nbrs.kneighbors(d)
+    IDX, _, _ = phenograph_local.cluster(d=d, idx=idx, n_jobs=1)
+    c_freq = []
+    for i in np.unique(IDX):
+        if i != -1:
+            sel = IDX == i
+            c_freq.append(np.sum(sel))
+
+    return c_freq
