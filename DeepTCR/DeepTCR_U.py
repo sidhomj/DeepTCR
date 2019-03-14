@@ -1333,8 +1333,15 @@ class DeepTCR_U(object):
         if plot is True:
             sns.boxplot(data=df,x='Label',y='Entropy')
 
-    def Structural_Diversity(self):
-        IDX, _, _ = phenograph.cluster(self.features, k=30)
+    def Structural_Diversity(self,sample=None,n_jobs=1):
+        if sample is not None:
+            idx_sel = np.random.choice(range(len(self.features)), sample, replace=False)
+            features_sel = self.features[idx_sel]
+            IDX,_,_ = phenograph.cluster(features_sel)
+            knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=n_jobs).fit(features_sel, IDX)
+            IDX = knn_class.predict(self.features)
+        else:
+            IDX, _, _ = phenograph.cluster(self.features, k=30)
         # IDX[IDX == -1] = np.max(IDX + 1)
 
         DFs = []
