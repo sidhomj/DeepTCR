@@ -388,8 +388,8 @@ class DeepTCR_U(object):
         self.j_alpha_num = j_alpha_num
         print('Data Loaded')
 
-    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,ortho_norm=False,
-                  trainable_embedding=True,seq_features_latent=False,use_only_gene=False,use_only_seq=False,epochs_min=10,stop_criterion=0.0001):
+    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
+                  trainable_embedding=True,use_only_gene=False,use_only_seq=False,epochs_min=100,stop_criterion=0.0001):
         """
         Train Variational Autoencoder (VAE)
 
@@ -413,6 +413,25 @@ class DeepTCR_U(object):
 
         suppress_output: bool
             To suppress command line output with training statisitcs, set to True.
+
+        trainable_embedding: bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
+
+        epochs_min: int
+            The minimum number of epochs to train the autoencoder.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
 
         Returns
 
@@ -510,9 +529,6 @@ class DeepTCR_U(object):
 
                     z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)
                     z = tf.identity(z, name='z')
-                    ortho_loss = 1e-1*tf.reduce_mean(tf.norm(z,ord=1,axis=1))
-                    #ortho_loss = Get_Ortho_Loss_dep(tf.trainable_variables()[-4])
-                    #ortho_loss = Get_Ortho_Loss(z)
 
                     fc_up = tf.layers.dense(z, 128)
                     fc_up = tf.layers.dense(fc_up, 256)
@@ -616,10 +632,8 @@ class DeepTCR_U(object):
                     accuracy = accuracy/num_acc
                     latent_cost = tf.reduce_sum(latent_cost)
 
-                    if ortho_norm is True:
-                        opt_ae = tf.train.AdamOptimizer().minimize(total_cost+ortho_loss)
-                    else:
-                        opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
+
+                    opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
 
                     saver = tf.train.Saver()
 
@@ -667,26 +681,22 @@ class DeepTCR_U(object):
                               "Total Loss: {:.5f}:".format(train_loss),
                               "Recon Loss: {:.5f}:".format(recon_loss),
                               "Latent Loss: {:5f}:".format(latent_loss),
-                              "AE Accuracy: {:.5f}".format(accuracy_check),
-                              'Ortho Loss: {:.5f}'.format(ortho_loss_i))
+                              "AE Accuracy: {:.5f}".format(accuracy_check))
 
-
-                    if accuracy_min is not None:
-                        if np.mean(accuracy_list[-10:]) > accuracy_min:
-                            break
 
                     if e > epochs_min:
-                        a, b, c = -50, -45, -5
-                        if (np.mean(recon_loss_list[a:b]) - np.mean(recon_loss_list[c:])) / np.mean(recon_loss_list[a:b]) < stop_criterion:
-                            break
+                        if accuracy_min is not None:
+                            if np.mean(accuracy_list[-10:]) > accuracy_min:
+                                break
+                        else:
+                            a, b, c = -50, -45, -5
+                            if (np.mean(recon_loss_list[a:b]) - np.mean(recon_loss_list[c:])) / np.mean(recon_loss_list[a:b]) < stop_criterion:
+                                break
 
 
 
                 features_list = []
                 accuracy_list = []
-                alpha_indices_list = []
-                beta_indices_list = []
-
                 Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,self.v_alpha_num, self.j_alpha_num]
 
                 for vars in get_batches(Vars, batch_size=batch_size, random=False):
@@ -711,32 +721,14 @@ class DeepTCR_U(object):
                     if self.use_j_alpha is True:
                         feed_dict[X_j_alpha] = vars[6]
 
-                    if seq_features_latent is True:
-                        get = Seq_Features
-                    else:
-                        get = z_mean
 
+                    get = z_mean
                     features_ind, accuracy_check = sess.run([get, accuracy], feed_dict=feed_dict)
                     features_list.append(features_ind)
                     accuracy_list.append(accuracy_check)
 
-                    if self.use_alpha is True:
-                        alpha_indices_list.append(sess.run(indices_alpha,feed_dict=feed_dict))
-
-                    if self.use_beta is True:
-                        beta_indices_list.append(sess.run(indices_beta,feed_dict=feed_dict))
-
-
-                if self.use_alpha is True:
-                    alpha_indices_list = np.vstack(alpha_indices_list)
-
-                if self.use_beta is True:
-                    beta_indices_list = np.vstack(beta_indices_list)
 
                 features = np.vstack(features_list)
-                # if seq_features_latent is True:
-                #features = MinMaxScaler().fit_transform(features)
-
                 accuracy_list = np.hstack(accuracy_list)
                 print('Reconstruction Accuracy: {:.5f}'.format(np.nanmean(accuracy_list)))
 
@@ -770,8 +762,6 @@ class DeepTCR_U(object):
         keep = np.asarray(keep)
         self.vae_features = self.features[:,keep]
         self.features = self.vae_features
-        # self.alpha_indices = alpha_indices_list
-        # self.beta_indices = beta_indices_list
         self.embed_dict = embed_dict
         print('Training Done')
 
