@@ -1354,7 +1354,7 @@ class DeepTCR_U(object):
 
     def Repertoire_Dendogram(self,distance_metric = 'KL',sample=None,n_jobs=1,color_dict=None,
                              dendrogram_radius = 0.32, repertoire_radius=0.4,linkage_method='ward',
-                             gridsize=10):
+                             gridsize=10,Load_Prev_Data=False):
         """
         Repertoire Dendrogram
 
@@ -1396,6 +1396,11 @@ class DeepTCR_U(object):
         gridsize: int
             This parameter modifies the granularity of the hexbins for the repertoire density plots.
 
+        Load_Prev_Data: bool
+            If method has been run before, one can load previous data used to construct the figure for
+            faster figure creation. This is helpful when trying to format the figure correctly and will require
+            the user to run the method multiple times.
+
         Returns
 
         self.pairwise_distances: Pandas dataframe
@@ -1404,9 +1409,15 @@ class DeepTCR_U(object):
 
         """
 
-        X_2 = umap.UMAP().fit_transform(self.features)
-        self.Cluster(sample=sample,n_jobs=n_jobs)
-        prop = self.Cluster_Frequencies
+        if Load_Prev_Data is False:
+            X_2 = umap.UMAP().fit_transform(self.features)
+            self.Cluster(sample=sample,n_jobs=n_jobs)
+            prop = self.Cluster_Frequencies
+            with open(os.path.join(self.Name,'dendro.pkl'),'wb') as f:
+                pickle.dump([X_2,prop],f)
+        else:
+            with open(os.path.join(self.Name,'dendro.pkl'),'rb') as f:
+                X_2,prop = pickle.load(f)
 
         if distance_metric == 'KL':
             func = sym_KL
