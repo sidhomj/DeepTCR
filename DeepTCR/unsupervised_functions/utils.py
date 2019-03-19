@@ -6,6 +6,11 @@ from scipy.cluster.hierarchy import linkage,fcluster
 from matplotlib import pyplot as plt
 from scipy.cluster.hierarchy import dendrogram, optimal_leaf_ordering, leaves_list
 from scipy.stats import entropy
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.model_selection import StratifiedKFold, LeaveOneOut
+from sklearn.metrics import f1_score, recall_score, precision_score, roc_auc_score,accuracy_score
+
 
 def get_batches(Vars, batch_size=10,random=False):
     """ Return a generator that yields batches from vars. """
@@ -138,4 +143,69 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,gridsize=5
 
     dg = dendrogram(Z, no_plot=True)
     polar_dendrogram(dg, fig, ax_radius=dg_radius, log_scale=log_scale)
+
+def KNN_samples(distances,labels,k,metrics):
+    lb = LabelEncoder()
+    labels = lb.fit_transform(labels)
+
+    skf = LeaveOneOut()
+    neigh = KNeighborsClassifier(n_neighbors=k, metric='precomputed', weights='distance')
+
+    pred_list = []
+    pred_prob_list = []
+    labels_list = []
+    for train_idx, test_idx in skf.split(distances,labels):
+        distances_train = distances[train_idx, :]
+        distances_train = distances_train[:, train_idx]
+
+        distances_test = distances[test_idx, :]
+        distances_test = distances_test[:, train_idx]
+
+        labels_train = labels[train_idx]
+        labels_test = labels[test_idx]
+
+        neigh.fit(distances_train, labels_train)
+        pred = neigh.predict(distances_test)
+        pred_prob = neigh.predict_proba(distances_test)
+
+        labels_list.extend(labels_test)
+        pred_list.extend(pred)
+        pred_prob_list.extend(pred_prob)
+
+    pred = np.asarray(pred_list)
+    pred_prob = np.asarray(pred_prob_list)
+    labels = np.asarray(labels_list)
+
+    OH = OneHotEncoder(sparse=False)
+    labels = OH.fit_transform(labels.reshape(-1,1))
+    pred = OH.transform(pred.reshape(-1,1))
+
+    metric = []
+    value = []
+    classes=[]
+    k_list = []
+    for ii,c in enumerate(lb.classes_):
+        if 'Recall' in metrics:
+            value.append(recall_score(y_true=labels[:,ii],y_pred=pred[:,ii]))
+            metric.append('Recall')
+            classes.append(c)
+            k_list.append(k)
+        if 'Precision' in metrics:
+            value.append(precision_score(y_true=labels[:,ii],y_pred=pred[:,ii]))
+            metric.append('Precision')
+            classes.append(c)
+            k_list.append(k)
+        if 'F1_Score' in metrics:
+            value.append(f1_score(y_true=labels[:, ii], y_pred=pred[:,ii]))
+            metric.append('F1_Score')
+            classes.append(c)
+            k_list.append(k)
+        if 'AUC' in metrics:
+            value.append(roc_auc_score(labels[:, ii],pred_prob[:,ii]))
+            metric.append('AUC')
+            classes.append(c)
+            k_list.append(k)
+
+    return classes,metric,value,k_list
+
 

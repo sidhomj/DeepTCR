@@ -331,8 +331,8 @@ def phenograph_clustering(d):
 
     return c_freq
 
-def phenograph_clustering_freq(d,DTCRU):
-    nbrs = NearestNeighbors(n_neighbors=30, metric='precomputed').fit(d)
+def phenograph_clustering_freq(d,DTCRU,n_jobs=1):
+    nbrs = NearestNeighbors(n_neighbors=30, metric='precomputed',n_jobs=n_jobs).fit(d)
     d_knn, idx = nbrs.kneighbors(d)
     IDX, _, _ = phenograph_local.cluster(d=d_knn, idx=idx, n_jobs=1)
 
@@ -434,7 +434,7 @@ def sym_KL(u,v):
     return entropy(u,v) + entropy(v,u)
 
 
-def Get_Prop_Distances(prop_list,names,eps = 1e-30):
+def Get_Prop_Distances(prop_list,names,eps = 1e-9):
     # distance_func = [wasserstein_distance, distance.euclidean, sym_entropy, distance.correlation, distance.braycurtis,
     #                  distance.canberra, distance.chebyshev,
     #                  distance.cityblock, distance.cosine, distance.jensenshannon, distance.minkowski]

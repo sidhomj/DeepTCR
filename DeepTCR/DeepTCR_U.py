@@ -390,7 +390,7 @@ class DeepTCR_U(object):
         print('Data Loaded')
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
-                  trainable_embedding=True,use_only_gene=False,use_only_seq=False,epochs_min=100,stop_criterion=0.0001):
+                  trainable_embedding=True,use_only_gene=False,use_only_seq=False,epochs_min=10,stop_criterion=0.0001):
         """
         Train Variational Autoencoder (VAE)
 
@@ -1370,7 +1370,7 @@ class DeepTCR_U(object):
 
         distance_metric = str
             Provided distance metric to determine repertoire-level distance from cluster proportions.
-            Options include = (KL,correlation,euclidean).
+            Options include = (KL,correlation,euclidean,wasserstein,JS).
 
         sample: int
             For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
@@ -1425,6 +1425,10 @@ class DeepTCR_U(object):
             func = distance.correlation
         elif distance_metric == 'euclidean':
             func = distance.euclidean
+        elif distance_metric == 'wasserstein':
+            func = wasserstein_distance
+        elif distance_metric == 'JS':
+            func = distance.jensenshannon
 
         pairwise_distances = np.zeros(shape=[len(prop), len(prop)])
         eps = 1e-9
@@ -1449,6 +1453,115 @@ class DeepTCR_U(object):
         rad_plot(X_2,pairwise_distances,samples,labels,self.file_id,color_dict,
                  gridsize=gridsize,dg_radius=dendrogram_radius,linkage_method=linkage_method,
                  figsize=8,axes_radius=repertoire_radius)
+
+    def KNN_Repertoire_Classifier(self,distance_metric='KL',sample=None,n_jobs=1,plot_metrics=False,
+                                  plot_type='violin',by_class=False,Load_Prev_Data=False):
+        """
+        K-Nearest Neighbor Repertoire Classifier
+
+        This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a repertoire
+        label given the structural distribution of the repertoire.The method returns AUC,Precision,Recall, and
+        F1 Scores for all classes.
+
+        Inputs
+        ---------------------------------------
+
+        distance_metric = str
+            Provided distance metric to determine repertoire-level distance from cluster proportions.
+            Options include = (KL,correlation,euclidean,wasserstein,JS).
+
+        sample: int
+            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+            a number of sequences and then use k-nearest neighbors to assign other sequences.
+
+        n_jobs:int
+            Number of processes to use for parallel operations.
+
+        plot_metrics: bool
+            Toggle to show the performance metrics
+
+        plot_type: str
+            Type of plot as taken by seaborn.catplot for kind parameter:
+            options include (strip,swarm,box,violin,boxen,point,bar,count)
+
+        by_class: bool
+            Toggle to show the performance metrics by class.
+
+        Load_Prev_Data: bool
+            If method has been run before, one can load previous data from clustering step to move to KNN
+            step faster. Can be useful when trying different distance methods to find optimizal distance metric
+            for a given dataset.
+
+        Returns
+
+        self.KNN_Samples_DF: Pandas dataframe
+            Dataframe with all metrics of performance organized by the class label,
+            metric (i.e. AUC), k-value (from k-nearest neighbors), and the value of the
+            performance metric.
+        ---------------------------------------
+
+        """
+        if Load_Prev_Data is False:
+            self.Cluster(sample=sample,n_jobs=n_jobs)
+            prop = self.Cluster_Frequencies
+            with open(os.path.join(self.Name,'KNN_sample.pkl'),'wb') as f:
+                pickle.dump(prop,f,protocol=4)
+        else:
+            with open(os.path.join(self.Name,'KNN_sample.pkl'),'rb') as f:
+                prop = pickle.load(f)
+
+        if distance_metric == 'KL':
+            func = sym_KL
+        elif distance_metric == 'correlation':
+            func = distance.correlation
+        elif distance_metric == 'euclidean':
+            func = distance.euclidean
+        elif distance_metric == 'wasserstein':
+            func = wasserstein_distance
+        elif distance_metric == 'JS':
+            func = distance.jensenshannon
+
+        pairwise_distances = np.zeros(shape=[len(prop), len(prop)])
+        eps = 1e-9
+        prop += eps
+        for ii, i in enumerate(prop.index, 0):
+            for jj, j in enumerate(prop.index, 0):
+                pairwise_distances[ii, jj] = func(prop.loc[i], prop.loc[j])
+
+        k_values = list(range(1, len(pairwise_distances)))
+
+        labels = []
+        for i in prop.index:
+            labels.append(self.label_id[np.where(self.file_id == i)[0][0]])
+
+        class_list = []
+        k_list = []
+        metric_list = []
+        val_list = []
+        metrics = ['Recall', 'Precision', 'F1_Score', 'AUC']
+        for k in k_values:
+            classes, metric, value, k_l = KNN_samples(pairwise_distances, labels, k=k, metrics=metrics)
+            metric_list.extend(metric)
+            val_list.extend(value)
+            class_list.extend(classes)
+            k_list.extend(k_l)
+
+        df_out = pd.DataFrame()
+        df_out['Classes'] = class_list
+        df_out['Metric'] = metric_list
+        df_out['Value'] = val_list
+        df_out['k'] = k_list
+
+        self.KNN_Samples_DF = df_out
+
+        if plot_metrics is True:
+            if by_class is True:
+                sns.catplot(data=df_out, x='Metric', y='Value',hue='Classes',kind=plot_type)
+            else:
+                sns.catplot(data=df_out, x='Metric', y='Value',kind=plot_type)
+
+
+
 
 
 
