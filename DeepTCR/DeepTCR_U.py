@@ -1526,8 +1526,6 @@ class DeepTCR_U(object):
                 sns.catplot(data=df_out, x='Metric', y='Value',kind=plot_type)
 
 
-
-
     def KNN_Repertoire_Classifier(self,distance_metric='KL',sample=None,n_jobs=1,plot_metrics=False,
                                   plot_type='violin',by_class=False,Load_Prev_Data=False):
         """
