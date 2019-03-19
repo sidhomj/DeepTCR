@@ -918,7 +918,8 @@ class DeepTCR_U(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results,filename))
 
-    def Cluster(self,clustering_method = 'phenograph',criterion='distance',method='ward',write_to_sheets=False,sample=None):
+    def Cluster(self,clustering_method = 'phenograph',criterion='distance',method='ward',write_to_sheets=False,sample=None,
+                n_jobs=1):
         """
         Clustering Sequences by Latent Features
 
@@ -951,6 +952,9 @@ class DeepTCR_U(object):
             For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
             a number of sequences and then use k-nearest neighbors to assign other sequences.
 
+        n_jobs:int
+            Number of processes to use for parallel operations.
+
         Returns
 
         self.DFs: list of Pandas dataframes
@@ -978,7 +982,7 @@ class DeepTCR_U(object):
             elif clustering_method == 'dbscan':
                 IDX = dbscan_optimization(distances,features_sel)
             elif clustering_method == 'phenograph':
-                IDX, _, _ = phenograph.cluster(features, k=30)
+                IDX, _, _ = phenograph.cluster(features, k=30,n_jobs=n_jobs)
 
             knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=40).fit(features_sel, IDX)
             IDX = knn_class.predict(features)
@@ -989,7 +993,7 @@ class DeepTCR_U(object):
             elif clustering_method =='dbscan':
                 IDX = dbscan_optimization(distances,features)
             elif clustering_method == 'phenograph':
-                IDX, _, _ = phenograph.cluster(features, k=30)
+                IDX, _, _ = phenograph.cluster(features, k=30,n_jobs=n_jobs)
 
 
         DFs = []
@@ -1191,74 +1195,46 @@ class DeepTCR_U(object):
             plt.scatter(X_2[:, 0], X_2[:, 1], c=row_colors, s=s)
             plt.legend(handles=patches)
 
-    def Structural_Entropy(self,plot=True):
+    def Structural_Diversity(self,sample=None,n_jobs=1):
         """
-        Structural Entropy Analysis
-        This method computes and assesses the structural entropy/diversity of the repertoire
-        of each sample.
+        Structural Diversity Measurements
+
+        This method first clusters sequences via the phenograph algorithm before computing
+        the number of clusters and entropy of the data over these clusters to obtain a measurement
+        of the structural diversity within a repertoire.
+
         Inputs
         ---------------------------------------
-        Load_Prev_Data: bool
-            Loads Previous Data.
-        plot: bool
-            In order to show a boxplot of the entropies per class label, set to True
+
+        sample: int
+            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+            a number of sequences and then use k-nearest neighbors to assign other sequences.
+
+        n_jobs:int
+            Number of processes to use for parallel operations.
+
         Returns
+
+        self.Structural_Diversity_DF: Pandas dataframe
+            A dataframe containing the number of clusters and entropy in each sample
+
         ---------------------------------------
-        self.Entropy_DF: pandas dataframe
-            dataframe that stores the structural entropies for each sample
+
         """
 
-        features = MinMaxScaler().fit_transform(self.features)
-
-        sample_id = self.file_list
-        entropy_list = []
-        label_list = []
-        for id in sample_id:
-            sel = np.squeeze(self.file_id == id)
-            features_sel = features[sel]
-            counts_sel = np.round(self.counts[sel]/np.min(self.counts[sel]))
-            d = squareform(pdist(features_sel))
-
-            temp = []
-            for ii, f in enumerate(d, 0):
-                temp.append(np.vstack([f] * int(counts_sel[ii])))
-            d = np.vstack(temp)
-            temp=[]
-            for ii,f in enumerate(d.T,0):
-                temp.append(np.vstack([f]*int(counts_sel[ii])))
-            d = np.vstack(temp)
-            d = squareform(d)
-
-            entropy_list.append(entropy(d))
-            label_list.append(self.label_id[sel][0])
-
-        df = pd.DataFrame()
-        df['Entropy'] = entropy_list
-        df.index = sample_id
-        df['Label'] = label_list
-        df['File'] = sample_id
-        self.Entropy_DF = df
-
-        if plot is True:
-            sns.boxplot(data=df,x='Label',y='Entropy')
-
-    def Structural_Diversity(self,sample=None,n_jobs=1):
         if sample is not None:
             idx_sel = np.random.choice(range(len(self.features)), sample, replace=False)
             features_sel = self.features[idx_sel]
-            IDX,_,_ = phenograph.cluster(features_sel)
+            IDX,_,_ = phenograph.cluster(features_sel,n_jobs=n_jobs)
             knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=n_jobs).fit(features_sel, IDX)
             IDX = knn_class.predict(self.features)
         else:
-            IDX, _, _ = phenograph.cluster(self.features, k=30)
-        # IDX[IDX == -1] = np.max(IDX + 1)
+            IDX, _, _ = phenograph.cluster(self.features, k=30,n_jobs=n_jobs)
 
         DFs = []
         DF_Sum = pd.DataFrame()
         DF_Sum['File'] = self.file_list
         DF_Sum.set_index('File', inplace=True)
-        var_list_alpha = []
-        var_list_beta = []
         for i in np.unique(IDX):
             if i != -1:
                 sel = IDX == i
