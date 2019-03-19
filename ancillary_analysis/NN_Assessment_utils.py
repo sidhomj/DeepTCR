@@ -3,7 +3,7 @@ from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 from sklearn.metrics import f1_score, recall_score, precision_score, roc_auc_score,accuracy_score
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, LeaveOneOut
 import os
 from scipy.spatial.distance import pdist, squareform
 import matplotlib.pyplot as plt
@@ -16,10 +16,13 @@ import numpy as np
 from multiprocessing import Pool
 import colorsys
 import matplotlib.patches as mpatches
-from scipy.stats import wasserstein_distance
+from scipy.stats import wasserstein_distance, entropy
 from sklearn.cluster import AgglomerativeClustering
 from sklearn import metrics as skmetrics
 import phenograph_local
+from scipy.spatial import distance
+import itertools
+
 
 def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC']):
     lb = LabelEncoder()
@@ -151,6 +154,35 @@ def Plot_Performance(df,dir_results,metrics=None):
             plt.subplots_adjust(bottom=0.15)
             plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'.eps'))
 
+def Plot_Performance_Samples(df,dir_results,metrics=None,distance_methods=None):
+    subdir = 'Performance'
+    if not os.path.exists(os.path.join(dir_results,subdir)):
+        os.makedirs(os.path.join(dir_results,subdir))
+
+    if metrics is None:
+        metrics = np.unique(df['Metric'].tolist())
+
+    if distance_methods is None:
+        distance_methods = np.unique(df['Distance Metric'].tolist())
+
+    types = np.unique(df['Classes'].tolist())
+    metrics = ['AUC']
+    types = ['Combo']
+
+    for m in metrics:
+        for t in types:
+            for d in distance_methods:
+                df_temp = df[(df['Classes']==t) & (df['Metric']==m) & (df['Distance Metric']==d)]
+                sns.catplot(data=df_temp,x='k',y='Value',kind='point',hue='Algorithm',capsize=0.2)
+                plt.title(t+'_'+d,fontsize=24)
+                plt.ylabel(m)
+                plt.subplots_adjust(top=0.9)
+                plt.xticks(rotation=90,fontsize=12)
+                plt.yticks(fontsize=12)
+                plt.xlabel('k',fontsize=18)
+                plt.ylabel(m,fontsize=18)
+                plt.subplots_adjust(bottom=0.15)
+                plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'_'+d+'.eps'))
 
 def Plot_Latent(labels,methods,dir_results):
     subdir = 'Latent'
@@ -217,27 +249,15 @@ def get_score(a,b):
     s_22 =  pairwise2.align.globalxx(b, b)[-1][-1]
     return (1-s_12/s_11)*(1-s_12/s_22)
 
+
 def pairwise_alignment(sequences):
-    matrix = np.zeros(shape=[len(sequences), len(sequences)])
-    seq_1 = []
-    seq_2 = []
-    for ii,a in enumerate(sequences,0):
-        for jj,b in enumerate(sequences,0):
-            seq_1.append(a)
-            seq_2.append(b)
 
-    args = list(zip(seq_1,seq_2))
+    seq_pw = list(itertools.product(sequences,repeat=2))
     p = Pool(40)
-    result = p.starmap(get_score, args)
-
+    result = p.starmap(get_score, seq_pw)
     p.close()
     p.join()
-
-    i=0
-    for ii,a in enumerate(sequences,0):
-        for jj,b in enumerate(sequences,0):
-            matrix[ii,jj] = result[i]
-            i+=1
+    matrix = np.array(result).reshape([len(sequences),len(sequences)])
 
     return matrix
 
@@ -310,3 +330,169 @@ def phenograph_clustering(d):
             c_freq.append(np.sum(sel))
 
     return c_freq
+
+def phenograph_clustering_freq(d,DTCRU):
+    nbrs = NearestNeighbors(n_neighbors=30, metric='precomputed').fit(d)
+    d_knn, idx = nbrs.kneighbors(d)
+    IDX, _, _ = phenograph_local.cluster(d=d_knn, idx=idx, n_jobs=1)
+
+    label_id = DTCRU.label_id
+    file_id = DTCRU.file_id
+    freq = DTCRU.freq
+    file_list = DTCRU.file_list
+
+    DFs = []
+    DF_Sum = pd.DataFrame()
+    DF_Sum['File'] = file_list
+    DF_Sum.set_index('File', inplace=True)
+    for i in np.unique(IDX):
+        if i != -1:
+            sel = IDX == i
+            label_sel = label_id[sel]
+            file_sel = file_id[sel]
+            freq_sel = freq[sel]
+
+            df = pd.DataFrame()
+            df['Labels'] = label_sel
+            df['File'] = file_sel
+            df['Frequency'] = freq_sel
+
+            df_sum = df.groupby(by='File', sort=False).agg({'Frequency': 'sum'})
+
+            DF_Sum['Cluster_' + str(i)] = df_sum
+
+            DFs.append(df)
+
+    DF_Sum.fillna(0.0, inplace=True)
+    return DF_Sum, IDX
+
+def KNN_samples(distances,labels,k,metrics):
+    lb = LabelEncoder()
+    labels = lb.fit_transform(labels)
+
+    skf = LeaveOneOut()
+    neigh = KNeighborsClassifier(n_neighbors=k, metric='precomputed', weights='distance')
+
+    pred_list = []
+    pred_prob_list = []
+    labels_list = []
+    for train_idx, test_idx in skf.split(distances,labels):
+        distances_train = distances[train_idx, :]
+        distances_train = distances_train[:, train_idx]
+
+        distances_test = distances[test_idx, :]
+        distances_test = distances_test[:, train_idx]
+
+        labels_train = labels[train_idx]
+        labels_test = labels[test_idx]
+
+        neigh.fit(distances_train, labels_train)
+        pred = neigh.predict(distances_test)
+        pred_prob = neigh.predict_proba(distances_test)
+
+        labels_list.extend(labels_test)
+        pred_list.extend(pred)
+        pred_prob_list.extend(pred_prob)
+
+    pred = np.asarray(pred_list)
+    pred_prob = np.asarray(pred_prob_list)
+    labels = np.asarray(labels_list)
+
+    OH = OneHotEncoder(sparse=False)
+    labels = OH.fit_transform(labels.reshape(-1,1))
+    pred = OH.transform(pred.reshape(-1,1))
+
+    metric = []
+    value = []
+    classes=[]
+    k_list = []
+    for ii,c in enumerate(lb.classes_):
+        if 'Recall' in metrics:
+            value.append(recall_score(y_true=labels[:,ii],y_pred=pred[:,ii]))
+            metric.append('Recall')
+            classes.append(c)
+            k_list.append(k)
+        if 'Precision' in metrics:
+            value.append(precision_score(y_true=labels[:,ii],y_pred=pred[:,ii]))
+            metric.append('Precision')
+            classes.append(c)
+            k_list.append(k)
+        if 'F1_Score' in metrics:
+            value.append(f1_score(y_true=labels[:, ii], y_pred=pred[:,ii]))
+            metric.append('F1_Score')
+            classes.append(c)
+            k_list.append(k)
+        if 'AUC' in metrics:
+            value.append(roc_auc_score(labels[:, ii],pred_prob[:,ii]))
+            metric.append('AUC')
+            classes.append(c)
+            k_list.append(k)
+
+    return classes,metric,value,k_list
+
+def sym_KL(u,v):
+    return entropy(u,v) + entropy(v,u)
+
+
+def Get_Prop_Distances(prop_list,names,eps = 1e-30):
+    # distance_func = [wasserstein_distance, distance.euclidean, sym_entropy, distance.correlation, distance.braycurtis,
+    #                  distance.canberra, distance.chebyshev,
+    #                  distance.cityblock, distance.cosine, distance.jensenshannon, distance.minkowski]
+    # distance_names = ['Wasserstein', 'Euclidean', 'KL', 'Correlation', 'Bray-Curtis', 'Canberra', 'Chebyshev',
+    #                   'Manhattan', 'Cosine', 'Jensen-Shannon', 'Minkowski']
+
+    distance_func = [distance.euclidean,distance.correlation,sym_KL,distance.jensenshannon,wasserstein_distance]
+    distance_names = ['Euclidean','Correlation','KL-Divergence','JS-Divergence','Wasserstein']
+
+    distances_list = []
+    distances_names_list = []
+    method_names = []
+    for func, n in zip(distance_func, distance_names):
+        for prop,n_method in zip(prop_list,names):
+            pairwise_distances = np.zeros(shape=[len(prop), len(prop)])
+            prop += eps
+            for ii, i in enumerate(prop.index, 0):
+                for jj, j in enumerate(prop.index, 0):
+                    pairwise_distances[ii, jj] = func(prop.loc[i], prop.loc[j])
+
+            distances_list.append(pairwise_distances)
+            distances_names_list.append(n)
+            method_names.append(n_method)
+
+    return distances_list, distances_names_list, method_names
+
+def Assess_Performance_KNN_Samples(distances_list,distances_names,method_names,dir_results,DTCRU,labels):
+    k_values = list(range(1,len(distances_list[0])))
+    metrics = ['Recall', 'Precision', 'F1_Score', 'AUC']
+
+
+    class_list = []
+    algorithm = []
+    distance_metric = []
+    k_list = []
+    metric_list = []
+    val_list = []
+    for k in k_values:
+        for d,n_d,n_m in zip(distances_list,distances_names,method_names):
+            classes,metric,value,k_l = KNN_samples(d,labels,k=k,metrics=metrics)
+            metric_list.extend(metric)
+            val_list.extend(value)
+            class_list.extend(classes)
+            k_list.extend(k_l)
+            algorithm.extend(len(classes) * [n_m])
+            distance_metric.extend(len(classes) * [n_d])
+
+
+    df_out = pd.DataFrame()
+    df_out['Classes'] = class_list
+    df_out['Metric'] = metric_list
+    df_out['Value'] = val_list
+    df_out['Algorithm'] = algorithm
+    df_out['k'] = k_list
+    df_out['Distance Metric'] = distance_metric
+
+    if not os.path.exists(dir_results):
+        os.makedirs(dir_results)
+    df_out.to_csv(os.path.join(dir_results,'df.csv'),index=False)
+
+    return df_out

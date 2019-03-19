@@ -918,7 +918,7 @@ class DeepTCR_U(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results,filename))
 
-    def Cluster(self,clustering_method = 'dbscan',criterion='distance',method='ward',write_to_sheets=False,sample=None):
+    def Cluster(self,clustering_method = 'phenograph',criterion='distance',method='ward',write_to_sheets=False,sample=None):
         """
         Clustering Sequences by Latent Features
 
@@ -929,23 +929,27 @@ class DeepTCR_U(object):
         Inputs
         ---------------------------------------
 
-        t: float/int
-            Threshold parameter for clustering algorithm
+        clustering_method: str
+            Clustering algorithm to use to cluster TCR sequences. Options include
+            phenograph, dbscan, or hierarchical. When using dbscan or hierarchical clustering,
+            a variety of thresholds are used to find an optimimum silhoutte score before using a final
+            clustering threshold.
 
         criterion: str
             Clustering criterion as allowed by fcluster function
-            in scipy.cluster.hierarchy module.
+            in scipy.cluster.hierarchy module. (Used in hierarchical clustering).
+
+        method: str
+            method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
 
         write_to_sheets: bool
             To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
             Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
             of each cluster to each sample.
 
-        method: str
-            method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
-
-        metric: str
-            metric parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+        sample: int
+            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+            a number of sequences and then use k-nearest neighbors to assign other sequences.
 
         Returns
 
@@ -973,6 +977,8 @@ class DeepTCR_U(object):
                 IDX = hierarchical_optimization(distances,features_sel,method=method,criterion=criterion)
             elif clustering_method == 'dbscan':
                 IDX = dbscan_optimization(distances,features_sel)
+            elif clustering_method == 'phenograph':
+                IDX, _, _ = phenograph.cluster(features, k=30)
 
             knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=40).fit(features_sel, IDX)
             IDX = knn_class.predict(features)
@@ -982,6 +988,8 @@ class DeepTCR_U(object):
                 IDX = hierarchical_optimization(distances,features,method=method,criterion=criterion)
             elif clustering_method =='dbscan':
                 IDX = dbscan_optimization(distances,features)
+            elif clustering_method == 'phenograph':
+                IDX, _, _ = phenograph.cluster(features, k=30)
 
 
         DFs = []
@@ -1052,95 +1060,6 @@ class DeepTCR_U(object):
         self.var_alpha = var_list_alpha
         self.var_beta = var_list_beta
         print('Clustering Done')
-
-    def Phenograph_Cluster(self):
-
-        import phenograph
-        IDX,_,_ = phenograph.cluster(self.features,k=30)
-        #IDX[IDX == -1] = np.max(IDX + 1)
-
-        DFs = []
-        DF_Sum = pd.DataFrame()
-        DF_Sum['File'] = self.file_list
-        DF_Sum.set_index('File', inplace=True)
-        var_list_alpha = []
-        var_list_beta = []
-        for i in np.unique(IDX):
-            if i != -1:
-                sel = IDX == i
-                seq_alpha = self.alpha_sequences[sel]
-                seq_beta = self.beta_sequences[sel]
-                label = self.label_id[sel]
-                file = self.file_id[sel]
-                freq = self.freq[sel]
-
-                if self.use_alpha is True:
-                    len_sel = [len(x) for x in seq_alpha]
-                    var = max(len_sel) - min(len_sel)
-                    var_list_alpha.append(var)
-                else:
-                    var_list_alpha.append(0)
-
-
-                if self.use_beta is True:
-                    len_sel = [len(x) for x in seq_beta]
-                    var = max(len_sel) - min(len_sel)
-                    var_list_beta.append(var)
-                else:
-                    var_list_beta.append(0)
-
-
-                df = pd.DataFrame()
-                df['Alpha_Sequences'] = seq_alpha
-                df['Beta_Sequences'] = seq_beta
-                df['Labels'] = label
-                df['File'] = file
-                df['Frequency'] = freq
-                df['V_alpha'] = self.v_alpha[sel]
-                df['J_alpha'] = self.j_alpha[sel]
-                df['V_beta'] = self.v_beta[sel]
-                df['D_beta'] = self.d_beta[sel]
-                df['J_beta'] = self.j_beta[sel]
-
-                df_sum = df.groupby(by='File', sort=False).agg({'Frequency': 'sum'})
-
-                DF_Sum['Cluster_' + str(i)] = df_sum
-
-                DFs.append(df)
-
-        DF_Sum.fillna(0.0, inplace=True)
-
-        labels = []
-        num_clusters = []
-        entropy_list = []
-        for file in self.file_list:
-            # IDX,_,_ = phenograph.cluster(self.features[self.file_id==file])
-            # df_temp = pd.DataFrame()
-            # df_temp['IDX'] = IDX
-            # df_temp['Freq'] = self.freq[self.file_id==file]
-            # df_temp = df_temp.groupby(['IDX']).agg({'Freq':'sum'})
-            # num_clusters.append(len(df_temp))
-            # entropy_list.append(entropy(df_temp)[0])
-
-            v = np.array(DF_Sum.loc[file].tolist())
-            v = v[v>0.0]
-            entropy_list.append(entropy(v))
-            num_clusters.append(len(v))
-            labels.append(self.label_id[self.file_id==file][0])
-
-        df_out = pd.DataFrame()
-        df_out['Label'] =labels
-        df_out['Entropy'] = entropy_list
-        df_out['Num of Clusters'] = num_clusters
-
-        sns.boxplot(data=df_out,x='Label',y='Num of Clusters',order=['CONTROL','9H10','RT','RT+9H10'])
-        sns.boxplot(data=df_out,x='Label',y='Num of Clusters')
-
-        sns.boxplot(data=df_out,x='Label',y='Entropy',order=['CONTROL','9H10','RT','RT+9H10'])
-        sns.boxplot(data=df_out,x='Label',y='Entropy')
-        from scipy.stats import mannwhitneyu,ttest_ind
-        mannwhitneyu(df_out[df_out['Label']=='NonResponder']['Entropy'],df_out[df_out['Label']=='Responder']['Entropy'])
-        ttest_ind(df_out[df_out['Label']=='NonResponder']['Entropy'],df_out[df_out['Label']=='Responder']['Entropy'])
 
     def Sample_Pairwise_Distances(self,Load_Prev_Data=False,plot=False,color_dict=None,s=100,n_neighbors=15):
         """
