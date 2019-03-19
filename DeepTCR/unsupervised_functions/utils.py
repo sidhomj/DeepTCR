@@ -1,10 +1,11 @@
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn import metrics as skmetrics
-import sklearn
 from scipy.spatial.distance import pdist, squareform
 from scipy.cluster.hierarchy import linkage,fcluster
-
+from matplotlib import pyplot as plt
+from scipy.cluster.hierarchy import dendrogram, optimal_leaf_ordering, leaves_list
+from scipy.stats import entropy
 
 def get_batches(Vars, batch_size=10,random=False):
     """ Return a generator that yields batches from vars. """
@@ -60,4 +61,81 @@ def dbscan_optimization(distances, features):
     IDX = DBSCAN(eps=eps_list[np.argmax(sil)], metric='precomputed').fit_predict(distances)
 
     return IDX
+
+def sym_KL(u,v):
+    return entropy(u,v) + entropy(v,u)
+
+def pol2cart(phi, rho=1.):
+    x = rho * np.cos(phi)
+    y = rho * np.sin(phi)
+    return np.array([x, y]).T
+
+def smoothsegment(seg, Nsmooth=100):
+    return np.concatenate([[seg[0]], np.linspace(seg[1], seg[2], Nsmooth), [seg[3]]])
+
+def polar_dendrogram(dg, fig, ax_radius=0.2, log_scale=False):
+    icoord = np.asarray(dg['icoord'], dtype=float)
+    dcoord = np.asarray(dg['dcoord'], dtype=float)
+
+    # adjust dcoord for radial
+    if log_scale:
+        dcoord = -np.log(dcoord + 1)
+    else:
+        dcoord = dcoord.max() - (dcoord + 1)
+
+    # adjust icoord for radial
+    imax = icoord.max()
+    imin = icoord.min()
+    icoord = 2 * np.pi * (icoord.shape[0] / (icoord.shape[0] + 1)) * ((icoord - imin) / (imax - imin))
+
+    # plot
+    with plt.style.context("seaborn-white"):
+        ax = fig.add_axes([0.5 - ax_radius, 0.5 - ax_radius, 2 * ax_radius, 2 * ax_radius], polar=True)
+        for xs, ys in zip(icoord, dcoord):
+            xs = smoothsegment(xs)
+            ys = smoothsegment(ys)
+            ax.plot(xs, ys, color="black")
+
+        ax.spines['polar'].set_visible(False)
+        # ax.set(xticks=np.linspace(0, 2 * np.pi, icoord.shape[0] + 2), xticklabels=dg['ivl'], yticks=[])
+        ax.set(xticks=[], yticks=[])
+
+def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,gridsize=50,
+             dg_radius=0.2,axes_radius=0.4,figsize=8,log_scale=False,linkage_method='complete',plot_type='hexbin'):
+
+    n_s = len(np.unique(samples))
+    clim = np.array([0, .1])
+    d_max = np.max(X_2, axis=0)
+    d_min = np.min(X_2, axis=0)
+    c_center = (d_max + d_min) / 2
+    c_radius = np.max(np.sqrt(np.sum(np.power(X_2 - c_center[np.newaxis, :], 2), axis=1))) * 1.1
+    c_pos = pol2cart(np.linspace(0, 2 * np.pi, 200), c_radius) + c_center[np.newaxis, :]
+
+    x_edges = np.linspace(d_min[0], d_max[0], gridsize)
+    y_edges = np.linspace(d_min[1], d_max[1], gridsize)
+    Y, X = np.meshgrid(x_edges[:-1] + (np.diff(x_edges) / 2), y_edges[:-1] + (np.diff(y_edges) / 2))
+
+    Z = optimal_leaf_ordering(linkage(pairwise_distances, method=linkage_method), pairwise_distances)
+    dg_order = leaves_list(Z)
+
+    fig = plt.figure(figsize=[figsize, figsize])
+    axes_pos = pol2cart(np.linspace(0, 2 * np.pi, n_s + 1), rho=axes_radius) + 0.5
+    axes_size = axes_radius * np.sin(0.5 * (2 * np.pi / n_s))
+    ax = [None] * n_s
+
+    for i in range(n_s):
+        ax[i] = fig.add_axes([axes_pos[i, 0] - axes_size, axes_pos[i, 1] - axes_size, 2 * axes_size, 2 * axes_size])
+        ax[i].plot(c_pos[:, 0], c_pos[:, 1], '-', linewidth=5., color=color_dict[labels[dg_order[i]]])
+        smp_d = X_2[file_id == samples[dg_order[i]], :]
+        if plot_type is 'hexbin':
+            ax[i].hexbin(smp_d[:, 0], smp_d[:, 1], gridsize=gridsize, mincnt=1)
+        elif plot_type is '2dhist':
+            h, _ = np.histogramdd(smp_d, [x_edges, y_edges])
+            ax[i].pcolormesh(X, Y, h / np.sum(h), shading='gouraud', vmin=clim[0], vmax=clim[1], cmap='GnBu')
+        else:
+            ax[i].plot(smp_d, '.', markersize=1, alpha=0.5)
+        ax[i].set(xticks=[], yticks=[],frame_on=False)
+
+    dg = dendrogram(Z, no_plot=True)
+    polar_dendrogram(dg, fig, ax_radius=dg_radius, log_scale=log_scale)
 

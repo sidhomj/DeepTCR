@@ -25,6 +25,7 @@ from sklearn.cluster import DBSCAN
 from sklearn import metrics as skmetrics
 import sklearn
 import phenograph
+from scipy.spatial import distance
 
 
 class DeepTCR_U(object):
@@ -671,7 +672,7 @@ class DeepTCR_U(object):
                         if self.use_j_alpha is True:
                             feed_dict[X_j_alpha] = vars[6]
 
-                        train_loss, recon_loss, latent_loss, accuracy_check, _,ortho_loss_i = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae,ortho_loss], feed_dict=feed_dict)
+                        train_loss, recon_loss, latent_loss, accuracy_check, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
                         accuracy_list.append(accuracy_check)
                         iteration += 1
                         recon_loss_list.append(recon_loss)
@@ -918,7 +919,7 @@ class DeepTCR_U(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results,filename))
 
-    def Cluster(self,clustering_method = 'phenograph',criterion='distance',method='ward',write_to_sheets=False,sample=None,
+    def Cluster(self,clustering_method = 'phenograph',t=None,criterion='distance',method='ward',write_to_sheets=False,sample=None,
                 n_jobs=1):
         """
         Clustering Sequences by Latent Features
@@ -934,7 +935,11 @@ class DeepTCR_U(object):
             Clustering algorithm to use to cluster TCR sequences. Options include
             phenograph, dbscan, or hierarchical. When using dbscan or hierarchical clustering,
             a variety of thresholds are used to find an optimimum silhoutte score before using a final
-            clustering threshold.
+            clustering threshold when t value is not provided.
+
+        t: float
+            If t is provided, this is used as a distance threshold for hierarchical clustering or the eps
+            value for dbscan.
 
         criterion: str
             Clustering criterion as allowed by fcluster function
@@ -978,20 +983,40 @@ class DeepTCR_U(object):
             distances = squareform(pdist(features_sel))
 
             if clustering_method == 'hierarchical':
-                IDX = hierarchical_optimization(distances,features_sel,method=method,criterion=criterion)
-            elif clustering_method == 'dbscan':
-                IDX = dbscan_optimization(distances,features_sel)
-            elif clustering_method == 'phenograph':
-                IDX, _, _ = phenograph.cluster(features, k=30,n_jobs=n_jobs)
+                if t is None:
+                    IDX = hierarchical_optimization(distances,features_sel,method=method,criterion=criterion)
+                else:
+                    Z = linkage(squareform(distances), method=method)
+                    IDX = fcluster(Z, t, criterion=criterion)
 
-            knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=40).fit(features_sel, IDX)
+            elif clustering_method == 'dbscan':
+                if t is None:
+                    IDX = dbscan_optimization(distances,features_sel)
+                else:
+                    IDX = DBSCAN(eps=t, metric='precomputed').fit_predict(distances)
+                    IDX[IDX == -1] = np.max(IDX + 1)
+
+            elif clustering_method == 'phenograph':
+                IDX, _, _ = phenograph.cluster(features_sel, k=30,n_jobs=n_jobs)
+
+            knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=n_jobs).fit(features_sel, IDX)
             IDX = knn_class.predict(features)
         else:
             distances = squareform(pdist(features))
             if clustering_method == 'hierarchical':
-                IDX = hierarchical_optimization(distances,features,method=method,criterion=criterion)
+                if t is None:
+                    IDX = hierarchical_optimization(distances,features,method=method,criterion=criterion)
+                else:
+                    Z = linkage(squareform(distances), method=method)
+                    IDX = fcluster(Z, t, criterion=criterion)
+
             elif clustering_method =='dbscan':
-                IDX = dbscan_optimization(distances,features)
+                if t is None:
+                    IDX = dbscan_optimization(distances,features)
+                else:
+                    IDX = DBSCAN(eps=t, metric='precomputed').fit_predict(distances)
+                    IDX[IDX == -1] = np.max(IDX + 1)
+
             elif clustering_method == 'phenograph':
                 IDX, _, _ = phenograph.cluster(features, k=30,n_jobs=n_jobs)
 
@@ -1064,136 +1089,6 @@ class DeepTCR_U(object):
         self.var_alpha = var_list_alpha
         self.var_beta = var_list_beta
         print('Clustering Done')
-
-    def Sample_Pairwise_Distances(self,Load_Prev_Data=False,plot=False,color_dict=None,s=100,n_neighbors=15):
-        """
-        Pairwise Distance Between Samples
-        This method computes the distance between samples by measuring the wasserstein
-        distance between distributions of features between samples.
-        Inputs
-        ---------------------------------------
-        Load_Prev_Data: bool
-            Loads Previous Data.
-        plot: bool
-            In order to plot samples via umap following pairwise distance computation,
-            set to True.
-        n_neighbors: int
-            The size of local neighborhood (in terms of number of neighboring sample points)
-            used for manifold approximation. Larger values result in more global views of
-            the manifold, while smaller values result in more local data being preserved.
-            In general values should be in the range 2 to 100.
-        color_dict: dict
-            Optional dictionary to provide specified colors for classes.
-        s: int
-            Size of circles on plot
-        Returns
-        ---------------------------------------
-        self.pairwise_distances: pandas dataframe
-            dataframe that stores the pairwise distances for all samples
-        self.X_2: numpy array
-            two-dimensional representation of samples
-        """
-
-        if Load_Prev_Data is False:
-
-
-
-            features = MinMaxScaler().fit_transform(self.features)
-            counts = np.round(self.counts)/np.min(self.counts)
-            temp= []
-            for ii,l in enumerate(self.label_id,0):
-                temp.extend(int(counts[ii])*[l])
-            labels = np.asarray(temp)
-
-
-            d = squareform(pdist(features))
-
-            temp = []
-            for ii, f in enumerate(d, 0):
-                temp.append(np.vstack([f] * int(counts[ii])))
-            d = np.vstack(temp)
-
-            temp = []
-            for ii, f in enumerate(d.T, 0):
-                temp.append(np.vstack([f] * int(counts[ii])))
-            d = np.vstack(temp)
-
-            samples = np.unique(self.label_id)
-
-            d_sample = np.zeros(shape=[len(self.file_list),len(self.file_list)])
-            for ii,i in enumerate(self.file_list,0):
-                break
-                for jj,j in enumerate(self.file_list,0):
-                    sel_x = labels == i
-                    sel_y = labels == j
-                    d_temp = d[sel_x,:]
-
-                    break
-
-
-
-
-
-            # Get Global Edges
-            density = True
-            features = umap.UMAP(n_components=6).fit_transform(self.features)
-
-            H, edges = np.histogramdd(features, weights=self.freq, density=density)
-
-            # Get histograms and compute entropies for all samples
-            sample_id = self.file_list
-            sample_histograms = []
-            file_label = []
-
-            for id in sample_id:
-                sel = self.file_id == id
-                sel_idx = features[sel]
-                sel_freq = np.expand_dims(self.freq[sel], 1)
-
-                hist = np.histogramdd(sel_idx, bins=edges, weights=np.squeeze(sel_freq), density=density)[0]
-                sample_histograms.append(hist)
-                file_label.append(np.unique(self.label_id[sel])[0])
-
-            #compute pairwise wasserstein distances
-            pairwise_distances = np.zeros(shape=[len(sample_id),len(sample_id)])
-            for ii,i in enumerate(sample_histograms,0):
-                for jj,j in enumerate(sample_histograms,0):
-                    pairwise_distances[ii, jj] = wasserstein_distance(np.ndarray.flatten(i),np.ndarray.flatten(j))
-
-
-            df = pd.DataFrame(pairwise_distances)
-            df.index = sample_id
-            df.columns = sample_id
-
-            with open(os.path.join(self.Name,'pwdistances.pkl'),'wb') as f:
-                pickle.dump([df,file_label,pairwise_distances],f,protocol=4)
-
-        else:
-            with open(os.path.join(self.Name,'pwdistances.pkl'),'rb') as f:
-                df,file_label,pairwise_distances = pickle.load(f)
-
-
-        self.pairwise_distances = df
-
-        X_2 = umap.UMAP(metric='precomputed', n_neighbors=n_neighbors).fit_transform(pairwise_distances)
-        self.X_2 = X_2
-        if plot is True:
-            if color_dict is None:
-                N = len(np.unique(self.label_id))
-                HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
-                np.random.shuffle(HSV_tuples)
-                RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-                color_dict = dict(zip(np.unique(self.label_id), RGB_tuples))
-
-            row_colors = [color_dict[x] for x in file_label]
-
-            patches = []
-            for i in color_dict:
-                patches.append(mpatches.Patch(color=color_dict[i], label=i))
-
-            plt.figure()
-            plt.scatter(X_2[:, 0], X_2[:, 1], c=row_colors, s=s)
-            plt.legend(handles=patches)
 
     def Structural_Diversity(self,sample=None,n_jobs=1):
         """
@@ -1280,6 +1175,94 @@ class DeepTCR_U(object):
         df_out['Num of Clusters'] = num_clusters
 
         self.Structural_Diversity_DF = df_out
+
+    def Repertoire_Dendogram(self,distance_metric = 'KL',sample=None,n_jobs=1,color_dict=None,
+                             dendrogram_radius = 0.32, repertoire_radius=0.4,linkage_method='ward',
+                             gridsize=10):
+        """
+        Repertoire Dendrogram
+
+        This method creates a visualization that shows and compares the distribution
+        of the sample repertoires via UMAP and provided distance metric. The underlying
+        algorithm first applied phenograph clustering to determine the proportions of the sample
+        within a given cluster. Then a distance metric is used to compare how far two samples are
+        based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
+        Correlation, and Euclidean.
+
+        Inputs
+        ---------------------------------------
+
+        distance_metric = str
+            Provided distance metric to determine repertoire-level distance from cluster proportions.
+            Options include = (KL,correlation,euclidean).
+
+        sample: int
+            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+            a number of sequences and then use k-nearest neighbors to assign other sequences.
+
+        n_jobs:int
+            Number of processes to use for parallel operations.
+
+        color_dict: dict
+            Optional dictionary to provide specified colors for classes.
+
+        dendrogram_radius: float
+            The radius of the dendrogram in the figure. This will usually require some adjustment
+            given the number of samples.
+
+        repertoire_radius: float
+            The radius of the repertoire plots in the figure. This will usually require some adjustment
+            given the number of samples.
+
+        linkage_method: str
+            linkage method used by scipy's linkage function
+
+        gridsize: int
+            This parameter modifies the granularity of the hexbins for the repertoire density plots.
+
+        Returns
+
+        self.pairwise_distances: Pandas dataframe
+            Pairwise distances of all samples
+        ---------------------------------------
+
+        """
+
+        X_2 = umap.UMAP().fit_transform(self.features)
+        self.Cluster(sample=sample,n_jobs=n_jobs)
+        prop = self.Cluster_Frequencies
+
+        if distance_metric == 'KL':
+            func = sym_KL
+        elif distance_metric == 'correlation':
+            func = distance.correlation
+        elif distance_metric == 'euclidean':
+            func = distance.euclidean
+
+        pairwise_distances = np.zeros(shape=[len(prop), len(prop)])
+        eps = 1e-9
+        prop += eps
+        for ii, i in enumerate(prop.index, 0):
+            for jj, j in enumerate(prop.index, 0):
+                pairwise_distances[ii, jj] = func(prop.loc[i], prop.loc[j])
+
+        labels = []
+        for i in prop.index:
+            labels.append(self.label_id[np.where(self.file_id == i)[0][0]])
+
+        samples = prop.index.tolist()
+
+        if color_dict is None:
+            N=len(np.unique(self.label_id))
+            HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
+            np.random.shuffle(HSV_tuples)
+            RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
+            color_dict = dict(zip(np.unique(self.label_id), RGB_tuples))
+
+
+        rad_plot(X_2,pairwise_distances,samples,labels,self.file_id,color_dict,
+                 gridsize=gridsize,dg_radius=dendrogram_radius,linkage_method=linkage_method,
+                 figsize=8,axes_radius=repertoire_radius)
 
 
 
