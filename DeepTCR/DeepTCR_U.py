@@ -1454,6 +1454,80 @@ class DeepTCR_U(object):
                  gridsize=gridsize,dg_radius=dendrogram_radius,linkage_method=linkage_method,
                  figsize=8,axes_radius=repertoire_radius)
 
+    def KNN_Sequence_Classifier(self,k_values=list(range(1, 500, 25)),rep=5,plot_metrics=False,by_class=False,
+                                plot_type='violin'):
+        """
+        K-Nearest Neighbor Sequence Classifier
+
+        This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a sequence
+        label given its sequence features.The method returns AUC,Precision,Recall, and
+        F1 Scores for all classes.
+
+        Inputs
+        ---------------------------------------
+
+        k_values: list
+            List of k for KNN algorithm to assess performance metrics across.
+
+        rep:int
+            Number of iterations to train KNN classifier for each k-value.
+
+        plot_metrics: bool
+            Toggle to show the performance metrics
+
+        plot_type: str
+            Type of plot as taken by seaborn.catplot for kind parameter:
+            options include (strip,swarm,box,violin,boxen,point,bar,count)
+
+        by_class: bool
+            Toggle to show the performance metrics by class.
+
+        Returns
+
+        self.KNN_Sequence_DF: Pandas dataframe
+            Dataframe with all metrics of performance organized by the class label,
+            metric (i.e. AUC), k-value (from k-nearest neighbors), and the value of the
+            performance metric.
+        ---------------------------------------
+
+        """
+
+        distances = squareform(pdist(self.features, metric='euclidean'))
+
+        temp = []
+        for v in k_values:
+            temp.extend(rep * [v])
+        k_values = temp
+        class_list = []
+        k_list = []
+        metric_list = []
+        val_list = []
+
+        metrics = ['Recall', 'Precision', 'F1_Score', 'AUC']
+        for k in k_values:
+            classes, metric, value, k_l = KNN(distances, self.label_id, k=k, metrics=metrics)
+            metric_list.extend(metric)
+            val_list.extend(value)
+            class_list.extend(classes)
+            k_list.extend(k_l)
+
+        df_out = pd.DataFrame()
+        df_out['Classes'] = class_list
+        df_out['Metric'] = metric_list
+        df_out['Value'] = val_list
+        df_out['k'] = k_list
+
+        self.KNN_Sequence_DF = df_out
+
+        if plot_metrics is True:
+            if by_class is True:
+                sns.catplot(data=df_out, x='Metric', y='Value',hue='Classes',kind=plot_type)
+            else:
+                sns.catplot(data=df_out, x='Metric', y='Value',kind=plot_type)
+
+
+
+
     def KNN_Repertoire_Classifier(self,distance_metric='KL',sample=None,n_jobs=1,plot_metrics=False,
                                   plot_type='violin',by_class=False,Load_Prev_Data=False):
         """
@@ -1494,7 +1568,7 @@ class DeepTCR_U(object):
 
         Returns
 
-        self.KNN_Samples_DF: Pandas dataframe
+        self.KNN_Repertoire_DF: Pandas dataframe
             Dataframe with all metrics of performance organized by the class label,
             metric (i.e. AUC), k-value (from k-nearest neighbors), and the value of the
             performance metric.
@@ -1552,7 +1626,7 @@ class DeepTCR_U(object):
         df_out['Value'] = val_list
         df_out['k'] = k_list
 
-        self.KNN_Samples_DF = df_out
+        self.KNN_Repertoire_DF = df_out
 
         if plot_metrics is True:
             if by_class is True:
