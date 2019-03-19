@@ -919,8 +919,9 @@ class DeepTCR_U(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results,filename))
 
-    def Cluster(self,clustering_method = 'phenograph',t=None,criterion='distance',method='ward',write_to_sheets=False,sample=None,
-                n_jobs=1):
+    def Cluster(self,clustering_method = 'phenograph',t=None,criterion='distance',
+                linkage_method='ward',write_to_sheets=False,sample=None,n_jobs=1):
+
         """
         Clustering Sequences by Latent Features
 
@@ -945,7 +946,7 @@ class DeepTCR_U(object):
             Clustering criterion as allowed by fcluster function
             in scipy.cluster.hierarchy module. (Used in hierarchical clustering).
 
-        method: str
+        linkage_method: str
             method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
 
         write_to_sheets: bool
@@ -984,9 +985,9 @@ class DeepTCR_U(object):
 
             if clustering_method == 'hierarchical':
                 if t is None:
-                    IDX = hierarchical_optimization(distances,features_sel,method=method,criterion=criterion)
+                    IDX = hierarchical_optimization(distances,features_sel,method=linkage_method,criterion=criterion)
                 else:
-                    Z = linkage(squareform(distances), method=method)
+                    Z = linkage(squareform(distances), method=linkage_method)
                     IDX = fcluster(Z, t, criterion=criterion)
 
             elif clustering_method == 'dbscan':
@@ -1005,9 +1006,9 @@ class DeepTCR_U(object):
             distances = squareform(pdist(features))
             if clustering_method == 'hierarchical':
                 if t is None:
-                    IDX = hierarchical_optimization(distances,features,method=method,criterion=criterion)
+                    IDX = hierarchical_optimization(distances,features,method=linkage_method,criterion=criterion)
                 else:
-                    Z = linkage(squareform(distances), method=method)
+                    Z = linkage(squareform(distances), method=linkage_method)
                     IDX = fcluster(Z, t, criterion=criterion)
 
             elif clustering_method =='dbscan':
