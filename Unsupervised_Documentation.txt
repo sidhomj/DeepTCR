@@ -10,7 +10,7 @@ CLASSES
     class DeepTCR_U(builtins.object)
      |  Methods defined here:
      |  
-     |  Cluster(self, t=100, criterion='distance', on=None, write_to_sheets=False, method='ward', metric='euclidean')
+     |  Cluster(self, clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
      |      Clustering Sequences by Latent Features
      |      
      |      This method clusters all sequences by learned latent features from
@@ -20,28 +20,34 @@ CLASSES
      |      Inputs
      |      ---------------------------------------
      |      
-     |      t: float/int
-     |          Threshold parameter for clustering algorithm
+     |      clustering_method: str
+     |          Clustering algorithm to use to cluster TCR sequences. Options include
+     |          phenograph, dbscan, or hierarchical. When using dbscan or hierarchical clustering,
+     |          a variety of thresholds are used to find an optimimum silhoutte score before using a final
+     |          clustering threshold when t value is not provided.
+     |      
+     |      t: float
+     |          If t is provided, this is used as a distance threshold for hierarchical clustering or the eps
+     |          value for dbscan.
      |      
      |      criterion: str
      |          Clustering criterion as allowed by fcluster function
-     |          in scipy.cluster.hierarchy module.
+     |          in scipy.cluster.hierarchy module. (Used in hierarchical clustering).
+     |      
+     |      linkage_method: str
+     |          method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
      |      
      |      write_to_sheets: bool
      |          To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
      |          Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
      |          of each cluster to each sample.
      |      
-     |      on: str
-     |          Specificy which feature space to cluster on. Options are 'VAE','GAN','Both',None. If nothing is specified, the
-     |          features from the last algorithm ran are used. If 'Both' is specified, a clustering solution is applied that merges
-     |          the feature space from both unsupervised algorithms before clustering.
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
      |      
-     |      method: str
-     |          method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
-     |      
-     |      metric: str
-     |          metric parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
      |      
      |      Returns
      |      
@@ -56,7 +62,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None)
      |      Get Data for Unsupervised Deep Learning Methods.
      |      
      |      Parse Data into appropriate inputs for neural network.
@@ -106,12 +112,8 @@ CLASSES
      |      aa_column_beta: int
      |          Column where beta chain amino acid data is stored.(0-indexed)
      |      
-     |      If both column integers are left to None, column with a header containing 'acid' is used as
-     |          the amino acid column.
-     |      
      |      count_column: int
-     |          Column where counts are stored. If set to None, first column with data in integer datatype is used as the
-     |          counts column.
+     |          Column where counts are stored.
      |      
      |      sep: str
      |          Type of delimiter used in file with TCRSeq data.
@@ -119,6 +121,22 @@ CLASSES
      |      aggregate_by_aa: bool
      |          Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
      |          of the same amino acid sequence given it comes from different nucleotide clones.
+     |      
+     |      v_alpha_column: int
+     |          Column where v_alpha gene information is stored.
+     |      
+     |      j_alpha_column: int
+     |          Column where j_alpha gene information is stored.
+     |      
+     |      v_beta_column: int
+     |          Column where v_beta gene information is stored.
+     |      
+     |      d_beta_column: int
+     |          Column where d_beta gene information is stored.
+     |      
+     |      j_beta_column: int
+     |          Column where j_beta gene information is stored.
+     |      
      |      
      |      Returns
      |      ---------------------------------------
@@ -173,38 +191,121 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train_GAN(self, Load_Prev_Data=False, batch_size=10000, it_min=50, latent_dim=256, suppress_output=False)
-     |      Train Generative Adversarial Network (GAN)
+     |  Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |      Predicting features on new data
      |      
-     |      This method trains the network and saves features values for sequences
-     |      to create heatmaps.
+     |      This method allows a user to take a pre-trained autoencoder and generate feature values
+     |      on new data.
      |      
      |      Inputs
      |      ---------------------------------------
      |      
-     |      latent_dim: int
-     |          Number of latent dimensions for GAN.
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
      |      batch_size: int
-     |          Size of batch to be used for each training iteration of the net.
-     |      
-     |      it_min: int
-     |          Minimum number of iterations for training the GAN.
-     |      
-     |      Load_Prev_Data: bool
-     |          Load previous feature data from prior training.
-     |      
-     |      suppress_output: bool
-     |          To suppress command line output with training statisitcs, set to True.
+     |          Batch size for inference.
      |      
      |      Returns
      |      
-     |      self.gan_features: array
+     |      features: array
      |          An array that contains n x latent_dim containing features for all sequences
      |      
      |      ---------------------------------------
      |  
-     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False)
+     |  Repertoire_Dendogram(self, distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10)
+     |      Repertoire Dendrogram
+     |      
+     |      This method creates a visualization that shows and compares the distribution
+     |      of the sample repertoires via UMAP and provided distance metric. The underlying
+     |      algorithm first applied phenograph clustering to determine the proportions of the sample
+     |      within a given cluster. Then a distance metric is used to compare how far two samples are
+     |      based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
+     |      Correlation, and Euclidean.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      distance_metric = str
+     |          Provided distance metric to determine repertoire-level distance from cluster proportions.
+     |          Options include = (KL,correlation,euclidean).
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      dendrogram_radius: float
+     |          The radius of the dendrogram in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      repertoire_radius: float
+     |          The radius of the repertoire plots in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      linkage_method: str
+     |          linkage method used by scipy's linkage function
+     |      
+     |      gridsize: int
+     |          This parameter modifies the granularity of the hexbins for the repertoire density plots.
+     |      
+     |      Returns
+     |      
+     |      self.pairwise_distances: Pandas dataframe
+     |          Pairwise distances of all samples
+     |      ---------------------------------------
+     |  
+     |  Structural_Diversity(self, sample=None, n_jobs=1)
+     |      Structural Diversity Measurements
+     |      
+     |      This method first clusters sequences via the phenograph algorithm before computing
+     |      the number of clusters and entropy of the data over these clusters to obtain a measurement
+     |      of the structural diversity within a repertoire.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      Returns
+     |      
+     |      self.Structural_Diversity_DF: Pandas dataframe
+     |          A dataframe containing the number of clusters and entropy in each sample
+     |      
+     |      ---------------------------------------
+     |  
+     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, epochs_min=100, stop_criterion=0.0001)
      |      Train Variational Autoencoder (VAE)
      |      
      |      This method trains the network and saves features values for sequences
@@ -227,6 +328,25 @@ CLASSES
      |      
      |      suppress_output: bool
      |          To suppress command line output with training statisitcs, set to True.
+     |      
+     |      trainable_embedding: bool
+     |          Toggle to control whether a trainable embedding layer is used or native
+     |          one-hot representation for convolutional layers.
+     |      
+     |      use_only_gene: bool
+     |          To only use gene-usage features, set to True. This will turn off features from
+     |          the sequences.
+     |      
+     |      use_only_seq: bool
+     |          To only use sequence feaures, set to True. This will turn off features learned
+     |          from gene usage.
+     |      
+     |      epochs_min: int
+     |          The minimum number of epochs to train the autoencoder.
+     |      
+     |      stop_criterion: float
+     |          Minimum percent decrease in determined interval (below) to continue
+     |          training. Used as early stopping criterion.
      |      
      |      Returns
      |      
