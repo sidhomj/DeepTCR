@@ -1642,8 +1642,8 @@ class DeepTCR_U(object):
             else:
                 sns.catplot(data=df_out, x='Metric', y='Value',kind=plot_type)
 
-    def UMAP_Plot(self,by_label=True,by_cluster=False,freq_weight=False,show_legend=True,scale=100,
-                  Load_Prev_Data=False):
+    def UMAP_Plot(self,by_label=False,by_cluster=False,by_file=False,freq_weight=False,show_legend=True,scale=100,
+                  Load_Prev_Data=False,alpha=1.0):
         """
         UMAP vizualisation of TCR Sequences
 
@@ -1675,6 +1675,9 @@ class DeepTCR_U(object):
             to True to bypass recomputing the UMAP projection. Useful for generating
             different versions of the plot on the same UMAP representation.
 
+        alpha: float
+            Value between 0-1 that controls transparency of points.
+
 
         Returns
 
@@ -1694,6 +1697,7 @@ class DeepTCR_U(object):
         df_plot['x'] = X_2[:, 0]
         df_plot['y'] = X_2[:, 1]
         df_plot['Label'] = self.label_id
+        df_plot['File'] = self.file_id
         IDX = self.Cluster_Assignments
         IDX[IDX==-1]= np.max(IDX)+1
         IDX = ['Cluster_'+str(I) for I in IDX]
@@ -1714,8 +1718,16 @@ class DeepTCR_U(object):
             hue = 'Label'
         elif by_cluster is True:
             hue = 'Cluster'
+        elif by_file is True:
+            hue = 'File'
+        else:
+            hue=None
 
-        sns.scatterplot(data=df_plot,x='x',y='y',s=s,hue=hue,legend=legend)
+        sns.scatterplot(data=df_plot,x='x',y='y',s=s,hue=hue,legend=legend,alpha=alpha)
+        plt.xticks([])
+        plt.yticks([])
+        plt.xlabel('')
+        plt.ylabel('')
 
 
 
