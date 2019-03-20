@@ -163,6 +163,28 @@ class DeepTCR_U(object):
 
 
         Returns
+
+        self.alpha_sequences: ndarray
+            array with alpha sequences (if provided)
+
+        self.beta_sequences: ndarray
+            array with beta sequences (if provided)
+
+        self.label_id: ndarray
+            array with sequence class labels
+
+        self.file_id: ndarray
+            array with sequence file labels
+
+        self.freq: ndarray
+            array with sequence frequencies from samples
+
+        self.counts: ndarray
+            array with sequence counts from samples
+
+        self.(v/d/j)_(alpha/beta): ndarray
+            array with sequence (v/d/j)-(alpha/beta) usage
+
         ---------------------------------------
 
         """
