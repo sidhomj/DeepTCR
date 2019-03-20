@@ -234,7 +234,93 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendogram(self, distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10)
+     |  KNN_Repertoire_Classifier(self, distance_metric='KL', sample=None, n_jobs=1, plot_metrics=False, plot_type='violin', by_class=False, Load_Prev_Data=False, metrics=['Recall', 'Precision', 'F1_Score', 'AUC'])
+     |      K-Nearest Neighbor Repertoire Classifier
+     |      
+     |      This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a repertoire
+     |      label given the structural distribution of the repertoire.The method returns AUC,Precision,Recall, and
+     |      F1 Scores for all classes.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      distance_metric = str
+     |          Provided distance metric to determine repertoire-level distance from cluster proportions.
+     |          Options include = (KL,correlation,euclidean,wasserstein,JS).
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      plot_metrics: bool
+     |          Toggle to show the performance metrics
+     |      
+     |      plot_type: str
+     |          Type of plot as taken by seaborn.catplot for kind parameter:
+     |          options include (strip,swarm,box,violin,boxen,point,bar,count)
+     |      
+     |      by_class: bool
+     |          Toggle to show the performance metrics by class.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method has been run before, one can load previous data from clustering step to move to KNN
+     |          step faster. Can be useful when trying different distance methods to find optimizal distance metric
+     |          for a given dataset.
+     |      
+     |      metrics: list
+     |          List of performance measures one wants to compute.
+     |          options include AUC, Precision, Recall, F1_Score
+     |      
+     |      Returns
+     |      
+     |      self.KNN_Repertoire_DF: Pandas dataframe
+     |          Dataframe with all metrics of performance organized by the class label,
+     |          metric (i.e. AUC), k-value (from k-nearest neighbors), and the value of the
+     |          performance metric.
+     |      ---------------------------------------
+     |  
+     |  KNN_Sequence_Classifier(self, k_values=[1, 26, 51, 76, 101, 126, 151, 176, 201, 226, 251, 276, 301, 326, 351, 376, 401, 426, 451, 476], rep=5, plot_metrics=False, by_class=False, plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC'])
+     |      K-Nearest Neighbor Sequence Classifier
+     |      
+     |      This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a sequence
+     |      label given its sequence features.The method returns AUC,Precision,Recall, and
+     |      F1 Scores for all classes.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      k_values: list
+     |          List of k for KNN algorithm to assess performance metrics across.
+     |      
+     |      rep:int
+     |          Number of iterations to train KNN classifier for each k-value.
+     |      
+     |      plot_metrics: bool
+     |          Toggle to show the performance metrics
+     |      
+     |      plot_type: str
+     |          Type of plot as taken by seaborn.catplot for kind parameter:
+     |          options include (strip,swarm,box,violin,boxen,point,bar,count)
+     |      
+     |      by_class: bool
+     |          Toggle to show the performance metrics by class.
+     |      
+     |      metrics: list
+     |          List of performance measures one wants to compute.
+     |          options include AUC, Precision, Recall, F1_Score
+     |      
+     |      Returns
+     |      
+     |      self.KNN_Sequence_DF: Pandas dataframe
+     |          Dataframe with all metrics of performance organized by the class label,
+     |          metric (i.e. AUC), k-value (from k-nearest neighbors), and the value of the
+     |          performance metric.
+     |      ---------------------------------------
+     |  
+     |  Repertoire_Dendogram(self, distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -249,7 +335,7 @@ CLASSES
      |      
      |      distance_metric = str
      |          Provided distance metric to determine repertoire-level distance from cluster proportions.
-     |          Options include = (KL,correlation,euclidean).
+     |          Options include = (KL,correlation,euclidean,wasserstein,JS).
      |      
      |      sample: int
      |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
@@ -274,6 +360,11 @@ CLASSES
      |      
      |      gridsize: int
      |          This parameter modifies the granularity of the hexbins for the repertoire density plots.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method has been run before, one can load previous data used to construct the figure for
+     |          faster figure creation. This is helpful when trying to format the figure correctly and will require
+     |          the user to run the method multiple times.
      |      
      |      Returns
      |      
@@ -305,7 +396,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, epochs_min=100, stop_criterion=0.0001)
+     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, epochs_min=10, stop_criterion=0.0001)
      |      Train Variational Autoencoder (VAE)
      |      
      |      This method trains the network and saves features values for sequences

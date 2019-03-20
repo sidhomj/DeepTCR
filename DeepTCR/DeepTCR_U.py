@@ -1455,7 +1455,7 @@ class DeepTCR_U(object):
                  figsize=8,axes_radius=repertoire_radius)
 
     def KNN_Sequence_Classifier(self,k_values=list(range(1, 500, 25)),rep=5,plot_metrics=False,by_class=False,
-                                plot_type='violin'):
+                                plot_type='violin',metrics = ['Recall', 'Precision', 'F1_Score', 'AUC']):
         """
         K-Nearest Neighbor Sequence Classifier
 
@@ -1481,6 +1481,10 @@ class DeepTCR_U(object):
 
         by_class: bool
             Toggle to show the performance metrics by class.
+        
+        metrics: list
+            List of performance measures one wants to compute.
+            options include AUC, Precision, Recall, F1_Score
 
         Returns
 
@@ -1503,7 +1507,6 @@ class DeepTCR_U(object):
         metric_list = []
         val_list = []
 
-        metrics = ['Recall', 'Precision', 'F1_Score', 'AUC']
         for k in k_values:
             classes, metric, value, k_l = KNN(distances, self.label_id, k=k, metrics=metrics)
             metric_list.extend(metric)
@@ -1526,7 +1529,8 @@ class DeepTCR_U(object):
                 sns.catplot(data=df_out, x='Metric', y='Value',kind=plot_type)
 
     def KNN_Repertoire_Classifier(self,distance_metric='KL',sample=None,n_jobs=1,plot_metrics=False,
-                                  plot_type='violin',by_class=False,Load_Prev_Data=False):
+                                  plot_type='violin',by_class=False,Load_Prev_Data=False,
+                                  metrics = ['Recall', 'Precision', 'F1_Score', 'AUC']):
         """
         K-Nearest Neighbor Repertoire Classifier
 
@@ -1562,6 +1566,10 @@ class DeepTCR_U(object):
             If method has been run before, one can load previous data from clustering step to move to KNN
             step faster. Can be useful when trying different distance methods to find optimizal distance metric
             for a given dataset.
+
+        metrics: list
+            List of performance measures one wants to compute.
+            options include AUC, Precision, Recall, F1_Score
 
         Returns
 
@@ -1609,7 +1617,6 @@ class DeepTCR_U(object):
         k_list = []
         metric_list = []
         val_list = []
-        metrics = ['Recall', 'Precision', 'F1_Score', 'AUC']
         for k in k_values:
             classes, metric, value, k_l = KNN_samples(pairwise_distances, labels, k=k, metrics=metrics)
             metric_list.extend(metric)
