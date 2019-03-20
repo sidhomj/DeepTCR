@@ -1745,7 +1745,7 @@ class DeepTCR_U(object):
         else:
             hue=None
 
-        sns.scatterplot(data=df_plot,x='x',y='y',s=s,hue=hue,legend=legend,alpha=alpha)
+        sns.scatterplot(data=df_plot,x='x',y='y',s=s,hue=hue,legend=legend,alpha=alpha,linewidth=0.0)
         plt.xticks([])
         plt.yticks([])
         plt.xlabel('')
