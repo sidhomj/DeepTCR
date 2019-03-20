@@ -1642,6 +1642,83 @@ class DeepTCR_U(object):
             else:
                 sns.catplot(data=df_out, x='Metric', y='Value',kind=plot_type)
 
+    def UMAP_Plot(self,by_label=True,by_cluster=False,freq_weight=False,show_legend=True,scale=100,
+                  Load_Prev_Data=False):
+        """
+        UMAP vizualisation of TCR Sequences
+
+        This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
+        prior computing clustering solution or by label. Size of points can also be made to be proportional to
+        frequency of sequence within sample.
+
+        Inputs
+        ---------------------------------------
+
+        by_label: bool
+            To color the points by their label, set to True.
+
+        by_cluster:bool
+            To color the points by the prior computed clustering solution, set to True.
+
+        freq_weight: bool
+            To scale size of points proportionally to their frequency, set to True.
+
+        show_legend: bool
+            To display legend, set to True.
+
+        scale: float
+            To change size of points, change scale parameter. Is particularly useful
+            when finding good display size when points are scaled by frequency.
+
+        Load_Prev_Data: bool
+            If method was run before, one can rerun this method with this parameter set
+            to True to bypass recomputing the UMAP projection. Useful for generating
+            different versions of the plot on the same UMAP representation.
+
+
+        Returns
+
+        ---------------------------------------
+
+        """
+
+        if Load_Prev_Data is False:
+            X_2 = umap.UMAP().fit_transform(self.features)
+            with open(os.path.join(self.Name,'umap.pkl'),'wb') as f:
+                pickle.dump(X_2,f,protocol=4)
+        else:
+            with open(os.path.join(self.Name,'umap.pkl'),'rb') as f:
+                X_2 = pickle.load(f)
+
+        df_plot = pd.DataFrame()
+        df_plot['x'] = X_2[:, 0]
+        df_plot['y'] = X_2[:, 1]
+        df_plot['Label'] = self.label_id
+        IDX = self.Cluster_Assignments
+        IDX[IDX==-1]= np.max(IDX)+1
+        IDX = ['Cluster_'+str(I) for I in IDX]
+        df_plot['Cluster'] = IDX
+
+        if freq_weight is True:
+            freq = self.freq
+            s = freq*scale
+        else:
+            s = scale
+
+        if show_legend is True:
+            legend = 'full'
+        else:
+            legend = False
+
+        if by_label is True:
+            hue = 'Label'
+        elif by_cluster is True:
+            hue = 'Cluster'
+
+        sns.scatterplot(data=df_plot,x='x',y='y',s=s,hue=hue,legend=legend)
+
+
+
 
 
 
