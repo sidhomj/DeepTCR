@@ -60,6 +60,9 @@ CLASSES
      |      self.Cluster_Frequencies: Pandas dataframe
      |          A dataframe containing the frequency contribution of each cluster to each sample.
      |      
+     |      self.Cluster_Assignemnts: ndarray
+     |          Array with cluster assignments by number.
+     |      
      |      ---------------------------------------
      |  
      |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None)
@@ -139,6 +142,28 @@ CLASSES
      |      
      |      
      |      Returns
+     |      
+     |      self.alpha_sequences: ndarray
+     |          array with alpha sequences (if provided)
+     |      
+     |      self.beta_sequences: ndarray
+     |          array with beta sequences (if provided)
+     |      
+     |      self.label_id: ndarray
+     |          array with sequence class labels
+     |      
+     |      self.file_id: ndarray
+     |          array with sequence file labels
+     |      
+     |      self.freq: ndarray
+     |          array with sequence frequencies from samples
+     |      
+     |      self.counts: ndarray
+     |          array with sequence counts from samples
+     |      
+     |      self.(v/d/j)_(alpha/beta): ndarray
+     |          array with sequence (v/d/j)-(alpha/beta) usage
+     |      
      |      ---------------------------------------
      |  
      |  HeatMap_Files(self, filename='Heatmap_Files.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
@@ -443,6 +468,45 @@ CLASSES
      |      
      |      self.vae_features: array
      |          An array that contains n x latent_dim containing features for all sequences
+     |      
+     |      ---------------------------------------
+     |  
+     |  UMAP_Plot(self, by_label=False, by_cluster=False, by_file=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |      UMAP vizualisation of TCR Sequences
+     |      
+     |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
+     |      prior computing clustering solution or by label. Size of points can also be made to be proportional to
+     |      frequency of sequence within sample.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      by_label: bool
+     |          To color the points by their label, set to True.
+     |      
+     |      by_cluster:bool
+     |          To color the points by the prior computed clustering solution, set to True.
+     |      
+     |      freq_weight: bool
+     |          To scale size of points proportionally to their frequency, set to True.
+     |      
+     |      show_legend: bool
+     |          To display legend, set to True.
+     |      
+     |      scale: float
+     |          To change size of points, change scale parameter. Is particularly useful
+     |          when finding good display size when points are scaled by frequency.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method was run before, one can rerun this method with this parameter set
+     |          to True to bypass recomputing the UMAP projection. Useful for generating
+     |          different versions of the plot on the same UMAP representation.
+     |      
+     |      alpha: float
+     |          Value between 0-1 that controls transparency of points.
+     |      
+     |      
+     |      Returns
      |      
      |      ---------------------------------------
      |  
