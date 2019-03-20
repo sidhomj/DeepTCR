@@ -1147,6 +1147,9 @@ class DeepTCR_U(object):
         self.Cluster_Frequencies: Pandas dataframe
             A dataframe containing the frequency contribution of each cluster to each sample.
 
+        self.Cluster_Assignemnts: ndarray
+            Array with cluster assignments by number.
+
         ---------------------------------------
 
         """
@@ -1264,6 +1267,7 @@ class DeepTCR_U(object):
         self.Cluster_Frequencies = DF_Sum
         self.var_alpha = var_list_alpha
         self.var_beta = var_list_beta
+        self.Cluster_Assignments = IDX
         print('Clustering Done')
 
     def Structural_Diversity(self,sample=None,n_jobs=1):
