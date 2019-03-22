@@ -410,13 +410,14 @@ class DeepTCR_S(object):
         ---------------------------------------
 
         """
-        Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,
-                self.sample_id,self.seq_index,
-                self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_beta,self.d_beta,self.j_beta]
+        Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.sample_id,self.class_id,
+                self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num,
+                self.v_beta,self.d_beta,self.j_beta,self.v_alpha,self.j_alpha]
+
         self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False,LOO=LOO)
 
     def Train_SS(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,trainable_embedding=True,weight_by_class=False,
-                 num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False):
+                 num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,use_only_seq=False,use_only_gene=False):
         """
         Train Single-Sequence Classifier
 
@@ -474,18 +475,18 @@ class DeepTCR_S(object):
                     X_Seq_beta = tf.placeholder(tf.int64,shape=[None, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2]],name='Input_Beta')
                     X_Seq_beta_OH = tf.one_hot(X_Seq_beta, depth=21)
 
-                embedding_dim_genes = 12
-                gene_features = []
+                Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
+                prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
 
+                embedding_dim_genes = 48
+                gene_features = []
                 X_v_beta, X_v_beta_OH, embedding_layer_v_beta, \
                 X_d_beta, X_d_beta_OH, embedding_layer_d_beta, \
                 X_j_beta, X_j_beta_OH, embedding_layer_j_beta, \
-                gene_features = Get_Gene_Features(self, embedding_dim_genes,gene_features)
+                X_v_alpha, X_v_alpha_OH, embedding_layer_v_alpha, \
+                X_j_alpha, X_j_alpha_OH, embedding_layer_j_alpha, \
+                gene_features = Get_Gene_Features(self, embedding_dim_genes, gene_features)
 
-
-                Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
-                training = tf.placeholder_with_default(False, shape=())
-                prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
 
                 if trainable_embedding is True:
                     # AA Embedding
@@ -512,22 +513,31 @@ class DeepTCR_S(object):
                 if self.use_beta is True:
                     Seq_Features_beta, Indices_beta = Convolutional_Features(inputs_seq_embed_beta, kernel=kernel, units=units,trainable_embedding=trainable_embedding,name='beta_conv')
 
-                if (self.use_alpha is True) and (self.use_beta is True):
-                    Seq_Features = tf.concat((Seq_Features_alpha,Seq_Features_beta),axis=1)
-                elif (self.use_alpha is True) and (self.use_beta is False):
-                    Seq_Features = Seq_Features_alpha
-                elif (self.use_alpha is False) and (self.use_beta is True):
-                    Seq_Features = Seq_Features_beta
+                Seq_Features = []
+                if self.use_alpha is True:
+                    Seq_Features.append(Seq_Features_alpha)
+                if self.use_beta is True:
+                    Seq_Features.append(Seq_Features_beta)
 
-                if not isinstance(gene_features, list):
-                    Seq_Features = tf.concat((Seq_Features, gene_features), axis=1)
-                    #Seq_Features = gene_features
+                if Seq_Features:
+                    Seq_Features = tf.concat(Seq_Features, axis=1)
+
+                if not isinstance(Seq_Features, list):
+                    if not isinstance(gene_features, list):
+                        Features = tf.concat((Seq_Features, gene_features), axis=1)
+                    else:
+                        Features = Seq_Features
+
+                    if use_only_seq is True:
+                        Features = Seq_Features
+
+                    if use_only_gene is True:
+                        Features = gene_features
+                else:
+                    Features = gene_features
 
 
-                Seq_Features = tf.identity(Seq_Features,'Seq_Features')
-                fc = Seq_Features
-
-
+                fc = Features
                 if num_fc_layers != 0:
                     for lyr in range(num_fc_layers):
                         fc = tf.layers.dropout(fc,prob)
