@@ -48,6 +48,8 @@ class DeepTCR_S(object):
         self.use_v_beta = False
         self.use_d_beta = False
         self.use_j_beta = False
+        self.use_v_alpha = False
+        self.use_j_alpha = False
 
         #Create dataframes for assigning AA to ints
         aa_idx, aa_mat = make_aa_df()
@@ -388,7 +390,7 @@ class DeepTCR_S(object):
         self.j_alpha_num = j_alpha_num
         print('Data Loaded')
 
-    def Get_Train_Valid_Test_SS(self,test_size=0.2,LOO=None):
+    def Get_Train_Valid_Test_SS(self,test_size=0.25,LOO=None):
         """
         Train/Valid/Test Splits.
 
@@ -409,7 +411,7 @@ class DeepTCR_S(object):
 
         """
         Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,
-                self.file_id,self.seq_index,
+                self.sample_id,self.seq_index,
                 self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_beta,self.d_beta,self.j_beta]
         self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False,LOO=LOO)
 
