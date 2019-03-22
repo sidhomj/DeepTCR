@@ -161,6 +161,10 @@ class DeepTCR_U(object):
         j_beta_column: int
             Column where j_beta gene information is stored.
 
+        p: multiprocessing pool object
+            For parellelized operations, one can pass a multiprocessing pool object
+            to this method.
+
 
         Returns
 

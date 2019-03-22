@@ -66,9 +66,10 @@ class DeepTCR_S(object):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-    def Get_Data_SS(self, directory, Load_Prev_Data=False,classes=None,save_data=True,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
-                    aa_column_alpha=None, aa_column_beta=None, count_column = None,sep='\t',aggregate_by_aa=True,
-                    v_beta_column=None,j_beta_column=None,d_beta_column=None):
+    def Get_Data_SS(self, directory, Load_Prev_Data=False,classes=None,save_data=True,type_of_data_cut='Fraction_Response',
+                    data_cut=1.0,n_jobs=40,aa_column_alpha=None, aa_column_beta=None, count_column = None,sep='\t',aggregate_by_aa=True,
+                    v_alpha_column = None, j_alpha_column = None,
+                    v_beta_column=None,j_beta_column=None,d_beta_column=None,p=None):
 
         """
         Get Data for Single Sequence Classification.
@@ -88,9 +89,10 @@ class DeepTCR_S(object):
             Optional selection of input of which sub-directories to use for analysis.
 
         save_data: bool
-           Whether to save data to pickle file for later use.
+            Whether to save data to pickle file for future re-loading. Useful to set this to False when trying to
+            do inference on new data.
 
-                type_of_data_cut: str
+        type_of_data_cut: str
             Method by which one wants to sample from the TCRSeq File.
 
             Options are:
@@ -122,12 +124,8 @@ class DeepTCR_S(object):
         aa_column_beta: int
             Column where beta chain amino acid data is stored.(0-indexed)
 
-        If both column integers are left to None, column with a header containing 'acid' is used as
-            the amino acid column.
-
         count_column: int
-            Column where counts are stored. If set to None, first column with data in integer datatype is used as the
-            counts column.
+            Column where counts are stored.
 
         sep: str
             Type of delimiter used in file with TCRSeq data.
@@ -135,6 +133,25 @@ class DeepTCR_S(object):
         aggregate_by_aa: bool
             Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
             of the same amino acid sequence given it comes from different nucleotide clones.
+
+        v_alpha_column: int
+            Column where v_alpha gene information is stored.
+
+        j_alpha_column: int
+            Column where j_alpha gene information is stored.
+
+        v_beta_column: int
+            Column where v_beta gene information is stored.
+
+        d_beta_column: int
+            Column where d_beta gene information is stored.
+
+        j_beta_column: int
+            Column where j_beta gene information is stored.
+
+        p: multiprocessing pool object
+            For parellelized operations, one can pass a multiprocessing pool object
+            to this method.
 
         Returns
         ---------------------------------------
@@ -178,9 +195,15 @@ class DeepTCR_S(object):
             v_beta = []
             d_beta = []
             j_beta = []
+            v_alpha = []
+            j_alpha = []
             label_id = []
             file_id = []
-            p = Pool(n_jobs)
+            counts = []
+            file_list = []
+            freq = []
+            if p is None:
+                p = Pool(n_jobs)
 
             if sep == '\t':
                 ext = '*.tsv'
@@ -204,7 +227,9 @@ class DeepTCR_S(object):
                                 [aggregate_by_aa] * num_ins,
                                 [v_beta_column] * num_ins,
                                 [d_beta_column] * num_ins,
-                                [j_beta_column] * num_ins))
+                                [j_beta_column] * num_ins,
+                                [v_alpha_column] * num_ins,
+                                [j_alpha_column] * num_ins))
 
                 DF = p.starmap(Get_DF_Data, args)
 
@@ -214,8 +239,11 @@ class DeepTCR_S(object):
                     if aa_column_beta is not None:
                         beta_sequences += df['beta'].tolist()
 
-                    if (aa_column_alpha is None) and (aa_column_beta is None):
-                        beta_sequences += df['beta'].tolist()
+                    if v_alpha_column is not None:
+                        v_alpha += df['v_alpha'].tolist()
+
+                    if j_alpha_column is not None:
+                        j_alpha += df['j_alpha'].tolist()
 
                     if v_beta_column is not None:
                         v_beta += df['v_beta'].tolist()
@@ -228,14 +256,21 @@ class DeepTCR_S(object):
 
                     label_id += [type] * len(df)
                     file_id += [file.split('/')[-1]] * len(df)
+                    file_list.append(file.split('/')[-1])
+                    freq += df['Frequency'].tolist()
+                    counts += df['counts'].tolist()
 
             alpha_sequences = np.asarray(alpha_sequences)
             beta_sequences = np.asarray(beta_sequences)
-            label_id = np.asarray(label_id)
-            file_id = np.asarray(file_id)
             v_beta = np.asarray(v_beta)
             d_beta = np.asarray(d_beta)
             j_beta = np.asarray(j_beta)
+            v_alpha = np.asarray(v_alpha)
+            j_alpha = np.asarray(j_alpha)
+            label_id = np.asarray(label_id)
+            file_id = np.asarray(file_id)
+            freq = np.asarray(freq)
+            counts = np.asarray(counts)
 
             Y = self.lb.transform(label_id)
             OH = OneHotEncoder(sparse=False)
@@ -256,16 +291,17 @@ class DeepTCR_S(object):
 
 
 
-            p.close()
-            p.join()
+            if p is None:
+                p.close()
+                p.join()
 
-            if (self.use_beta is True) and (self.use_alpha is False):
-                X_Seq_alpha = np.zeros_like(X_Seq_beta)
-                alpha_sequences = np.asarray([None]*len(X_Seq_beta))
+            if self.use_alpha is False:
+                X_Seq_alpha = np.zeros(shape=[len(label_id)])
+                alpha_sequences = np.asarray([None]*len(label_id))
 
-            if (self.use_beta is False) and (self.use_alpha is True):
-                X_Seq_beta = np.zeros_like(X_Seq_alpha)
-                beta_sequences = np.asarray([None]*len(X_Seq_alpha))
+            if self.use_beta is False:
+                X_Seq_beta = np.zeros(shape=[len(label_id)])
+                beta_sequences = np.asarray([None]*len(label_id))
 
             #transform v/d/j genes into categorical space
             num_seq = X_Seq_alpha.shape[0]
@@ -275,7 +311,7 @@ class DeepTCR_S(object):
             else:
                 self.lb_v_beta = LabelEncoder()
                 v_beta_num = np.zeros(shape=[num_seq])
-                v_beta = np.asarray(['None']*num_seq)
+                v_beta = np.asarray([None]*len(label_id))
 
             if self.use_d_beta is True:
                 self.lb_d_beta = LabelEncoder()
@@ -283,8 +319,7 @@ class DeepTCR_S(object):
             else:
                 self.lb_d_beta = LabelEncoder()
                 d_beta_num = np.zeros(shape=[num_seq])
-                d_beta = np.asarray(['None']*num_seq)
-
+                d_beta = np.asarray([None]*len(label_id))
 
             if self.use_j_beta is True:
                 self.lb_j_beta = LabelEncoder()
@@ -292,44 +327,65 @@ class DeepTCR_S(object):
             else:
                 self.lb_j_beta = LabelEncoder()
                 j_beta_num = np.zeros(shape=[num_seq])
-                j_beta = np.asarray(['None']*num_seq)
+                j_beta = np.asarray([None]*len(label_id))
+
+            if self.use_v_alpha is True:
+                self.lb_v_alpha = LabelEncoder()
+                v_alpha_num = self.lb_v_alpha.fit_transform(v_alpha)
+            else:
+                self.lb_v_alpha = LabelEncoder()
+                v_alpha_num = np.zeros(shape=[num_seq])
+                v_alpha = np.asarray([None]*len(label_id))
+
+            if self.use_j_alpha is True:
+                self.lb_j_alpha = LabelEncoder()
+                j_alpha_num = self.lb_j_alpha.fit_transform(j_alpha)
+            else:
+                self.lb_j_alpha = LabelEncoder()
+                j_alpha_num = np.zeros(shape=[num_seq])
+                j_alpha = np.asarray([None]*len(label_id))
+
 
 
             #Save Data
             if save_data is True:
                 with open(os.path.join(self.Name, self.Name) + '_Data.pkl', 'wb') as f:
-                    pickle.dump([X_Seq_alpha,X_Seq_beta, Y, alpha_sequences,beta_sequences, label_id, file_id,
-                                 self.lb,self.use_alpha,self.use_beta,
-                                 self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
-                                 v_beta, d_beta,j_beta,
-                                 v_beta_num, d_beta_num, j_beta_num,
-                                 self.use_v_beta,self.use_d_beta,self.use_j_beta], f, protocol=4)
+                    pickle.dump([X_Seq_alpha,X_Seq_beta, Y, alpha_sequences,beta_sequences, label_id, file_id,freq,counts,
+                                 self.lb,file_list,self.use_alpha,self.use_beta,
+                                 self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,
+                                 v_beta, d_beta,j_beta,v_alpha,j_alpha,
+                                 v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,
+                                 self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha], f, protocol=4)
 
         else:
             #Load Data
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
-                X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id,\
-                self.lb,self.use_alpha,self.use_beta,\
-                    self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,\
-                    v_beta, d_beta,j_beta,\
-                    v_beta_num, d_beta_num, j_beta_num,\
-                    self.use_v_beta,self.use_d_beta,self.use_j_beta = pickle.load(f)
+                X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id,freq,counts,\
+                self.lb,file_list,self.use_alpha,self.use_beta,\
+                    self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,\
+                    v_beta, d_beta,j_beta,v_alpha,j_alpha,\
+                    v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,\
+                    self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha = pickle.load(f)
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
         self.alpha_sequences = alpha_sequences
         self.beta_sequences = beta_sequences
-        self.Y = Y
-        self.label_id = label_id
-        self.file_id = file_id
-        self.seq_index = np.asarray(list(range(len(self.Y))))
-        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        self.class_id = label_id
+        self.sample_id = file_id
+        self.freq = freq
+        self.counts = counts
+        self.sample_list = file_list
         self.v_beta = v_beta
         self.v_beta_num = v_beta_num
         self.d_beta = d_beta
         self.d_beta_num = d_beta_num
         self.j_beta = j_beta
         self.j_beta_num = j_beta_num
+        self.v_alpha = v_alpha
+        self.v_alpha_num = v_alpha_num
+        self.j_alpha = j_alpha
+        self.j_alpha_num = j_alpha_num
         print('Data Loaded')
 
     def Get_Train_Valid_Test_SS(self,test_size=0.2,LOO=None):
