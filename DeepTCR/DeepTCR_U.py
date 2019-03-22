@@ -1151,7 +1151,7 @@ class DeepTCR_U(object):
             features = np.vstack(features_list)
             return features
 
-    def HeatMap_Sequences(self,filename='Heatmap_Features.tif',sample_num=None,sample_num_per_seq=None,color_dict=None):
+    def HeatMap_Sequences(self,filename='Heatmap_Sequences.tif',sample_num=None,sample_num_per_seq=None,color_dict=None):
         """
         HeatMap of Sequences
 
@@ -1233,7 +1233,7 @@ class DeepTCR_U(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results,filename))
 
-    def HeatMap_Files(self,filename='Heatmap_Files.tif',Weight_by_Freq=True,color_dict=None,labels=True,font_scale=1.0):
+    def HeatMap_Samples(self,filename='Heatmap_Samples.tif',Weight_by_Freq=True,color_dict=None,labels=True,font_scale=1.0):
         """
         HeatMap of Samples
 
