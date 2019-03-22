@@ -166,7 +166,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  HeatMap_Files(self, filename='Heatmap_Files.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
+     |  HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
      |      HeatMap of Samples
      |      
      |      This method creates a heatmap/clustermap for samples by latent features
@@ -195,7 +195,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  HeatMap_Sequences(self, filename='Heatmap_Features.tif', sample_num=None, sample_num_per_seq=None, color_dict=None)
+     |  HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None, color_dict=None)
      |      HeatMap of Sequences
      |      
      |      This method creates a heatmap/clustermap for sequences by latent features
