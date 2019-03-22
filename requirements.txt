@@ -7,3 +7,4 @@ matplotlib==2.2.2
 scipy==1.1.0
 biopython==1.69
 seaborn==0.9.0
+PhenoGraph==1.5.2
