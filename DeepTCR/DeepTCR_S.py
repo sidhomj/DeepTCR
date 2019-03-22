@@ -470,6 +470,14 @@ class DeepTCR_S(object):
         suppress_output: bool
             To suppress command line output with training statisitcs, set to True.
 
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
+
 
         Returns
         ---------------------------------------
@@ -833,6 +841,14 @@ class DeepTCR_S(object):
         suppress_output: bool
             To suppress command line output with training statisitcs, set to True.
 
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
+
 
         Returns
         ---------------------------------------
@@ -933,6 +949,14 @@ class DeepTCR_S(object):
         iterations: int
             Option to specify how many iterations one wants to complete before
             terminating training. Useful for very large datasets.
+
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
 
 
         Returns
