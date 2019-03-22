@@ -51,7 +51,7 @@ CLASSES
      |      
      |      Returns
      |      
-     |      self.DFs: list of Pandas dataframes
+     |      self.Cluster_DFs: list of Pandas dataframes
      |          Clusters by sequences/label
      |      
      |      self.var: list
@@ -149,10 +149,10 @@ CLASSES
      |      self.beta_sequences: ndarray
      |          array with beta sequences (if provided)
      |      
-     |      self.label_id: ndarray
+     |      self.class_id: ndarray
      |          array with sequence class labels
      |      
-     |      self.file_id: ndarray
+     |      self.sample_id: ndarray
      |          array with sequence file labels
      |      
      |      self.freq: ndarray
@@ -345,6 +345,77 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None)
+     |      Load Data programatically into DeepTCR.
+     |      
+     |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
+     |      a user cn load numpy arrays with relevant TCRSeq data for analysis.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      class_labels: ndarray of strings
+     |          A 1d array with class labels for the sequence (i.e. antigen-specificities)
+     |      
+     |      sample_labels: ndarray of strings
+     |          A 1d array with sample labels for the sequence. (i.e. when loading data from differnet samples)
+     |      
+     |      counts: ndarray of ints
+     |          A 1d array with the counts for each sequence, in the case they come from samples.
+     |      
+     |      freq: ndarray of float values
+     |          A 1d array with the frequencies for each sequence, in the case they come from samples.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      
+     |      Returns
+     |      
+     |      self.alpha_sequences: ndarray
+     |          array with alpha sequences (if provided)
+     |      
+     |      self.beta_sequences: ndarray
+     |          array with beta sequences (if provided)
+     |      
+     |      self.label_id: ndarray
+     |          array with sequence class labels
+     |      
+     |      self.file_id: ndarray
+     |          array with sequence file labels
+     |      
+     |      self.freq: ndarray
+     |          array with sequence frequencies from samples
+     |      
+     |      self.counts: ndarray
+     |          array with sequence counts from samples
+     |      
+     |      self.(v/d/j)_(alpha/beta): ndarray
+     |          array with sequence (v/d/j)-(alpha/beta) usage
+     |      
+     |      ---------------------------------------
+     |  
      |  Repertoire_Dendogram(self, distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
      |      Repertoire Dendrogram
      |      
@@ -471,7 +542,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, by_label=False, by_cluster=False, by_file=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |  UMAP_Plot(self, by_label=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -482,7 +553,10 @@ CLASSES
      |      ---------------------------------------
      |      
      |      by_label: bool
-     |          To color the points by their label, set to True.
+     |          To color the points by their class label, set to True.
+     |      
+     |      by_sample: bool
+     |          To color the points by their sample lebel, set to True.
      |      
      |      by_cluster:bool
      |          To color the points by the prior computed clustering solution, set to True.
