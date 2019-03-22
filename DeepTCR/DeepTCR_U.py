@@ -596,6 +596,7 @@ class DeepTCR_U(object):
         else:
             self.class_id = ['None']*len_input
 
+        print('Data Loaded')
 
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
