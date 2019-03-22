@@ -542,7 +542,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, by_label=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |  UMAP_Plot(self, by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -552,7 +552,7 @@ CLASSES
      |      Inputs
      |      ---------------------------------------
      |      
-     |      by_label: bool
+     |      by_class: bool
      |          To color the points by their class label, set to True.
      |      
      |      by_sample: bool
