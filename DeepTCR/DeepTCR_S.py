@@ -371,6 +371,7 @@ class DeepTCR_S(object):
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
+        self.Y = Y
         self.alpha_sequences = alpha_sequences
         self.beta_sequences = beta_sequences
         self.class_id = label_id
@@ -465,26 +466,28 @@ class DeepTCR_S(object):
         """
         epochs = 10000
         graph_model = tf.Graph()
+        GO = graph_object()
+
         with tf.device(self.device):
             with graph_model.as_default():
                 if self.use_alpha is True:
-                    X_Seq_alpha = tf.placeholder(tf.int64,shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],name='Input_Alpha')
-                    X_Seq_alpha_OH = tf.one_hot(X_Seq_alpha, depth=21)
+                    GO.X_Seq_alpha = tf.placeholder(tf.int64,shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],name='Input_Alpha')
+                    GO.X_Seq_alpha_OH = tf.one_hot(GO.X_Seq_alpha, depth=21)
 
                 if self.use_beta is True:
-                    X_Seq_beta = tf.placeholder(tf.int64,shape=[None, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2]],name='Input_Beta')
-                    X_Seq_beta_OH = tf.one_hot(X_Seq_beta, depth=21)
+                    GO.X_Seq_beta = tf.placeholder(tf.int64,shape=[None, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2]],name='Input_Beta')
+                    GO.X_Seq_beta_OH = tf.one_hot(GO.X_Seq_beta, depth=21)
 
-                Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
-                prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
+                GO.Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
+                GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
 
                 embedding_dim_genes = 48
                 gene_features = []
-                X_v_beta, X_v_beta_OH, embedding_layer_v_beta, \
-                X_d_beta, X_d_beta_OH, embedding_layer_d_beta, \
-                X_j_beta, X_j_beta_OH, embedding_layer_j_beta, \
-                X_v_alpha, X_v_alpha_OH, embedding_layer_v_alpha, \
-                X_j_alpha, X_j_alpha_OH, embedding_layer_j_alpha, \
+                GO.X_v_beta, GO.X_v_beta_OH, GO.embedding_layer_v_beta, \
+                GO.X_d_beta, GO.X_d_beta_OH, GO.embedding_layer_d_beta, \
+                GO.X_j_beta, GO.X_j_beta_OH, GO.embedding_layer_j_beta, \
+                GO.X_v_alpha, GO.X_v_alpha_OH, GO.embedding_layer_v_alpha, \
+                GO.X_j_alpha, GO.X_j_alpha_OH, GO.embedding_layer_j_alpha, \
                 gene_features = Get_Gene_Features(self, embedding_dim_genes, gene_features)
 
 
@@ -495,16 +498,16 @@ class DeepTCR_S(object):
                         embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq', shape=[21, embedding_dim_aa])
                         embedding_layer_seq = tf.expand_dims(tf.expand_dims(embedding_layer_seq, axis=0), axis=0)
                         if self.use_alpha is True:
-                            inputs_seq_embed_alpha = tf.squeeze(tf.tensordot(X_Seq_alpha_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                            inputs_seq_embed_alpha = tf.squeeze(tf.tensordot(GO.X_Seq_alpha_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
                         if self.use_beta is True:
-                            inputs_seq_embed_beta = tf.squeeze(tf.tensordot(X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                            inputs_seq_embed_beta = tf.squeeze(tf.tensordot(GO.X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
 
                 else:
                     if self.use_alpha is True:
-                        inputs_seq_embed_alpha = X_Seq_alpha_OH
+                        inputs_seq_embed_alpha = GO.X_Seq_alpha_OH
 
                     if self.use_beta is True:
-                        inputs_seq_embed_beta = X_Seq_beta_OH
+                        inputs_seq_embed_beta = GO.X_Seq_beta_OH
 
 
                 # Convolutional Features
@@ -544,25 +547,25 @@ class DeepTCR_S(object):
                         fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
 
 
-                logits = tf.layers.dense(fc, self.Y.shape[1])
-                ortho_loss = Get_Ortho_Loss(Seq_Features)
+                GO.logits = tf.layers.dense(fc, self.Y.shape[1])
+                GO.ortho_loss = Get_Ortho_Loss(Seq_Features)
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
                     weights = tf.squeeze(tf.matmul(tf.cast(Y, dtype='float32'), class_weights, transpose_b=True), axis=1)
-                    loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(labels=Y, logits=logits))
+                    GO.loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
                 else:
-                    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=Y, logits=logits))
+                    GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
-                loss = loss+ortho_loss
-                opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
+                #GO.loss = GO.loss+GO.ortho_loss
+                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
 
                 with tf.name_scope('Accuracy_Measurements'):
-                    predicted = tf.nn.softmax(logits, name='predicted')
-                    correct_pred = tf.equal(tf.argmax(predicted, 1), tf.argmax(Y, 1))
-                    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+                    GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
+                    correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
+                    GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
 
-                saver = tf.train.Saver()
+                GO.saver = tf.train.Saver()
 
 
         #Initialize Training
@@ -574,115 +577,27 @@ class DeepTCR_S(object):
 
             val_loss_total = []
             for e in range(epochs):
-                train_loss = []
-                train_accuracy = []
-                predicted_list = []
-                set = self.train
-                Vars = [set[0],set[1],set[6],set[7],set[8],set[-1]]
-                for vars in get_batches_gen(Vars, batch_size=batch_size, random=True):
-                    feed_dict = {Y:vars[-1],prob:drop_out_rate}
-                    if self.use_alpha is True:
-                        feed_dict[X_Seq_alpha] = vars[0]
-                    if self.use_beta is True:
-                        feed_dict[X_Seq_beta] = vars[1]
+                train_loss, train_accuracy, train_predicted,train_auc = \
+                    Run_Graph(self.train,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=drop_out_rate)
 
-                    if self.use_v_beta is True:
-                        feed_dict[X_v_beta] = vars[2]
+                valid_loss, valid_accuracy, valid_predicted,valid_auc = \
+                    Run_Graph(self.valid,sess,self,GO,batch_size,random=False,train=False)
 
-                    if self.use_d_beta is True:
-                        feed_dict[X_d_beta] = vars[3]
+                val_loss_total.append(valid_loss)
 
-                    if self.use_j_beta is True:
-                        feed_dict[X_j_beta] = vars[4]
-
-                    loss_i, accuracy_i, _,predicted_i = sess.run([loss, accuracy, opt,predicted], feed_dict=feed_dict)
-                    train_loss.append(loss_i)
-                    train_accuracy.append(accuracy_i)
-                    predicted_list.append(predicted_i)
-
-                train_loss = np.mean(train_loss)
-                train_accuracy = np.mean(train_accuracy)
-                predicted_out = np.vstack(predicted_list)
-                train_auc = roc_auc_score(self.train[-1],predicted_out)
-
-
-                val_loss = []
-                val_accuracy = []
-                set = self.valid
-                Vars = [set[0], set[1], set[6], set[7], set[8], set[-1]]
-                for vars in get_batches_gen(Vars, batch_size=batch_size, random=False):
-                    feed_dict = {Y:vars[-1]}
-                    if self.use_alpha is True:
-                        feed_dict[X_Seq_alpha] = vars[0]
-                    if self.use_beta is True:
-                        feed_dict[X_Seq_beta] = vars[1]
-
-                    if self.use_v_beta is True:
-                        feed_dict[X_v_beta] = vars[2]
-
-                    if self.use_d_beta is True:
-                        feed_dict[X_d_beta] = vars[3]
-
-                    if self.use_j_beta is True:
-                        feed_dict[X_j_beta] = vars[4]
-
-                    loss_i, accuracy_i = sess.run([loss, accuracy], feed_dict=feed_dict)
-                    val_loss.append(loss_i)
-                    val_accuracy.append(accuracy_i)
-
-
-                val_loss = np.mean(val_loss)
-                val_accuracy = np.mean(val_accuracy)
-                val_loss_total.append(val_loss)
-
-                test_loss = []
-                test_accuracy = []
-                predicted_list = []
-                set = self.test
-                Vars = [set[0], set[1], set[6], set[7], set[8], set[-1]]
-                for vars in get_batches_gen(Vars, batch_size=batch_size, random=False):
-                    feed_dict = {Y:vars[-1]}
-                    if self.use_alpha is True:
-                        feed_dict[X_Seq_alpha] = vars[0]
-                    if self.use_beta is True:
-                        feed_dict[X_Seq_beta] = vars[1]
-
-                    if self.use_v_beta is True:
-                        feed_dict[X_v_beta] = vars[2]
-
-                    if self.use_d_beta is True:
-                        feed_dict[X_d_beta] = vars[3]
-
-                    if self.use_j_beta is True:
-                        feed_dict[X_j_beta] = vars[4]
-
-                    loss_i, accuracy_i, predicted_i = sess.run([loss, accuracy, predicted], feed_dict=feed_dict)
-                    test_loss.append(loss_i)
-                    test_accuracy.append(accuracy_i)
-                    predicted_list.append(predicted_i)
-
-                test_loss = np.mean(test_loss)
-                test_accuracy = np.mean(test_accuracy)
-                predicted_out = np.vstack(predicted_list)
-                self.y_pred = predicted_out
-                self.y_test = self.test[-1]
-
-                y_test2 = np.vstack(self.y_test)
-                if (np.sum(y_test2[:,0])!=len(y_test2)) and (np.sum(y_test2[:,0])!=0):
-                    auc = roc_auc_score(np.vstack(self.y_test),np.vstack(self.y_pred))
-                else:
-                    auc = 0.0
+                test_loss, test_accuracy, test_predicted,test_auc = \
+                    Run_Graph(self.test,sess,self,GO,batch_size,random=False,train=False)
 
                 if suppress_output is False:
                     print("Training_Statistics: \n",
                           "Epoch: {}/{}".format(e + 1, epochs),
                           "Training loss: {:.5f}".format(train_loss),
-                          "Validation loss: {:.5f}".format(val_loss),
+                          "Validation loss: {:.5f}".format(valid_loss),
                           "Testing loss: {:.5f}".format(test_loss),
                           "Training Accuracy: {:.5}".format(train_accuracy),
-                          "Validation Accuracy: {:.5}".format(val_accuracy),
+                          "Validation Accuracy: {:.5}".format(valid_accuracy),
                           'Training AUC: {:.5}'.format(train_auc),
-                          "Testing AUC: {:.5}".format(auc))
+                          "Testing AUC: {:.5}".format(test_auc))
 
 
                 if e > epochs_min:
@@ -695,7 +610,8 @@ class DeepTCR_S(object):
             beta_features_list = []
             alpha_indices_list = []
             beta_indices_list = []
-            for x_seq_a,x_seq_b, y in get_batches_model(self.X_Seq_alpha,self.X_Seq_beta, self.Y, batch_size=batch_size, random=False):
+            Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.Y]
+            for vars in get_batches(Vars, batch_size=batch_size, random=False):
                 if self.use_alpha is True:
                     feed_dict[X_Seq_alpha] = x_seq_a
                 if self.use_beta is True:

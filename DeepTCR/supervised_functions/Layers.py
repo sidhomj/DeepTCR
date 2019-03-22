@@ -72,5 +72,6 @@ def Convolutional_Features_Test(inputs,motifs,bias=0,reuse=False,name='Convoluti
 
         return conv
 
-
-
+class graph_object(object):
+    def __init__(self):
+        self.init=0

@@ -9,6 +9,7 @@ from scipy.stats import mannwhitneyu
 import os
 from Bio.Alphabet import IUPAC
 import seaborn as sns
+from sklearn.metrics import roc_auc_score
 
 
 def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None):
@@ -121,76 +122,7 @@ def Get_Train_Test(Vars,test_idx,train_idx,Y=None):
 
     return var_train, var_test
 
-def get_batches(x,y, batch_size=10,random=False):
-    """ Return a generator that yields batches from arrays x and y. """
-    #batch_size = len(x) // n_batches
-    if len(x) % batch_size == 0:
-        n_batches = (len(x) // batch_size)
-    else:
-        n_batches = (len(x) // batch_size) + 1
-
-    sel = np.asarray(list(range(x.shape[0])))
-    if random is True:
-        np.random.shuffle(sel)
-
-    for ii in range(0, n_batches * batch_size, batch_size):
-        # If we're not on the last batch, grab data with size batch_size
-        if ii != (n_batches - 1) * batch_size:
-            sel_ind=sel[ii: ii + batch_size]
-            X,Y = x[sel_ind], y[sel_ind]
-            # On the last batch, grab the rest of the data
-        else:
-            sel_ind = sel[ii:]
-            X, Y  = x[sel_ind], y[sel_ind]
-        yield X,Y
-
-def get_batches_model(x,x2,y, batch_size=10,random=False):
-    """ Return a generator that yields batches from arrays x and y. """
-    #batch_size = len(x) // n_batches
-    if len(x) % batch_size == 0:
-        n_batches = (len(x) // batch_size)
-    else:
-        n_batches = (len(x) // batch_size) + 1
-
-    sel = np.asarray(list(range(x.shape[0])))
-    if random is True:
-        np.random.shuffle(sel)
-
-    for ii in range(0, n_batches * batch_size, batch_size):
-        # If we're not on the last batch, grab data with size batch_size
-        if ii != (n_batches - 1) * batch_size:
-            sel_ind=sel[ii: ii + batch_size]
-            X,X2,Y = x[sel_ind],x2[sel_ind],y[sel_ind]
-            # On the last batch, grab the rest of the data
-        else:
-            sel_ind = sel[ii:]
-            X,X2,Y  = x[sel_ind],x2[sel_ind], y[sel_ind]
-        yield X,X2,Y
-
-def get_batches_model_2(x,x2,y,y2, batch_size=10,random=False):
-    """ Return a generator that yields batches from arrays x and y. """
-    #batch_size = len(x) // n_batches
-    if len(x) % batch_size == 0:
-        n_batches = (len(x) // batch_size)
-    else:
-        n_batches = (len(x) // batch_size) + 1
-
-    sel = np.asarray(list(range(x.shape[0])))
-    if random is True:
-        np.random.shuffle(sel)
-
-    for ii in range(0, n_batches * batch_size, batch_size):
-        # If we're not on the last batch, grab data with size batch_size
-        if ii != (n_batches - 1) * batch_size:
-            sel_ind=sel[ii: ii + batch_size]
-            # On the last batch, grab the rest of the data
-        else:
-            sel_ind = sel[ii:]
-
-        X, X2, Y, Y2 = x[sel_ind], x2[sel_ind], y[sel_ind], y2[sel_ind]
-        yield X,X2,Y,Y2
-
-def get_batches_gen(Vars, batch_size=10,random=False):
+def get_batches(Vars, batch_size=10,random=False):
     """ Return a generator that yields batches from vars. """
     #batch_size = len(x) // n_batches
     x = Vars[0]
@@ -213,53 +145,6 @@ def get_batches_gen(Vars, batch_size=10,random=False):
         Vars_Out = [var[sel_ind] for var in Vars]
 
         yield Vars_Out
-
-def get_motif_batches(x, batch_size=10,random=False):
-    """ Return a generator that yields batches from arrays x and y. """
-    #batch_size = len(x) // n_batches
-    num_samples = x.shape[-1]
-    if num_samples % batch_size == 0:
-        n_batches = (num_samples // batch_size)
-    else:
-        n_batches = (num_samples // batch_size) + 1
-
-    sel = np.asarray(list(range(num_samples)))
-    if random is True:
-        np.random.shuffle(sel)
-
-    for ii in range(0, n_batches * batch_size, batch_size):
-        # If we're not on the last batch, grab data with size batch_size
-        if ii != (n_batches - 1) * batch_size:
-            sel_ind=sel[ii: ii + batch_size]
-            # On the last batch, grab the rest of the data
-        else:
-            sel_ind = sel[ii:]
-
-        X = x[:,:,:,sel_ind]
-        yield X
-
-def get_batches_seq(x, batch_size=10,random=False):
-    """ Return a generator that yields batches from arrays x and y. """
-    #batch_size = len(x) // n_batches
-    if len(x) % batch_size == 0:
-        n_batches = (len(x) // batch_size)
-    else:
-        n_batches = (len(x) // batch_size) + 1
-
-    sel = np.asarray(list(range(x.shape[0])))
-    if random is True:
-        np.random.shuffle(sel)
-
-    for ii in range(0, n_batches * batch_size, batch_size):
-        # If we're not on the last batch, grab data with size batch_size
-        if ii != (n_batches - 1) * batch_size:
-            sel_ind=sel[ii: ii + batch_size]
-            X = x[sel_ind]
-            # On the last batch, grab the rest of the data
-        else:
-            sel_ind = sel[ii:]
-            X   = x[sel_ind]
-        yield X
 
 def get_mers(X,mer=15,stride=7):
 
@@ -519,3 +404,46 @@ def pad_freq(freq,num_seq_per_instance):
             freq[ii] = np.pad(freq[ii], (0, num_seq_per_instance - len(sample)), mode='constant')
 
     return freq
+
+def Run_Graph(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=0.0):
+    loss = []
+    accuracy = []
+    predicted_list = []
+    Vars = [set[0], set[1], set[6], set[7], set[8], set[-1]]
+    for vars in get_batches(Vars, batch_size=batch_size, random=random):
+        feed_dict = {GO.Y: vars[-1], GO.prob: drop_out_rate}
+        if self.use_alpha is True:
+            feed_dict[GO.X_Seq_alpha] = vars[0]
+        if self.use_beta is True:
+            feed_dict[GO.X_Seq_beta] = vars[1]
+
+        if self.use_v_beta is True:
+            feed_dict[GO.X_v_beta] = vars[2]
+
+        if self.use_d_beta is True:
+            feed_dict[GO.X_d_beta] = vars[3]
+
+        if self.use_j_beta is True:
+            feed_dict[GO.X_j_beta] = vars[4]
+
+        if self.use_v_alpha is True:
+            feed_dict[GO.X_v_alpha] = vars[5]
+
+        if self.use_j_alpha is True:
+            feed_dict[GO.X_j_alpha] = vars[6]
+
+        if train is True:
+            loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted], feed_dict=feed_dict)
+        else:
+            loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted], feed_dict=feed_dict)
+
+        loss.append(loss_i)
+        accuracy.append(accuracy_i)
+        predicted_list.append(predicted_i)
+
+    loss = np.mean(loss)
+    accuracy = np.mean(accuracy)
+    predicted_out = np.vstack(predicted_list)
+    auc = roc_auc_score(set[-1], predicted_out)
+    return loss,accuracy,predicted_out,auc
+
