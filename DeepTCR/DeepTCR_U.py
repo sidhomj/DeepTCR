@@ -1852,7 +1852,7 @@ class DeepTCR_U(object):
             else:
                 sns.catplot(data=df_out, x='Metric', y='Value',kind=plot_type)
 
-    def UMAP_Plot(self,by_label=False,by_cluster=False,by_sample=False,freq_weight=False,show_legend=True,scale=100,
+    def UMAP_Plot(self,by_class=False,by_cluster=False,by_sample=False,freq_weight=False,show_legend=True,scale=100,
                   Load_Prev_Data=False,alpha=1.0):
         """
         UMAP vizualisation of TCR Sequences
@@ -1864,7 +1864,7 @@ class DeepTCR_U(object):
         Inputs
         ---------------------------------------
 
-        by_label: bool
+        by_class: bool
             To color the points by their class label, set to True.
 
         by_sample: bool
@@ -1909,7 +1909,7 @@ class DeepTCR_U(object):
         df_plot = pd.DataFrame()
         df_plot['x'] = X_2[:, 0]
         df_plot['y'] = X_2[:, 1]
-        df_plot['Label'] = self.class_id
+        df_plot['Class'] = self.class_id
         df_plot['Sample'] = self.sample_id
         IDX = self.Cluster_Assignments
         IDX[IDX==-1]= np.max(IDX)+1
@@ -1927,8 +1927,8 @@ class DeepTCR_U(object):
         else:
             legend = False
 
-        if by_label is True:
-            hue = 'Label'
+        if by_class is True:
+            hue = 'Class'
         elif by_cluster is True:
             hue = 'Cluster'
         elif by_sample is True:
