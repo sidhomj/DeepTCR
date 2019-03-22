@@ -32,6 +32,7 @@ DeepTCR has the following python library dependencies:
 7. scipy==1.1.0
 8. biopython==1.69
 9. seaborn==0.9.0
+10. PhenoGraph==1.5.2
 
 
 ## Installation
