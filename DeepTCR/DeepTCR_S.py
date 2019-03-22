@@ -69,7 +69,8 @@ class DeepTCR_S(object):
             os.makedirs(directory)
 
     def Get_Data_SS(self, directory, Load_Prev_Data=False,classes=None,save_data=True,type_of_data_cut='Fraction_Response',
-                    data_cut=1.0,n_jobs=40,aa_column_alpha=None, aa_column_beta=None, count_column = None,sep='\t',aggregate_by_aa=True,
+                    data_cut=1.0,n_jobs=40,aa_column_alpha=None, aa_column_beta=None,
+                    count_column = None,sep='\t',aggregate_by_aa=True,
                     v_alpha_column = None, j_alpha_column = None,
                     v_beta_column=None,j_beta_column=None,d_beta_column=None,p=None):
 
@@ -389,6 +390,8 @@ class DeepTCR_S(object):
         self.v_alpha_num = v_alpha_num
         self.j_alpha = j_alpha
         self.j_alpha_num = j_alpha_num
+        self.seq_index = np.asarray(list(range(len(self.Y))))
+        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         print('Data Loaded')
 
     def Get_Train_Valid_Test_SS(self,test_size=0.25,LOO=None):
@@ -411,14 +414,22 @@ class DeepTCR_S(object):
         ---------------------------------------
 
         """
-        Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.sample_id,self.class_id,
+        Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.sample_id,self.class_id,self.seq_index,
                 self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num,
                 self.v_beta,self.d_beta,self.j_beta,self.v_alpha,self.j_alpha]
 
+        var_names = ['X_Seq_alpha','X_Seq_beta','alpha_sequences','beta_sequences','sample_id','class_id','seq_index',
+                     'v_beta_num','d_beta_num','j_beta_num','v_alpha_num','j_alpha_num','v_beta','d_beta','j_beta',
+                     'v_alpha','j_alpha']
+
+        self.var_dict = dict(zip(var_names,list(range(len(var_names)))))
+
         self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False,LOO=LOO)
 
-    def Train_SS(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,trainable_embedding=True,weight_by_class=False,
-                 num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,use_only_seq=False,use_only_gene=False):
+    def Train_SS(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,
+                 trainable_embedding=True,weight_by_class=False,
+                 num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
+                 use_only_seq=False,use_only_gene=False):
         """
         Train Single-Sequence Classifier
 
@@ -552,7 +563,7 @@ class DeepTCR_S(object):
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
-                    weights = tf.squeeze(tf.matmul(tf.cast(Y, dtype='float32'), class_weights, transpose_b=True), axis=1)
+                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True), axis=1)
                     GO.loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
                 else:
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
@@ -587,6 +598,8 @@ class DeepTCR_S(object):
 
                 test_loss, test_accuracy, test_predicted,test_auc = \
                     Run_Graph(self.test,sess,self,GO,batch_size,random=False,train=False)
+                self.y_pred = test_predicted
+                self.y_test = self.test[-1]
 
                 if suppress_output is False:
                     print("Training_Statistics: \n",
@@ -596,7 +609,6 @@ class DeepTCR_S(object):
                           "Testing loss: {:.5f}".format(test_loss),
                           "Training Accuracy: {:.5}".format(train_accuracy),
                           "Validation Accuracy: {:.5}".format(valid_accuracy),
-                          'Training AUC: {:.5}'.format(train_auc),
                           "Testing AUC: {:.5}".format(test_auc))
 
 
@@ -610,25 +622,21 @@ class DeepTCR_S(object):
             beta_features_list = []
             alpha_indices_list = []
             beta_indices_list = []
-            Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.Y]
+            Vars = [self.X_Seq_alpha,self.X_Seq_beta]
             for vars in get_batches(Vars, batch_size=batch_size, random=False):
+                feed_dict = {}
                 if self.use_alpha is True:
-                    feed_dict[X_Seq_alpha] = x_seq_a
+                    feed_dict[GO.X_Seq_alpha] = vars[0]
                 if self.use_beta is True:
-                    feed_dict[X_Seq_beta] = x_seq_b
-
-                if (self.use_alpha is True) and (self.use_beta is True):
-                    features_i_alpha,indices_i_alpha,features_i_beta,indices_i_beta = sess.run([Seq_Features_alpha,Indices_alpha,Seq_Features_beta,Indices_beta],feed_dict=feed_dict)
-                elif (self.use_alpha is True) and (self.use_beta is False):
-                    features_i_alpha,indices_i_alpha = sess.run([Seq_Features_alpha,Indices_alpha],feed_dict=feed_dict)
-                elif (self.use_alpha is False) and (self.use_beta is True):
-                    features_i_beta,indices_i_beta = sess.run([Seq_Features_beta,Indices_beta],feed_dict=feed_dict)
+                    feed_dict[GO.X_Seq_beta] = vars[1]
 
                 if self.use_alpha is True:
+                    features_i_alpha,indices_i_alpha = sess.run([Seq_Features_alpha,Indices_alpha],feed_dict=feed_dict)
                     alpha_features_list.append(features_i_alpha)
                     alpha_indices_list.append(indices_i_alpha)
 
                 if self.use_beta is True:
+                    features_i_beta,indices_i_beta = sess.run([Seq_Features_beta,Indices_beta],feed_dict=feed_dict)
                     beta_features_list.append(features_i_beta)
                     beta_indices_list.append(indices_i_beta)
 
@@ -642,7 +650,7 @@ class DeepTCR_S(object):
                 self.beta_indices = np.vstack(beta_indices_list)
 
 
-            self.predicted[self.test[5]] += self.y_pred
+            self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
 
             self.kernel = kernel
             #

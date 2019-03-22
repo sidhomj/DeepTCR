@@ -409,7 +409,12 @@ def Run_Graph(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=0
     loss = []
     accuracy = []
     predicted_list = []
-    Vars = [set[0], set[1], set[6], set[7], set[8], set[-1]]
+    var_names = ['X_Seq_alpha','X_Seq_beta','v_beta_num','d_beta_num','j_beta_num','v_alpha_num','j_alpha_num']
+    Vars = []
+    for v in var_names:
+        Vars.append(set[self.var_dict[v]])
+    Vars.append(set[-1])
+
     for vars in get_batches(Vars, batch_size=batch_size, random=random):
         feed_dict = {GO.Y: vars[-1], GO.prob: drop_out_rate}
         if self.use_alpha is True:
