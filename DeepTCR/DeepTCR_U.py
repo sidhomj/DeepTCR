@@ -1347,7 +1347,7 @@ class DeepTCR_U(object):
 
         Returns
 
-        self.DFs: list of Pandas dataframes
+        self.Cluster_DFs: list of Pandas dataframes
             Clusters by sequences/label
 
         self.var: list
@@ -1412,7 +1412,7 @@ class DeepTCR_U(object):
         DFs = []
         DF_Sum = pd.DataFrame()
         DF_Sum['Sample'] = self.sample_list
-        DF_Sum.set_index('File', inplace=True)
+        DF_Sum.set_index('Sample', inplace=True)
         var_list_alpha = []
         var_list_beta = []
         for i in np.unique(IDX):
@@ -1472,7 +1472,7 @@ class DeepTCR_U(object):
 
             DF_Sum.to_csv(os.path.join(self.directory_results, 'Cluster_Frequencies_by_Sample.csv'))
 
-        self.DFs = DFs
+        self.Cluster_DFs = DFs
         self.Cluster_Frequencies = DF_Sum
         self.var_alpha = var_list_alpha
         self.var_beta = var_list_beta
@@ -1518,7 +1518,7 @@ class DeepTCR_U(object):
         DFs = []
         DF_Sum = pd.DataFrame()
         DF_Sum['Sample'] = self.sample_list
-        DF_Sum.set_index('File', inplace=True)
+        DF_Sum.set_index('Sample', inplace=True)
         for i in np.unique(IDX):
             if i != -1:
                 sel = IDX == i
@@ -1551,15 +1551,16 @@ class DeepTCR_U(object):
         labels = []
         num_clusters = []
         entropy_list = []
-        for file in self.file_list:
+        for file in self.sample_list:
             v = np.array(DF_Sum.loc[file].tolist())
             v = v[v > 0.0]
             entropy_list.append(entropy(v))
             num_clusters.append(len(v))
-            labels.append(self.label_id[self.file_id == file][0])
+            labels.append(self.class_id[self.sample_id == file][0])
 
         df_out = pd.DataFrame()
-        df_out['Label'] = labels
+        df_out['Sample'] = self.sample_list
+        df_out['Class'] = labels
         df_out['Entropy'] = entropy_list
         df_out['Num of Clusters'] = num_clusters
 
