@@ -170,10 +170,10 @@ class DeepTCR_U(object):
         self.beta_sequences: ndarray
             array with beta sequences (if provided)
 
-        self.label_id: ndarray
+        self.class_id: ndarray
             array with sequence class labels
 
-        self.file_id: ndarray
+        self.sample_id: ndarray
             array with sequence file labels
 
         self.freq: ndarray
@@ -394,11 +394,11 @@ class DeepTCR_U(object):
         self.X_Seq_beta = X_Seq_beta
         self.alpha_sequences = alpha_sequences
         self.beta_sequences = beta_sequences
-        self.label_id = label_id
-        self.file_id = file_id
+        self.class_id = label_id
+        self.sample_id = file_id
         self.freq = freq
         self.counts = counts
-        self.file_list = file_list
+        self.sample_list = file_list
         self.v_beta = v_beta
         self.v_beta_num = v_beta_num
         self.d_beta = d_beta
@@ -410,6 +410,193 @@ class DeepTCR_U(object):
         self.j_alpha = j_alpha
         self.j_alpha_num = j_alpha_num
         print('Data Loaded')
+
+    def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
+                  v_alpha=None,j_alpha=None,class_labels=None,sample_labels=None,freq=None,counts=None,p=None):
+        """
+        Load Data programatically into DeepTCR.
+
+        DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
+        a user cn load numpy arrays with relevant TCRSeq data for analysis.
+
+        Inputs
+        ---------------------------------------
+
+        alpha_sequences: ndarray of strings
+            A 1d array with the sequences for inference for the alpha chain.
+
+        beta_sequences: ndarray of strings
+            A 1d array with the sequences for inference for the beta chain.
+
+        v_beta: ndarray of strings
+            A 1d array with the v-beta genes for inference.
+
+        d_beta: ndarray of strings
+            A 1d array with the d-beta genes for inference.
+
+        j_beta: ndarray of strings
+            A 1d array with the j-beta genes for inference.
+
+        v_alpha: ndarray of strings
+            A 1d array with the v-alpha genes for inference.
+
+        j_alpha: ndarray of strings
+            A 1d array with the j-alpha genes for inference.
+
+        class_labels: ndarray of strings
+            A 1d array with class labels for the sequence (i.e. antigen-specificities)
+
+        sample_labels: ndarray of strings
+            A 1d array with sample labels for the sequence. (i.e. when loading data from differnet samples)
+
+        counts: ndarray of ints
+            A 1d array with the counts for each sequence, in the case they come from samples.
+
+        freq: ndarray of float values
+            A 1d array with the frequencies for each sequence, in the case they come from samples.
+
+        p: multiprocessing pool object
+            a pre-formed pool object can be passed to method for multiprocessing tasks.
+
+
+        Returns
+
+        self.alpha_sequences: ndarray
+            array with alpha sequences (if provided)
+
+        self.beta_sequences: ndarray
+            array with beta sequences (if provided)
+
+        self.label_id: ndarray
+            array with sequence class labels
+
+        self.file_id: ndarray
+            array with sequence file labels
+
+        self.freq: ndarray
+            array with sequence frequencies from samples
+
+        self.counts: ndarray
+            array with sequence counts from samples
+
+        self.(v/d/j)_(alpha/beta): ndarray
+            array with sequence (v/d/j)-(alpha/beta) usage
+
+        ---------------------------------------
+
+        """
+
+        inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha]
+        for i in inputs:
+            if i is not None:
+                len_input = len(i)
+                break
+
+        if p is None:
+            p = Pool(40)
+
+        if alpha_sequences is not None:
+            args = list(zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
+            result = p.starmap(Embed_Seq_Num, args)
+            sequences_num = np.vstack(result)
+            self.X_Seq_alpha = np.expand_dims(sequences_num, 1)
+        else:
+            self.X_Seq_alpha = np.zeros(shape=[len_input])
+            self.alpha_sequences = np.asarray([None] * len_input)
+
+        if beta_sequences is not None:
+            args = list(zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length] * len(beta_sequences)))
+            result = p.starmap(Embed_Seq_Num, args)
+            sequences_num = np.vstack(result)
+            self.X_Seq_beta = np.expand_dims(sequences_num, 1)
+        else:
+            self.X_Seq_beta = np.zeros(shape=[len_input])
+            self.beta_sequences = np.asarray([None] * len_input)
+
+        if v_beta is not None:
+            self.lb_v_beta = LabelEncoder()
+            self.v_beta_num = self.lb_v_beta.fit_transform(v_beta)
+        else:
+            self.v_beta_num = np.zeros(shape=[len_input])
+            self.v_beta = np.asarray([None] * len_input)
+
+        if d_beta is not None:
+            self.lb_d_beta = LabelEncoder()
+            self.d_beta_num = self.lb_d_beta.fit_transform(d_beta)
+        else:
+            self.d_beta_num = np.zeros(shape=[len_input])
+            self.d_beta = np.asarray([None] * len_input)
+
+        if j_beta is not None:
+            self.lb_j_beta = LabelEncoder()
+            self.j_beta_num = self.lb_j_beta.fit_transform(j_beta)
+        else:
+            self.j_beta_num = np.zeros(shape=[len_input])
+            self.j_beta = np.asarray([None] * len_input)
+
+        if v_alpha is not None:
+            self.lb_v_alpha = LabelEncoder()
+            self.v_alpha_num = self.lb_v_alpha.fit_transform(v_alpha)
+        else:
+            self.v_alpha_num = np.zeros(shape=[len_input])
+            self.v_alpha = np.asarray([None] * len_input)
+
+        if j_alpha is not None:
+            self.lb_j_alpha = LabelEncoder()
+            self.j_alpha_num = self.lb_j_alpha.fit_transform(j_alpha)
+        else:
+            self.j_alpha_num = np.zeros(shape=[len_input])
+            self.j_alpha = np.asarray([None] * len_input)
+
+        if p is None:
+            p.close()
+            p.join()
+
+        if counts is not None:
+            if sample_labels is not None:
+                count_dict={}
+                for s in np.unique(sample_labels):
+                    idx = sample_labels==s
+                    count_dict[s]=np.sum(counts[idx])
+
+                freq = []
+                for c,n in zip(counts,sample_labels):
+                    freq.append(c/count_dict[n])
+                freq = np.asarray(freq)
+                self.counts = counts
+            else:
+                print('Counts need to be provided with sample labels')
+                return
+
+        if freq is not None:
+            self.freq = freq
+
+        if (counts is None) & (freq is None):
+            counts = np.ones(shape=len_input)
+            count_dict = {}
+            for s in np.unique(sample_labels):
+                idx = sample_labels == s
+                count_dict[s] = int(np.sum(counts[idx]))
+
+            freq = []
+            for c, n in zip(counts, sample_labels):
+                freq.append(c / count_dict[n])
+            freq = np.asarray(freq)
+            self.counts = counts
+            self.freq = freq
+
+
+        if sample_labels is not None:
+            self.sample_id = sample_labels
+        else:
+            self.sample_id = ['None']*len_input
+
+        if class_labels is not None:
+            self.class_id = class_labels
+        else:
+            self.class_id = ['None']*len_input
+
+
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
                   trainable_embedding=True,use_only_gene=False,use_only_seq=False,epochs_min=10,stop_criterion=0.0001):
@@ -994,8 +1181,8 @@ class DeepTCR_U(object):
         if sample_num is not None:
             sel = np.random.choice(range(len(self.features)),sample_num,replace=False)
             self.features = self.features[sel]
-            self.label_id = self.label_id[sel]
-            self.file_id = self.file_id[sel]
+            self.class_id = self.class_id[sel]
+            self.sample_id = self.sample_id[sel]
             self.alpha_sequences = self.alpha_sequences[sel]
             self.beta_sequences = self.beta_sequences[sel]
 
@@ -1007,17 +1194,17 @@ class DeepTCR_U(object):
             seq_temp_alpha = []
             seq_temp_beta = []
             for i in self.lb.classes_:
-                sel = np.where(self.label_id==i)[0]
+                sel = np.where(self.class_id==i)[0]
                 sel = np.random.choice(sel,sample_num_per_seq,replace=False)
                 features_temp.append(self.features[sel])
-                label_temp.append(self.label_id[sel])
-                file_temp.append(self.file_id[sel])
+                label_temp.append(self.class_id[sel])
+                file_temp.append(self.sample_id[sel])
                 seq_temp_alpha.append(self.alpha_sequences[sel])
                 seq_temp_beta.append(self.beta_sequences[sel])
 
             self.features = np.vstack(features_temp)
-            self.label_id = np.hstack(label_temp)
-            self.file_id = np.hstack(file_temp)
+            self.class_id = np.hstack(label_temp)
+            self.sample_id = np.hstack(file_temp)
             self.alpha_sequences = np.hstack(seq_temp_alpha)
             self.beta_sequences = np.hstack(seq_temp_beta)
 
@@ -1030,13 +1217,13 @@ class DeepTCR_U(object):
         self.features = self.features[:,keep]
 
         if color_dict is None:
-            N=len(np.unique(self.label_id))
+            N=len(np.unique(self.class_id))
             HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
             np.random.shuffle(HSV_tuples)
             RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-            color_dict = dict(zip(np.unique(self.label_id), RGB_tuples))
+            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
 
-        row_colors = [color_dict[x] for x in self.label_id]
+        row_colors = [color_dict[x] for x in self.class_id]
         sns.set(font_scale=0.5)
         CM = sns.clustermap(self.features,standard_scale=1,row_colors=row_colors,cmap='bwr')
         ax = CM.ax_heatmap
@@ -1076,29 +1263,29 @@ class DeepTCR_U(object):
         ---------------------------------------
 
         """
-        sample_id = np.unique(self.file_id)
+        sample_id = np.unique(self.sample_id)
 
         vector = []
         file_label=[]
         for id in sample_id:
-            sel = self.file_id == id
+            sel = self.sample_id == id
             sel_idx = self.features[sel]
             sel_freq = np.expand_dims(self.freq[sel], 1)
             if Weight_by_Freq is True:
                 dist = np.expand_dims(np.sum(sel_idx * sel_freq, 0), 0)
             else:
                 dist = np.expand_dims(np.mean(sel_idx, 0), 0)
-            file_label.append(np.unique(self.label_id[sel])[0])
+            file_label.append(np.unique(self.class_id[sel])[0])
             vector.append(dist)
 
         vector = np.vstack(vector)
 
         if color_dict is None:
-            N=len(np.unique(self.label_id))
+            N=len(np.unique(self.class_id))
             HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
             np.random.shuffle(HSV_tuples)
             RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-            color_dict = dict(zip(np.unique(self.label_id), RGB_tuples))
+            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
 
 
         row_colors = [color_dict[x] for x in file_label]
@@ -1224,7 +1411,7 @@ class DeepTCR_U(object):
 
         DFs = []
         DF_Sum = pd.DataFrame()
-        DF_Sum['File'] = self.file_list
+        DF_Sum['Sample'] = self.sample_list
         DF_Sum.set_index('File', inplace=True)
         var_list_alpha = []
         var_list_beta = []
@@ -1233,8 +1420,8 @@ class DeepTCR_U(object):
                 sel = IDX == i
                 seq_alpha = self.alpha_sequences[sel]
                 seq_beta = self.beta_sequences[sel]
-                label = self.label_id[sel]
-                file = self.file_id[sel]
+                label = self.class_id[sel]
+                file = self.sample_id[sel]
                 freq = self.freq[sel]
 
                 if self.use_alpha is True:
@@ -1257,7 +1444,7 @@ class DeepTCR_U(object):
                 df['Alpha_Sequences'] = seq_alpha
                 df['Beta_Sequences'] = seq_beta
                 df['Labels'] = label
-                df['File'] = file
+                df['Sample'] = file
                 df['Frequency'] = freq
                 df['V_alpha'] = self.v_alpha[sel]
                 df['J_alpha'] = self.j_alpha[sel]
@@ -1265,7 +1452,7 @@ class DeepTCR_U(object):
                 df['D_beta'] = self.d_beta[sel]
                 df['J_beta'] = self.j_beta[sel]
 
-                df_sum = df.groupby(by='File', sort=False).agg({'Frequency': 'sum'})
+                df_sum = df.groupby(by='Sample', sort=False).agg({'Frequency': 'sum'})
 
                 DF_Sum['Cluster_' + str(i)] = df_sum
 
@@ -1330,22 +1517,22 @@ class DeepTCR_U(object):
 
         DFs = []
         DF_Sum = pd.DataFrame()
-        DF_Sum['File'] = self.file_list
+        DF_Sum['Sample'] = self.sample_list
         DF_Sum.set_index('File', inplace=True)
         for i in np.unique(IDX):
             if i != -1:
                 sel = IDX == i
                 seq_alpha = self.alpha_sequences[sel]
                 seq_beta = self.beta_sequences[sel]
-                label = self.label_id[sel]
-                file = self.file_id[sel]
+                label = self.class_id[sel]
+                file = self.sample_id[sel]
                 freq = self.freq[sel]
 
                 df = pd.DataFrame()
                 df['Alpha_Sequences'] = seq_alpha
                 df['Beta_Sequences'] = seq_beta
                 df['Labels'] = label
-                df['File'] = file
+                df['Sample'] = file
                 df['Frequency'] = freq
                 df['V_alpha'] = self.v_alpha[sel]
                 df['J_alpha'] = self.j_alpha[sel]
@@ -1353,7 +1540,7 @@ class DeepTCR_U(object):
                 df['D_beta'] = self.d_beta[sel]
                 df['J_beta'] = self.j_beta[sel]
 
-                df_sum = df.groupby(by='File', sort=False).agg({'Frequency': 'sum'})
+                df_sum = df.groupby(by='Sample', sort=False).agg({'Frequency': 'sum'})
 
                 DF_Sum['Cluster_' + str(i)] = df_sum
 
@@ -1465,18 +1652,18 @@ class DeepTCR_U(object):
 
         labels = []
         for i in prop.index:
-            labels.append(self.label_id[np.where(self.file_id == i)[0][0]])
+            labels.append(self.class_id[np.where(self.sample_id == i)[0][0]])
 
         samples = prop.index.tolist()
 
         if color_dict is None:
-            N=len(np.unique(self.label_id))
+            N=len(np.unique(self.class_id))
             HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
             np.random.shuffle(HSV_tuples)
             RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-            color_dict = dict(zip(np.unique(self.label_id), RGB_tuples))
+            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
 
-        rad_plot(X_2,pairwise_distances,samples,labels,self.file_id,color_dict,
+        rad_plot(X_2,pairwise_distances,samples,labels,self.sample_id,color_dict,
                  gridsize=gridsize,dg_radius=dendrogram_radius,linkage_method=linkage_method,
                  figsize=8,axes_radius=repertoire_radius)
 
@@ -1534,7 +1721,7 @@ class DeepTCR_U(object):
         val_list = []
 
         for k in k_values:
-            classes, metric, value, k_l = KNN(distances, self.label_id, k=k, metrics=metrics)
+            classes, metric, value, k_l = KNN(distances, self.class_id, k=k, metrics=metrics)
             metric_list.extend(metric)
             val_list.extend(value)
             class_list.extend(classes)
@@ -1637,7 +1824,7 @@ class DeepTCR_U(object):
 
         labels = []
         for i in prop.index:
-            labels.append(self.label_id[np.where(self.file_id == i)[0][0]])
+            labels.append(self.class_id[np.where(self.sample_id == i)[0][0]])
 
         class_list = []
         k_list = []
@@ -1664,7 +1851,7 @@ class DeepTCR_U(object):
             else:
                 sns.catplot(data=df_out, x='Metric', y='Value',kind=plot_type)
 
-    def UMAP_Plot(self,by_label=False,by_cluster=False,by_file=False,freq_weight=False,show_legend=True,scale=100,
+    def UMAP_Plot(self,by_label=False,by_cluster=False,by_sample=False,freq_weight=False,show_legend=True,scale=100,
                   Load_Prev_Data=False,alpha=1.0):
         """
         UMAP vizualisation of TCR Sequences
@@ -1677,7 +1864,10 @@ class DeepTCR_U(object):
         ---------------------------------------
 
         by_label: bool
-            To color the points by their label, set to True.
+            To color the points by their class label, set to True.
+
+        by_sample: bool
+            To color the points by their sample lebel, set to True.
 
         by_cluster:bool
             To color the points by the prior computed clustering solution, set to True.
@@ -1718,8 +1908,8 @@ class DeepTCR_U(object):
         df_plot = pd.DataFrame()
         df_plot['x'] = X_2[:, 0]
         df_plot['y'] = X_2[:, 1]
-        df_plot['Label'] = self.label_id
-        df_plot['File'] = self.file_id
+        df_plot['Label'] = self.class_id
+        df_plot['Sample'] = self.sample_id
         IDX = self.Cluster_Assignments
         IDX[IDX==-1]= np.max(IDX)+1
         IDX = ['Cluster_'+str(I) for I in IDX]
@@ -1740,8 +1930,8 @@ class DeepTCR_U(object):
             hue = 'Label'
         elif by_cluster is True:
             hue = 'Cluster'
-        elif by_file is True:
-            hue = 'File'
+        elif by_sample is True:
+            hue = 'Sample'
         else:
             hue=None
 
