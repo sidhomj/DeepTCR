@@ -703,14 +703,14 @@ class DeepTCR_S(object):
         df_temp = pd.DataFrame()
         df_temp['alpha'] = self.alpha_sequences
         df_temp['beta'] = self.beta_sequences
-        df_temp['label'] = self.label_id
-        df_temp['file'] = self.file_id
+        df_temp['Class'] = self.class_id
+        df_temp['Sample'] = self.sample_id
         for ii,sample in enumerate(self.lb.classes_,0):
             df_temp[sample] = self.predicted[:,ii]
 
         for ii,sample in enumerate(self.lb.classes_,0):
             df_temp.sort_values(by=sample,ascending=False,inplace=True)
-            df_sample = df_temp[df_temp['label']==sample][0:top_seq]
+            df_sample = df_temp[df_temp['Class']==sample][0:top_seq]
 
             if not df_sample.empty:
                 Rep_Seq.append(df_sample)
@@ -778,7 +778,8 @@ class DeepTCR_S(object):
         print('Motif Identification Completed')
 
     def Monte_Carlo_CrossVal_SS(self,fold=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
-                                trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False):
+                                trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
+                                use_only_seq=False,use_only_gene=False):
 
         '''
         Monte Carlo Cross-Validation for Single-Sequence Classifier
@@ -848,7 +849,8 @@ class DeepTCR_S(object):
             self.Train_SS(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
                           kernel=kernel,units=units,weight_by_class=weight_by_class,
                           trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
-                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output)
+                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
+                          use_only_seq=use_only_seq,use_only_gene=use_only_gene)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -857,8 +859,8 @@ class DeepTCR_S(object):
                 predicted = np.zeros_like(self.predicted)
                 counts = np.zeros_like(self.predicted)
 
-            predicted[self.test[5]] += self.y_pred
-            counts[self.test[5]] += 1
+            predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
+            counts[self.test[self.var_dict['seq_index']]] += 1
 
             y_test2 = np.vstack(y_test)
             y_pred2 = np.vstack(y_pred)
@@ -881,7 +883,7 @@ class DeepTCR_S(object):
 
     def K_Fold_CrossVal_SS(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
                            trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
-                           iterations=None):
+                           iterations=None,use_only_seq=False,use_only_gene=False):
         '''
         K_Fold Cross-Validation for Single-Sequence Classifier
 
@@ -963,9 +965,19 @@ class DeepTCR_S(object):
                 print(ii)
             train_idx = np.setdiff1d(idx,test_idx[ii])
 
-            Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.alpha_sequences, self.beta_sequences,
-                    self.file_id, self.seq_index,
-                    self.v_beta_num, self.d_beta_num, self.j_beta_num, self.v_beta, self.d_beta, self.j_beta]
+            Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.alpha_sequences, self.beta_sequences, self.sample_id,
+                    self.class_id, self.seq_index,
+                    self.v_beta_num, self.d_beta_num, self.j_beta_num, self.v_alpha_num, self.j_alpha_num,
+                    self.v_beta, self.d_beta, self.j_beta, self.v_alpha, self.j_alpha]
+
+            var_names = ['X_Seq_alpha', 'X_Seq_beta', 'alpha_sequences', 'beta_sequences', 'sample_id', 'class_id',
+                         'seq_index',
+                         'v_beta_num', 'd_beta_num', 'j_beta_num', 'v_alpha_num', 'j_alpha_num', 'v_beta', 'd_beta',
+                         'j_beta',
+                         'v_alpha', 'j_alpha']
+
+            self.var_dict = dict(zip(var_names, list(range(len(var_names)))))
+
             self.train, self.test = Get_Train_Test(Vars=Vars,train_idx=train_idx,test_idx = test_idx[ii],Y=self.Y)
             self.valid = self.test
             self.LOO = True
@@ -973,7 +985,8 @@ class DeepTCR_S(object):
             self.Train_SS(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
                           kernel=kernel,units=units,weight_by_class=weight_by_class,
                           trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
-                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output)
+                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
+                          use_only_gene=use_only_gene,use_only_seq=use_only_seq)
 
 
             y_test.append(self.y_test)
