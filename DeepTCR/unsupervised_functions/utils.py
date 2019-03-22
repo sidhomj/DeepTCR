@@ -241,7 +241,7 @@ def KNN_samples(distances,labels,k,metrics):
     pred_prob = np.asarray(pred_prob_list)
     labels = np.asarray(labels_list)
 
-    OH = OneHotEncoder(sparse=False)
+    OH = OneHotEncoder(sparse=False,categories='auto')
     labels = OH.fit_transform(labels.reshape(-1,1))
     pred = OH.transform(pred.reshape(-1,1))
 
