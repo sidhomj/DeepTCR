@@ -1665,7 +1665,7 @@ class DeepTCR_U(object):
             RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
             color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
 
-        rad_plot(X_2,pairwise_distances,samples,labels,self.sample_id,color_dict,
+        rad_plot(X_2,squareform(pairwise_distances),samples,labels,self.sample_id,color_dict,
                  gridsize=gridsize,dg_radius=dendrogram_radius,linkage_method=linkage_method,
                  figsize=8,axes_radius=repertoire_radius)
 
