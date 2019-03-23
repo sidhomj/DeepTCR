@@ -2658,7 +2658,6 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         print('K-fold Cross Validation Completed')
 
-
 class DeepTCR_WF(DeepTCR_S_base):
     def Get_Train_Valid_Test_WF(self,test_size=0.2,LOO=None):
         """
