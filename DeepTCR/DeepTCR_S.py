@@ -1101,7 +1101,9 @@ class DeepTCR_S(object):
         plt.show(block=False)
 
     def Get_Data_WF(self,directory,Load_Prev_Data=False,classes=None,save_data=True,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
-                    aa_column_alpha = None, aa_column_beta=None, count_column = None,sep='\t',aggregate_by_aa=True):
+                    aa_column_alpha = None, aa_column_beta=None, count_column = None,sep='\t',aggregate_by_aa=True,
+                    v_alpha_column=None, j_alpha_column=None,
+                    v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None):
         """
         Get Data for Whole Sample Classification.
 

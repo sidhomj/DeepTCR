@@ -4,13 +4,8 @@ from DeepTCR.functions.data_processing import *
 from DeepTCR.functions.Layers import *
 from DeepTCR.functions.utils_u import *
 from DeepTCR.functions.utils_s import *
-import glob
-from sklearn.preprocessing import LabelEncoder
-from multiprocessing import Pool
-import pickle
 import seaborn as sns
 import colorsys
-import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage,fcluster
 from scipy.stats import wasserstein_distance, entropy
 from scipy.spatial.distance import pdist, squareform
@@ -19,6 +14,12 @@ from sklearn.cluster import DBSCAN
 import sklearn
 import phenograph
 from scipy.spatial import distance
+import glob
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from multiprocessing import Pool
+import pickle
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, roc_auc_score
 
 class DeepTCR_base(object):
 
@@ -2272,7 +2273,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                 self.beta_indices = np.vstack(beta_indices_list)
 
 
-            self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
+            if hasattr(self,'predicted'):
+                self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
 
             self.kernel = kernel
             #
@@ -2399,7 +2401,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         print('Motif Identification Completed')
 
-    def Monte_Carlo_CrossVal(self,fold=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
+    def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
                                 trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                                 use_only_seq=False,use_only_gene=False):
 
@@ -2413,7 +2415,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         Inputs
         ---------------------------------------
-        fold: int
+        folds: int
             Number of iterations for Cross-Validation
 
         test_size: float
@@ -2473,7 +2475,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         y_pred = []
         y_test = []
-        for i in range(0, fold):
+        for i in range(0, folds):
             if suppress_output is False:
                 print(i)
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO)
@@ -2657,7 +2659,35 @@ class DeepTCR_SS(DeepTCR_S_base):
         print('K-fold Cross Validation Completed')
 
 
-class DeepTCR_WF(DeepTCR_base):
+class DeepTCR_WF(DeepTCR_S_base):
+    def Get_Train_Valid_Test_WF(self,test_size=0.2,LOO=None):
+        """
+        Train/Valid/Test Splits.
+
+        Divide data for train, valid, test set. Training is used to
+        train model parameters, validation is used to set early stopping,
+        and test acts as blackbox independent test set. In the case that
+        Leave-One-Out (LOO) is set to a value, the valid and test sets
+        have the same data and early stopping is based on the training loss.
+
+        Inputs
+        ---------------------------------------
+        test_size: float
+            Fraction of sample to be used for valid and test set.
+
+        LOO: int
+            Number of samples to leave-out in Leave-One-Out Cross-Validation
+
+        Returns
+        ---------------------------------------
+
+        """
+
+        Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,self.alpha_sequences,self.beta_sequences,self.seq_index]
+        self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=self.Y, test_size=test_size, regression=False,LOO=LOO)
+        self.LOO = LOO
+
+
 
 
 

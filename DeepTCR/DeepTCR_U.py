@@ -421,7 +421,7 @@ class DeepTCR_U(object):
         Load Data programatically into DeepTCR.
 
         DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
-        a user cn load numpy arrays with relevant TCRSeq data for analysis.
+        a user can load numpy arrays with relevant TCRSeq data for analysis.
 
         Inputs
         ---------------------------------------
