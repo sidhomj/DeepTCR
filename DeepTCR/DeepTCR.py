@@ -1,9 +1,9 @@
 import sys
 sys.path.append('../')
-import os
 from DeepTCR.functions.data_processing import *
 from DeepTCR.functions.Layers import *
 from DeepTCR.functions.utils_u import *
+from DeepTCR.functions.utils_s import *
 import glob
 from sklearn.preprocessing import LabelEncoder
 from multiprocessing import Pool
@@ -301,6 +301,10 @@ class DeepTCR_base(object):
             freq = np.asarray(freq)
             counts = np.asarray(counts)
 
+            Y = self.lb.transform(label_id)
+            OH = OneHotEncoder(sparse=False)
+            Y = OH.fit_transform(Y.reshape(-1,1))
+
             #transform sequences into numerical space
             if aa_column_alpha is not None:
                 args = list(zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
@@ -388,6 +392,7 @@ class DeepTCR_base(object):
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
+        self.Y = Y
         self.alpha_sequences = alpha_sequences
         self.beta_sequences = beta_sequences
         self.class_id = label_id
@@ -592,6 +597,11 @@ class DeepTCR_base(object):
         else:
             self.class_id = ['None']*len_input
 
+        self.lb = LabelEncoder()
+        Y = self.lb.fit_transform(self.class_id)
+        OH = OneHotEncoder(sparse=False)
+        Y = OH.fit_transform(Y.reshape(-1, 1))
+        self.Y = Y
         print('Data Loaded')
 
 class DeepTCR_U(DeepTCR_base):
@@ -1937,7 +1947,717 @@ class DeepTCR_U(DeepTCR_base):
         plt.xlabel('')
         plt.ylabel('')
 
+class DeepTCR_S_base(DeepTCR_base):
+    def AUC_Curve(self,show_all=True,filename='AUC.tif',title=None):
+        """
+        AUC Curve for both Single Sequence and Whole File Models
 
+        Inputs
+        ---------------------------------------
+        show_all: bool
+            In the case there is only two classes, the method defaults
+            to producing an curve for only one class. If one desires
+            to see curves for all classes, set to True.
+
+        filename: str
+            Filename to save tif file of AUC curve.
+
+        title: str
+            Optional Title to put on ROC Curve.
+
+        Returns
+        ---------------------------------------
+
+        """
+        y_test = self.y_test
+        y_pred = self.y_pred
+        if (self.Y.shape[1] == 2) & (show_all is False):
+            plt.figure()
+            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.05])
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+            plt.title('ROC_Curves')
+
+            class_name = self.lb.classes_[1]
+            roc_score = roc_auc_score(y_test[:, 1], y_pred[:, 1])
+            fpr, tpr, _ = roc_curve(y_test[:, 1], y_pred[:, 1])
+            plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score))
+
+
+        else:
+            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.05])
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+
+            for ii, class_name in enumerate(self.lb.classes_, 0):
+                roc_score = roc_auc_score(y_test[:, ii], y_pred[:,ii])
+                fpr, tpr, _ = roc_curve(y_test[:, ii], y_pred[:,ii])
+                plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score))
+
+            plt.legend(loc="lower right")
+
+        if title is not None:
+            plt.title(title)
+
+        plt.savefig(os.path.join(self.directory_results,filename))
+        plt.show(block=False)
+
+class DeepTCR_SS(DeepTCR_S_base):
+    def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
+        """
+        Train/Valid/Test Splits.
+
+        Divide data for train, valid, test set. Training is used to
+        train model parameters, validation is used to set early stopping,
+        and test acts as blackbox independent test set.
+
+        Inputs
+        ---------------------------------------
+        test_size: float
+            Fraction of sample to be used for valid and test set.
+
+        LOO: int
+            Number of sequences to leave-out in Leave-One-Out Cross-Validation
+
+        Returns
+        ---------------------------------------
+
+        """
+        self.seq_index = np.asarray(list(range(len(self.Y))))
+        Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.sample_id,self.class_id,self.seq_index,
+                self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num,
+                self.v_beta,self.d_beta,self.j_beta,self.v_alpha,self.j_alpha]
+
+        var_names = ['X_Seq_alpha','X_Seq_beta','alpha_sequences','beta_sequences','sample_id','class_id','seq_index',
+                     'v_beta_num','d_beta_num','j_beta_num','v_alpha_num','j_alpha_num','v_beta','d_beta','j_beta',
+                     'v_alpha','j_alpha']
+
+        self.var_dict = dict(zip(var_names,list(range(len(var_names)))))
+
+        self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False,LOO=LOO)
+
+    def Train(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,
+                 trainable_embedding=True,weight_by_class=False,
+                 num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
+                 use_only_seq=False,use_only_gene=False):
+        """
+        Train Single-Sequence Classifier
+
+        This method trains the network and saves features values at the
+        end of training for motif analysis.
+
+        Inputs
+        ---------------------------------------
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        kernel: int
+            Size of convolutional kernel.
+
+        units: int
+            Number of filters to be used for convolutional kernel.
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
+
+
+        Returns
+        ---------------------------------------
+
+        """
+        epochs = 10000
+        graph_model = tf.Graph()
+        GO = graph_object()
+
+        with tf.device(self.device):
+            with graph_model.as_default():
+                if self.use_alpha is True:
+                    GO.X_Seq_alpha = tf.placeholder(tf.int64,shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],name='Input_Alpha')
+                    GO.X_Seq_alpha_OH = tf.one_hot(GO.X_Seq_alpha, depth=21)
+
+                if self.use_beta is True:
+                    GO.X_Seq_beta = tf.placeholder(tf.int64,shape=[None, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2]],name='Input_Beta')
+                    GO.X_Seq_beta_OH = tf.one_hot(GO.X_Seq_beta, depth=21)
+
+                GO.Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
+                GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
+
+                embedding_dim_genes = 48
+                gene_features = []
+                GO.X_v_beta, GO.X_v_beta_OH, GO.embedding_layer_v_beta, \
+                GO.X_d_beta, GO.X_d_beta_OH, GO.embedding_layer_d_beta, \
+                GO.X_j_beta, GO.X_j_beta_OH, GO.embedding_layer_j_beta, \
+                GO.X_v_alpha, GO.X_v_alpha_OH, GO.embedding_layer_v_alpha, \
+                GO.X_j_alpha, GO.X_j_alpha_OH, GO.embedding_layer_j_alpha, \
+                gene_features = Get_Gene_Features(self, embedding_dim_genes, gene_features)
+
+
+                if trainable_embedding is True:
+                    # AA Embedding
+                    with tf.variable_scope('AA_Embedding'):
+                        embedding_dim_aa = 64
+                        embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq', shape=[21, embedding_dim_aa])
+                        embedding_layer_seq = tf.expand_dims(tf.expand_dims(embedding_layer_seq, axis=0), axis=0)
+                        if self.use_alpha is True:
+                            inputs_seq_embed_alpha = tf.squeeze(tf.tensordot(GO.X_Seq_alpha_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                        if self.use_beta is True:
+                            inputs_seq_embed_beta = tf.squeeze(tf.tensordot(GO.X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+
+                else:
+                    if self.use_alpha is True:
+                        inputs_seq_embed_alpha = GO.X_Seq_alpha_OH
+
+                    if self.use_beta is True:
+                        inputs_seq_embed_beta = GO.X_Seq_beta_OH
+
+
+                # Convolutional Features
+                if self.use_alpha is True:
+                    Seq_Features_alpha, Indices_alpha = Convolutional_Features(inputs_seq_embed_alpha, kernel=kernel, units=units,trainable_embedding=trainable_embedding,name='alpha_conv')
+                if self.use_beta is True:
+                    Seq_Features_beta, Indices_beta = Convolutional_Features(inputs_seq_embed_beta, kernel=kernel, units=units,trainable_embedding=trainable_embedding,name='beta_conv')
+
+                Seq_Features = []
+                if self.use_alpha is True:
+                    Seq_Features.append(Seq_Features_alpha)
+                if self.use_beta is True:
+                    Seq_Features.append(Seq_Features_beta)
+
+                if Seq_Features:
+                    Seq_Features = tf.concat(Seq_Features, axis=1)
+
+                if not isinstance(Seq_Features, list):
+                    if not isinstance(gene_features, list):
+                        Features = tf.concat((Seq_Features, gene_features), axis=1)
+                    else:
+                        Features = Seq_Features
+
+                    if use_only_seq is True:
+                        Features = Seq_Features
+
+                    if use_only_gene is True:
+                        Features = gene_features
+                else:
+                    Features = gene_features
+
+
+                fc = Features
+                if num_fc_layers != 0:
+                    for lyr in range(num_fc_layers):
+                        fc = tf.layers.dropout(fc,GO.prob)
+                        fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
+
+
+                GO.logits = tf.layers.dense(fc, self.Y.shape[1])
+                GO.ortho_loss = Get_Ortho_Loss(Seq_Features)
+
+                if weight_by_class is True:
+                    class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
+                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True), axis=1)
+                    GO.loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                else:
+                    GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+
+                #GO.loss = GO.loss+GO.ortho_loss
+                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
+
+                with tf.name_scope('Accuracy_Measurements'):
+                    GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
+                    correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
+                    GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+
+                GO.saver = tf.train.Saver()
+
+
+        #Initialize Training
+        tf.reset_default_graph()
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        with tf.Session(graph=graph_model,config=config) as sess:
+            sess.run(tf.global_variables_initializer())
+
+            val_loss_total = []
+            for e in range(epochs):
+                train_loss, train_accuracy, train_predicted,train_auc = \
+                    Run_Graph(self.train,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=drop_out_rate)
+
+                valid_loss, valid_accuracy, valid_predicted,valid_auc = \
+                    Run_Graph(self.valid,sess,self,GO,batch_size,random=False,train=False)
+
+                val_loss_total.append(valid_loss)
+
+                test_loss, test_accuracy, test_predicted,test_auc = \
+                    Run_Graph(self.test,sess,self,GO,batch_size,random=False,train=False)
+                self.y_pred = test_predicted
+                self.y_test = self.test[-1]
+
+                if suppress_output is False:
+                    print("Training_Statistics: \n",
+                          "Epoch: {}/{}".format(e + 1, epochs),
+                          "Training loss: {:.5f}".format(train_loss),
+                          "Validation loss: {:.5f}".format(valid_loss),
+                          "Testing loss: {:.5f}".format(test_loss),
+                          "Training Accuracy: {:.5}".format(train_accuracy),
+                          "Validation Accuracy: {:.5}".format(valid_accuracy),
+                          "Testing AUC: {:.5}".format(test_auc))
+
+
+                if e > epochs_min:
+                    a, b, c = -10, -7, -3
+                    if (np.mean(val_loss_total[a:b]) - np.mean(val_loss_total[c:])) / np.mean(val_loss_total[a:b]) < stop_criterion:
+                        break
+
+
+            alpha_features_list = []
+            beta_features_list = []
+            alpha_indices_list = []
+            beta_indices_list = []
+            Vars = [self.X_Seq_alpha,self.X_Seq_beta]
+            for vars in get_batches(Vars, batch_size=batch_size, random=False):
+                feed_dict = {}
+                if self.use_alpha is True:
+                    feed_dict[GO.X_Seq_alpha] = vars[0]
+                if self.use_beta is True:
+                    feed_dict[GO.X_Seq_beta] = vars[1]
+
+                if self.use_alpha is True:
+                    features_i_alpha,indices_i_alpha = sess.run([Seq_Features_alpha,Indices_alpha],feed_dict=feed_dict)
+                    alpha_features_list.append(features_i_alpha)
+                    alpha_indices_list.append(indices_i_alpha)
+
+                if self.use_beta is True:
+                    features_i_beta,indices_i_beta = sess.run([Seq_Features_beta,Indices_beta],feed_dict=feed_dict)
+                    beta_features_list.append(features_i_beta)
+                    beta_indices_list.append(indices_i_beta)
+
+
+            if self.use_alpha is True:
+                self.alpha_features = np.vstack(alpha_features_list)
+                self.alpha_indices = np.vstack(alpha_indices_list)
+
+            if self.use_beta is True:
+                self.beta_features = np.vstack(beta_features_list)
+                self.beta_indices = np.vstack(beta_indices_list)
+
+
+            self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
+
+            self.kernel = kernel
+            #
+            var_save = []
+            if self.use_alpha is True:
+                var_save.extend([self.alpha_features,self.alpha_indices,self.alpha_sequences])
+            if self.use_beta is True:
+                var_save.extend([self.beta_features,self.beta_indices,self.beta_sequences])
+
+            var_save.extend([self.y_pred,self.y_test,self.kernel])
+
+            with open(os.path.join(self.Name,self.Name) + '_features.pkl','wb') as f:
+                pickle.dump(var_save,f)
+
+            print('Done Training')
+
+
+    def Representative_Sequences(self,top_seq=10):
+        """
+        Identify most highly predicted sequences for each class for single sequence classifier.
+
+        This method allows the user to query which sequences were most predicted to belong to a given class.
+
+        Inputs
+        ---------------------------------------
+
+        top_seq: int
+            The number of top sequences to show for each class.
+
+        Returns
+
+        self.Rep_Seq_SS: dictionary of dataframes
+            This dictionary of dataframes holds for each class the top sequences and their respective
+            probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences_SS.
+
+        ---------------------------------------
+
+
+        """
+        dir = 'Rep_Sequences_SS'
+        dir = os.path.join(self.directory_results,dir)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        file_list = [f for f in os.listdir(dir)]
+        [os.remove(os.path.join(dir, f)) for f in file_list]
+
+        Rep_Seq = []
+        keep = []
+        df_temp = pd.DataFrame()
+        df_temp['alpha'] = self.alpha_sequences
+        df_temp['beta'] = self.beta_sequences
+        df_temp['Class'] = self.class_id
+        df_temp['Sample'] = self.sample_id
+        for ii,sample in enumerate(self.lb.classes_,0):
+            df_temp[sample] = self.predicted[:,ii]
+
+        for ii,sample in enumerate(self.lb.classes_,0):
+            df_temp.sort_values(by=sample,ascending=False,inplace=True)
+            df_sample = df_temp[df_temp['Class']==sample][0:top_seq]
+
+            if not df_sample.empty:
+                Rep_Seq.append(df_sample)
+                df_sample.to_csv(os.path.join(dir,sample+'.csv'),index=False)
+                keep.append(ii)
+
+        self.Rep_Seq_SS = dict(zip(self.lb.classes_[keep],Rep_Seq))
+
+    def Motif_Identification(self,group,p_val_threshold=0.05):
+        """
+        Motif Identification for Single-Sequence Classifier
+
+        This method looks for enriched features in the predetermined gropu
+        and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
+        to produce seqlogos.
+
+        Inputs
+        ---------------------------------------
+        group: string
+            Class for analyzing enriched motifs.
+
+        p_val_threshold: float
+            Significance threshold for enriched features/motifs for
+            Mann-Whitney UTest.
+
+        Returns
+        ---------------------------------------
+
+        self.(alpha/beta)_group_features_ss: Pandas Dataframe
+            Sequences used to determine motifs in fasta files
+            are stored in this dataframe where column names represent
+            the feature number.
+
+        """
+        #Get Saved Features, Indices, and Sequences
+        with open(os.path.join(self.Name,self.Name) + '_features.pkl', 'rb') as f:
+            var_load = pickle.load(f)
+
+        if (self.use_alpha is True) and (self.use_beta is True):
+            self.alpha_features, self.alpha_indices, self.alpha_sequences,\
+            self.beta_features, self.beta_indices, self.beta_sequences,self.y_pred,self.y_test,self.kernel = var_load
+
+        elif (self.use_alpha is True) and (self.use_beta is False):
+            self.alpha_features, self.alpha_indices, self.alpha_sequences,self.y_pred,self.y_test,self.kernel = var_load
+
+        elif (self.use_alpha is False) and (self.use_beta is True):
+            self.beta_features, self.beta_indices, self.beta_sequences, self.y_pred, self.y_test, self.kernel = var_load
+
+
+        group_num = np.where(self.lb.classes_ == group)[0][0]
+
+        # Find diff expressed features
+        idx_pos = self.Y[:, group_num] == 1
+        idx_neg = self.Y[:, group_num] == 0
+
+        if self.use_alpha is True:
+            self.alpha_group_features_ss = Diff_Features(self.alpha_features, self.alpha_indices, self.alpha_sequences, 'alpha',
+                                     p_val_threshold, idx_pos, idx_neg, self.directory_results, group, self.kernel)
+
+        if self.use_beta is True:
+            self.beta_group_features_ss = Diff_Features(self.beta_features, self.beta_indices, self.beta_sequences, 'beta',
+                                     p_val_threshold, idx_pos, idx_neg, self.directory_results, group, self.kernel)
+
+
+        print('Motif Identification Completed')
+
+    def Monte_Carlo_CrossVal(self,fold=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
+                                trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
+                                use_only_seq=False,use_only_gene=False):
+
+        '''
+        Monte Carlo Cross-Validation for Single-Sequence Classifier
+
+        If the number of sequences is small but training the single-sequence classifier, one
+        can use Monte Carlo Cross Validation to train a number of iterations before assessing
+        predictive performance.After this method is run, the AUC_Curve method can be run to
+        assess the overall performance.
+
+        Inputs
+        ---------------------------------------
+        fold: int
+            Number of iterations for Cross-Validation
+
+        test_size: float
+            Fraction of sample to be used for valid and test set.
+
+        LOO: int
+            Number of sequences to leave-out in Leave-One-Out Cross-Validation
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        kernel: int
+            Size of convolutional kernel.
+
+        units: int
+            Number of filters to be used for convolutional kernel.
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
+
+
+        Returns
+        ---------------------------------------
+
+
+        '''
+
+        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        y_pred = []
+        y_test = []
+        for i in range(0, fold):
+            if suppress_output is False:
+                print(i)
+            self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO)
+            self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
+                          kernel=kernel,units=units,weight_by_class=weight_by_class,
+                          trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
+                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
+                          use_only_seq=use_only_seq,use_only_gene=use_only_gene)
+
+            y_test.append(self.y_test)
+            y_pred.append(self.y_pred)
+
+            if i == 0:
+                predicted = np.zeros_like(self.predicted)
+                counts = np.zeros_like(self.predicted)
+
+            predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
+            counts[self.test[self.var_dict['seq_index']]] += 1
+
+            y_test2 = np.vstack(y_test)
+            y_pred2 = np.vstack(y_pred)
+
+            if suppress_output is False:
+                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
+
+                if self.y_test.shape[1] == 2:
+                    if i > 0:
+                        y_test2 = np.vstack(y_test)
+                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+
+
+        self.y_test = np.vstack(y_test)
+        self.y_pred = np.vstack(y_pred)
+        self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
+        print('Monte Carlo Simulation Completed')
+
+
+    def K_Fold_CrossVal(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
+                           trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
+                           iterations=None,use_only_seq=False,use_only_gene=False):
+        '''
+        K_Fold Cross-Validation for Single-Sequence Classifier
+
+        If the number of sequences is small but training the single-sequence classifier, one
+        can use K_Fold Cross Validation to train on all but one before assessing
+        predictive performance.After this method is run, the AUC_Curve method can be run to
+        assess the overall performance.
+
+        Inputs
+        ---------------------------------------
+
+        folds: int
+            Number of Folds
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        kernel: int
+            Size of convolutional kernel.
+
+        units: int
+            Number of filters to be used for convolutional kernel.
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        iterations: int
+            Option to specify how many iterations one wants to complete before
+            terminating training. Useful for very large datasets.
+
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
+
+
+        Returns
+        ---------------------------------------
+
+        '''
+
+        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        if folds is None:
+            folds = len(self.Y)
+
+        #Create Folds
+        idx = list(range(len(self.Y)))
+        idx_left = idx
+        file_per_sample = len(self.Y) // folds
+        test_idx = []
+        for ii in range(folds):
+            if ii != folds-1:
+                idx_sel = np.random.choice(idx_left, size=file_per_sample, replace=False)
+            else:
+                idx_sel = idx_left
+
+            test_idx.append(idx_sel)
+            idx_left = np.setdiff1d(idx_left, idx_sel)
+
+
+        y_test = []
+        y_pred = []
+        for ii in range(folds):
+            if suppress_output is False:
+                print(ii)
+            train_idx = np.setdiff1d(idx,test_idx[ii])
+
+            Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.alpha_sequences, self.beta_sequences, self.sample_id,
+                    self.class_id, self.seq_index,
+                    self.v_beta_num, self.d_beta_num, self.j_beta_num, self.v_alpha_num, self.j_alpha_num,
+                    self.v_beta, self.d_beta, self.j_beta, self.v_alpha, self.j_alpha]
+
+            var_names = ['X_Seq_alpha', 'X_Seq_beta', 'alpha_sequences', 'beta_sequences', 'sample_id', 'class_id',
+                         'seq_index',
+                         'v_beta_num', 'd_beta_num', 'j_beta_num', 'v_alpha_num', 'j_alpha_num', 'v_beta', 'd_beta',
+                         'j_beta',
+                         'v_alpha', 'j_alpha']
+
+            self.var_dict = dict(zip(var_names, list(range(len(var_names)))))
+
+            self.train, self.test = Get_Train_Test(Vars=Vars,train_idx=train_idx,test_idx = test_idx[ii],Y=self.Y)
+            self.valid = self.test
+            self.LOO = True
+
+            self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
+                          kernel=kernel,units=units,weight_by_class=weight_by_class,
+                          trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
+                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
+                          use_only_gene=use_only_gene,use_only_seq=use_only_seq)
+
+
+            y_test.append(self.y_test)
+            y_pred.append(self.y_pred)
+
+            y_test2 = np.vstack(y_test)
+            y_pred2 = np.vstack(y_pred)
+
+            if suppress_output is False:
+                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))))
+
+                if self.y_test.shape[1] == 2:
+                    if ii > 0:
+                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+
+
+            if iterations is not None:
+                if ii > iterations:
+                    break
+
+        self.y_test = np.vstack(y_test)
+        self.y_pred = np.vstack(y_pred)
+        test_idx = np.hstack(test_idx)
+        self.predicted = np.zeros_like(self.predicted)
+        self.predicted[test_idx] = self.y_pred
+
+        print('K-fold Cross Validation Completed')
+
+
+class DeepTCR_WF(DeepTCR_base):
 
 
 
