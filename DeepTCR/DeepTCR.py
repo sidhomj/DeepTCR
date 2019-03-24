@@ -2686,7 +2686,6 @@ class DeepTCR_WF(DeepTCR_S_base):
             val_loss_total = []
             train_accuracy_total = []
             train_loss_total = []
-            GO.i = LabelEncoder().fit_transform(self.sample_id)
 
             for e in range(epochs):
                 train_loss, train_accuracy, train_predicted,train_auc = \
@@ -2759,6 +2758,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 pickle.dump(var_save,f)
 
             print('Done Training')
+
     def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,
                              kernel=5,units=12,weight_by_class=False, trainable_embedding=True,accuracy_min = None,
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False):
@@ -2948,13 +2948,21 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         """
 
+        num_samples = len(self.sample_list)
         if folds is None:
-            folds = len(self.files)
+            folds = num_samples
+
+        Y = []
+        for s in self.sample_list:
+            Y.append(self.Y[np.where(self.sample_id == s)[0][0]])
+        Y = np.vstack(Y)
+
+        Vars = [np.asarray(self.sample_list)]
 
         #Create Folds
-        idx = list(range(len(self.files)))
+        idx = list(range(num_samples))
         idx_left = idx
-        file_per_sample = len(self.files) // folds
+        file_per_sample = num_samples // folds
         test_idx = []
         for ii in range(folds):
             if ii != folds-1:
@@ -2973,16 +2981,15 @@ class DeepTCR_WF(DeepTCR_S_base):
                 print(ii)
             train_idx = np.setdiff1d(idx,test_idx[ii])
 
-            Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,self.alpha_sequences,self.beta_sequences,self.seq_index]
-            self.train, self.test = Get_Train_Test(Vars=Vars,train_idx=train_idx,test_idx = test_idx[ii],Y=self.Y)
+            self.train, self.test = Get_Train_Test(Vars=Vars,train_idx=train_idx,test_idx = test_idx[ii],Y=Y)
             self.valid = self.test
             self.LOO = True
 
-            self.Train_WF(epochs_min=epochs_min, batch_size=batch_size,
+            self.Train(epochs_min=epochs_min, batch_size=batch_size,
                           stop_criterion=stop_criterion, kernel=kernel,
                           units=units, weight_by_class=weight_by_class,
                           trainable_embedding=trainable_embedding,accuracy_min = accuracy_min,
-                          weight_by_freq = weight_by_freq, plot_loss = plot_loss,num_fc_layers=num_fc_layers,units_fc=units_fc,
+                          num_fc_layers=num_fc_layers,units_fc=units_fc,
                           drop_out_rate=drop_out_rate,suppress_output=suppress_output)
 
 

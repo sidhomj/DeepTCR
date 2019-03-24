@@ -10,7 +10,7 @@ import os
 from Bio.Alphabet import IUPAC
 import seaborn as sns
 from sklearn.metrics import roc_auc_score
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import tensorflow as tf
 
 
@@ -467,8 +467,14 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
     predicted_list = []
     for vars in get_batches(set, batch_size=batch_size, random=random):
         var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
+        lb = LabelEncoder()
+        lb.fit(vars[0])
+        _,_,sample_idx = np.intersect1d(lb.classes_,vars[0],return_indices=True)
+        vars = [v[sample_idx] for v in vars]
+        i = lb.transform(self.sample_id[var_idx])
+
         OH = OneHotEncoder(categories='auto')
-        sp = OH.fit_transform(GO.i[var_idx].reshape(-1, 1)).T
+        sp = OH.fit_transform(i.reshape(-1, 1)).T
         sp = sp.tocoo()
         indices = np.mat([sp.row, sp.col]).T
         sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
