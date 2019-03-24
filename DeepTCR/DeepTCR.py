@@ -2232,7 +2232,6 @@ class DeepTCR_S_base(DeepTCR_base):
         plt.xlabel('')
         plt.ylabel('')
 
-
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
         """
@@ -2764,10 +2763,10 @@ class DeepTCR_WF(DeepTCR_S_base):
         GO = graph_object()
         with tf.device(self.device):
             with graph_model.as_default():
-                Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc)
-                Features = Features*GO.X_Freq[:,tf.newaxis]
-                Features_Agg = tf.sparse.matmul(GO.sp, Features)
-                GO.logits = tf.layers.dense(Features_Agg,self.Y.shape[1])
+                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc)
+                GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
+                GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
+                GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
@@ -2848,6 +2847,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                                 break
 
             Get_Seq_Features_Indices(self,batch_size,GO,sess)
+            self.features = Get_Latent_Features(self,batch_size,GO,sess)
             pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
             self.predicted[idx] += pred
             self.seq_idx = idx
