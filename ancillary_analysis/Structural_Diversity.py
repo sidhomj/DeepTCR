@@ -1,4 +1,4 @@
-from DeepTCR.DeepTCR_U import DeepTCR_U
+from DeepTCR.DeepTCR import DeepTCR_U
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -40,7 +40,7 @@ for n,rep in zip(num,reps):
         DTCRU = DeepTCR_U('Reperoire_Distances')
         DTCRU.Get_Data(directory='../Data/Dash/Traditional/Mouse',Load_Prev_Data=False,aggregate_by_aa=True,classes=classes,
                             aa_column_alpha=0,aa_column_beta=1,count_column=2,v_alpha_column=None,j_alpha_column=None,v_beta_column=None,j_beta_column=None,p=p)
-        DTCRU.Train_VAE(seq_features_latent=False,accuracy_min=0.9)
+        DTCRU.Train_VAE(accuracy_min=0.9)
         distances_vae_seq_l_temp.append(pdist(DTCRU.features))
         #entropy_list.append(entropy(pdist(DTCRU.features)))
         method_list.append('VAE-Seq')
@@ -48,7 +48,7 @@ for n,rep in zip(num,reps):
 
         DTCRU.Get_Data(directory='../Data/Dash/Traditional/Mouse',Load_Prev_Data=False,aggregate_by_aa=True,classes=classes,
                             aa_column_alpha=0,aa_column_beta=1,count_column=2,v_alpha_column=3,j_alpha_column=4,v_beta_column=5,j_beta_column=6,p=p)
-        DTCRU.Train_VAE(seq_features_latent=True,accuracy_min=0.9)
+        DTCRU.Train_VAE(accuracy_min=0.9)
         distances_vae_seq_gene_l_temp.append(pdist(DTCRU.features))
         #entropy_list.append(entropy(pdist(DTCRU.features)))
         method_list.append('VAE-Seq-Gene')
@@ -76,7 +76,7 @@ for n,rep in zip(num,reps):
         DTCRU = DeepTCR_U('Reperoire_Distances')
         DTCRU.Get_Data(directory='../Data/Dash/Traditional/Mouse',Load_Prev_Data=False,aggregate_by_aa=False,classes=classes,
                             aa_column_alpha=None,aa_column_beta=None,count_column=2,v_alpha_column=3,j_alpha_column=4,v_beta_column=5,j_beta_column=6,p=p)
-        DTCRU.Train_VAE(seq_features_latent=False,accuracy_min=0.9)
+        DTCRU.Train_VAE(accuracy_min=0.9)
         distances_vae_gene_l_temp.append(pdist(DTCRU.features))
         method_list.append('VAE-Gene')
         num_list.append(n)

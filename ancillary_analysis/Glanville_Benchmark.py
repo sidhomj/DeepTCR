@@ -1,7 +1,7 @@
 """This script is used to benchmark the performance and cluster characteristics of the VAE/GAN on the Glanville et.al
 antigen-specific dataset. The dataset consists of 2066 sequences across 7 Class I specificities."""
 
-from DeepTCR.DeepTCR_U import DeepTCR_U
+from DeepTCR.DeepTCR import DeepTCR_U
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd

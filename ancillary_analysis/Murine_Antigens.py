@@ -1,4 +1,4 @@
-from DeepTCR.DeepTCR_U import DeepTCR_U
+from DeepTCR.DeepTCR import DeepTCR_U
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -17,15 +17,15 @@ DTCRU.Get_Data(directory='../Data/Murine_Antigens',Load_Prev_Data=False,aggregat
 
 #Get distances from various methods
 #VAE_- Genes
-DTCRU.Train_VAE(Load_Prev_Data=False,use_only_gene=True,ortho_norm=True)
+DTCRU.Train_VAE(Load_Prev_Data=False,use_only_gene=True)
 distances_vae_gene = pdist(DTCRU.features, metric='euclidean')
 
 # #VAE_- Sequencs Alone+
-DTCRU.Train_VAE(Load_Prev_Data=False,use_only_seq=True,ortho_norm=True)
+DTCRU.Train_VAE(Load_Prev_Data=False,use_only_seq=True)
 distances_vae_seq = pdist(DTCRU.features, metric='euclidean')
 
 #VAE_- Gene+Sequencs
-DTCRU.Train_VAE(Load_Prev_Data=False,ortho_norm=True)
+DTCRU.Train_VAE(Load_Prev_Data=False)
 distances_vae_seq_gene = pdist(DTCRU.features, metric='euclidean')
 
 #Hamming
