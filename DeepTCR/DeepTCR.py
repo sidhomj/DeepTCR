@@ -605,6 +605,8 @@ class DeepTCR_base(object):
         OH = OneHotEncoder(sparse=False)
         Y = OH.fit_transform(Y.reshape(-1, 1))
         self.Y = Y
+        self.seq_index = np.asarray(list(range(len(self.Y))))
+        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         print('Data Loaded')
 
 class DeepTCR_U(DeepTCR_base):
@@ -2011,7 +2013,7 @@ class DeepTCR_S_base(DeepTCR_base):
 
     def Representative_Sequences(self, top_seq=10):
         """
-        Identify most highly predicted sequences for each class for single sequence classifier.
+        Identify most highly predicted sequences for each class.
 
         This method allows the user to query which sequences were most predicted to belong to a given class.
 
@@ -2023,15 +2025,15 @@ class DeepTCR_S_base(DeepTCR_base):
 
         Returns
 
-        self.Rep_Seq_SS: dictionary of dataframes
+        self.Rep_Seq: dictionary of dataframes
             This dictionary of dataframes holds for each class the top sequences and their respective
-            probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences_SS.
+            probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
 
         ---------------------------------------
 
 
         """
-        dir = 'Rep_Sequences_SS'
+        dir = 'Rep_Sequences'
         dir = os.path.join(self.directory_results, dir)
         if not os.path.exists(dir):
             os.makedirs(dir)
@@ -2066,7 +2068,7 @@ class DeepTCR_S_base(DeepTCR_base):
                 df_sample.to_csv(os.path.join(dir, sample + '.csv'), index=False)
                 keep.append(ii)
 
-        self.Rep_Seq_SS = dict(zip(self.lb.classes_[keep], Rep_Seq))
+        self.Rep_Seq = dict(zip(self.lb.classes_[keep], Rep_Seq))
 
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
