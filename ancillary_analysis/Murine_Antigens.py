@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
-from scipy.stats import spearmanr, chi2_contingency
+from scipy.stats import spearmanr
 import seaborn as sns
 from NN_Assessment_utils import *
 import pickle
