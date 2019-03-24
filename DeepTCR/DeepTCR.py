@@ -2127,9 +2127,9 @@ class DeepTCR_S_base(DeepTCR_base):
 
         print('Motif Identification Completed')
 
-    def UMAP_Plot(self, by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True,
-                  scale=100,
-                  Load_Prev_Data=False, alpha=1.0):
+    def UMAP_Plot(self, set='all',by_class=False, by_sample=False, freq_weight=False, show_legend=True,
+                  scale=100,Load_Prev_Data=False, alpha=1.0):
+
         """
         UMAP vizualisation of TCR Sequences
 
@@ -2139,6 +2139,11 @@ class DeepTCR_S_base(DeepTCR_base):
 
         Inputs
         ---------------------------------------
+
+        set: str
+            To choose which set of sequences to plot in latent space, enter either
+            'all','train', or 'test'. Viewing the latent space of the sequences in the train set
+            may be overfit so it preferable to view the latent space in the test set.
 
         by_class: bool
             To color the points by their class label, set to True.
@@ -2173,12 +2178,25 @@ class DeepTCR_S_base(DeepTCR_base):
         ---------------------------------------
 
         """
-        features = self.features
-        class_id = self.class_id
-        sample_id = self.sample_id
+        if set == 'all':
+            features = self.features
+            class_id = self.class_id
+            sample_id = self.sample_id
+            freq = self.freq
+        elif set == 'train':
+            features = self.features[self.train[self.var_dict['seq_index']]]
+            class_id = self.class_id[self.train[self.var_dict['seq_index']]]
+            sample_id = self.sample_id[self.train[self.var_dict['seq_index']]]
+            freq = self.freq[self.train[self.var_dict['seq_index']]]
+
+        elif set == 'test':
+            features = self.features[self.test[self.var_dict['seq_index']]]
+            class_id = self.class_id[self.test[self.var_dict['seq_index']]]
+            sample_id = self.sample_id[self.test[self.var_dict['seq_index']]]
+            freq = self.freq[self.test[self.var_dict['seq_index']]]
 
         if Load_Prev_Data is False:
-            X_2 = umap.UMAP().fit_transform(self.features)
+            X_2 = umap.UMAP().fit_transform(features)
             with open(os.path.join(self.Name, 'umap.pkl'), 'wb') as f:
                 pickle.dump(X_2, f, protocol=4)
         else:
@@ -2188,16 +2206,10 @@ class DeepTCR_S_base(DeepTCR_base):
         df_plot = pd.DataFrame()
         df_plot['x'] = X_2[:, 0]
         df_plot['y'] = X_2[:, 1]
-        df_plot['Class'] = self.class_id
-        df_plot['Sample'] = self.sample_id
-        if hasattr(self,'Cluster_Assignments'):
-            IDX = self.Cluster_Assignments
-            IDX[IDX == -1] = np.max(IDX) + 1
-            IDX = ['Cluster_' + str(I) for I in IDX]
-            df_plot['Cluster'] = IDX
+        df_plot['Class'] = class_id
+        df_plot['Sample'] = sample_id
 
         if freq_weight is True:
-            freq = self.freq
             s = freq * scale
         else:
             s = scale
@@ -2209,8 +2221,6 @@ class DeepTCR_S_base(DeepTCR_base):
 
         if by_class is True:
             hue = 'Class'
-        elif by_cluster is True:
-            hue = 'Cluster'
         elif by_sample is True:
             hue = 'Sample'
         else:
