@@ -1,14 +1,11 @@
-from DeepTCR.DeepTCR_U import DeepTCR_U
+from DeepTCR.DeepTCR import DeepTCR_U
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 from scipy.spatial.distance import pdist, squareform
-from scipy.stats import spearmanr, chi2_contingency
 import seaborn as sns
 from NN_Assessment_utils import *
 import pickle
 import os
-
 
 #Instantiate training object
 DTCRU = DeepTCR_U('Clustering_Metrics')
