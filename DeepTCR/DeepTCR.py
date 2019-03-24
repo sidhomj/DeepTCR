@@ -303,7 +303,7 @@ class DeepTCR_base(object):
             counts = np.asarray(counts)
 
             Y = self.lb.transform(label_id)
-            OH = OneHotEncoder(sparse=False)
+            OH = OneHotEncoder(sparse=False,categories='auto')
             Y = OH.fit_transform(Y.reshape(-1,1))
 
             #transform sequences into numerical space
@@ -602,7 +602,7 @@ class DeepTCR_base(object):
 
         self.lb = LabelEncoder()
         Y = self.lb.fit_transform(self.class_id)
-        OH = OneHotEncoder(sparse=False)
+        OH = OneHotEncoder(sparse=False,categories='auto')
         Y = OH.fit_transform(Y.reshape(-1, 1))
         self.Y = Y
         self.seq_index = np.asarray(list(range(len(self.Y))))
