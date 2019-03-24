@@ -158,7 +158,7 @@ def Convolutional_Features(inputs,reuse=False,units=12,kernel=5,trainable_embedd
 
         return tf.layers.flatten(conv), tf.layers.flatten(indices)
 
-def Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene):
+def Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc):
     if self.use_alpha is True:
         GO.X_Seq_alpha = tf.placeholder(tf.int64,
                                         shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],
@@ -240,7 +240,13 @@ def Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_ge
     else:
         Features = gene_features
 
-    return Features
+    fc = Features
+    if num_fc_layers != 0:
+        for lyr in range(num_fc_layers):
+            fc = tf.layers.dropout(fc, GO.prob)
+            fc = tf.layers.dense(fc, units_fc, tf.nn.relu)
+
+    return fc
 
 
 

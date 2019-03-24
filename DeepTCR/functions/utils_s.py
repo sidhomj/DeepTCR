@@ -407,7 +407,7 @@ def pad_freq(freq,num_seq_per_instance):
 
     return freq
 
-def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=0.0):
+def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=None):
     loss = []
     accuracy = []
     predicted_list = []
@@ -418,7 +418,11 @@ def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
     Vars.append(set[-1])
 
     for vars in get_batches(Vars, batch_size=batch_size, random=random):
-        feed_dict = {GO.Y: vars[-1], GO.prob: drop_out_rate}
+        feed_dict = {GO.Y: vars[-1]}
+
+        if drop_out_rate is not None:
+            feed_dict[GO.prob] = drop_out_rate
+
         if self.use_alpha is True:
             feed_dict[GO.X_Seq_alpha] = vars[0]
         if self.use_beta is True:
@@ -451,10 +455,13 @@ def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
     loss = np.mean(loss)
     accuracy = np.mean(accuracy)
     predicted_out = np.vstack(predicted_list)
-    auc = roc_auc_score(set[-1], predicted_out)
+    try:
+        auc = roc_auc_score(set[-1], predicted_out)
+    except:
+        auc = 0.0
     return loss,accuracy,predicted_out,auc
 
-def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=0.0):
+def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=None):
     loss = []
     accuracy = []
     predicted_list = []
@@ -467,9 +474,11 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
 
         feed_dict = {GO.Y: vars[-1],
-                     GO.prob: drop_out_rate,
                      GO.X_Freq: self.freq[var_idx],
                      GO.sp: sp}
+
+        if drop_out_rate is not None:
+            feed_dict[GO.prob] = drop_out_rate
 
         if self.use_alpha is True:
             feed_dict[GO.X_Seq_alpha] = self.X_Seq_alpha[var_idx]
@@ -505,7 +514,10 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
     loss = np.mean(loss)
     accuracy = np.mean(accuracy)
     predicted_out = np.vstack(predicted_list)
-    auc = roc_auc_score(set[-1], predicted_out)
+    try:
+        auc = roc_auc_score(set[-1], predicted_out)
+    except:
+        auc = 0.0
     return loss,accuracy,predicted_out,auc
 
 def Get_Seq_Features_Indices(self,batch_size,GO,sess):
@@ -538,3 +550,53 @@ def Get_Seq_Features_Indices(self,batch_size,GO,sess):
     if self.use_beta is True:
         self.beta_features = np.vstack(beta_features_list)
         self.beta_indices = np.vstack(beta_indices_list)
+
+def Get_Sequence_Pred(self,batch_size,GO,sess):
+    predicted_list = []
+    i = np.asarray(range(len(self.Y)))
+    freq = np.ones_like(self.freq)
+    idx = []
+    for vars in get_batches(self.test, batch_size=batch_size, random=False):
+        var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
+        OH = OneHotEncoder(categories='auto')
+        sp = OH.fit_transform(i[var_idx].reshape(-1, 1)).T
+        sp = sp.tocoo()
+        indices = np.mat([sp.row, sp.col]).T
+        sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+
+        feed_dict = {GO.X_Freq: freq[var_idx],
+                     GO.sp: sp}
+
+        if self.use_alpha is True:
+            feed_dict[GO.X_Seq_alpha] = self.X_Seq_alpha[var_idx]
+        if self.use_beta is True:
+            feed_dict[GO.X_Seq_beta] = self.X_Seq_beta[var_idx]
+
+        if self.use_v_beta is True:
+            feed_dict[GO.X_v_beta] = self.v_beta_num[var_idx]
+
+        if self.use_d_beta is True:
+            feed_dict[GO.X_d_beta] = self.d_beta_num[var_idx]
+
+        if self.use_j_beta is True:
+            feed_dict[GO.X_j_beta] = self.j_beta_num[var_idx]
+
+        if self.use_v_alpha is True:
+            feed_dict[GO.X_v_alpha] = self.v_alpha_num[var_idx]
+
+        if self.use_j_alpha is True:
+            feed_dict[GO.X_j_alpha] = self.j_alpha_num[var_idx]
+
+        predicted_list.append(sess.run(GO.predicted,feed_dict=feed_dict))
+        idx.append(var_idx)
+
+    return np.vstack(predicted_list),np.squeeze(np.hstack(idx))
+
+
+
+
+
+
+
+
+

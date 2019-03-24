@@ -2166,15 +2166,8 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         with tf.device(self.device):
             with graph_model.as_default():
-                Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene)
-
-                fc = Features
-                if num_fc_layers != 0:
-                    for lyr in range(num_fc_layers):
-                        fc = tf.layers.dropout(fc,GO.prob)
-                        fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
-
-                GO.logits = tf.layers.dense(fc, self.Y.shape[1])
+                Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc)
+                GO.logits = tf.layers.dense(Features, self.Y.shape[1])
                 #GO.ortho_loss = Get_Ortho_Loss(Seq_Features)
 
                 if weight_by_class is True:
@@ -2601,8 +2594,9 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.LOO = LOO
 
     def Train(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,
-                 weight_by_class=False,trainable_embedding = True,accuracy_min = None, weight_by_freq=True,
-                 num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,use_only_seq=False,use_only_gene=False):
+                 weight_by_class=False,trainable_embedding = True,accuracy_min = None,
+                 num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
+              use_only_seq=False,use_only_gene=False):
 
 
         """
@@ -2641,9 +2635,6 @@ class DeepTCR_WF(DeepTCR_S_base):
             Optional parameter to allow alternative training strategy until minimum
             training accuracy is achieved, at which point, training ceases.
 
-        weight_by_freq: bool
-            Whether to use frequency to weight each sequence's features.
-
         num_fc_layers: int
             Number of fully connected layers following convolutional layer.
 
@@ -2667,11 +2658,8 @@ class DeepTCR_WF(DeepTCR_S_base):
         GO = graph_object()
         with tf.device(self.device):
             with graph_model.as_default():
-                Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene)
-
-                if weight_by_freq is True:
-                    Features = Features*GO.X_Freq[:,tf.newaxis]
-
+                Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc)
+                Features = Features*GO.X_Freq[:,tf.newaxis]
                 Features_Agg = tf.sparse.matmul(GO.sp, Features)
                 GO.logits = tf.layers.dense(Features_Agg,self.Y.shape[1])
 
@@ -2710,14 +2698,13 @@ class DeepTCR_WF(DeepTCR_S_base):
                 train_loss_total.append(train_loss)
 
                 valid_loss, valid_accuracy, valid_predicted, valid_auc = \
-                    Run_Graph_WF(self.valid, sess, self, GO, batch_size, random=False, train=False,
-                                 drop_out_rate=drop_out_rate)
+                    Run_Graph_WF(self.valid, sess, self, GO, batch_size, random=False, train=False)
+
 
                 val_loss_total.append(valid_loss)
 
                 test_loss, test_accuracy, test_predicted, test_auc = \
-                    Run_Graph_WF(self.test, sess, self, GO, batch_size, random=False, train=False,
-                                 drop_out_rate=drop_out_rate)
+                    Run_Graph_WF(self.test, sess, self, GO, batch_size, random=False, train=False)
 
                 self.y_pred = test_predicted
                 self.y_test = self.test[-1]
@@ -2756,6 +2743,24 @@ class DeepTCR_WF(DeepTCR_S_base):
                                 break
 
             Get_Seq_Features_Indices(self,batch_size,GO,sess)
+            pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
+            self.predicted[idx] += pred
+
+            self.kernel = kernel
+            #
+            var_save = []
+            if self.use_alpha is True:
+                var_save.extend([self.alpha_features,self.alpha_indices,self.alpha_sequences])
+            if self.use_beta is True:
+                var_save.extend([self.beta_features,self.beta_indices,self.beta_sequences])
+
+            var_save.extend([self.y_pred,self.y_test,self.kernel])
+
+            with open(os.path.join(self.Name,self.Name) + '_features.pkl','wb') as f:
+                pickle.dump(var_save,f)
+
+            print('Done Training')
+
 
 
 
