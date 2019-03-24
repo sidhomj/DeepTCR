@@ -20,6 +20,7 @@ from multiprocessing import Pool
 import pickle
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
+import shutil
 
 class DeepTCR_base(object):
 
@@ -2697,7 +2698,6 @@ class DeepTCR_WF(DeepTCR_S_base):
         Vars = [np.asarray(self.sample_list)]
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
-        check=1
 
     def Train(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,
                  weight_by_class=False,trainable_embedding = True,accuracy_min = None,
