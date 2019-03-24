@@ -10,6 +10,8 @@ import os
 from Bio.Alphabet import IUPAC
 import seaborn as sns
 from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import OneHotEncoder
+import tensorflow as tf
 
 
 def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None):
@@ -405,7 +407,7 @@ def pad_freq(freq,num_seq_per_instance):
 
     return freq
 
-def Run_Graph(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=0.0):
+def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=0.0):
     loss = []
     accuracy = []
     predicted_list = []
@@ -452,3 +454,87 @@ def Run_Graph(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=0
     auc = roc_auc_score(set[-1], predicted_out)
     return loss,accuracy,predicted_out,auc
 
+def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=0.0):
+    loss = []
+    accuracy = []
+    predicted_list = []
+    for vars in get_batches(set, batch_size=batch_size, random=random):
+        var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
+        OH = OneHotEncoder(categories='auto')
+        sp = OH.fit_transform(GO.i[var_idx].reshape(-1, 1)).T
+        sp = sp.tocoo()
+        indices = np.mat([sp.row, sp.col]).T
+        sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+
+        feed_dict = {GO.Y: vars[-1],
+                     GO.prob: drop_out_rate,
+                     GO.X_Freq: self.freq[var_idx],
+                     GO.sp: sp}
+
+        if self.use_alpha is True:
+            feed_dict[GO.X_Seq_alpha] = self.X_Seq_alpha[var_idx]
+        if self.use_beta is True:
+            feed_dict[GO.X_Seq_beta] = self.X_Seq_beta[var_idx]
+
+        if self.use_v_beta is True:
+            feed_dict[GO.X_v_beta] = self.v_beta_num[var_idx]
+
+        if self.use_d_beta is True:
+            feed_dict[GO.X_d_beta] = self.d_beta_num[var_idx]
+
+        if self.use_j_beta is True:
+            feed_dict[GO.X_j_beta] = self.j_beta_num[var_idx]
+
+        if self.use_v_alpha is True:
+            feed_dict[GO.X_v_alpha] = self.v_alpha_num[var_idx]
+
+        if self.use_j_alpha is True:
+            feed_dict[GO.X_j_alpha] = self.j_alpha_num[var_idx]
+
+        if train is True:
+            loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted],
+                                                          feed_dict=feed_dict)
+        else:
+            loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
+                                                       feed_dict=feed_dict)
+
+        loss.append(loss_i)
+        accuracy.append(accuracy_i)
+        predicted_list.append(predicted_i)
+
+    loss = np.mean(loss)
+    accuracy = np.mean(accuracy)
+    predicted_out = np.vstack(predicted_list)
+    auc = roc_auc_score(set[-1], predicted_out)
+    return loss,accuracy,predicted_out,auc
+
+def Get_Seq_Features_Indices(self,batch_size,GO,sess):
+    alpha_features_list = []
+    beta_features_list = []
+    alpha_indices_list = []
+    beta_indices_list = []
+    Vars = [self.X_Seq_alpha, self.X_Seq_beta]
+    for vars in get_batches(Vars, batch_size=batch_size, random=False):
+        feed_dict = {}
+        if self.use_alpha is True:
+            feed_dict[GO.X_Seq_alpha] = vars[0]
+        if self.use_beta is True:
+            feed_dict[GO.X_Seq_beta] = vars[1]
+
+        if self.use_alpha is True:
+            features_i_alpha, indices_i_alpha = sess.run([GO.Seq_Features_alpha, GO.Indices_alpha], feed_dict=feed_dict)
+            alpha_features_list.append(features_i_alpha)
+            alpha_indices_list.append(indices_i_alpha)
+
+        if self.use_beta is True:
+            features_i_beta, indices_i_beta = sess.run([GO.Seq_Features_beta, GO.Indices_beta], feed_dict=feed_dict)
+            beta_features_list.append(features_i_beta)
+            beta_indices_list.append(indices_i_beta)
+
+    if self.use_alpha is True:
+        self.alpha_features = np.vstack(alpha_features_list)
+        self.alpha_indices = np.vstack(alpha_indices_list)
+
+    if self.use_beta is True:
+        self.beta_features = np.vstack(beta_features_list)
+        self.beta_indices = np.vstack(beta_indices_list)

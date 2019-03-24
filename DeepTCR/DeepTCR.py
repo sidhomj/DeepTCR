@@ -411,6 +411,8 @@ class DeepTCR_base(object):
         self.v_alpha_num = v_alpha_num
         self.j_alpha = j_alpha
         self.j_alpha_num = j_alpha_num
+        self.seq_index = np.asarray(list(range(len(self.Y))))
+        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         print('Data Loaded')
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
@@ -2007,6 +2009,65 @@ class DeepTCR_S_base(DeepTCR_base):
         plt.savefig(os.path.join(self.directory_results,filename))
         plt.show(block=False)
 
+    def Representative_Sequences(self, top_seq=10):
+        """
+        Identify most highly predicted sequences for each class for single sequence classifier.
+
+        This method allows the user to query which sequences were most predicted to belong to a given class.
+
+        Inputs
+        ---------------------------------------
+
+        top_seq: int
+            The number of top sequences to show for each class.
+
+        Returns
+
+        self.Rep_Seq_SS: dictionary of dataframes
+            This dictionary of dataframes holds for each class the top sequences and their respective
+            probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences_SS.
+
+        ---------------------------------------
+
+
+        """
+        dir = 'Rep_Sequences_SS'
+        dir = os.path.join(self.directory_results, dir)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        file_list = [f for f in os.listdir(dir)]
+        [os.remove(os.path.join(dir, f)) for f in file_list]
+
+        Rep_Seq = []
+        keep = []
+        df_temp = pd.DataFrame()
+        df_temp['alpha'] = self.alpha_sequences
+        df_temp['beta'] = self.beta_sequences
+        df_temp['v_beta'] = self.v_beta
+        df_temp['d_beta'] = self.d_beta
+        df_temp['j_beta'] = self.j_beta
+        df_temp['v_alpha'] = self.v_alpha
+        df_temp['j_alpha'] = self.j_alpha
+        df_temp['Class'] = self.class_id
+        df_temp['Sample'] = self.sample_id
+        df_temp['Freq'] = self.freq
+        df_temp['Counts'] = self.counts
+
+        for ii, sample in enumerate(self.lb.classes_, 0):
+            df_temp[sample] = self.predicted[:, ii]
+
+        for ii, sample in enumerate(self.lb.classes_, 0):
+            df_temp.sort_values(by=sample, ascending=False, inplace=True)
+            df_sample = df_temp[df_temp['Class'] == sample][0:top_seq]
+
+            if not df_sample.empty:
+                Rep_Seq.append(df_sample)
+                df_sample.to_csv(os.path.join(dir, sample + '.csv'), index=False)
+                keep.append(ii)
+
+        self.Rep_Seq_SS = dict(zip(self.lb.classes_[keep], Rep_Seq))
+
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
         """
@@ -2028,7 +2089,6 @@ class DeepTCR_SS(DeepTCR_S_base):
         ---------------------------------------
 
         """
-        self.seq_index = np.asarray(list(range(len(self.Y))))
         Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.sample_id,self.class_id,self.seq_index,
                 self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num,
                 self.v_beta,self.d_beta,self.j_beta,self.v_alpha,self.j_alpha]
@@ -2104,75 +2164,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         with tf.device(self.device):
             with graph_model.as_default():
-                if self.use_alpha is True:
-                    GO.X_Seq_alpha = tf.placeholder(tf.int64,shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],name='Input_Alpha')
-                    GO.X_Seq_alpha_OH = tf.one_hot(GO.X_Seq_alpha, depth=21)
-
-                if self.use_beta is True:
-                    GO.X_Seq_beta = tf.placeholder(tf.int64,shape=[None, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2]],name='Input_Beta')
-                    GO.X_Seq_beta_OH = tf.one_hot(GO.X_Seq_beta, depth=21)
-
-                GO.Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
-                GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
-
-                embedding_dim_genes = 48
-                gene_features = []
-                GO.X_v_beta, GO.X_v_beta_OH, GO.embedding_layer_v_beta, \
-                GO.X_d_beta, GO.X_d_beta_OH, GO.embedding_layer_d_beta, \
-                GO.X_j_beta, GO.X_j_beta_OH, GO.embedding_layer_j_beta, \
-                GO.X_v_alpha, GO.X_v_alpha_OH, GO.embedding_layer_v_alpha, \
-                GO.X_j_alpha, GO.X_j_alpha_OH, GO.embedding_layer_j_alpha, \
-                gene_features = Get_Gene_Features(self, embedding_dim_genes, gene_features)
-
-
-                if trainable_embedding is True:
-                    # AA Embedding
-                    with tf.variable_scope('AA_Embedding'):
-                        embedding_dim_aa = 64
-                        embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq', shape=[21, embedding_dim_aa])
-                        embedding_layer_seq = tf.expand_dims(tf.expand_dims(embedding_layer_seq, axis=0), axis=0)
-                        if self.use_alpha is True:
-                            inputs_seq_embed_alpha = tf.squeeze(tf.tensordot(GO.X_Seq_alpha_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
-                        if self.use_beta is True:
-                            inputs_seq_embed_beta = tf.squeeze(tf.tensordot(GO.X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
-
-                else:
-                    if self.use_alpha is True:
-                        inputs_seq_embed_alpha = GO.X_Seq_alpha_OH
-
-                    if self.use_beta is True:
-                        inputs_seq_embed_beta = GO.X_Seq_beta_OH
-
-
-                # Convolutional Features
-                if self.use_alpha is True:
-                    Seq_Features_alpha, Indices_alpha = Convolutional_Features(inputs_seq_embed_alpha, kernel=kernel, units=units,trainable_embedding=trainable_embedding,name='alpha_conv')
-                if self.use_beta is True:
-                    Seq_Features_beta, Indices_beta = Convolutional_Features(inputs_seq_embed_beta, kernel=kernel, units=units,trainable_embedding=trainable_embedding,name='beta_conv')
-
-                Seq_Features = []
-                if self.use_alpha is True:
-                    Seq_Features.append(Seq_Features_alpha)
-                if self.use_beta is True:
-                    Seq_Features.append(Seq_Features_beta)
-
-                if Seq_Features:
-                    Seq_Features = tf.concat(Seq_Features, axis=1)
-
-                if not isinstance(Seq_Features, list):
-                    if not isinstance(gene_features, list):
-                        Features = tf.concat((Seq_Features, gene_features), axis=1)
-                    else:
-                        Features = Seq_Features
-
-                    if use_only_seq is True:
-                        Features = Seq_Features
-
-                    if use_only_gene is True:
-                        Features = gene_features
-                else:
-                    Features = gene_features
-
+                Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene)
 
                 fc = Features
                 if num_fc_layers != 0:
@@ -2180,9 +2172,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                         fc = tf.layers.dropout(fc,GO.prob)
                         fc = tf.layers.dense(fc,units_fc,tf.nn.relu)
 
-
                 GO.logits = tf.layers.dense(fc, self.Y.shape[1])
-                GO.ortho_loss = Get_Ortho_Loss(Seq_Features)
+                #GO.ortho_loss = Get_Ortho_Loss(Seq_Features)
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
@@ -2212,15 +2203,15 @@ class DeepTCR_SS(DeepTCR_S_base):
             val_loss_total = []
             for e in range(epochs):
                 train_loss, train_accuracy, train_predicted,train_auc = \
-                    Run_Graph(self.train,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=drop_out_rate)
+                    Run_Graph_SS(self.train,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=drop_out_rate)
 
                 valid_loss, valid_accuracy, valid_predicted,valid_auc = \
-                    Run_Graph(self.valid,sess,self,GO,batch_size,random=False,train=False)
+                    Run_Graph_SS(self.valid,sess,self,GO,batch_size,random=False,train=False)
 
                 val_loss_total.append(valid_loss)
 
                 test_loss, test_accuracy, test_predicted,test_auc = \
-                    Run_Graph(self.test,sess,self,GO,batch_size,random=False,train=False)
+                    Run_Graph_SS(self.test,sess,self,GO,batch_size,random=False,train=False)
                 self.y_pred = test_predicted
                 self.y_test = self.test[-1]
 
@@ -2241,37 +2232,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                         break
 
 
-            alpha_features_list = []
-            beta_features_list = []
-            alpha_indices_list = []
-            beta_indices_list = []
-            Vars = [self.X_Seq_alpha,self.X_Seq_beta]
-            for vars in get_batches(Vars, batch_size=batch_size, random=False):
-                feed_dict = {}
-                if self.use_alpha is True:
-                    feed_dict[GO.X_Seq_alpha] = vars[0]
-                if self.use_beta is True:
-                    feed_dict[GO.X_Seq_beta] = vars[1]
-
-                if self.use_alpha is True:
-                    features_i_alpha,indices_i_alpha = sess.run([Seq_Features_alpha,Indices_alpha],feed_dict=feed_dict)
-                    alpha_features_list.append(features_i_alpha)
-                    alpha_indices_list.append(indices_i_alpha)
-
-                if self.use_beta is True:
-                    features_i_beta,indices_i_beta = sess.run([Seq_Features_beta,Indices_beta],feed_dict=feed_dict)
-                    beta_features_list.append(features_i_beta)
-                    beta_indices_list.append(indices_i_beta)
-
-
-            if self.use_alpha is True:
-                self.alpha_features = np.vstack(alpha_features_list)
-                self.alpha_indices = np.vstack(alpha_indices_list)
-
-            if self.use_beta is True:
-                self.beta_features = np.vstack(beta_features_list)
-                self.beta_indices = np.vstack(beta_indices_list)
-
+            Get_Seq_Features_Indices(self,batch_size,GO,sess)
 
             if hasattr(self,'predicted'):
                 self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
@@ -2291,57 +2252,6 @@ class DeepTCR_SS(DeepTCR_S_base):
 
             print('Done Training')
 
-
-    def Representative_Sequences(self,top_seq=10):
-        """
-        Identify most highly predicted sequences for each class for single sequence classifier.
-
-        This method allows the user to query which sequences were most predicted to belong to a given class.
-
-        Inputs
-        ---------------------------------------
-
-        top_seq: int
-            The number of top sequences to show for each class.
-
-        Returns
-
-        self.Rep_Seq_SS: dictionary of dataframes
-            This dictionary of dataframes holds for each class the top sequences and their respective
-            probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences_SS.
-
-        ---------------------------------------
-
-
-        """
-        dir = 'Rep_Sequences_SS'
-        dir = os.path.join(self.directory_results,dir)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-
-        file_list = [f for f in os.listdir(dir)]
-        [os.remove(os.path.join(dir, f)) for f in file_list]
-
-        Rep_Seq = []
-        keep = []
-        df_temp = pd.DataFrame()
-        df_temp['alpha'] = self.alpha_sequences
-        df_temp['beta'] = self.beta_sequences
-        df_temp['Class'] = self.class_id
-        df_temp['Sample'] = self.sample_id
-        for ii,sample in enumerate(self.lb.classes_,0):
-            df_temp[sample] = self.predicted[:,ii]
-
-        for ii,sample in enumerate(self.lb.classes_,0):
-            df_temp.sort_values(by=sample,ascending=False,inplace=True)
-            df_sample = df_temp[df_temp['Class']==sample][0:top_seq]
-
-            if not df_sample.empty:
-                Rep_Seq.append(df_sample)
-                df_sample.to_csv(os.path.join(dir,sample+'.csv'),index=False)
-                keep.append(ii)
-
-        self.Rep_Seq_SS = dict(zip(self.lb.classes_[keep],Rep_Seq))
 
     def Motif_Identification(self,group,p_val_threshold=0.05):
         """
@@ -2472,7 +2382,6 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         '''
 
-        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         y_pred = []
         y_test = []
         for i in range(0, folds):
@@ -2580,8 +2489,6 @@ class DeepTCR_SS(DeepTCR_S_base):
         ---------------------------------------
 
         '''
-
-        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         if folds is None:
             folds = len(self.Y)
 
@@ -2659,7 +2566,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         print('K-fold Cross Validation Completed')
 
 class DeepTCR_WF(DeepTCR_S_base):
-    def Get_Train_Valid_Test_WF(self,test_size=0.2,LOO=None):
+    def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
         """
         Train/Valid/Test Splits.
 
@@ -2682,9 +2589,182 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         """
 
-        Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,self.alpha_sequences,self.beta_sequences,self.seq_index]
-        self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=self.Y, test_size=test_size, regression=False,LOO=LOO)
+        Y = []
+        for s in self.sample_list:
+            Y.append(self.Y[np.where(self.sample_id==s)[0][0]])
+        Y = np.vstack(Y)
+
+        Vars = [np.asarray(self.sample_list)]
+        self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
+
+    def Train(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,
+                 weight_by_class=False,trainable_embedding = True,accuracy_min = None, weight_by_freq=True,
+                 num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,use_only_seq=False,use_only_gene=False):
+
+
+        """
+        Train Whole-Sample Classifier
+
+        This method trains the network and saves features values at the
+        end of training for motif analysis.
+
+        Inputs
+        ---------------------------------------
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        kernel: int
+            Size of convolutional kernel.
+
+        units: int
+            Number of filters to be used for convolutional kernel.
+
+        weight_by_class: bool
+            Option to weight loss by the inverse of the class frequency. Useful for
+            unbalanced classes.
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        accuracy_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training accuracy is achieved, at which point, training ceases.
+
+        weight_by_freq: bool
+            Whether to use frequency to weight each sequence's features.
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+
+        Returns
+        ---------------------------------------
+
+        """
+
+        epochs = 10000
+        graph_model = tf.Graph()
+        GO = graph_object()
+        with tf.device(self.device):
+            with graph_model.as_default():
+                Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene)
+
+                if weight_by_freq is True:
+                    Features = Features*GO.X_Freq[:,tf.newaxis]
+
+                Features_Agg = tf.sparse.matmul(GO.sp, Features)
+                GO.logits = tf.layers.dense(Features_Agg,self.Y.shape[1])
+
+                if weight_by_class is True:
+                    class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
+                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
+                    GO.loss = tf.reduce_mean(weights * tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                else:
+                    GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+
+                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
+
+                # Operations for validation/test accuracy
+                GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
+                correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
+                GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+
+                saver = tf.train.Saver()
+
+        tf.reset_default_graph()
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        with tf.Session(graph=graph_model,config=config) as sess:
+            sess.run(tf.global_variables_initializer())
+
+            val_loss_total = []
+            train_accuracy_total = []
+            train_loss_total = []
+            GO.i = LabelEncoder().fit_transform(self.sample_id)
+
+            for e in range(epochs):
+                train_loss, train_accuracy, train_predicted,train_auc = \
+                    Run_Graph_WF(self.train,sess,self,GO,batch_size,random=True,train=True,
+                                 drop_out_rate=drop_out_rate)
+                train_accuracy_total.append(train_accuracy)
+                train_loss_total.append(train_loss)
+
+                valid_loss, valid_accuracy, valid_predicted, valid_auc = \
+                    Run_Graph_WF(self.valid, sess, self, GO, batch_size, random=False, train=False,
+                                 drop_out_rate=drop_out_rate)
+
+                val_loss_total.append(valid_loss)
+
+                test_loss, test_accuracy, test_predicted, test_auc = \
+                    Run_Graph_WF(self.test, sess, self, GO, batch_size, random=False, train=False,
+                                 drop_out_rate=drop_out_rate)
+
+                self.y_pred = test_predicted
+                self.y_test = self.test[-1]
+
+                if suppress_output is False:
+                    print("Training_Statistics: \n",
+                          "Epoch: {}/{}".format(e + 1, epochs),
+                          "Training loss: {:.5f}".format(train_loss),
+                          "Validation loss: {:.5f}".format(valid_loss),
+                          "Testing loss: {:.5f}".format(test_loss),
+                          "Training Accuracy: {:.5}".format(train_accuracy),
+                          "Validation Accuracy: {:.5}".format(valid_accuracy),
+                          "Testing Accuracy: {:.5}".format(test_accuracy),
+                          'Testing AUC: {:.5}'.format(test_auc))
+
+
+                if e > epochs_min:
+                    if accuracy_min is not None:
+                        if np.mean(train_accuracy_total[-3:]) >= accuracy_min:
+                            break
+
+                    else:
+                        if self.LOO is None:
+                            a, b, c = -10, -7, -3
+                            if val_loss_total:
+                                if (np.mean(val_loss_total[a:b]) - np.mean(val_loss_total[c:])) / np.mean(val_loss_total[a:b]) < stop_criterion:
+                                    break
+
+                        else:
+                            a, b, c = -10, -7, -3
+                            if train_loss_total:
+                                if (np.mean(train_loss_total[a:b]) - np.mean(train_loss_total[c:])) / np.mean(train_loss_total[a:b]) < stop_criterion:
+                                    break
+
+                            if np.mean(train_accuracy_total[-100:]) == 1.0:
+                                break
+
+            Get_Seq_Features_Indices(self,batch_size,GO,sess)
+
+
+
+
+
+
+
+
+
+
+
 
 
 

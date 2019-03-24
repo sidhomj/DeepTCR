@@ -158,57 +158,91 @@ def Convolutional_Features(inputs,reuse=False,units=12,kernel=5,trainable_embedd
 
         return tf.layers.flatten(conv), tf.layers.flatten(indices)
 
-def Convolutional_Features_WF(inputs,reuse=False,units=12,kernel=5,trainable_embedding=False,conv_weights=None,name='Convolutional_Features'):
-    with tf.variable_scope(name,reuse=reuse):
-        if conv_weights is not None:
-            conv_weights = conv_weights[:,:,1:,:]
-            units_orig = conv_weights.shape[-1]
-            conv_weights = tf.Variable(conv_weights, name='conv_weights', dtype=tf.float32,trainable=True)
+def Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene):
+    if self.use_alpha is True:
+        GO.X_Seq_alpha = tf.placeholder(tf.int64,
+                                        shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],
+                                        name='Input_Alpha')
+        GO.X_Seq_alpha_OH = tf.one_hot(GO.X_Seq_alpha, depth=21)
 
-            conv_weights_add = tf.get_variable(name='conv_weights_add', shape=[1, kernel, 20, units])
-            conv_weights = tf.concat((conv_weights,conv_weights_add),axis=3)
+    if self.use_beta is True:
+        GO.X_Seq_beta = tf.placeholder(tf.int64,
+                                       shape=[None, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2]],
+                                       name='Input_Beta')
+        GO.X_Seq_beta_OH = tf.one_hot(GO.X_Seq_beta, depth=21)
 
-            conv_weights = tf.abs(conv_weights)
-            conv_weights_out = conv_weights
-            conv_zero = tf.get_variable(name='conv_zero', shape=[1, kernel, 1, units+units_orig], initializer=tf.initializers.zeros(), trainable=False)
-            conv_weights = tf.concat((conv_zero, conv_weights), axis=2)
-            bias_val = -kernel+1
-            conv_bias = tf.get_variable(name='conv_bias', shape=units, initializer=tf.initializers.constant(bias_val),trainable=True)
-            bias_val = 0.0
-            conv_bias_add =  tf.get_variable(name='conv_bias_add', shape=units_orig, initializer=tf.initializers.constant(bias_val),trainable=True)
-            conv_bias = tf.concat((conv_bias,conv_bias_add),0)
+    GO.Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
+    GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
+    GO.sp = tf.sparse.placeholder(dtype=tf.float32, shape=[None, None])
+    GO.X_Freq = tf.placeholder(tf.float32, shape=[None, ], name='Freq')
 
+    embedding_dim_genes = 48
+    gene_features = []
+    GO.X_v_beta, GO.X_v_beta_OH, GO.embedding_layer_v_beta, \
+    GO.X_d_beta, GO.X_d_beta_OH, GO.embedding_layer_d_beta, \
+    GO.X_j_beta, GO.X_j_beta_OH, GO.embedding_layer_j_beta, \
+    GO.X_v_alpha, GO.X_v_alpha_OH, GO.embedding_layer_v_alpha, \
+    GO.X_j_alpha, GO.X_j_alpha_OH, GO.embedding_layer_j_alpha, \
+    gene_features = Get_Gene_Features(self, embedding_dim_genes, gene_features)
 
+    if trainable_embedding is True:
+        # AA Embedding
+        with tf.variable_scope('AA_Embedding'):
+            embedding_dim_aa = 64
+            embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq', shape=[21, embedding_dim_aa])
+            embedding_layer_seq = tf.expand_dims(tf.expand_dims(embedding_layer_seq, axis=0), axis=0)
+            if self.use_alpha is True:
+                inputs_seq_embed_alpha = tf.squeeze(
+                    tf.tensordot(GO.X_Seq_alpha_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+            if self.use_beta is True:
+                inputs_seq_embed_beta = tf.squeeze(
+                    tf.tensordot(GO.X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+
+    else:
+        if self.use_alpha is True:
+            inputs_seq_embed_alpha = GO.X_Seq_alpha_OH
+
+        if self.use_beta is True:
+            inputs_seq_embed_beta = GO.X_Seq_beta_OH
+
+    # Convolutional Features
+    if self.use_alpha is True:
+        GO.Seq_Features_alpha, GO.Indices_alpha = Convolutional_Features(inputs_seq_embed_alpha, kernel=kernel,
+                                                                         units=units,
+                                                                         trainable_embedding=trainable_embedding,
+                                                                         name='alpha_conv')
+    if self.use_beta is True:
+        GO.Seq_Features_beta, GO.Indices_beta = Convolutional_Features(inputs_seq_embed_beta, kernel=kernel,
+                                                                       units=units,
+                                                                       trainable_embedding=trainable_embedding,
+                                                                       name='beta_conv')
+
+    Seq_Features = []
+    if self.use_alpha is True:
+        Seq_Features.append(GO.Seq_Features_alpha)
+    if self.use_beta is True:
+        Seq_Features.append(GO.Seq_Features_beta)
+
+    if Seq_Features:
+        Seq_Features = tf.concat(Seq_Features, axis=1)
+
+    if not isinstance(Seq_Features, list):
+        if not isinstance(gene_features, list):
+            Features = tf.concat((Seq_Features, gene_features), axis=1)
         else:
-            if trainable_embedding is True:
-                conv_weights = tf.get_variable(name='conv_weights', shape=[1, kernel, inputs.shape[-1], units])
-            else:
-                conv_weights = tf.get_variable(name='conv_weights',shape=[1,kernel,20,units])
-                conv_weights = tf.abs(conv_weights)
+            Features = Seq_Features
 
-            conv_weights_out = conv_weights
+        if use_only_seq is True:
+            Features = Seq_Features
 
-            if trainable_embedding is False:
-                conv_zero = tf.get_variable(name='conv_zero', shape=[1, kernel, 1, units], initializer=tf.initializers.zeros(), trainable=False)
-                conv_weights = tf.concat((conv_zero, conv_weights), axis=2)
+        if use_only_gene is True:
+            Features = gene_features
+    else:
+        Features = gene_features
 
-            conv_bias = tf.get_variable(name='conv_bias', shape=units, initializer=tf.initializers.constant(0.0),trainable=True)
+    return Features
 
 
-        conv = tf.nn.conv2d(inputs, conv_weights, padding='SAME', strides=[1, 1, 1, 1]) + conv_bias
-
-        conv = tf.nn.relu(conv)
-        indices = tf.cast(tf.argmax(conv, axis=2), tf.float32)
-        conv = tf.reduce_max(conv, axis=2)
-        return conv, conv_weights_out, indices
-
-def Convolutional_Features_Test(inputs,motifs,bias=0,reuse=False,name='Convolutional_Features'):
-    with tf.variable_scope(name,reuse=reuse):
-        conv = tf.nn.conv2d(inputs,motifs,padding='SAME',strides=[1,1,1,1]) - bias
-        conv = tf.nn.relu(conv)
-        conv = tf.squeeze(tf.layers.max_pooling2d(conv,(1,conv.shape[2]),(1,conv.shape[2])),2)
-
-        return conv
 
 
 
