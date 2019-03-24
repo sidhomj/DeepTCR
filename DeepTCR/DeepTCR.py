@@ -2308,9 +2308,6 @@ class DeepTCR_SS(DeepTCR_S_base):
 
             print('Done Training')
 
-
-
-
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
                                 trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                                 use_only_seq=False,use_only_gene=False):
@@ -2419,7 +2416,6 @@ class DeepTCR_SS(DeepTCR_S_base):
         self.y_pred = np.vstack(y_pred)
         self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
-
 
     def K_Fold_CrossVal(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
                            trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
@@ -2821,13 +2817,6 @@ class DeepTCR_WF(DeepTCR_S_base):
             Optional parameter to allow alternative training strategy until minimum
             training accuracy is achieved, at which point, training ceases.
 
-
-        weight_by_freq: bool
-            Whether to use frequency to weight each sequence's features.
-
-        plot_loss: bool
-            To live plot the train/valid/test losses, set to True.
-
         num_fc_layers: int
             Number of fully connected layers following convolutional layer.
 
@@ -2931,13 +2920,6 @@ class DeepTCR_WF(DeepTCR_S_base):
         accuracy_min: float
             Optional parameter to allow alternative training strategy until minimum
             training accuracy is achieved, at which point, training ceases.
-
-
-        weight_by_freq: bool
-            Whether to use frequency to weight each sequence's features.
-
-        plot_loss: bool
-            To live plot the train/valid/test losses, set to True.
 
         num_fc_layers: int
             Number of fully connected layers following convolutional layer.
