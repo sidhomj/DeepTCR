@@ -2379,6 +2379,8 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         y_pred = []
         y_test = []
+        predicted = np.zeros_like(self.predicted)
+        counts = np.zeros_like(self.predicted)
         for i in range(0, folds):
             if suppress_output is False:
                 print(i)
@@ -2391,10 +2393,6 @@ class DeepTCR_SS(DeepTCR_S_base):
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
-
-            if i == 0:
-                predicted = np.zeros_like(self.predicted)
-                counts = np.zeros_like(self.predicted)
 
             predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
             counts[self.test[self.var_dict['seq_index']]] += 1
@@ -2745,6 +2743,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             Get_Seq_Features_Indices(self,batch_size,GO,sess)
             pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
             self.predicted[idx] += pred
+            self.seq_idx = idx
 
             self.kernel = kernel
             #
@@ -2760,6 +2759,259 @@ class DeepTCR_WF(DeepTCR_S_base):
                 pickle.dump(var_save,f)
 
             print('Done Training')
+    def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,
+                             kernel=5,units=12,weight_by_class=False, trainable_embedding=True,accuracy_min = None,
+                             num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False):
+
+
+        """
+        Monte Carlo Cross-Validation for Whole Sample Classifier
+
+        If the number of samples is small but training the whole sample classifier, one
+        can use Monte Carlo Cross Validation to train a number of iterations before assessing
+        predictive performance.After this method is run, the AUC_Curve method can be run to
+        assess the overall performance.
+
+        Inputs
+        ---------------------------------------
+        folds: int
+            Number of iterations for Cross-Validation
+
+        test_size: float
+            Fraction of sample to be used for valid and test set.
+
+        LOO: int
+            Number of samples to leave-out in Leave-One-Out Cross-Validation
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        kernel: int
+            Size of convolutional kernel.
+
+        units: int
+            Number of filters to be used for convolutional kernel.
+
+
+        weight_by_class: bool
+            Option to weight loss by the inverse of the class frequency. Useful for
+            unbalanced classes.
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        accuracy_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training accuracy is achieved, at which point, training ceases.
+
+
+        weight_by_freq: bool
+            Whether to use frequency to weight each sequence's features.
+
+        plot_loss: bool
+            To live plot the train/valid/test losses, set to True.
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+
+        Returns
+        ---------------------------------------
+
+        """
+
+        y_pred = []
+        y_test = []
+        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        counts = np.zeros_like(self.predicted)
+        for i in range(0, folds):
+            if suppress_output is False:
+                print(i)
+            self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO)
+            self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
+                          kernel=kernel,units=units,weight_by_class=weight_by_class,
+                          trainable_embedding=trainable_embedding,accuracy_min=accuracy_min,
+                          num_fc_layers=num_fc_layers,
+                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output)
+
+            y_test.append(self.y_test)
+            y_pred.append(self.y_pred)
+
+            counts[self.seq_idx] += 1
+
+            y_test2 = np.vstack(y_test)
+            y_pred2 = np.vstack(y_pred)
+
+            if suppress_output is False:
+                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
+
+                if self.y_test.shape[1] == 2:
+                    if i > 0:
+                        y_test2 = np.vstack(y_test)
+                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+
+
+        self.y_test = np.vstack(y_test)
+        self.y_pred = np.vstack(y_pred)
+        self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
+        print('Monte Carlo Simulation Completed')
+
+    def K_Fold_CrossVal(self,folds=None,epochs_min=5,batch_size=25,stop_criterion=0.001, kernel=5,units=12, weight_by_class=False, iterations=None,
+                        trainable_embedding=True, accuracy_min = None,
+                        num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False):
+
+        """
+        K_Fold Cross-Validation for Whole Sample Classifier
+
+        If the number of samples is small but training the whole sample classifier, one
+        can use K_Fold Cross Validation to train on all but one before assessing
+        predictive performance.After this method is run, the AUC_Curve method can be run to
+        assess the overall performance.
+
+        Inputs
+        ---------------------------------------
+        folds: int
+            Number of Folds
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        kernel: int
+            Size of convolutional kernel.
+
+        units: int
+            Number of filters to be used for convolutional kernel.
+
+        weight_by_class: bool
+            Option to weight loss by the inverse of the class frequency. Useful for
+            unbalanced classes.
+
+        iterations: int
+            Option to specify how many iterations one wants to complete before
+            terminating training. Useful for very large datasets.
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        accuracy_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training accuracy is achieved, at which point, training ceases.
+
+
+        weight_by_freq: bool
+            Whether to use frequency to weight each sequence's features.
+
+        plot_loss: bool
+            To live plot the train/valid/test losses, set to True.
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+
+        Returns
+        ---------------------------------------
+
+        """
+
+        if folds is None:
+            folds = len(self.files)
+
+        #Create Folds
+        idx = list(range(len(self.files)))
+        idx_left = idx
+        file_per_sample = len(self.files) // folds
+        test_idx = []
+        for ii in range(folds):
+            if ii != folds-1:
+                idx_sel = np.random.choice(idx_left, size=file_per_sample, replace=False)
+            else:
+                idx_sel = idx_left
+
+            test_idx.append(idx_sel)
+            idx_left = np.setdiff1d(idx_left, idx_sel)
+
+
+        y_test = []
+        y_pred = []
+        for ii in range(folds):
+            if suppress_output is False:
+                print(ii)
+            train_idx = np.setdiff1d(idx,test_idx[ii])
+
+            Vars = [self.X_Seq_alpha,self.X_Seq_beta, self.X_Freq,self.files,self.alpha_sequences,self.beta_sequences,self.seq_index]
+            self.train, self.test = Get_Train_Test(Vars=Vars,train_idx=train_idx,test_idx = test_idx[ii],Y=self.Y)
+            self.valid = self.test
+            self.LOO = True
+
+            self.Train_WF(epochs_min=epochs_min, batch_size=batch_size,
+                          stop_criterion=stop_criterion, kernel=kernel,
+                          units=units, weight_by_class=weight_by_class,
+                          trainable_embedding=trainable_embedding,accuracy_min = accuracy_min,
+                          weight_by_freq = weight_by_freq, plot_loss = plot_loss,num_fc_layers=num_fc_layers,units_fc=units_fc,
+                          drop_out_rate=drop_out_rate,suppress_output=suppress_output)
+
+
+            y_test.append(self.y_test)
+            y_pred.append(self.y_pred)
+
+            y_test2 = np.vstack(y_test)
+            y_pred2 = np.vstack(y_pred)
+
+            if suppress_output is False:
+                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))))
+
+                if self.y_test.shape[1] == 2:
+                    if ii > 0:
+                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+
+
+            if iterations is not None:
+                if ii+1 >= iterations:
+                    break
+
+        self.y_test = np.vstack(y_test)
+        self.y_pred = np.vstack(y_pred)
+        print('K-fold Cross Validation Completed')
+
+
+
+
 
 
 
