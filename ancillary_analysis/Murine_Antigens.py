@@ -9,7 +9,6 @@ from NN_Assessment_utils import *
 import pickle
 import os
 
-
 #Instantiate training object
 DTCRU = DeepTCR_U('Clustering_Metrics')
 #Load Data
@@ -65,7 +64,6 @@ plt.subplots_adjust(bottom=0.15)
 plt.title('Clustering Quality',fontsize=24)
 plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 
-
 #Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.label_id,dir_results)
 Plot_Performance(df_metrics,dir_results)
@@ -111,12 +109,3 @@ df_out = pd.DataFrame()
 df_out['Methods'] = names
 df_out['SRCC'] = SRCC
 df_out.to_csv(os.path.join(dir_results,'out.csv'),index=False)
-
-#Assess relationship of VDJ usage
-features = DTCRU.embed_dict['v_beta']
-labels = DTCRU.lb_v_beta.classes_
-
-df = pd.DataFrame(features)
-df.index = labels
-sns.clustermap(standard_scale=1,cmap='bwr',data=df)
-
