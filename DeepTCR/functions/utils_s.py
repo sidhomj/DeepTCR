@@ -418,6 +418,35 @@ def Get_Sequence_Pred(self,batch_size,GO,sess):
 
     return np.vstack(predicted_list),np.squeeze(np.hstack(idx))
 
+def Get_Latent_Features(self,batch_size,GO,sess):
+    Vars = [self.X_Seq_alpha, self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
+            self.v_alpha_num,self.v_alpha_num]
+    Features = []
+    for vars in get_batches(Vars, batch_size=batch_size, random=False):
+        feed_dict = {}
+        if self.use_alpha is True:
+            feed_dict[GO.X_Seq_alpha] = vars[0]
+        if self.use_beta is True:
+            feed_dict[GO.X_Seq_beta] = vars[1]
+
+        if self.use_v_beta is True:
+            feed_dict[GO.X_v_beta] = vars[2]
+
+        if self.use_d_beta is True:
+            feed_dict[GO.X_d_beta] = vars[3]
+
+        if self.use_j_beta is True:
+            feed_dict[GO.X_j_beta] = vars[4]
+
+        if self.use_v_alpha is True:
+            feed_dict[GO.X_v_alpha] = vars[5]
+
+        if self.use_j_alpha is True:
+            feed_dict[GO.X_j_alpha] = vars[6]
+
+        Features.append(sess.run(GO.Features,feed_dict=feed_dict))
+
+    return np.vstack(Features)
 
 
 

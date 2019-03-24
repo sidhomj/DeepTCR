@@ -1907,7 +1907,6 @@ class DeepTCR_U(DeepTCR_base):
         ---------------------------------------
 
         """
-
         if Load_Prev_Data is False:
             X_2 = umap.UMAP().fit_transform(self.features)
             with open(os.path.join(self.Name, 'umap.pkl'), 'wb') as f:
@@ -1921,10 +1920,11 @@ class DeepTCR_U(DeepTCR_base):
         df_plot['y'] = X_2[:, 1]
         df_plot['Class'] = self.class_id
         df_plot['Sample'] = self.sample_id
-        IDX = self.Cluster_Assignments
-        IDX[IDX == -1] = np.max(IDX) + 1
-        IDX = ['Cluster_' + str(I) for I in IDX]
-        df_plot['Cluster'] = IDX
+        if hasattr(self,'Cluster_Assignments'):
+            IDX = self.Cluster_Assignments
+            IDX[IDX == -1] = np.max(IDX) + 1
+            IDX = ['Cluster_' + str(I) for I in IDX]
+            df_plot['Cluster'] = IDX
 
         if freq_weight is True:
             freq = self.freq
@@ -2127,6 +2127,102 @@ class DeepTCR_S_base(DeepTCR_base):
 
         print('Motif Identification Completed')
 
+    def UMAP_Plot(self, by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True,
+                  scale=100,
+                  Load_Prev_Data=False, alpha=1.0):
+        """
+        UMAP vizualisation of TCR Sequences
+
+        This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
+        prior computing clustering solution or by label. Size of points can also be made to be proportional to
+        frequency of sequence within sample.
+
+        Inputs
+        ---------------------------------------
+
+        by_class: bool
+            To color the points by their class label, set to True.
+
+        by_sample: bool
+            To color the points by their sample lebel, set to True.
+
+        by_cluster:bool
+            To color the points by the prior computed clustering solution, set to True.
+
+        freq_weight: bool
+            To scale size of points proportionally to their frequency, set to True.
+
+        show_legend: bool
+            To display legend, set to True.
+
+        scale: float
+            To change size of points, change scale parameter. Is particularly useful
+            when finding good display size when points are scaled by frequency.
+
+        Load_Prev_Data: bool
+            If method was run before, one can rerun this method with this parameter set
+            to True to bypass recomputing the UMAP projection. Useful for generating
+            different versions of the plot on the same UMAP representation.
+
+        alpha: float
+            Value between 0-1 that controls transparency of points.
+
+
+        Returns
+
+        ---------------------------------------
+
+        """
+        features = self.features
+        class_id = self.class_id
+        sample_id = self.sample_id
+
+        if Load_Prev_Data is False:
+            X_2 = umap.UMAP().fit_transform(self.features)
+            with open(os.path.join(self.Name, 'umap.pkl'), 'wb') as f:
+                pickle.dump(X_2, f, protocol=4)
+        else:
+            with open(os.path.join(self.Name, 'umap.pkl'), 'rb') as f:
+                X_2 = pickle.load(f)
+
+        df_plot = pd.DataFrame()
+        df_plot['x'] = X_2[:, 0]
+        df_plot['y'] = X_2[:, 1]
+        df_plot['Class'] = self.class_id
+        df_plot['Sample'] = self.sample_id
+        if hasattr(self,'Cluster_Assignments'):
+            IDX = self.Cluster_Assignments
+            IDX[IDX == -1] = np.max(IDX) + 1
+            IDX = ['Cluster_' + str(I) for I in IDX]
+            df_plot['Cluster'] = IDX
+
+        if freq_weight is True:
+            freq = self.freq
+            s = freq * scale
+        else:
+            s = scale
+
+        if show_legend is True:
+            legend = 'full'
+        else:
+            legend = False
+
+        if by_class is True:
+            hue = 'Class'
+        elif by_cluster is True:
+            hue = 'Cluster'
+        elif by_sample is True:
+            hue = 'Sample'
+        else:
+            hue = None
+
+        sns.scatterplot(data=df_plot, x='x', y='y', s=s, hue=hue, legend=legend, alpha=alpha, linewidth=0.0)
+        plt.xticks([])
+        plt.yticks([])
+        plt.xlabel('')
+        plt.ylabel('')
+
+
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
         """
@@ -2223,8 +2319,8 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         with tf.device(self.device):
             with graph_model.as_default():
-                Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc)
-                GO.logits = tf.layers.dense(Features, self.Y.shape[1])
+                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc)
+                GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
                 #GO.ortho_loss = Get_Ortho_Loss(Seq_Features)
 
                 if weight_by_class is True:
@@ -2285,6 +2381,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
 
             Get_Seq_Features_Indices(self,batch_size,GO,sess)
+            self.features = Get_Latent_Features(self,batch_size,GO,sess)
 
             if hasattr(self,'predicted'):
                 self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
