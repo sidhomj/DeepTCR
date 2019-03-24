@@ -3,12 +3,15 @@
 ## Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data
 
 DeepTCR is a python package that has a collection of unsupervised and supervised 
-deep learning methods to parse TCRSeq data. To see an example of how the algorithms can 
-be used on an example dataset, see Tutorial.ipnyb. For complete documentation for all available methods,
-see 'Supervised_Documentation.txt' and 'Unsupervised_Documentation.txt'. While DeepTCR will run with Tensorflow-CPU versions,
-for optimal training times, we suggest training these algorithms on GPU's (requiring CUDA, cuDNN, and tensorflow-GPU). 
+deep learning methods to parse TCRSeq data. To see examples of how the algorithms can 
+be used on an example datasets, see the subdirectory 'tutorials' for a collection of tutorial 
+use cases across multiple datasets. For complete documentation for all available methods,
+see 'Supervised_Documentation.txt' and 'Unsupervised_Documentation.txt'. 
+While DeepTCR will run with Tensorflow-CPU versions, for optimal training times, 
+we suggest training these algorithms on GPU's (requiring CUDA, cuDNN, and tensorflow-GPU). 
 
-DeepTCR now has the added functionality of being able to analyze paired alpha/beta chain inputs. For detailed instructions on 
+DeepTCR now has the added functionality of being able to analyze paired alpha/beta chain inputs as well
+as also being able to take in v/d/j gene usage if available. For detailed instructions on 
 how to upload this type of data, refer to the documentation for loading data into DeepTCR.  
 
 For questions or help, email: jsidhom1@jhmi.edu
