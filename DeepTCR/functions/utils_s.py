@@ -230,7 +230,7 @@ def randperm_test(data, labels, func, n_perms=100):
 
     return obs, p
 
-def Diff_Features(features,indices,sequences,type,p_val_threshold,idx_pos,idx_neg,directory_results,group,kernel):
+def Diff_Features(features,indices,sequences,type,sample_id,p_val_threshold,idx_pos,idx_neg,directory_results,group,kernel,sample_avg):
     pos_mean = []
     neg_mean = []
     p_val = []
@@ -258,7 +258,7 @@ def Diff_Features(features,indices,sequences,type,p_val_threshold,idx_pos,idx_ne
     df_features.sort_values(by='Mag', inplace=True, ascending=False)
 
     # Get motifs for positive features
-    dir = os.path.join(directory_results, group + '_'+type+'_SS_Motifs')
+    dir = os.path.join(directory_results, group + '_'+type+'_Motifs')
     if not os.path.exists(dir):
         os.makedirs(dir)
 

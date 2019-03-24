@@ -2070,6 +2070,63 @@ class DeepTCR_S_base(DeepTCR_base):
 
         self.Rep_Seq = dict(zip(self.lb.classes_[keep], Rep_Seq))
 
+    def Motif_Identification(self,group,p_val_threshold=0.05):
+        """
+        Motif Identification Supervised Classifiers
+
+        This method looks for enriched features in the predetermined gropu
+        and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
+        to produce seqlogos.
+
+        Inputs
+        ---------------------------------------
+        group: string
+            Class for analyzing enriched motifs.
+
+        p_val_threshold: float
+            Significance threshold for enriched features/motifs for
+            Mann-Whitney UTest.
+
+        Returns
+        ---------------------------------------
+
+        self.(alpha/beta)_group_features: Pandas Dataframe
+            Sequences used to determine motifs in fasta files
+            are stored in this dataframe where column names represent
+            the feature number.
+
+        """
+        #Get Saved Features, Indices, and Sequences
+        with open(os.path.join(self.Name,self.Name) + '_features.pkl', 'rb') as f:
+            self.y_pred, self.y_test, self.kernel,self.sample_avg = pickle.load(f)
+
+        if self.use_alpha is True:
+            with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'rb') as f:
+                self.alpha_features, self.alpha_indices, self.alpha_sequences = pickle.load(f)
+
+        if self.use_beta is True:
+            with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'rb') as f:
+                self.beta_features, self.beta_indices, self.beta_sequences = pickle.load(f)
+
+        group_num = np.where(self.lb.classes_ == group)[0][0]
+
+        # Find diff expressed features
+        idx_pos = self.Y[:, group_num] == 1
+        idx_neg = self.Y[:, group_num] == 0
+
+        if self.use_alpha is True:
+            self.alpha_group_features_ss = Diff_Features(self.alpha_features, self.alpha_indices, self.alpha_sequences,
+                                                         'alpha', self.sample_id,p_val_threshold, idx_pos, idx_neg,
+                                                        self.directory_results, group, self.kernel,self.sample_avg)
+
+        if self.use_beta is True:
+            self.beta_group_features_ss = Diff_Features(self.beta_features, self.beta_indices, self.beta_sequences,
+                                                        'beta',self.sample_id,p_val_threshold, idx_pos, idx_neg,
+                                                        self.directory_results, group, self.kernel,self.sample_avg)
+
+
+        print('Motif Identification Completed')
+
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
         """
@@ -2234,77 +2291,25 @@ class DeepTCR_SS(DeepTCR_S_base):
 
             self.kernel = kernel
             #
-            var_save = []
             if self.use_alpha is True:
-                var_save.extend([self.alpha_features,self.alpha_indices,self.alpha_sequences])
+                var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
+                with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
+                    pickle.dump(var_save, f)
+
             if self.use_beta is True:
-                var_save.extend([self.beta_features,self.beta_indices,self.beta_sequences])
+                var_save = [self.beta_features,self.beta_indices,self.beta_sequences]
+                with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
+                    pickle.dump(var_save, f)
 
-            var_save.extend([self.y_pred,self.y_test,self.kernel])
-
-            with open(os.path.join(self.Name,self.Name) + '_features.pkl','wb') as f:
-                pickle.dump(var_save,f)
+            self.sample_avg = False
+            var_save = [self.y_pred,self.y_test,self.kernel,self.sample_avg]
+            with open(os.path.join(self.Name, self.Name) + '_features.pkl', 'wb') as f:
+                pickle.dump(var_save, f)
 
             print('Done Training')
 
 
-    def Motif_Identification(self,group,p_val_threshold=0.05):
-        """
-        Motif Identification for Single-Sequence Classifier
 
-        This method looks for enriched features in the predetermined gropu
-        and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
-        to produce seqlogos.
-
-        Inputs
-        ---------------------------------------
-        group: string
-            Class for analyzing enriched motifs.
-
-        p_val_threshold: float
-            Significance threshold for enriched features/motifs for
-            Mann-Whitney UTest.
-
-        Returns
-        ---------------------------------------
-
-        self.(alpha/beta)_group_features_ss: Pandas Dataframe
-            Sequences used to determine motifs in fasta files
-            are stored in this dataframe where column names represent
-            the feature number.
-
-        """
-        #Get Saved Features, Indices, and Sequences
-        with open(os.path.join(self.Name,self.Name) + '_features.pkl', 'rb') as f:
-            var_load = pickle.load(f)
-
-        if (self.use_alpha is True) and (self.use_beta is True):
-            self.alpha_features, self.alpha_indices, self.alpha_sequences,\
-            self.beta_features, self.beta_indices, self.beta_sequences,self.y_pred,self.y_test,self.kernel = var_load
-
-        elif (self.use_alpha is True) and (self.use_beta is False):
-            self.alpha_features, self.alpha_indices, self.alpha_sequences,self.y_pred,self.y_test,self.kernel = var_load
-
-        elif (self.use_alpha is False) and (self.use_beta is True):
-            self.beta_features, self.beta_indices, self.beta_sequences, self.y_pred, self.y_test, self.kernel = var_load
-
-
-        group_num = np.where(self.lb.classes_ == group)[0][0]
-
-        # Find diff expressed features
-        idx_pos = self.Y[:, group_num] == 1
-        idx_neg = self.Y[:, group_num] == 0
-
-        if self.use_alpha is True:
-            self.alpha_group_features_ss = Diff_Features(self.alpha_features, self.alpha_indices, self.alpha_sequences, 'alpha',
-                                     p_val_threshold, idx_pos, idx_neg, self.directory_results, group, self.kernel)
-
-        if self.use_beta is True:
-            self.beta_group_features_ss = Diff_Features(self.beta_features, self.beta_indices, self.beta_sequences, 'beta',
-                                     p_val_threshold, idx_pos, idx_neg, self.directory_results, group, self.kernel)
-
-
-        print('Motif Identification Completed')
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
                                 trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
@@ -2746,16 +2751,20 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             self.kernel = kernel
             #
-            var_save = []
             if self.use_alpha is True:
-                var_save.extend([self.alpha_features,self.alpha_indices,self.alpha_sequences])
+                var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
+                with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
+                    pickle.dump(var_save, f)
+
             if self.use_beta is True:
-                var_save.extend([self.beta_features,self.beta_indices,self.beta_sequences])
+                var_save = [self.beta_features,self.beta_indices,self.beta_sequences]
+                with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
+                    pickle.dump(var_save, f)
 
-            var_save.extend([self.y_pred,self.y_test,self.kernel])
-
-            with open(os.path.join(self.Name,self.Name) + '_features.pkl','wb') as f:
-                pickle.dump(var_save,f)
+            self.sample_avg = True
+            var_save = [self.y_pred,self.y_test,self.kernel,self.sample_avg]
+            with open(os.path.join(self.Name, self.Name) + '_features.pkl', 'wb') as f:
+                pickle.dump(var_save, f)
 
             print('Done Training')
 
