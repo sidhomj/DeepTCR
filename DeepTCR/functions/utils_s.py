@@ -236,8 +236,22 @@ def Diff_Features(features,indices,sequences,type,sample_id,p_val_threshold,idx_
     p_val = []
     feature_num = list(range(len(features.T)))
     for i in feature_num:
-        pos = features[idx_pos, i]
-        neg = features[idx_neg, i]
+        if sample_avg is False:
+            pos = features[idx_pos, i]
+            neg = features[idx_neg, i]
+        else:
+            df_temp = pd.DataFrame()
+            df_temp['pos'] = features[idx_pos, i]
+            df_temp['sample_id'] = sample_id[idx_pos]
+            df_temp = df_temp.groupby(['sample_id']).agg({'pos':'mean'})
+            pos = np.asarray(df_temp['pos'].tolist())
+
+            df_temp = pd.DataFrame()
+            df_temp['neg'] = features[idx_neg, i]
+            df_temp['sample_id'] = sample_id[idx_neg]
+            df_temp = df_temp.groupby(['sample_id']).agg({'neg':'mean'})
+            neg = np.asarray(df_temp['neg'].tolist())
+
         pos_mean.append(np.mean(pos))
         neg_mean.append(np.mean(neg))
         try:
@@ -245,6 +259,7 @@ def Diff_Features(features,indices,sequences,type,sample_id,p_val_threshold,idx_
             p_val.append(p)
         except:
             p_val.append(1.0)
+
 
     df_features = pd.DataFrame()
     df_features['Feature'] = feature_num
@@ -289,6 +304,7 @@ def Diff_Features(features,indices,sequences,type,sample_id,p_val_threshold,idx_
             SeqIO.write(motifs, os.path.join(dir, 'feature_') + str(feature) + '.fasta', 'fasta')
 
     seq_features_df_pos = pd.DataFrame()
+
     for ii, f in enumerate(feature_keep, 0):
         seq_features_df_pos[f] = seq_cluster[ii]
 

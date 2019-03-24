@@ -2115,12 +2115,12 @@ class DeepTCR_S_base(DeepTCR_base):
         idx_neg = self.Y[:, group_num] == 0
 
         if self.use_alpha is True:
-            self.alpha_group_features_ss = Diff_Features(self.alpha_features, self.alpha_indices, self.alpha_sequences,
+            self.alpha_group_features = Diff_Features(self.alpha_features, self.alpha_indices, self.alpha_sequences,
                                                          'alpha', self.sample_id,p_val_threshold, idx_pos, idx_neg,
                                                         self.directory_results, group, self.kernel,self.sample_avg)
 
         if self.use_beta is True:
-            self.beta_group_features_ss = Diff_Features(self.beta_features, self.beta_indices, self.beta_sequences,
+            self.beta_group_features = Diff_Features(self.beta_features, self.beta_indices, self.beta_sequences,
                                                         'beta',self.sample_id,p_val_threshold, idx_pos, idx_neg,
                                                         self.directory_results, group, self.kernel,self.sample_avg)
 
