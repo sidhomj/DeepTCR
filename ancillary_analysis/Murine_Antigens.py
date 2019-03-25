@@ -1,3 +1,6 @@
+"""This script is used to characterize the performance of various featurization
+methods on TCRSeq data from 9 Murine Antigens"""
+
 from DeepTCR.DeepTCR import DeepTCR_U
 import numpy as np
 import matplotlib.pyplot as plt
