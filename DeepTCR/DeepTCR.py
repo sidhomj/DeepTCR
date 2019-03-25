@@ -81,9 +81,9 @@ class DeepTCR_base(object):
                     v_alpha_column=None,j_alpha_column=None,
                     v_beta_column=None,j_beta_column=None,d_beta_column=None,p=None):
         """
-        Get Data for Unsupervised Deep Learning Methods.
+        Get Data for DeepTCR
 
-        Parse Data into appropriate inputs for neural network.
+        Parse Data into appropriate inputs for neural network from directories where data is stored.
 
         Inputs
         ---------------------------------------
@@ -1171,7 +1171,7 @@ class DeepTCR_U(DeepTCR_base):
         HeatMap of Sequences
 
         This method creates a heatmap/clustermap for sequences by latent features
-        for either supervised deep learming method.
+        for the unsupervised deep lerning methods.
 
         Inputs
         ---------------------------------------
@@ -1252,7 +1252,7 @@ class DeepTCR_U(DeepTCR_base):
         HeatMap of Samples
 
         This method creates a heatmap/clustermap for samples by latent features
-        for either supervised deep learming method.
+        for the unsupervised deep learning methods.
 
         Inputs
         ---------------------------------------
@@ -1323,8 +1323,9 @@ class DeepTCR_U(DeepTCR_base):
         Clustering Sequences by Latent Features
 
         This method clusters all sequences by learned latent features from
-        either the VAE or the GAN. Hierarchical clustering is implemented
-        from the scipy package.
+        either the variational autoencoder Several clustering algorithms are included including
+        Phenograph, DBSCAN, or hierarchical clustering. DBSCAN is implemented from the
+        sklearn package. Hierarchical clustering is implemented from the scipy package.
 
         Inputs
         ---------------------------------------
@@ -1369,7 +1370,7 @@ class DeepTCR_U(DeepTCR_base):
         self.Cluster_Frequencies: Pandas dataframe
             A dataframe containing the frequency contribution of each cluster to each sample.
 
-        self.Cluster_Assignemnts: ndarray
+        self.Cluster_Assignments: ndarray
             Array with cluster assignments by number.
 
         ---------------------------------------
@@ -1863,14 +1864,14 @@ class DeepTCR_U(DeepTCR_base):
                 sns.catplot(data=df_out, x='Metric', y='Value', kind=plot_type)
 
     def UMAP_Plot(self, by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True,
-                  scale=100,
-                  Load_Prev_Data=False, alpha=1.0):
+                  scale=100,Load_Prev_Data=False, alpha=1.0):
+
         """
         UMAP vizualisation of TCR Sequences
 
         This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
-        prior computing clustering solution or by label. Size of points can also be made to be proportional to
-        frequency of sequence within sample.
+        class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional
+        to frequency of sequence within sample.
 
         Inputs
         ---------------------------------------
@@ -1956,7 +1957,7 @@ class DeepTCR_U(DeepTCR_base):
 class DeepTCR_S_base(DeepTCR_base):
     def AUC_Curve(self,show_all=True,filename='AUC.tif',title=None):
         """
-        AUC Curve for both Single Sequence and Whole File Models
+        AUC Curve for both Sequence and Repertoire/Sample Classifiers
 
         Inputs
         ---------------------------------------
@@ -2135,8 +2136,7 @@ class DeepTCR_S_base(DeepTCR_base):
         UMAP vizualisation of TCR Sequences
 
         This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
-        prior computing clustering solution or by label. Size of points can also be made to be proportional to
-        frequency of sequence within sample.
+        class label or sample_label. Size of points can also be made to be proportional to frequency of sequence within sample.
 
         Inputs
         ---------------------------------------
@@ -2151,9 +2151,6 @@ class DeepTCR_S_base(DeepTCR_base):
 
         by_sample: bool
             To color the points by their sample lebel, set to True.
-
-        by_cluster:bool
-            To color the points by the prior computed clustering solution, set to True.
 
         freq_weight: bool
             To scale size of points proportionally to their frequency, set to True.
