@@ -15,7 +15,8 @@ import os
 #Instantiate training object
 DTCRU = DeepTCR_U('Clustering_Metrics')
 #Load Data
-DTCRU.Get_Data(directory='../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
+DTCRU.Get_Data(directory='../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
+               aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
 #Get distances from various methods
 #VAE_- Genes
