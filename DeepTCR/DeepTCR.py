@@ -376,7 +376,7 @@ class DeepTCR_base(object):
                 j_alpha = np.asarray([None]*len(label_id))
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
-                pickle.dump([X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,
+                pickle.dump([X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,
                              self.lb,file_list,self.use_alpha,self.use_beta,
                              self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,
                              v_beta, d_beta,j_beta,v_alpha,j_alpha,
@@ -385,7 +385,7 @@ class DeepTCR_base(object):
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
-                X_Seq_alpha,X_Seq_beta, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,\
+                X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,\
                 self.lb,file_list,self.use_alpha,self.use_beta,\
                     self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,\
                     v_beta, d_beta,j_beta,v_alpha,j_alpha,\

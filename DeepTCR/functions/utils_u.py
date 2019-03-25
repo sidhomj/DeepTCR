@@ -140,6 +140,7 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,gridsize=5
         else:
             ax[i].plot(smp_d, '.', markersize=1, alpha=0.5)
         ax[i].set(xticks=[], yticks=[],frame_on=False)
+        #ax[i].set_title(samples[i])
 
     dg = dendrogram(Z, no_plot=True)
     polar_dendrogram(dg, fig, ax_radius=dg_radius, log_scale=log_scale)
