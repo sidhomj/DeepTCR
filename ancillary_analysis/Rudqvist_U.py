@@ -20,57 +20,59 @@ DTCRU = DeepTCR_U('Reperoire_Distances')
 
 DTCRU.Get_Data(directory='../Data/Rudqvist',Load_Prev_Data=False,aggregate_by_aa=True,
                aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21)
-
-# VAE-Gene
-DTCRU.Train_VAE(use_only_gene=True)
-d_vae_gene = squareform(pdist(DTCRU.features))
-prop_vae_gene,_ = phenograph_clustering_freq(d_vae_gene,DTCRU)
 #
+# # VAE-Gene
+# DTCRU.Train_VAE(use_only_gene=True)
+# d_vae_gene = squareform(pdist(DTCRU.features))
+# prop_vae_gene,_ = phenograph_clustering_freq(d_vae_gene,DTCRU)
 # #
-# VAE-Seq
-DTCRU.Train_VAE(use_only_seq=True)
-d_vae_seq = squareform(pdist(DTCRU.features))
-prop_vae_seq,_ = phenograph_clustering_freq(d_vae_seq,DTCRU)
-#
-#
+# # #
+# # VAE-Seq
+# DTCRU.Train_VAE(use_only_seq=True)
+# d_vae_seq = squareform(pdist(DTCRU.features))
+# prop_vae_seq,_ = phenograph_clustering_freq(d_vae_seq,DTCRU)
+# #
+# #
 # VAE-Seq-Gene
 DTCRU.Train_VAE(Load_Prev_Data=False)
-d_vae_seq_gene = squareform(pdist(DTCRU.features))
-prop_vae_seq_gene,_ = phenograph_clustering_freq(d_vae_seq_gene,DTCRU)
-#
-# Hamming
-d_hamming = squareform(pdist(np.squeeze(DTCRU.X_Seq_beta, 1), metric='hamming'))
-prop_hamming,_ = phenograph_clustering_freq(d_hamming,DTCRU)
-
-# #Kmer
-# # kmer_features = kmer_search(DTCRU.beta_sequences)
-# # d_kmer = squareform(pdist(kmer_features, metric='euclidean'))
+color_dict = {'Control':'g','RT':'r','9H10':'y','Combo':'b'}
+DTCRU.Repertoire_Dendogram(distance_metric='KL',color_dict=color_dict,Load_Prev_Data=True)
+# d_vae_seq_gene = squareform(pdist(DTCRU.features))
+# prop_vae_seq_gene,_ = phenograph_clustering_freq(d_vae_seq_gene,DTCRU)
 # #
-# # # with open('Rudqvist_kmer.pkl','wb') as f:
-# # #     pickle.dump(d_kmer,f,protocol=4)
-# #
-with open('Rudqvist_kmer.pkl','rb') as f:
-    d_kmer = pickle.load(f)
-
-prop_kmer,_ = phenograph_clustering_freq(d_kmer,DTCRU)
-
-# # Global Seq-Align
-# d_seqalign = pairwise_alignment(DTCRU.beta_sequences)
-# with open('Rudqvist_seqalign.pkl','wb') as f:
-#     pickle.dump(d_seqalign,f,protocol=4)
+# # Hamming
+# d_hamming = squareform(pdist(np.squeeze(DTCRU.X_Seq_beta, 1), metric='hamming'))
+# prop_hamming,_ = phenograph_clustering_freq(d_hamming,DTCRU)
 #
-with open('Rudqvist_seqalign.pkl', 'rb') as f:
-    d_seqalign = pickle.load(f)
-
-d_seqalign = d_seqalign + d_seqalign.T
-prop_seqalign,_ = phenograph_clustering_freq(d_seqalign,DTCRU)
-
+# # #Kmer
+# # # kmer_features = kmer_search(DTCRU.beta_sequences)
+# # # d_kmer = squareform(pdist(kmer_features, metric='euclidean'))
+# # #
+# # # # with open('Rudqvist_kmer.pkl','wb') as f:
+# # # #     pickle.dump(d_kmer,f,protocol=4)
+# # #
+# with open('Rudqvist_kmer.pkl','rb') as f:
+#     d_kmer = pickle.load(f)
 #
-prop_list = [prop_vae_seq,prop_vae_gene,prop_vae_seq_gene,prop_hamming,prop_kmer,prop_seqalign]
-names = ['VAE-Seq','VAE-Gene','VAE-Seq-Gene','Hamming','K-mer','Global-Seq-Align']
+# prop_kmer,_ = phenograph_clustering_freq(d_kmer,DTCRU)
+#
+# # # Global Seq-Align
+# # d_seqalign = pairwise_alignment(DTCRU.beta_sequences)
+# # with open('Rudqvist_seqalign.pkl','wb') as f:
+# #     pickle.dump(d_seqalign,f,protocol=4)
 # #
-with open('Prop.pkl','wb') as f:
-    pickle.dump([prop_list,names],f)
+# with open('Rudqvist_seqalign.pkl', 'rb') as f:
+#     d_seqalign = pickle.load(f)
+#
+# d_seqalign = d_seqalign + d_seqalign.T
+# prop_seqalign,_ = phenograph_clustering_freq(d_seqalign,DTCRU)
+#
+# #
+# prop_list = [prop_vae_seq,prop_vae_gene,prop_vae_seq_gene,prop_hamming,prop_kmer,prop_seqalign]
+# names = ['VAE-Seq','VAE-Gene','VAE-Seq-Gene','Hamming','K-mer','Global-Seq-Align']
+# # #
+# with open('Prop.pkl','wb') as f:
+#     pickle.dump([prop_list,names],f)
 
 with open('Prop.pkl','rb') as f:
     prop_list,names = pickle.load(f)
@@ -80,16 +82,21 @@ distances_list, distances_names, method_names = Get_Prop_Distances(prop_list,nam
 
 labels = []
 for i in prop_list[0].index:
-    labels.append(DTCRU.label_id[np.where(DTCRU.file_id == i)[0][0]])
+    labels.append(DTCRU.class_id[np.where(DTCRU.sample_id == i)[0][0]])
 
-
-df_metrics = Assess_Performance_KNN_Samples(distances_list,distances_names,method_names,dir_results,DTCRU,labels)
-#Plot_Performance_Samples(df_metrics,dir_results)
+df_metrics = Assess_Performance_KNN_Samples(distances_list,distances_names,method_names,dir_results,labels)
+Plot_Performance_Samples(df_metrics,dir_results)
 
 #Determine best distance metric across all algorithms
 df_temp = df_metrics[df_metrics['Metric']=='AUC']
-df_temp = df_temp[df_temp['Classes']=='Combo']
-sns.violinplot(data=df_temp,x='Distance Metric',y='Value',hue='Algorithm')
+#df_temp = df_temp[df_temp['Classes']=='Combo']
+fig,ax = plt.subplots()
+sns.violinplot(data=df_temp,x='Distance Metric',y='Value',hue='Algorithm',ax=ax)
+plt.xlabel('')
+plt.ylabel('')
+plt.xticks(fontsize=24)
+plt.yticks(fontsize=24)
+ax.get_legend().remove()
 
 subdir = 'Performance_Summary'
 if not os.path.exists(os.path.join(dir_results,subdir)):

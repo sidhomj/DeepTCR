@@ -64,7 +64,7 @@ num_cluster_list = []
 for n, rep in zip(num, reps):
     for r in range(rep):
         classes = np.random.choice(classes_all, n, replace=False)
-        sel = np.isin(DTCRU.label_id, classes)
+        sel = np.isin(DTCRU.class_id, classes)
 
         #VAE-Gene
         d = d_vae_gene[sel,:]

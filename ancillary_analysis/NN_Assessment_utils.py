@@ -166,23 +166,24 @@ def Plot_Performance_Samples(df,dir_results,metrics=None,distance_methods=None):
         distance_methods = np.unique(df['Distance Metric'].tolist())
 
     types = np.unique(df['Classes'].tolist())
-    metrics = ['AUC']
-    types = ['Combo']
+    # metrics = ['AUC']
+    # types = ['Combo']
 
     for m in metrics:
-        for t in types:
-            for d in distance_methods:
+        fig,axes = plt.subplots(len(distance_methods),len(types),figsize=(15,20))
+        for ii,t in enumerate(types,0):
+            for jj,d in enumerate(distance_methods,0):
                 df_temp = df[(df['Classes']==t) & (df['Metric']==m) & (df['Distance Metric']==d)]
-                sns.catplot(data=df_temp,x='k',y='Value',kind='point',hue='Algorithm',capsize=0.2)
-                plt.title(t+'_'+d,fontsize=24)
-                plt.ylabel(m)
-                plt.subplots_adjust(top=0.9)
-                plt.xticks(rotation=90,fontsize=12)
-                plt.yticks(fontsize=12)
-                plt.xlabel('k',fontsize=18)
-                plt.ylabel(m,fontsize=18)
-                plt.subplots_adjust(bottom=0.15)
-                plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'_'+d+'.eps'))
+                ax = axes[jj,ii]
+                sns.pointplot(data=df_temp,x='k',y='Value',hue='Algorithm',capsize=0.2,ax=ax)
+                ax.get_legend().remove()
+                ax.set_title(t+'_'+d)
+                ax.tick_params(axis='x',rotation=90)
+                ax.get_xaxis().set_visible(False)
+                ax.set_ylabel('')
+                ax.set_ylim([0,1.0])
+
+        plt.savefig(os.path.join(dir_results,subdir,m+'.eps'))
 
 def Plot_Latent(labels,methods,dir_results):
     subdir = 'Latent'
@@ -461,7 +462,7 @@ def Get_Prop_Distances(prop_list,names,eps = 1e-9):
 
     return distances_list, distances_names_list, method_names
 
-def Assess_Performance_KNN_Samples(distances_list,distances_names,method_names,dir_results,DTCRU,labels):
+def Assess_Performance_KNN_Samples(distances_list,distances_names,method_names,dir_results,labels):
     k_values = list(range(1,len(distances_list[0])))
     metrics = ['Recall', 'Precision', 'F1_Score', 'AUC']
 
