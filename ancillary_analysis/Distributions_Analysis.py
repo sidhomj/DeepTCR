@@ -1,3 +1,6 @@
+"""This script is used to collect basic metrics for the TCRSeq data
+used in the DeepTCR manuscript. """
+
 import os
 import glob
 from multiprocessing import Pool
