@@ -1,3 +1,7 @@
+"""This script is used to assess the performance of various featurization methods
+at the sample/repertoire level on TCRSeq data from tumor infiltrating lymphocytes (TIL)
+taken from mice treated with different therapies."""
+
 from DeepTCR.DeepTCR import DeepTCR_U
 import numpy as np
 import seaborn as sns
@@ -14,7 +18,8 @@ if not os.path.exists(dir_results):
 # Instantiate training object
 DTCRU = DeepTCR_U('Reperoire_Distances')
 
-DTCRU.Get_Data(directory='../Data/Rudqvist',Load_Prev_Data=False,aggregate_by_aa=True,aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21)
+DTCRU.Get_Data(directory='../Data/Rudqvist',Load_Prev_Data=False,aggregate_by_aa=True,
+               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21)
 
 # VAE-Gene
 DTCRU.Train_VAE(use_only_gene=True)
