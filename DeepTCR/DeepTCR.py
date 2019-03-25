@@ -3046,7 +3046,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         ---------------------------------------
 
         """
-
+        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         num_samples = len(self.sample_list)
         if folds is None:
             folds = num_samples
