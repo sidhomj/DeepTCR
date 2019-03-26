@@ -872,6 +872,68 @@ class feature_analytics_class(object):
         self.Cluster_Assignments = IDX
         print('Clustering Done')
 
+    def Motif_Identification(self,group,p_val_threshold=0.05,by_samples=False):
+        """
+        Motif Identification Supervised Classifiers
+
+        This method looks for enriched features in the predetermined gropu
+        and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
+        to produce seqlogos.
+
+        Inputs
+        ---------------------------------------
+        group: string
+            Class for analyzing enriched motifs.
+
+        p_val_threshold: float
+            Significance threshold for enriched features/motifs for
+            Mann-Whitney UTest.
+
+        by_samples: bool
+            To run a motif identification that looks for enriched motifs at the sample
+            instead of the seuence level, set this parameter to True. Otherwise, the enrichment
+            analysis will be done at the sequence level.
+
+        Returns
+        ---------------------------------------
+
+        self.(alpha/beta)_group_features: Pandas Dataframe
+            Sequences used to determine motifs in fasta files
+            are stored in this dataframe where column names represent
+            the feature number.
+
+        """
+        #Get Saved Features, Indices, and Sequences
+        with open(os.path.join(self.Name,self.Name) + '_kernel.pkl', 'rb') as f:
+            self.kernel = pickle.load(f)
+
+        if self.use_alpha is True:
+            with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'rb') as f:
+                self.alpha_features, self.alpha_indices, self.alpha_sequences = pickle.load(f)
+
+        if self.use_beta is True:
+            with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'rb') as f:
+                self.beta_features, self.beta_indices, self.beta_sequences = pickle.load(f)
+
+        group_num = np.where(self.lb.classes_ == group)[0][0]
+
+        # Find diff expressed features
+        idx_pos = self.Y[:, group_num] == 1
+        idx_neg = self.Y[:, group_num] == 0
+
+        if self.use_alpha is True:
+            self.alpha_group_features = Diff_Features(self.alpha_features, self.alpha_indices, self.alpha_sequences,
+                                                         'alpha', self.sample_id,p_val_threshold, idx_pos, idx_neg,
+                                                        self.directory_results, group, self.kernel,by_samples)
+
+        if self.use_beta is True:
+            self.beta_group_features = Diff_Features(self.beta_features, self.beta_indices, self.beta_sequences,
+                                                        'beta',self.sample_id,p_val_threshold, idx_pos, idx_neg,
+                                                        self.directory_results, group, self.kernel,by_samples)
+
+
+        print('Motif Identification Completed')
+
 class vis_class(object):
 
     def HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None,
@@ -1246,7 +1308,8 @@ class vis_class(object):
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
-                  trainable_embedding=True,use_only_gene=False,use_only_seq=False,epochs_min=10,stop_criterion=0.0001):
+                  trainable_embedding=True,use_only_gene=False,use_only_seq=False,epochs_min=10,stop_criterion=0.0001,
+                  kernel=5):
         """
         Train Variational Autoencoder (VAE)
 
@@ -1289,6 +1352,10 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         stop_criterion: float
             Minimum percent decrease in determined interval (below) to continue
             training. Used as early stopping criterion.
+
+        kernel: int
+            To specify the motif k-mer of the first layer of the autoencoder, change this
+            parameter.
 
         Returns
 
@@ -1348,9 +1415,11 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                     # Convolutional Features
                     if self.use_alpha is True:
-                        Seq_Features_alpha,indices_alpha = Convolutional_Features_AE(inputs_seq_embed_alpha, training=training, prob=prob,name='alpha_conv')
+                        Seq_Features_alpha,alpha_out,indices_alpha = Convolutional_Features_AE(inputs_seq_embed_alpha, training=training,
+                                                                                               prob=prob,name='alpha_conv',kernel=kernel)
                     if self.use_beta is True:
-                        Seq_Features_beta,indices_beta = Convolutional_Features_AE(inputs_seq_embed_beta, training=training, prob=prob,name='beta_conv')
+                        Seq_Features_beta,beta_out,indices_beta = Convolutional_Features_AE(inputs_seq_embed_beta, training=training,
+                                                                                            prob=prob,name='beta_conv',kernel=kernel)
 
 
                     Seq_Features = []
@@ -1554,6 +1623,10 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                 features_list = []
                 accuracy_list = []
+                alpha_features_list = []
+                alpha_indices_list = []
+                beta_features_list = []
+                beta_indices_list = []
                 Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,self.v_alpha_num, self.j_alpha_num]
 
                 for vars in get_batches(Vars, batch_size=batch_size, random=False):
@@ -1584,9 +1657,42 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     features_list.append(features_ind)
                     accuracy_list.append(accuracy_check)
 
+                    if self.use_alpha is True:
+                        alpha_ft, alpha_i = sess.run([alpha_out,indices_alpha],feed_dict=feed_dict)
+                        alpha_features_list.append(alpha_ft)
+                        alpha_indices_list.append(alpha_i)
+
+                    if self.use_beta is True:
+                        beta_ft, beta_i = sess.run([beta_out,indices_beta],feed_dict=feed_dict)
+                        beta_features_list.append(beta_ft)
+                        beta_indices_list.append(beta_i)
 
                 features = np.vstack(features_list)
                 accuracy_list = np.hstack(accuracy_list)
+                if self.use_alpha is True:
+                    self.alpha_features = np.vstack(alpha_features_list)
+                    self.alpha_indices = np.vstack(alpha_indices_list)
+
+                if self.use_beta is True:
+                    self.beta_features = np.vstack(beta_features_list)
+                    self.beta_indices = np.vstack(beta_indices_list)
+
+                self.kernel = 3
+                #
+                if self.use_alpha is True:
+                    var_save = [self.alpha_features, self.alpha_indices, self.alpha_sequences]
+                    with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
+                        pickle.dump(var_save, f)
+
+                if self.use_beta is True:
+                    var_save = [self.beta_features, self.beta_indices, self.beta_sequences]
+                    with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
+                        pickle.dump(var_save, f)
+
+                with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
+                    pickle.dump(self.kernel, f)
+
+
                 print('Reconstruction Accuracy: {:.5f}'.format(np.nanmean(accuracy_list)))
 
                 embedding_layers = [embedding_layer_v_alpha,embedding_layer_j_alpha,embedding_layer_v_beta,embedding_layer_d_beta,embedding_layer_j_beta]
@@ -2100,68 +2206,6 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                 keep.append(ii)
 
         self.Rep_Seq = dict(zip(self.lb.classes_[keep], Rep_Seq))
-
-    def Motif_Identification(self,group,p_val_threshold=0.05,by_samples=False):
-        """
-        Motif Identification Supervised Classifiers
-
-        This method looks for enriched features in the predetermined gropu
-        and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
-        to produce seqlogos.
-
-        Inputs
-        ---------------------------------------
-        group: string
-            Class for analyzing enriched motifs.
-
-        p_val_threshold: float
-            Significance threshold for enriched features/motifs for
-            Mann-Whitney UTest.
-
-        by_samples: bool
-            To run a motif identification that looks for enriched motifs at the sample
-            instead of the seuence level, set this parameter to True. Otherwise, the enrichment
-            analysis will be done at the sequence level.
-
-        Returns
-        ---------------------------------------
-
-        self.(alpha/beta)_group_features: Pandas Dataframe
-            Sequences used to determine motifs in fasta files
-            are stored in this dataframe where column names represent
-            the feature number.
-
-        """
-        #Get Saved Features, Indices, and Sequences
-        with open(os.path.join(self.Name,self.Name) + '_kernel.pkl', 'rb') as f:
-            self.kernel = pickle.load(f)
-
-        if self.use_alpha is True:
-            with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'rb') as f:
-                self.alpha_features, self.alpha_indices, self.alpha_sequences = pickle.load(f)
-
-        if self.use_beta is True:
-            with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'rb') as f:
-                self.beta_features, self.beta_indices, self.beta_sequences = pickle.load(f)
-
-        group_num = np.where(self.lb.classes_ == group)[0][0]
-
-        # Find diff expressed features
-        idx_pos = self.Y[:, group_num] == 1
-        idx_neg = self.Y[:, group_num] == 0
-
-        if self.use_alpha is True:
-            self.alpha_group_features = Diff_Features(self.alpha_features, self.alpha_indices, self.alpha_sequences,
-                                                         'alpha', self.sample_id,p_val_threshold, idx_pos, idx_neg,
-                                                        self.directory_results, group, self.kernel,by_samples)
-
-        if self.use_beta is True:
-            self.beta_group_features = Diff_Features(self.beta_features, self.beta_indices, self.beta_sequences,
-                                                        'beta',self.sample_id,p_val_threshold, idx_pos, idx_neg,
-                                                        self.directory_results, group, self.kernel,by_samples)
-
-
-        print('Motif Identification Completed')
 
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):

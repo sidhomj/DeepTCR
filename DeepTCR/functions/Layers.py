@@ -88,15 +88,16 @@ def Get_Ortho_Loss_dep(x,alpha=1.0):
     return loss
 
 #Layers for VAE
-def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='Convolutional_Features'):
+def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='Convolutional_Features',kernel=5):
     with tf.variable_scope(name,reuse=reuse):
-        kernel = 3
         units = 32
         conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')
+        conv_out = tf.layers.flatten(tf.reduce_max(conv,2))
         indices = tf.squeeze(tf.cast(tf.argmax(conv, axis=2), tf.float32),1)
         conv = tf.nn.leaky_relu(conv)
         conv = tf.layers.dropout(conv,prob)
 
+        kernel = 3
         units = 64
         conv = tf.layers.conv2d(conv, units, (1, kernel), (1, kernel), padding='same')
         conv = tf.nn.leaky_relu(conv)
@@ -107,7 +108,7 @@ def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='C
         conv = tf.nn.leaky_relu(conv)
         conv = tf.layers.dropout(conv, prob)
 
-        return tf.layers.flatten(conv),indices
+        return tf.layers.flatten(conv),conv_out,indices
 
 def Recon_Loss(inputs,logits):
     #Calculate Per Sample Reconstruction Loss
