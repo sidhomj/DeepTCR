@@ -2184,8 +2184,12 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         Returns
 
+        self.AUC_DF: Pandas Dataframe
+            AUC scores are returned for each class.
+
         In addition to plotting the ROC Curve, the AUC's are saved
         to a csv file in the results directory called 'AUC.csv'
+
         ---------------------------------------
 
         """
@@ -2227,6 +2231,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         df_out['Class'] = classes
         df_out['AUC'] = auc_scores
         df_out.to_csv(os.path.join(self.directory_results,'AUC.csv'),index=False)
+        self.AUC_DF = df_out
 
     def Representative_Sequences(self, top_seq=10):
         """
