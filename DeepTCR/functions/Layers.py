@@ -87,8 +87,7 @@ def Get_Ortho_Loss_dep(x,alpha=1.0):
     loss = alpha*tf.reduce_sum(loss)
     return loss
 
-#Layers for VAE
-def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='Convolutional_Features',kernel=3):
+def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Features',kernel=3):
     with tf.variable_scope(name,reuse=reuse):
         units = 32
         conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')
@@ -110,56 +109,7 @@ def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='C
 
         return tf.layers.flatten(conv),conv_out,indices
 
-def Recon_Loss(inputs,logits):
-    #Calculate Per Sample Reconstruction Loss
-    shape_layer_1 = inputs.get_shape().as_list()
-    shape_layer_2 = tf.shape(inputs)
-    recon_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=inputs, logits=logits)
-    recon_loss = tf.reshape(recon_loss,shape=[shape_layer_2[0]*shape_layer_2[1],shape_layer_1[2]])
-    w=tf.cast(tf.squeeze(tf.greater(inputs,0),1),tf.float32)
-    recon_loss = tf.reduce_mean(w*recon_loss,axis=1)
-    return recon_loss
-
-def Latent_Loss(z_log_var,z_mean,alpha=1e-3):
-    #Calculate Per Sample Variational Loss
-    latent_loss = -alpha *tf.reduce_sum(1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1)
-    return latent_loss
-
-def Get_Gene_Loss(fc,embedding_layer,X_OH):
-    upsample1 = tf.layers.dense(fc, 128, tf.nn.relu)
-    upsample2 = tf.layers.dense(upsample1, 64, tf.nn.relu)
-    upsample3 = tf.layers.dense(upsample2, embedding_layer.shape[1], tf.nn.relu)
-    logits = tf.matmul(upsample3, tf.transpose(embedding_layer))
-    loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=X_OH, logits=logits)
-
-    predicted = tf.argmax(logits,1)
-    actual = tf.argmax(X_OH,1)
-    accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted,actual),tf.float32))
-
-    return loss,accuracy
-
-#Layers for supervised functions
-def Convolutional_Features(inputs,reuse=False,units=12,kernel=5,trainable_embedding=False,name='Convolutional_Features'):
-    with tf.variable_scope(name,reuse=reuse):
-
-        if trainable_embedding is True:
-            conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')
-        else:
-            conv_weights = tf.get_variable(name='conv_weights', shape=[1, kernel, 20, units])
-            conv_weights = tf.abs(conv_weights)
-            conv_zero = tf.get_variable(name='conv_zero', shape=[1, kernel, 1, units],initializer=tf.initializers.zeros(), trainable=False)
-            conv_weights = tf.concat((conv_zero,conv_weights),axis=2)
-            conv_bias = tf.get_variable(name='conv_bias', shape=units, initializer=tf.initializers.zeros())
-            conv = tf.nn.conv2d(inputs, conv_weights, padding='SAME', strides=[1, 1, 1, 1]) + conv_bias
-
-
-        conv = tf.nn.relu(conv)
-        indices = tf.cast(tf.argmax(conv, axis=2), tf.float32)
-        conv = tf.layers.max_pooling2d(conv,(1,conv.shape[2]),(1,conv.shape[2]))
-
-        return tf.layers.flatten(conv), tf.layers.flatten(indices)
-
-def Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc):
+def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene, num_fc_layers=0, units_fc=12):
     if self.use_alpha is True:
         GO.X_Seq_alpha = tf.placeholder(tf.int64,
                                         shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],
@@ -177,27 +127,27 @@ def Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_ge
     GO.sp = tf.sparse.placeholder(dtype=tf.float32, shape=[None, None])
     GO.X_Freq = tf.placeholder(tf.float32, shape=[None, ], name='Freq')
 
-    embedding_dim_genes = 48
+    GO.embedding_dim_genes = 48
     gene_features = []
     GO.X_v_beta, GO.X_v_beta_OH, GO.embedding_layer_v_beta, \
     GO.X_d_beta, GO.X_d_beta_OH, GO.embedding_layer_d_beta, \
     GO.X_j_beta, GO.X_j_beta_OH, GO.embedding_layer_j_beta, \
     GO.X_v_alpha, GO.X_v_alpha_OH, GO.embedding_layer_v_alpha, \
     GO.X_j_alpha, GO.X_j_alpha_OH, GO.embedding_layer_j_alpha, \
-    gene_features = Get_Gene_Features(self, embedding_dim_genes, gene_features)
+    gene_features = Get_Gene_Features(self, GO.embedding_dim_genes, gene_features)
 
     if trainable_embedding is True:
         # AA Embedding
         with tf.variable_scope('AA_Embedding'):
-            embedding_dim_aa = 64
-            embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq', shape=[21, embedding_dim_aa])
-            embedding_layer_seq = tf.expand_dims(tf.expand_dims(embedding_layer_seq, axis=0), axis=0)
+            GO.embedding_dim_aa = 64
+            GO.embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq', shape=[21, GO.embedding_dim_aa])
+            GO.embedding_layer_seq = tf.expand_dims(tf.expand_dims(GO.embedding_layer_seq, axis=0), axis=0)
             if self.use_alpha is True:
                 inputs_seq_embed_alpha = tf.squeeze(
-                    tf.tensordot(GO.X_Seq_alpha_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                    tf.tensordot(GO.X_Seq_alpha_OH, GO.embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
             if self.use_beta is True:
                 inputs_seq_embed_beta = tf.squeeze(
-                    tf.tensordot(GO.X_Seq_beta_OH, embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+                    tf.tensordot(GO.X_Seq_beta_OH, GO.embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
 
     else:
         if self.use_alpha is True:
@@ -208,15 +158,14 @@ def Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_ge
 
     # Convolutional Features
     if self.use_alpha is True:
-        GO.Seq_Features_alpha, GO.Indices_alpha = Convolutional_Features(inputs_seq_embed_alpha, kernel=kernel,
-                                                                         units=units,
-                                                                         trainable_embedding=trainable_embedding,
-                                                                         name='alpha_conv')
+        GO.Seq_Features_alpha, GO.alpha_out, GO.indices_alpha = Convolutional_Features(inputs_seq_embed_alpha,
+                                                                                       kernel=kernel,
+                                                                                       name='alpha_conv', prob=GO.prob)
+
     if self.use_beta is True:
-        GO.Seq_Features_beta, GO.Indices_beta = Convolutional_Features(inputs_seq_embed_beta, kernel=kernel,
-                                                                       units=units,
-                                                                       trainable_embedding=trainable_embedding,
-                                                                       name='beta_conv')
+        GO.Seq_Features_beta, GO.beta_out, GO.indices_beta = Convolutional_Features(inputs_seq_embed_beta,
+                                                                                    kernel=kernel,
+                                                                                    name='beta_conv', prob=GO.prob)
 
     Seq_Features = []
     if self.use_alpha is True:
@@ -248,6 +197,35 @@ def Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_ge
             fc = tf.layers.dense(fc, units_fc, tf.nn.relu)
 
     return fc
+
+#Layers for VAE
+def Recon_Loss(inputs,logits):
+    #Calculate Per Sample Reconstruction Loss
+    shape_layer_1 = inputs.get_shape().as_list()
+    shape_layer_2 = tf.shape(inputs)
+    recon_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=inputs, logits=logits)
+    recon_loss = tf.reshape(recon_loss,shape=[shape_layer_2[0]*shape_layer_2[1],shape_layer_1[2]])
+    w=tf.cast(tf.squeeze(tf.greater(inputs,0),1),tf.float32)
+    recon_loss = tf.reduce_mean(w*recon_loss,axis=1)
+    return recon_loss
+
+def Latent_Loss(z_log_var,z_mean,alpha=1e-3):
+    #Calculate Per Sample Variational Loss
+    latent_loss = -alpha *tf.reduce_sum(1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var), axis=1)
+    return latent_loss
+
+def Get_Gene_Loss(fc,embedding_layer,X_OH):
+    upsample1 = tf.layers.dense(fc, 128, tf.nn.relu)
+    upsample2 = tf.layers.dense(upsample1, 64, tf.nn.relu)
+    upsample3 = tf.layers.dense(upsample2, embedding_layer.shape[1], tf.nn.relu)
+    logits = tf.matmul(upsample3, tf.transpose(embedding_layer))
+    loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=X_OH, logits=logits)
+
+    predicted = tf.argmax(logits,1)
+    actual = tf.argmax(X_OH,1)
+    accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted,actual),tf.float32))
+
+    return loss,accuracy
 
 
 
