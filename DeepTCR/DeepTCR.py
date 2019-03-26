@@ -2166,16 +2166,15 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 sns.catplot(data=df_out, x='Metric', y='Value', kind=plot_type)
 
 class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
-    def AUC_Curve(self,show_all=True,filename='AUC.tif',title=None):
+    def AUC_Curve(self,by=None,filename='AUC.tif',title=None):
         """
         AUC Curve for both Sequence and Repertoire/Sample Classifiers
 
         Inputs
         ---------------------------------------
-        show_all: bool
-            In the case there is only two classes, the method defaults
-            to producing an curve for only one class. If one desires
-            to see curves for all classes, set to True.
+        by: str
+            To show AUC curve for only one class, set this parameter
+            to the name of the class label one wants to plot.
 
         filename: str
             Filename to save tif file of AUC curve.
@@ -2184,27 +2183,16 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             Optional Title to put on ROC Curve.
 
         Returns
+
+        In addition to plotting the ROC Curve, the AUC's are saved
+        to a csv file in the results directory called 'AUC.csv'
         ---------------------------------------
 
         """
         y_test = self.y_test
         y_pred = self.y_pred
-        if (self.Y.shape[1] == 2) & (show_all is False):
-            plt.figure()
-            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-            plt.xlim([0.0, 1.0])
-            plt.ylim([0.0, 1.05])
-            plt.xlabel('False Positive Rate')
-            plt.ylabel('True Positive Rate')
-            plt.title('ROC_Curves')
-
-            class_name = self.lb.classes_[1]
-            roc_score = roc_auc_score(y_test[:, 1], y_pred[:, 1])
-            fpr, tpr, _ = roc_curve(y_test[:, 1], y_pred[:, 1])
-            plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score))
-
-
-        else:
+        auc_scores = []
+        if by is None:
             plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
             plt.xlim([0.0, 1.0])
             plt.ylim([0.0, 1.05])
@@ -2213,6 +2201,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
             for ii, class_name in enumerate(self.lb.classes_, 0):
                 roc_score = roc_auc_score(y_test[:, ii], y_pred[:,ii])
+                auc_scores.append(roc_score)
                 fpr, tpr, _ = roc_curve(y_test[:, ii], y_pred[:,ii])
                 plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score))
 
@@ -2223,6 +2212,11 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         plt.savefig(os.path.join(self.directory_results,filename))
         plt.show(block=False)
+
+        df_out = pd.DataFrame()
+        df_out['Class'] = self.lb.classes_
+        df_out['AUC'] = auc_scores
+        df_out.to_csv(os.path.join(self.directory_results,'AUC.csv'),index=False)
 
     def Representative_Sequences(self, top_seq=10):
         """
@@ -2381,7 +2375,7 @@ class DeepTCR_SS(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc)
                 GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
-                #GO.ortho_loss = Get_Ortho_Loss(Seq_Features)
+                GO.ortho_loss = Get_Ortho_Loss(GO.Features)
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
