@@ -1677,7 +1677,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     self.beta_features = np.vstack(beta_features_list)
                     self.beta_indices = np.vstack(beta_indices_list)
 
-                self.kernel = 3
+                self.kernel = kernel
                 #
                 if self.use_alpha is True:
                     var_save = [self.alpha_features, self.alpha_indices, self.alpha_sequences]
