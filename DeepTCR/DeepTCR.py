@@ -2324,7 +2324,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         with tf.device(self.device):
             with graph_model.as_default():
-                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc)
+                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
                 GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
 
                 if weight_by_class is True:

@@ -360,12 +360,12 @@ def Get_Seq_Features_Indices(self,batch_size,GO,sess):
             feed_dict[GO.X_Seq_beta] = vars[1]
 
         if self.use_alpha is True:
-            features_i_alpha, indices_i_alpha = sess.run([GO.Seq_Features_alpha, GO.Indices_alpha], feed_dict=feed_dict)
+            features_i_alpha, indices_i_alpha = sess.run([GO.alpha_out, GO.indices_alpha], feed_dict=feed_dict)
             alpha_features_list.append(features_i_alpha)
             alpha_indices_list.append(indices_i_alpha)
 
         if self.use_beta is True:
-            features_i_beta, indices_i_beta = sess.run([GO.Seq_Features_beta, GO.Indices_beta], feed_dict=feed_dict)
+            features_i_beta, indices_i_beta = sess.run([GO.beta_out, GO.indices_beta], feed_dict=feed_dict)
             beta_features_list.append(features_i_beta)
             beta_indices_list.append(indices_i_beta)
 
