@@ -2397,7 +2397,6 @@ class DeepTCR_SS(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc)
                 GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
-                #GO.ortho_loss = Get_Ortho_Loss(GO.Features)
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
@@ -2406,7 +2405,10 @@ class DeepTCR_SS(DeepTCR_S_base):
                 else:
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
-                #GO.loss = GO.loss+GO.ortho_loss
+                # if ortho_norm is True:
+                #     #GO.ortho_loss = Get_Ortho_Loss(GO.Features, alpha=alpha)
+                #     GO.ortho_loss = alpha*tf.reduce_mean(tf.norm(GO.Features,ord=1,axis=1))
+                #     GO.loss = GO.loss+GO.ortho_loss
                 GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
 
                 with tf.name_scope('Accuracy_Measurements'):
