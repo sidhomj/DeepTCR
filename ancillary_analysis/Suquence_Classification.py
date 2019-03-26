@@ -17,7 +17,7 @@ DTCRS.Get_Data(directory='../Data/Human_Antigens',Load_Prev_Data=False,aggregate
 AUC = []
 Method = []
 Class = []
-for i in range(10):
+for i in range(5):
     DTCRS.Get_Train_Valid_Test()
 
     DTCRS.Train(use_only_seq=True)

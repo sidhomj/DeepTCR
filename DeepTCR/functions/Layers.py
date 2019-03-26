@@ -106,7 +106,6 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
         conv = tf.layers.conv2d(conv, units, (1, kernel), (1, kernel), padding='same')
         conv = tf.nn.leaky_relu(conv)
         conv = tf.layers.dropout(conv, prob)
-
         return tf.layers.flatten(conv),conv_out,indices
 
 def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene, num_fc_layers=0, units_fc=12):
