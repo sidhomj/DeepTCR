@@ -384,8 +384,14 @@ def Get_Sequence_Pred(self,batch_size,GO,sess):
     idx = []
     for vars in get_batches(self.test, batch_size=batch_size, random=False):
         var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
+        lb = LabelEncoder()
+        lb.fit(vars[0])
+        _,_,sample_idx = np.intersect1d(lb.classes_,vars[0],return_indices=True)
+        vars = [v[sample_idx] for v in vars]
+        i = lb.transform(self.sample_id[var_idx])
+
         OH = OneHotEncoder(categories='auto')
-        sp = OH.fit_transform(i[var_idx].reshape(-1, 1)).T
+        sp = OH.fit_transform(i.reshape(-1, 1)).T
         sp = sp.tocoo()
         indices = np.mat([sp.row, sp.col]).T
         sp = tf.SparseTensorValue(indices, sp.data, sp.shape)

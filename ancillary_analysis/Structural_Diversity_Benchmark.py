@@ -11,6 +11,7 @@ from scipy.stats import entropy, pearsonr
 from scipy.spatial.distance import pdist, squareform
 from NN_Assessment_utils import *
 import pickle
+import matplotlib.pyplot as plt
 
 # Instantiate training object
 DTCRU = DeepTCR_U('Reperoire_Distances')
@@ -129,7 +130,11 @@ df['Number of Clusters'] = num_cluster_list
 df['Method'] = method_list
 
 sns.catplot(data=df, x='Number Of Antigens', y='Structural Entropy', kind='point',hue='Method')
+plt.xlabel('Number of Antigens',fontsize=16)
+plt.ylabel('Structural Entropy',fontsize=16)
 sns.catplot(data=df, x='Number Of Antigens', y='Number of Clusters', kind='point',hue='Method')
+plt.xlabel('Number of Antigens',fontsize=16)
+plt.ylabel('Number of Clusters',fontsize=16)
 
 corr_SE = []
 corr_NC = []
@@ -145,6 +150,7 @@ df_corr = pd.DataFrame()
 df_corr['Methods'] = methods
 df_corr['Corr_SE'] = corr_SE
 df_corr['Corr_NC'] = corr_NC
+df_corr.to_csv('df_corr.csv',index=False)
 
 
 
