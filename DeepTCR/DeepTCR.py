@@ -1374,6 +1374,7 @@ class vis_class(object):
         else:
             hue = None
 
+        plt.figure()
         sns.scatterplot(data=df_plot, x='x', y='y', s=s, hue=hue, legend=legend, alpha=alpha, linewidth=0.0)
         plt.xticks([])
         plt.yticks([])
