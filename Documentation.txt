@@ -248,7 +248,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_S_base:
      |  
-     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None)
+     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None, plot=True)
      |      AUC Curve for both Sequence and Repertoire/Sample Classifiers
      |      
      |      Inputs
@@ -262,6 +262,9 @@ CLASSES
      |      
      |      title: str
      |          Optional Title to put on ROC Curve.
+     |      
+     |      plot: bool
+     |          To suppress plotting and just save the data/figure, set to False.
      |      
      |      Returns
      |      
@@ -277,6 +280,10 @@ CLASSES
      |      Identify most highly predicted sequences for each class.
      |      
      |      This method allows the user to query which sequences were most predicted to belong to a given class.
+     |      Of note, this method only reports sequences that were in the test set so as not to return highly predicted
+     |      sequences that were over-fit in the training set. To obtain the highest predictd sequences in all the data,
+     |      run a K-fold cross-validation before running this method. In this way, the predicted probability will have been
+     |      assigned to a sequence only when it was in the independent test set.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -564,7 +571,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False)
+     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False, top_seq=10)
      |      Motif Identification Supervised Classifiers
      |      
      |      This method looks for enriched features in the predetermined gropu
@@ -584,6 +591,10 @@ CLASSES
      |          To run a motif identification that looks for enriched motifs at the sample
      |          instead of the seuence level, set this parameter to True. Otherwise, the enrichment
      |          analysis will be done at the sequence level.
+     |      
+     |      top_seq: int
+     |          The number of sequences from which to derive the learned motifs. The larger the number,
+     |          the more noisy the motif logo may be.
      |      
      |      Returns
      |      ---------------------------------------
@@ -784,7 +795,7 @@ CLASSES
      |  
      |  Methods defined here:
      |  
-     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None)
+     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None, plot=True)
      |      AUC Curve for both Sequence and Repertoire/Sample Classifiers
      |      
      |      Inputs
@@ -798,6 +809,9 @@ CLASSES
      |      
      |      title: str
      |          Optional Title to put on ROC Curve.
+     |      
+     |      plot: bool
+     |          To suppress plotting and just save the data/figure, set to False.
      |      
      |      Returns
      |      
@@ -813,6 +827,10 @@ CLASSES
      |      Identify most highly predicted sequences for each class.
      |      
      |      This method allows the user to query which sequences were most predicted to belong to a given class.
+     |      Of note, this method only reports sequences that were in the test set so as not to return highly predicted
+     |      sequences that were over-fit in the training set. To obtain the highest predictd sequences in all the data,
+     |      run a K-fold cross-validation before running this method. In this way, the predicted probability will have been
+     |      assigned to a sequence only when it was in the independent test set.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -1100,7 +1118,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False)
+     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False, top_seq=10)
      |      Motif Identification Supervised Classifiers
      |      
      |      This method looks for enriched features in the predetermined gropu
@@ -1120,6 +1138,10 @@ CLASSES
      |          To run a motif identification that looks for enriched motifs at the sample
      |          instead of the seuence level, set this parameter to True. Otherwise, the enrichment
      |          analysis will be done at the sequence level.
+     |      
+     |      top_seq: int
+     |          The number of sequences from which to derive the learned motifs. The larger the number,
+     |          the more noisy the motif logo may be.
      |      
      |      Returns
      |      ---------------------------------------
@@ -1775,7 +1797,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False)
+     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False, top_seq=10)
      |      Motif Identification Supervised Classifiers
      |      
      |      This method looks for enriched features in the predetermined gropu
@@ -1795,6 +1817,10 @@ CLASSES
      |          To run a motif identification that looks for enriched motifs at the sample
      |          instead of the seuence level, set this parameter to True. Otherwise, the enrichment
      |          analysis will be done at the sequence level.
+     |      
+     |      top_seq: int
+     |          The number of sequences from which to derive the learned motifs. The larger the number,
+     |          the more noisy the motif logo may be.
      |      
      |      Returns
      |      ---------------------------------------
@@ -2196,7 +2222,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_S_base:
      |  
-     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None)
+     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None, plot=True)
      |      AUC Curve for both Sequence and Repertoire/Sample Classifiers
      |      
      |      Inputs
@@ -2210,6 +2236,9 @@ CLASSES
      |      
      |      title: str
      |          Optional Title to put on ROC Curve.
+     |      
+     |      plot: bool
+     |          To suppress plotting and just save the data/figure, set to False.
      |      
      |      Returns
      |      
@@ -2225,6 +2254,10 @@ CLASSES
      |      Identify most highly predicted sequences for each class.
      |      
      |      This method allows the user to query which sequences were most predicted to belong to a given class.
+     |      Of note, this method only reports sequences that were in the test set so as not to return highly predicted
+     |      sequences that were over-fit in the training set. To obtain the highest predictd sequences in all the data,
+     |      run a K-fold cross-validation before running this method. In this way, the predicted probability will have been
+     |      assigned to a sequence only when it was in the independent test set.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -2512,7 +2545,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False)
+     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False, top_seq=10)
      |      Motif Identification Supervised Classifiers
      |      
      |      This method looks for enriched features in the predetermined gropu
@@ -2532,6 +2565,10 @@ CLASSES
      |          To run a motif identification that looks for enriched motifs at the sample
      |          instead of the seuence level, set this parameter to True. Otherwise, the enrichment
      |          analysis will be done at the sequence level.
+     |      
+     |      top_seq: int
+     |          The number of sequences from which to derive the learned motifs. The larger the number,
+     |          the more noisy the motif logo may be.
      |      
      |      Returns
      |      ---------------------------------------
@@ -2994,7 +3031,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False)
+     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False, top_seq=10)
      |      Motif Identification Supervised Classifiers
      |      
      |      This method looks for enriched features in the predetermined gropu
@@ -3014,6 +3051,10 @@ CLASSES
      |          To run a motif identification that looks for enriched motifs at the sample
      |          instead of the seuence level, set this parameter to True. Otherwise, the enrichment
      |          analysis will be done at the sequence level.
+     |      
+     |      top_seq: int
+     |          The number of sequences from which to derive the learned motifs. The larger the number,
+     |          the more noisy the motif logo may be.
      |      
      |      Returns
      |      ---------------------------------------
