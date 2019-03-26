@@ -88,7 +88,7 @@ def Get_Ortho_Loss_dep(x,alpha=1.0):
     return loss
 
 #Layers for VAE
-def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='Convolutional_Features',kernel=5):
+def Convolutional_Features_AE(inputs,reuse=False,training=False,prob=0.0,name='Convolutional_Features',kernel=3):
     with tf.variable_scope(name,reuse=reuse):
         units = 32
         conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')
