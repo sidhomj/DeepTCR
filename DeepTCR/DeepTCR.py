@@ -2166,7 +2166,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 sns.catplot(data=df_out, x='Metric', y='Value', kind=plot_type)
 
 class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
-    def AUC_Curve(self,by=None,filename='AUC.tif',title=None):
+    def AUC_Curve(self,by=None,filename='AUC.tif',title=None,plot=True):
         """
         AUC Curve for both Sequence and Repertoire/Sample Classifiers
 
@@ -2181,6 +2181,9 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         title: str
             Optional Title to put on ROC Curve.
+
+        plot: bool
+            To suppress plotting and just save the data/figure, set to False.
 
         Returns
 
@@ -2197,6 +2200,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         y_pred = self.y_pred
         auc_scores = []
         classes = []
+        plt.figure()
         plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
@@ -2225,7 +2229,10 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             plt.title(title)
 
         plt.savefig(os.path.join(self.directory_results,filename))
-        plt.show(block=False)
+        if plot is True:
+            plt.show(block=False)
+        else:
+            plt.close()
 
         df_out = pd.DataFrame()
         df_out['Class'] = classes
