@@ -926,7 +926,7 @@ class feature_analytics_class(object):
         self.Cluster_Assignments = IDX
         print('Clustering Done')
 
-    def Motif_Identification(self,group,p_val_threshold=0.05,by_samples=False):
+    def Motif_Identification(self,group,p_val_threshold=0.05,by_samples=False,top_seq=10):
         """
         Motif Identification Supervised Classifiers
 
@@ -947,6 +947,10 @@ class feature_analytics_class(object):
             To run a motif identification that looks for enriched motifs at the sample
             instead of the seuence level, set this parameter to True. Otherwise, the enrichment
             analysis will be done at the sequence level.
+
+        top_seq: int
+            The number of sequences from which to derive the learned motifs. The larger the number,
+            the more noisy the motif logo may be.
 
         Returns
         ---------------------------------------
@@ -978,12 +982,12 @@ class feature_analytics_class(object):
         if self.use_alpha is True:
             self.alpha_group_features = Diff_Features(self.alpha_features, self.alpha_indices, self.alpha_sequences,
                                                          'alpha', self.sample_id,p_val_threshold, idx_pos, idx_neg,
-                                                        self.directory_results, group, self.kernel,by_samples)
+                                                        self.directory_results, group, self.kernel,by_samples,top_seq)
 
         if self.use_beta is True:
             self.beta_group_features = Diff_Features(self.beta_features, self.beta_indices, self.beta_sequences,
                                                         'beta',self.sample_id,p_val_threshold, idx_pos, idx_neg,
-                                                        self.directory_results, group, self.kernel,by_samples)
+                                                        self.directory_results, group, self.kernel,by_samples,top_seq)
 
 
         print('Motif Identification Completed')
@@ -1448,6 +1452,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             with tf.device(self.device):
                 graph_model_AE = tf.Graph()
                 with graph_model_AE.as_default():
+                    GO.net = 'ae'
                     GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene)
                     fc = tf.layers.dense(GO.Features, 256)
                     fc = tf.layers.dense(fc, 128)
@@ -2174,6 +2179,10 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         Identify most highly predicted sequences for each class.
 
         This method allows the user to query which sequences were most predicted to belong to a given class.
+        Of note, this method only reports sequences that were in the test set so as not to return highly predicted
+        sequences that were over-fit in the training set. To obtain the highest predictd sequences in all the data,
+        run a K-fold cross-validation before running this method. In this way, the predicted probability will have been
+        assigned to a sequence only when it was in the independent test set.
 
         Inputs
         ---------------------------------------
@@ -2324,6 +2333,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         with tf.device(self.device):
             with graph_model.as_default():
+                GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
                 GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
 
@@ -2764,6 +2774,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         GO = graph_object()
         with tf.device(self.device):
             with graph_model.as_default():
+                GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
                 GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
                 GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)

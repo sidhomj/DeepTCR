@@ -87,7 +87,7 @@ def Get_Ortho_Loss_dep(x,alpha=1.0):
     loss = alpha*tf.reduce_sum(loss)
     return loss
 
-def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Features',kernel=3):
+def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Features',kernel=3,net='ae'):
     with tf.variable_scope(name,reuse=reuse):
         units = 32
         conv = tf.layers.conv2d(inputs, units, (1, kernel), 1, padding='same')
@@ -98,15 +98,21 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
 
         kernel = 3
         units = 64
-        conv = tf.layers.conv2d(conv, units, (1, kernel), (1, kernel), padding='same')
-        conv = tf.nn.leaky_relu(conv)
-        conv = tf.layers.dropout(conv, prob)
+        conv_2 = tf.layers.conv2d(conv, units, (1, kernel), (1, kernel), padding='same')
+        conv_2 = tf.nn.leaky_relu(conv_2)
+        conv_2 = tf.layers.dropout(conv_2, prob)
+        conv_2_out = tf.layers.flatten(tf.reduce_max(conv_2,2))
 
         units = 128
-        conv = tf.layers.conv2d(conv, units, (1, kernel), (1, kernel), padding='same')
-        conv = tf.nn.leaky_relu(conv)
-        conv = tf.layers.dropout(conv, prob)
-        return tf.layers.flatten(conv),conv_out,indices
+        conv_3 = tf.layers.conv2d(conv_2, units, (1, kernel), (1, kernel), padding='same')
+        conv_3 = tf.nn.leaky_relu(conv_3)
+        conv_3 = tf.layers.dropout(conv_3, prob)
+        conv_3_out = tf.layers.flatten(tf.reduce_max(conv_3,axis=2))
+
+        if net == 'ae':
+            return tf.layers.flatten(conv_3),conv_out,indices
+        else:
+            return tf.concat((conv_out,conv_2_out,conv_3_out),axis=1),conv_out,indices
 
 def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene, num_fc_layers=0, units_fc=12):
     if self.use_alpha is True:
@@ -159,12 +165,14 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gen
     if self.use_alpha is True:
         GO.Seq_Features_alpha, GO.alpha_out, GO.indices_alpha = Convolutional_Features(inputs_seq_embed_alpha,
                                                                                        kernel=kernel,
-                                                                                       name='alpha_conv', prob=GO.prob)
+                                                                                       name='alpha_conv', prob=GO.prob,
+                                                                                       net=GO.net)
 
     if self.use_beta is True:
         GO.Seq_Features_beta, GO.beta_out, GO.indices_beta = Convolutional_Features(inputs_seq_embed_beta,
                                                                                     kernel=kernel,
-                                                                                    name='beta_conv', prob=GO.prob)
+                                                                                    name='beta_conv', prob=GO.prob,
+                                                                                    net=GO.net)
 
     Seq_Features = []
     if self.use_alpha is True:

@@ -147,7 +147,8 @@ def get_batches(Vars, batch_size=10,random=False):
 
         yield Vars_Out
 
-def Diff_Features(features,indices,sequences,type,sample_id,p_val_threshold,idx_pos,idx_neg,directory_results,group,kernel,sample_avg):
+def Diff_Features(features,indices,sequences,type,sample_id,p_val_threshold,
+                  idx_pos,idx_neg,directory_results,group,kernel,sample_avg,top_seq):
     pos_mean = []
     neg_mean = []
     p_val = []
@@ -197,7 +198,6 @@ def Diff_Features(features,indices,sequences,type,sample_id,p_val_threshold,idx_
     file_list = [f for f in os.listdir(dir)]
     [os.remove(os.path.join(dir, f)) for f in file_list]
 
-    top_seq = 10
     seq_cluster = []
     feature_keep = []
     for feature in df_features['Feature'].tolist():

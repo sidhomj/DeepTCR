@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 DTCRS = DeepTCR_SS('Sequence_C')
 
 #Murine Antigens
-# DTCRS.Get_Data(directory='../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
-#                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
+DTCRS.Get_Data(directory='../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
+               aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
 #Human Antigens
 DTCRS.Get_Data(directory='../Data/Human_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
@@ -17,7 +17,7 @@ DTCRS.Get_Data(directory='../Data/Human_Antigens',Load_Prev_Data=False,aggregate
 AUC = []
 Method = []
 Class = []
-for i in range(5):
+for i in range(10):
     DTCRS.Get_Train_Valid_Test()
 
     DTCRS.Train(use_only_seq=True)
