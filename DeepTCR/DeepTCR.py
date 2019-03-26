@@ -2192,20 +2192,30 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         y_test = self.y_test
         y_pred = self.y_pred
         auc_scores = []
-        if by is None:
-            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-            plt.xlim([0.0, 1.0])
-            plt.ylim([0.0, 1.05])
-            plt.xlabel('False Positive Rate')
-            plt.ylabel('True Positive Rate')
+        classes = []
+        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
 
+        if by is None:
             for ii, class_name in enumerate(self.lb.classes_, 0):
                 roc_score = roc_auc_score(y_test[:, ii], y_pred[:,ii])
+                classes.append(class_name)
                 auc_scores.append(roc_score)
                 fpr, tpr, _ = roc_curve(y_test[:, ii], y_pred[:,ii])
                 plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score))
+        else:
+            class_name = by
+            ii = self.lb.transform([by])[0]
+            roc_score = roc_auc_score(y_test[:, ii], y_pred[:, ii])
+            auc_scores.append(roc_score)
+            classes.append(class_name)
+            fpr, tpr, _ = roc_curve(y_test[:, ii], y_pred[:, ii])
+            plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score))
 
-            plt.legend(loc="lower right")
+        plt.legend(loc="lower right")
 
         if title is not None:
             plt.title(title)
@@ -2214,7 +2224,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         plt.show(block=False)
 
         df_out = pd.DataFrame()
-        df_out['Class'] = self.lb.classes_
+        df_out['Class'] = classes
         df_out['AUC'] = auc_scores
         df_out.to_csv(os.path.join(self.directory_results,'AUC.csv'),index=False)
 
@@ -2375,7 +2385,7 @@ class DeepTCR_SS(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc)
                 GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
-                GO.ortho_loss = Get_Ortho_Loss(GO.Features)
+                #GO.ortho_loss = Get_Ortho_Loss(GO.Features)
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
