@@ -610,7 +610,640 @@ class DeepTCR_base(object):
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         print('Data Loaded')
 
-class DeepTCR_U(DeepTCR_base):
+class feature_analytics_class(object):
+    def Structural_Diversity(self, sample=None, n_jobs=1):
+        """
+        Structural Diversity Measurements
+
+        This method first clusters sequences via the phenograph algorithm before computing
+        the number of clusters and entropy of the data over these clusters to obtain a measurement
+        of the structural diversity within a repertoire.
+
+        Inputs
+        ---------------------------------------
+
+        sample: int
+            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+            a number of sequences and then use k-nearest neighbors to assign other sequences.
+
+        n_jobs:int
+            Number of processes to use for parallel operations.
+
+        Returns
+
+        self.Structural_Diversity_DF: Pandas dataframe
+            A dataframe containing the number of clusters and entropy in each sample
+
+        ---------------------------------------
+
+        """
+
+        if sample is not None:
+            idx_sel = np.random.choice(range(len(self.features)), sample, replace=False)
+            features_sel = self.features[idx_sel]
+            IDX, _, _ = phenograph.cluster(features_sel, n_jobs=n_jobs)
+            knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=n_jobs).fit(features_sel, IDX)
+            IDX = knn_class.predict(self.features)
+        else:
+            IDX, _, _ = phenograph.cluster(self.features, k=30, n_jobs=n_jobs)
+
+        DFs = []
+        DF_Sum = pd.DataFrame()
+        DF_Sum['Sample'] = self.sample_list
+        DF_Sum.set_index('Sample', inplace=True)
+        for i in np.unique(IDX):
+            if i != -1:
+                sel = IDX == i
+                seq_alpha = self.alpha_sequences[sel]
+                seq_beta = self.beta_sequences[sel]
+                label = self.class_id[sel]
+                file = self.sample_id[sel]
+                freq = self.freq[sel]
+
+                df = pd.DataFrame()
+                df['Alpha_Sequences'] = seq_alpha
+                df['Beta_Sequences'] = seq_beta
+                df['Labels'] = label
+                df['Sample'] = file
+                df['Frequency'] = freq
+                df['V_alpha'] = self.v_alpha[sel]
+                df['J_alpha'] = self.j_alpha[sel]
+                df['V_beta'] = self.v_beta[sel]
+                df['D_beta'] = self.d_beta[sel]
+                df['J_beta'] = self.j_beta[sel]
+
+                df_sum = df.groupby(by='Sample', sort=False).agg({'Frequency': 'sum'})
+
+                DF_Sum['Cluster_' + str(i)] = df_sum
+
+                DFs.append(df)
+
+        DF_Sum.fillna(0.0, inplace=True)
+
+        labels = []
+        num_clusters = []
+        entropy_list = []
+        for file in self.sample_list:
+            v = np.array(DF_Sum.loc[file].tolist())
+            v = v[v > 0.0]
+            entropy_list.append(entropy(v))
+            num_clusters.append(len(v))
+            labels.append(self.class_id[self.sample_id == file][0])
+
+        df_out = pd.DataFrame()
+        df_out['Sample'] = self.sample_list
+        df_out['Class'] = labels
+        df_out['Entropy'] = entropy_list
+        df_out['Num of Clusters'] = num_clusters
+
+        self.Structural_Diversity_DF = df_out
+
+    def Cluster(self, clustering_method='phenograph', t=None, criterion='distance',
+                linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1):
+
+        """
+        Clustering Sequences by Latent Features
+
+        This method clusters all sequences by learned latent features from
+        either the variational autoencoder Several clustering algorithms are included including
+        Phenograph, DBSCAN, or hierarchical clustering. DBSCAN is implemented from the
+        sklearn package. Hierarchical clustering is implemented from the scipy package.
+
+        Inputs
+        ---------------------------------------
+
+        clustering_method: str
+            Clustering algorithm to use to cluster TCR sequences. Options include
+            phenograph, dbscan, or hierarchical. When using dbscan or hierarchical clustering,
+            a variety of thresholds are used to find an optimimum silhoutte score before using a final
+            clustering threshold when t value is not provided.
+
+        t: float
+            If t is provided, this is used as a distance threshold for hierarchical clustering or the eps
+            value for dbscan.
+
+        criterion: str
+            Clustering criterion as allowed by fcluster function
+            in scipy.cluster.hierarchy module. (Used in hierarchical clustering).
+
+        linkage_method: str
+            method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+
+        write_to_sheets: bool
+            To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
+            Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
+            of each cluster to each sample.
+
+        sample: int
+            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+            a number of sequences and then use k-nearest neighbors to assign other sequences.
+
+        n_jobs:int
+            Number of processes to use for parallel operations.
+
+        Returns
+
+        self.Cluster_DFs: list of Pandas dataframes
+            Clusters by sequences/label
+
+        self.var: list
+            Variance of lengths in each cluster
+
+        self.Cluster_Frequencies: Pandas dataframe
+            A dataframe containing the frequency contribution of each cluster to each sample.
+
+        self.Cluster_Assignments: ndarray
+            Array with cluster assignments by number.
+
+        ---------------------------------------
+
+        """
+        # Normalize Features
+        features = self.features
+
+        if sample is not None:
+            idx_sel = np.random.choice(range(len(features)), sample, replace=False)
+            features_sel = features[idx_sel]
+            distances = squareform(pdist(features_sel))
+
+            if clustering_method == 'hierarchical':
+                if t is None:
+                    IDX = hierarchical_optimization(distances, features_sel, method=linkage_method, criterion=criterion)
+                else:
+                    Z = linkage(squareform(distances), method=linkage_method)
+                    IDX = fcluster(Z, t, criterion=criterion)
+
+            elif clustering_method == 'dbscan':
+                if t is None:
+                    IDX = dbscan_optimization(distances, features_sel)
+                else:
+                    IDX = DBSCAN(eps=t, metric='precomputed').fit_predict(distances)
+                    IDX[IDX == -1] = np.max(IDX + 1)
+
+            elif clustering_method == 'phenograph':
+                IDX, _, _ = phenograph.cluster(features_sel, k=30, n_jobs=n_jobs)
+
+            knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=n_jobs).fit(features_sel, IDX)
+            IDX = knn_class.predict(features)
+        else:
+            distances = squareform(pdist(features))
+            if clustering_method == 'hierarchical':
+                if t is None:
+                    IDX = hierarchical_optimization(distances, features, method=linkage_method, criterion=criterion)
+                else:
+                    Z = linkage(squareform(distances), method=linkage_method)
+                    IDX = fcluster(Z, t, criterion=criterion)
+
+            elif clustering_method == 'dbscan':
+                if t is None:
+                    IDX = dbscan_optimization(distances, features)
+                else:
+                    IDX = DBSCAN(eps=t, metric='precomputed').fit_predict(distances)
+                    IDX[IDX == -1] = np.max(IDX + 1)
+
+            elif clustering_method == 'phenograph':
+                IDX, _, _ = phenograph.cluster(features, k=30, n_jobs=n_jobs)
+
+        DFs = []
+        DF_Sum = pd.DataFrame()
+        DF_Sum['Sample'] = self.sample_list
+        DF_Sum.set_index('Sample', inplace=True)
+        var_list_alpha = []
+        var_list_beta = []
+        for i in np.unique(IDX):
+            if i != -1:
+                sel = IDX == i
+                seq_alpha = self.alpha_sequences[sel]
+                seq_beta = self.beta_sequences[sel]
+                label = self.class_id[sel]
+                file = self.sample_id[sel]
+                freq = self.freq[sel]
+
+                if self.use_alpha is True:
+                    len_sel = [len(x) for x in seq_alpha]
+                    var = max(len_sel) - min(len_sel)
+                    var_list_alpha.append(var)
+                else:
+                    var_list_alpha.append(0)
+
+                if self.use_beta is True:
+                    len_sel = [len(x) for x in seq_beta]
+                    var = max(len_sel) - min(len_sel)
+                    var_list_beta.append(var)
+                else:
+                    var_list_beta.append(0)
+
+                df = pd.DataFrame()
+                df['Alpha_Sequences'] = seq_alpha
+                df['Beta_Sequences'] = seq_beta
+                df['Labels'] = label
+                df['Sample'] = file
+                df['Frequency'] = freq
+                df['V_alpha'] = self.v_alpha[sel]
+                df['J_alpha'] = self.j_alpha[sel]
+                df['V_beta'] = self.v_beta[sel]
+                df['D_beta'] = self.d_beta[sel]
+                df['J_beta'] = self.j_beta[sel]
+
+                df_sum = df.groupby(by='Sample', sort=False).agg({'Frequency': 'sum'})
+
+                DF_Sum['Cluster_' + str(i)] = df_sum
+
+                DFs.append(df)
+
+        DF_Sum.fillna(0.0, inplace=True)
+
+        if write_to_sheets is True:
+            if not os.path.exists(os.path.join(self.directory_results, 'Clusters')):
+                os.makedirs(os.path.join(self.directory_results, 'Clusters'))
+            else:
+                shutil.rmtree(os.path.join(self.directory_results, 'Clusters'))
+                os.makedirs(os.path.join(self.directory_results, 'Clusters'))
+
+            for ii, df in enumerate(DFs, 1):
+                df.to_csv(os.path.join(self.directory_results, 'Clusters', str(ii) + '.csv'), index=False)
+
+            DF_Sum.to_csv(os.path.join(self.directory_results, 'Cluster_Frequencies_by_Sample.csv'))
+
+        self.Cluster_DFs = DFs
+        self.Cluster_Frequencies = DF_Sum
+        self.var_alpha = var_list_alpha
+        self.var_beta = var_list_beta
+        self.Cluster_Assignments = IDX
+        print('Clustering Done')
+
+class vis_class(object):
+
+    def HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None,
+                          color_dict=None):
+        """
+        HeatMap of Sequences
+
+        This method creates a heatmap/clustermap for sequences by latent features
+        for the unsupervised deep lerning methods.
+
+        Inputs
+        ---------------------------------------
+
+        filename: str
+            Name of file to save heatmap.
+
+        sample_num: int
+            Number of events to randomly sample for heatmap.
+
+        color_dict: dict
+            Optional dictionary to provide specified colors for classes.
+
+        Returns
+        ---------------------------------------
+
+        """
+
+        if sample_num_per_seq is not None and sample_num is not None:
+            print("sample_num_per_seq and sample_num cannot be assigned simultaneously")
+            return
+
+        if sample_num is not None:
+            sel = np.random.choice(range(len(self.features)), sample_num, replace=False)
+            self.features = self.features[sel]
+            self.class_id = self.class_id[sel]
+            self.sample_id = self.sample_id[sel]
+            self.alpha_sequences = self.alpha_sequences[sel]
+            self.beta_sequences = self.beta_sequences[sel]
+
+        if sample_num_per_seq is not None:
+            features_temp = []
+            label_temp = []
+            file_temp = []
+            seq_temp_alpha = []
+            seq_temp_beta = []
+            for i in self.lb.classes_:
+                sel = np.where(self.class_id == i)[0]
+                sel = np.random.choice(sel, sample_num_per_seq, replace=False)
+                features_temp.append(self.features[sel])
+                label_temp.append(self.class_id[sel])
+                file_temp.append(self.sample_id[sel])
+                seq_temp_alpha.append(self.alpha_sequences[sel])
+                seq_temp_beta.append(self.beta_sequences[sel])
+
+            self.features = np.vstack(features_temp)
+            self.class_id = np.hstack(label_temp)
+            self.sample_id = np.hstack(file_temp)
+            self.alpha_sequences = np.hstack(seq_temp_alpha)
+            self.beta_sequences = np.hstack(seq_temp_beta)
+
+        keep = []
+        for i, column in enumerate(self.features.T, 0):
+            if len(np.unique(column)) > 1:
+                keep.append(i)
+        keep = np.asarray(keep)
+        self.features = self.features[:, keep]
+
+        if color_dict is None:
+            N = len(np.unique(self.class_id))
+            HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
+            np.random.shuffle(HSV_tuples)
+            RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
+            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
+
+        row_colors = [color_dict[x] for x in self.class_id]
+        sns.set(font_scale=0.5)
+        CM = sns.clustermap(self.features, standard_scale=1, row_colors=row_colors, cmap='bwr')
+        ax = CM.ax_heatmap
+        ax.set_xticklabels('')
+        ax.set_yticklabels('')
+        plt.show()
+        plt.savefig(os.path.join(self.directory_results, filename))
+
+    def HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True,
+                        font_scale=1.0):
+        """
+        HeatMap of Samples
+
+        This method creates a heatmap/clustermap for samples by latent features
+        for the unsupervised deep learning methods.
+
+        Inputs
+        ---------------------------------------
+
+        filename: str
+            Name of file to save heatmap.
+
+        Weight_by_Freq: bool
+            Option to weight each sequence used in aggregate measure
+            of feature across sample by its frequency.
+
+        color_dict: dict
+            Optional dictionary to provide specified colors for classes.
+
+        labels: bool
+            Option to show names of samples on y-axis of heatmap.
+
+        font_scale: float
+            This parameter controls the font size of the row labels. If there are many rows, one can make this value
+            smaller to get better labeling of the rows.
+
+        Returns
+        ---------------------------------------
+
+        """
+        sample_id = np.unique(self.sample_id)
+
+        vector = []
+        file_label = []
+        for id in sample_id:
+            sel = self.sample_id == id
+            sel_idx = self.features[sel]
+            sel_freq = np.expand_dims(self.freq[sel], 1)
+            if Weight_by_Freq is True:
+                dist = np.expand_dims(np.sum(sel_idx * sel_freq, 0), 0)
+            else:
+                dist = np.expand_dims(np.mean(sel_idx, 0), 0)
+            file_label.append(np.unique(self.class_id[sel])[0])
+            vector.append(dist)
+
+        vector = np.vstack(vector)
+
+        if color_dict is None:
+            N = len(np.unique(self.class_id))
+            HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
+            np.random.shuffle(HSV_tuples)
+            RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
+            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
+
+        row_colors = [color_dict[x] for x in file_label]
+
+        dfs = pd.DataFrame(vector)
+        dfs.set_index(sample_id, inplace=True)
+        sns.set(font_scale=font_scale)
+        CM = sns.clustermap(dfs, standard_scale=1, cmap='bwr', figsize=(12, 10), row_colors=row_colors)
+        ax = CM.ax_heatmap
+        ax.set_xticklabels('')
+        if labels is False:
+            ax.set_yticklabels('')
+        plt.subplots_adjust(right=0.8)
+        plt.show()
+        plt.savefig(os.path.join(self.directory_results, filename))
+
+    def Repertoire_Dendogram(self, distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
+                             dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward',
+                             gridsize=10, Load_Prev_Data=False):
+        """
+        Repertoire Dendrogram
+
+        This method creates a visualization that shows and compares the distribution
+        of the sample repertoires via UMAP and provided distance metric. The underlying
+        algorithm first applied phenograph clustering to determine the proportions of the sample
+        within a given cluster. Then a distance metric is used to compare how far two samples are
+        based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
+        Correlation, and Euclidean.
+
+        Inputs
+        ---------------------------------------
+
+        distance_metric = str
+            Provided distance metric to determine repertoire-level distance from cluster proportions.
+            Options include = (KL,correlation,euclidean,wasserstein,JS).
+
+        sample: int
+            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+            a number of sequences and then use k-nearest neighbors to assign other sequences.
+
+        n_jobs:int
+            Number of processes to use for parallel operations.
+
+        color_dict: dict
+            Optional dictionary to provide specified colors for classes.
+
+        dendrogram_radius: float
+            The radius of the dendrogram in the figure. This will usually require some adjustment
+            given the number of samples.
+
+        repertoire_radius: float
+            The radius of the repertoire plots in the figure. This will usually require some adjustment
+            given the number of samples.
+
+        linkage_method: str
+            linkage method used by scipy's linkage function
+
+        gridsize: int
+            This parameter modifies the granularity of the hexbins for the repertoire density plots.
+
+        Load_Prev_Data: bool
+            If method has been run before, one can load previous data used to construct the figure for
+            faster figure creation. This is helpful when trying to format the figure correctly and will require
+            the user to run the method multiple times.
+
+        Returns
+
+        self.pairwise_distances: Pandas dataframe
+            Pairwise distances of all samples
+        ---------------------------------------
+
+        """
+
+        if Load_Prev_Data is False:
+            X_2 = umap.UMAP().fit_transform(self.features)
+            self.Cluster(sample=sample, n_jobs=n_jobs)
+            prop = self.Cluster_Frequencies
+            with open(os.path.join(self.Name, 'dendro.pkl'), 'wb') as f:
+                pickle.dump([X_2, prop], f)
+        else:
+            with open(os.path.join(self.Name, 'dendro.pkl'), 'rb') as f:
+                X_2, prop = pickle.load(f)
+
+        if distance_metric == 'KL':
+            func = sym_KL
+        elif distance_metric == 'correlation':
+            func = distance.correlation
+        elif distance_metric == 'euclidean':
+            func = distance.euclidean
+        elif distance_metric == 'wasserstein':
+            func = wasserstein_distance
+        elif distance_metric == 'JS':
+            func = distance.jensenshannon
+
+        pairwise_distances = np.zeros(shape=[len(prop), len(prop)])
+        eps = 1e-9
+        prop += eps
+        for ii, i in enumerate(prop.index, 0):
+            for jj, j in enumerate(prop.index, 0):
+                pairwise_distances[ii, jj] = func(prop.loc[i], prop.loc[j])
+
+        labels = []
+        for i in prop.index:
+            labels.append(self.class_id[np.where(self.sample_id == i)[0][0]])
+
+        samples = prop.index.tolist()
+
+        if color_dict is None:
+            N = len(np.unique(self.class_id))
+            HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
+            np.random.shuffle(HSV_tuples)
+            RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
+            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
+
+        rad_plot(X_2, squareform(pairwise_distances), samples, labels, self.sample_id, color_dict,
+                 gridsize=gridsize, dg_radius=dendrogram_radius, linkage_method=linkage_method,
+                 figsize=8, axes_radius=repertoire_radius)
+
+    def UMAP_Plot(self, set='all',by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True,
+                  scale=100,Load_Prev_Data=False, alpha=1.0):
+
+        """
+        UMAP vizualisation of TCR Sequences
+
+        This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
+        class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional
+        to frequency of sequence within sample.
+
+        Inputs
+        ---------------------------------------
+
+        set: str
+            To choose which set of sequences to plot in latent space, enter either
+            'all','train', 'valid',or 'test'. Viewing the latent space of the sequences in the train set
+            may be overfit so it preferable to view the latent space in the test set.
+
+        by_class: bool
+            To color the points by their class label, set to True.
+
+        by_sample: bool
+            To color the points by their sample lebel, set to True.
+
+        by_cluster:bool
+            To color the points by the prior computed clustering solution, set to True.
+
+        freq_weight: bool
+            To scale size of points proportionally to their frequency, set to True.
+
+        show_legend: bool
+            To display legend, set to True.
+
+        scale: float
+            To change size of points, change scale parameter. Is particularly useful
+            when finding good display size when points are scaled by frequency.
+
+        Load_Prev_Data: bool
+            If method was run before, one can rerun this method with this parameter set
+            to True to bypass recomputing the UMAP projection. Useful for generating
+            different versions of the plot on the same UMAP representation.
+
+        alpha: float
+            Value between 0-1 that controls transparency of points.
+
+
+        Returns
+
+        ---------------------------------------
+
+        """
+        if set == 'all':
+            features = self.features
+            class_id = self.class_id
+            sample_id = self.sample_id
+            freq = self.freq
+        elif set == 'train':
+            features = self.features[self.train_idx]
+            class_id = self.class_id[self.train_idx]
+            sample_id = self.sample_id[self.train_idx]
+            freq = self.freq[self.train_idx]
+        elif set == 'valid':
+            features = self.features[self.valid_idx]
+            class_id = self.class_id[self.valid_idx]
+            sample_id = self.sample_id[self.valid_idx]
+            freq = self.freq[self.valid_idx]
+        elif set == 'test':
+            features = self.features[self.test_idx]
+            class_id = self.class_id[self.test_idx]
+            sample_id = self.sample_id[self.test_idx]
+            freq = self.freq[self.test_idx]
+
+        if Load_Prev_Data is False:
+            X_2 = umap.UMAP().fit_transform(features)
+            with open(os.path.join(self.Name, 'umap.pkl'), 'wb') as f:
+                pickle.dump(X_2, f, protocol=4)
+        else:
+            with open(os.path.join(self.Name, 'umap.pkl'), 'rb') as f:
+                X_2 = pickle.load(f)
+
+        df_plot = pd.DataFrame()
+        df_plot['x'] = X_2[:, 0]
+        df_plot['y'] = X_2[:, 1]
+        df_plot['Class'] = class_id
+        df_plot['Sample'] = sample_id
+        if hasattr(self,'Cluster_Assignments'):
+            IDX = self.Cluster_Assignments
+            IDX[IDX == -1] = np.max(IDX) + 1
+            IDX = ['Cluster_' + str(I) for I in IDX]
+            df_plot['Cluster'] = IDX
+
+        if freq_weight is True:
+            s = freq * scale
+        else:
+            s = scale
+
+        if show_legend is True:
+            legend = 'full'
+        else:
+            legend = False
+
+        if by_class is True:
+            hue = 'Class'
+        elif by_cluster is True:
+            hue = 'Cluster'
+        elif by_sample is True:
+            hue = 'Sample'
+        else:
+            hue = None
+
+        sns.scatterplot(data=df_plot, x='x', y='y', s=s, hue=hue, legend=legend, alpha=alpha, linewidth=0.0)
+        plt.xticks([])
+        plt.yticks([])
+        plt.xlabel('')
+        plt.ylabel('')
+
+class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
                   trainable_embedding=True,use_only_gene=False,use_only_seq=False,epochs_min=10,stop_criterion=0.0001):
@@ -1165,519 +1798,6 @@ class DeepTCR_U(DeepTCR_base):
             features = np.vstack(features_list)
             return features
 
-    def HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None,
-                          color_dict=None):
-        """
-        HeatMap of Sequences
-
-        This method creates a heatmap/clustermap for sequences by latent features
-        for the unsupervised deep lerning methods.
-
-        Inputs
-        ---------------------------------------
-
-        filename: str
-            Name of file to save heatmap.
-
-        sample_num: int
-            Number of events to randomly sample for heatmap.
-
-        color_dict: dict
-            Optional dictionary to provide specified colors for classes.
-
-        Returns
-        ---------------------------------------
-
-        """
-
-        if sample_num_per_seq is not None and sample_num is not None:
-            print("sample_num_per_seq and sample_num cannot be assigned simultaneously")
-            return
-
-        if sample_num is not None:
-            sel = np.random.choice(range(len(self.features)), sample_num, replace=False)
-            self.features = self.features[sel]
-            self.class_id = self.class_id[sel]
-            self.sample_id = self.sample_id[sel]
-            self.alpha_sequences = self.alpha_sequences[sel]
-            self.beta_sequences = self.beta_sequences[sel]
-
-        if sample_num_per_seq is not None:
-            features_temp = []
-            label_temp = []
-            file_temp = []
-            seq_temp_alpha = []
-            seq_temp_beta = []
-            for i in self.lb.classes_:
-                sel = np.where(self.class_id == i)[0]
-                sel = np.random.choice(sel, sample_num_per_seq, replace=False)
-                features_temp.append(self.features[sel])
-                label_temp.append(self.class_id[sel])
-                file_temp.append(self.sample_id[sel])
-                seq_temp_alpha.append(self.alpha_sequences[sel])
-                seq_temp_beta.append(self.beta_sequences[sel])
-
-            self.features = np.vstack(features_temp)
-            self.class_id = np.hstack(label_temp)
-            self.sample_id = np.hstack(file_temp)
-            self.alpha_sequences = np.hstack(seq_temp_alpha)
-            self.beta_sequences = np.hstack(seq_temp_beta)
-
-        keep = []
-        for i, column in enumerate(self.features.T, 0):
-            if len(np.unique(column)) > 1:
-                keep.append(i)
-        keep = np.asarray(keep)
-        self.features = self.features[:, keep]
-
-        if color_dict is None:
-            N = len(np.unique(self.class_id))
-            HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
-            np.random.shuffle(HSV_tuples)
-            RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
-
-        row_colors = [color_dict[x] for x in self.class_id]
-        sns.set(font_scale=0.5)
-        CM = sns.clustermap(self.features, standard_scale=1, row_colors=row_colors, cmap='bwr')
-        ax = CM.ax_heatmap
-        ax.set_xticklabels('')
-        ax.set_yticklabels('')
-        plt.show()
-        plt.savefig(os.path.join(self.directory_results, filename))
-
-    def HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True,
-                        font_scale=1.0):
-        """
-        HeatMap of Samples
-
-        This method creates a heatmap/clustermap for samples by latent features
-        for the unsupervised deep learning methods.
-
-        Inputs
-        ---------------------------------------
-
-        filename: str
-            Name of file to save heatmap.
-
-        Weight_by_Freq: bool
-            Option to weight each sequence used in aggregate measure
-            of feature across sample by its frequency.
-
-        color_dict: dict
-            Optional dictionary to provide specified colors for classes.
-
-        labels: bool
-            Option to show names of samples on y-axis of heatmap.
-
-        font_scale: float
-            This parameter controls the font size of the row labels. If there are many rows, one can make this value
-            smaller to get better labeling of the rows.
-
-        Returns
-        ---------------------------------------
-
-        """
-        sample_id = np.unique(self.sample_id)
-
-        vector = []
-        file_label = []
-        for id in sample_id:
-            sel = self.sample_id == id
-            sel_idx = self.features[sel]
-            sel_freq = np.expand_dims(self.freq[sel], 1)
-            if Weight_by_Freq is True:
-                dist = np.expand_dims(np.sum(sel_idx * sel_freq, 0), 0)
-            else:
-                dist = np.expand_dims(np.mean(sel_idx, 0), 0)
-            file_label.append(np.unique(self.class_id[sel])[0])
-            vector.append(dist)
-
-        vector = np.vstack(vector)
-
-        if color_dict is None:
-            N = len(np.unique(self.class_id))
-            HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
-            np.random.shuffle(HSV_tuples)
-            RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
-
-        row_colors = [color_dict[x] for x in file_label]
-
-        dfs = pd.DataFrame(vector)
-        dfs.set_index(sample_id, inplace=True)
-        sns.set(font_scale=font_scale)
-        CM = sns.clustermap(dfs, standard_scale=1, cmap='bwr', figsize=(12, 10), row_colors=row_colors)
-        ax = CM.ax_heatmap
-        ax.set_xticklabels('')
-        if labels is False:
-            ax.set_yticklabels('')
-        plt.subplots_adjust(right=0.8)
-        plt.show()
-        plt.savefig(os.path.join(self.directory_results, filename))
-
-    def Cluster(self, clustering_method='phenograph', t=None, criterion='distance',
-                linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1):
-
-        """
-        Clustering Sequences by Latent Features
-
-        This method clusters all sequences by learned latent features from
-        either the variational autoencoder Several clustering algorithms are included including
-        Phenograph, DBSCAN, or hierarchical clustering. DBSCAN is implemented from the
-        sklearn package. Hierarchical clustering is implemented from the scipy package.
-
-        Inputs
-        ---------------------------------------
-
-        clustering_method: str
-            Clustering algorithm to use to cluster TCR sequences. Options include
-            phenograph, dbscan, or hierarchical. When using dbscan or hierarchical clustering,
-            a variety of thresholds are used to find an optimimum silhoutte score before using a final
-            clustering threshold when t value is not provided.
-
-        t: float
-            If t is provided, this is used as a distance threshold for hierarchical clustering or the eps
-            value for dbscan.
-
-        criterion: str
-            Clustering criterion as allowed by fcluster function
-            in scipy.cluster.hierarchy module. (Used in hierarchical clustering).
-
-        linkage_method: str
-            method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
-
-        write_to_sheets: bool
-            To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
-            Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
-            of each cluster to each sample.
-
-        sample: int
-            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
-            a number of sequences and then use k-nearest neighbors to assign other sequences.
-
-        n_jobs:int
-            Number of processes to use for parallel operations.
-
-        Returns
-
-        self.Cluster_DFs: list of Pandas dataframes
-            Clusters by sequences/label
-
-        self.var: list
-            Variance of lengths in each cluster
-
-        self.Cluster_Frequencies: Pandas dataframe
-            A dataframe containing the frequency contribution of each cluster to each sample.
-
-        self.Cluster_Assignments: ndarray
-            Array with cluster assignments by number.
-
-        ---------------------------------------
-
-        """
-        # Normalize Features
-        features = self.features
-
-        if sample is not None:
-            idx_sel = np.random.choice(range(len(features)), sample, replace=False)
-            features_sel = features[idx_sel]
-            distances = squareform(pdist(features_sel))
-
-            if clustering_method == 'hierarchical':
-                if t is None:
-                    IDX = hierarchical_optimization(distances, features_sel, method=linkage_method, criterion=criterion)
-                else:
-                    Z = linkage(squareform(distances), method=linkage_method)
-                    IDX = fcluster(Z, t, criterion=criterion)
-
-            elif clustering_method == 'dbscan':
-                if t is None:
-                    IDX = dbscan_optimization(distances, features_sel)
-                else:
-                    IDX = DBSCAN(eps=t, metric='precomputed').fit_predict(distances)
-                    IDX[IDX == -1] = np.max(IDX + 1)
-
-            elif clustering_method == 'phenograph':
-                IDX, _, _ = phenograph.cluster(features_sel, k=30, n_jobs=n_jobs)
-
-            knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=n_jobs).fit(features_sel, IDX)
-            IDX = knn_class.predict(features)
-        else:
-            distances = squareform(pdist(features))
-            if clustering_method == 'hierarchical':
-                if t is None:
-                    IDX = hierarchical_optimization(distances, features, method=linkage_method, criterion=criterion)
-                else:
-                    Z = linkage(squareform(distances), method=linkage_method)
-                    IDX = fcluster(Z, t, criterion=criterion)
-
-            elif clustering_method == 'dbscan':
-                if t is None:
-                    IDX = dbscan_optimization(distances, features)
-                else:
-                    IDX = DBSCAN(eps=t, metric='precomputed').fit_predict(distances)
-                    IDX[IDX == -1] = np.max(IDX + 1)
-
-            elif clustering_method == 'phenograph':
-                IDX, _, _ = phenograph.cluster(features, k=30, n_jobs=n_jobs)
-
-        DFs = []
-        DF_Sum = pd.DataFrame()
-        DF_Sum['Sample'] = self.sample_list
-        DF_Sum.set_index('Sample', inplace=True)
-        var_list_alpha = []
-        var_list_beta = []
-        for i in np.unique(IDX):
-            if i != -1:
-                sel = IDX == i
-                seq_alpha = self.alpha_sequences[sel]
-                seq_beta = self.beta_sequences[sel]
-                label = self.class_id[sel]
-                file = self.sample_id[sel]
-                freq = self.freq[sel]
-
-                if self.use_alpha is True:
-                    len_sel = [len(x) for x in seq_alpha]
-                    var = max(len_sel) - min(len_sel)
-                    var_list_alpha.append(var)
-                else:
-                    var_list_alpha.append(0)
-
-                if self.use_beta is True:
-                    len_sel = [len(x) for x in seq_beta]
-                    var = max(len_sel) - min(len_sel)
-                    var_list_beta.append(var)
-                else:
-                    var_list_beta.append(0)
-
-                df = pd.DataFrame()
-                df['Alpha_Sequences'] = seq_alpha
-                df['Beta_Sequences'] = seq_beta
-                df['Labels'] = label
-                df['Sample'] = file
-                df['Frequency'] = freq
-                df['V_alpha'] = self.v_alpha[sel]
-                df['J_alpha'] = self.j_alpha[sel]
-                df['V_beta'] = self.v_beta[sel]
-                df['D_beta'] = self.d_beta[sel]
-                df['J_beta'] = self.j_beta[sel]
-
-                df_sum = df.groupby(by='Sample', sort=False).agg({'Frequency': 'sum'})
-
-                DF_Sum['Cluster_' + str(i)] = df_sum
-
-                DFs.append(df)
-
-        DF_Sum.fillna(0.0, inplace=True)
-
-        if write_to_sheets is True:
-            if not os.path.exists(os.path.join(self.directory_results, 'Clusters')):
-                os.makedirs(os.path.join(self.directory_results, 'Clusters'))
-            else:
-                shutil.rmtree(os.path.join(self.directory_results, 'Clusters'))
-                os.makedirs(os.path.join(self.directory_results, 'Clusters'))
-
-            for ii, df in enumerate(DFs, 1):
-                df.to_csv(os.path.join(self.directory_results, 'Clusters', str(ii) + '.csv'), index=False)
-
-            DF_Sum.to_csv(os.path.join(self.directory_results, 'Cluster_Frequencies_by_Sample.csv'))
-
-        self.Cluster_DFs = DFs
-        self.Cluster_Frequencies = DF_Sum
-        self.var_alpha = var_list_alpha
-        self.var_beta = var_list_beta
-        self.Cluster_Assignments = IDX
-        print('Clustering Done')
-
-    def Structural_Diversity(self, sample=None, n_jobs=1):
-        """
-        Structural Diversity Measurements
-
-        This method first clusters sequences via the phenograph algorithm before computing
-        the number of clusters and entropy of the data over these clusters to obtain a measurement
-        of the structural diversity within a repertoire.
-
-        Inputs
-        ---------------------------------------
-
-        sample: int
-            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
-            a number of sequences and then use k-nearest neighbors to assign other sequences.
-
-        n_jobs:int
-            Number of processes to use for parallel operations.
-
-        Returns
-
-        self.Structural_Diversity_DF: Pandas dataframe
-            A dataframe containing the number of clusters and entropy in each sample
-
-        ---------------------------------------
-
-        """
-
-        if sample is not None:
-            idx_sel = np.random.choice(range(len(self.features)), sample, replace=False)
-            features_sel = self.features[idx_sel]
-            IDX, _, _ = phenograph.cluster(features_sel, n_jobs=n_jobs)
-            knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=n_jobs).fit(features_sel, IDX)
-            IDX = knn_class.predict(self.features)
-        else:
-            IDX, _, _ = phenograph.cluster(self.features, k=30, n_jobs=n_jobs)
-
-        DFs = []
-        DF_Sum = pd.DataFrame()
-        DF_Sum['Sample'] = self.sample_list
-        DF_Sum.set_index('Sample', inplace=True)
-        for i in np.unique(IDX):
-            if i != -1:
-                sel = IDX == i
-                seq_alpha = self.alpha_sequences[sel]
-                seq_beta = self.beta_sequences[sel]
-                label = self.class_id[sel]
-                file = self.sample_id[sel]
-                freq = self.freq[sel]
-
-                df = pd.DataFrame()
-                df['Alpha_Sequences'] = seq_alpha
-                df['Beta_Sequences'] = seq_beta
-                df['Labels'] = label
-                df['Sample'] = file
-                df['Frequency'] = freq
-                df['V_alpha'] = self.v_alpha[sel]
-                df['J_alpha'] = self.j_alpha[sel]
-                df['V_beta'] = self.v_beta[sel]
-                df['D_beta'] = self.d_beta[sel]
-                df['J_beta'] = self.j_beta[sel]
-
-                df_sum = df.groupby(by='Sample', sort=False).agg({'Frequency': 'sum'})
-
-                DF_Sum['Cluster_' + str(i)] = df_sum
-
-                DFs.append(df)
-
-        DF_Sum.fillna(0.0, inplace=True)
-
-        labels = []
-        num_clusters = []
-        entropy_list = []
-        for file in self.sample_list:
-            v = np.array(DF_Sum.loc[file].tolist())
-            v = v[v > 0.0]
-            entropy_list.append(entropy(v))
-            num_clusters.append(len(v))
-            labels.append(self.class_id[self.sample_id == file][0])
-
-        df_out = pd.DataFrame()
-        df_out['Sample'] = self.sample_list
-        df_out['Class'] = labels
-        df_out['Entropy'] = entropy_list
-        df_out['Num of Clusters'] = num_clusters
-
-        self.Structural_Diversity_DF = df_out
-
-    def Repertoire_Dendogram(self, distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
-                             dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward',
-                             gridsize=10, Load_Prev_Data=False):
-        """
-        Repertoire Dendrogram
-
-        This method creates a visualization that shows and compares the distribution
-        of the sample repertoires via UMAP and provided distance metric. The underlying
-        algorithm first applied phenograph clustering to determine the proportions of the sample
-        within a given cluster. Then a distance metric is used to compare how far two samples are
-        based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
-        Correlation, and Euclidean.
-
-        Inputs
-        ---------------------------------------
-
-        distance_metric = str
-            Provided distance metric to determine repertoire-level distance from cluster proportions.
-            Options include = (KL,correlation,euclidean,wasserstein,JS).
-
-        sample: int
-            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
-            a number of sequences and then use k-nearest neighbors to assign other sequences.
-
-        n_jobs:int
-            Number of processes to use for parallel operations.
-
-        color_dict: dict
-            Optional dictionary to provide specified colors for classes.
-
-        dendrogram_radius: float
-            The radius of the dendrogram in the figure. This will usually require some adjustment
-            given the number of samples.
-
-        repertoire_radius: float
-            The radius of the repertoire plots in the figure. This will usually require some adjustment
-            given the number of samples.
-
-        linkage_method: str
-            linkage method used by scipy's linkage function
-
-        gridsize: int
-            This parameter modifies the granularity of the hexbins for the repertoire density plots.
-
-        Load_Prev_Data: bool
-            If method has been run before, one can load previous data used to construct the figure for
-            faster figure creation. This is helpful when trying to format the figure correctly and will require
-            the user to run the method multiple times.
-
-        Returns
-
-        self.pairwise_distances: Pandas dataframe
-            Pairwise distances of all samples
-        ---------------------------------------
-
-        """
-
-        if Load_Prev_Data is False:
-            X_2 = umap.UMAP().fit_transform(self.features)
-            self.Cluster(sample=sample, n_jobs=n_jobs)
-            prop = self.Cluster_Frequencies
-            with open(os.path.join(self.Name, 'dendro.pkl'), 'wb') as f:
-                pickle.dump([X_2, prop], f)
-        else:
-            with open(os.path.join(self.Name, 'dendro.pkl'), 'rb') as f:
-                X_2, prop = pickle.load(f)
-
-        if distance_metric == 'KL':
-            func = sym_KL
-        elif distance_metric == 'correlation':
-            func = distance.correlation
-        elif distance_metric == 'euclidean':
-            func = distance.euclidean
-        elif distance_metric == 'wasserstein':
-            func = wasserstein_distance
-        elif distance_metric == 'JS':
-            func = distance.jensenshannon
-
-        pairwise_distances = np.zeros(shape=[len(prop), len(prop)])
-        eps = 1e-9
-        prop += eps
-        for ii, i in enumerate(prop.index, 0):
-            for jj, j in enumerate(prop.index, 0):
-                pairwise_distances[ii, jj] = func(prop.loc[i], prop.loc[j])
-
-        labels = []
-        for i in prop.index:
-            labels.append(self.class_id[np.where(self.sample_id == i)[0][0]])
-
-        samples = prop.index.tolist()
-
-        if color_dict is None:
-            N = len(np.unique(self.class_id))
-            HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
-            np.random.shuffle(HSV_tuples)
-            RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
-
-        rad_plot(X_2, squareform(pairwise_distances), samples, labels, self.sample_id, color_dict,
-                 gridsize=gridsize, dg_radius=dendrogram_radius, linkage_method=linkage_method,
-                 figsize=8, axes_radius=repertoire_radius)
 
     def KNN_Sequence_Classifier(self, k_values=list(range(1, 500, 25)), rep=5, plot_metrics=False, by_class=False,
                                 plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC']):
@@ -1863,96 +1983,6 @@ class DeepTCR_U(DeepTCR_base):
             else:
                 sns.catplot(data=df_out, x='Metric', y='Value', kind=plot_type)
 
-    def UMAP_Plot(self, by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True,
-                  scale=100,Load_Prev_Data=False, alpha=1.0):
-
-        """
-        UMAP vizualisation of TCR Sequences
-
-        This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
-        class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional
-        to frequency of sequence within sample.
-
-        Inputs
-        ---------------------------------------
-
-        by_class: bool
-            To color the points by their class label, set to True.
-
-        by_sample: bool
-            To color the points by their sample lebel, set to True.
-
-        by_cluster:bool
-            To color the points by the prior computed clustering solution, set to True.
-
-        freq_weight: bool
-            To scale size of points proportionally to their frequency, set to True.
-
-        show_legend: bool
-            To display legend, set to True.
-
-        scale: float
-            To change size of points, change scale parameter. Is particularly useful
-            when finding good display size when points are scaled by frequency.
-
-        Load_Prev_Data: bool
-            If method was run before, one can rerun this method with this parameter set
-            to True to bypass recomputing the UMAP projection. Useful for generating
-            different versions of the plot on the same UMAP representation.
-
-        alpha: float
-            Value between 0-1 that controls transparency of points.
-
-
-        Returns
-
-        ---------------------------------------
-
-        """
-        if Load_Prev_Data is False:
-            X_2 = umap.UMAP().fit_transform(self.features)
-            with open(os.path.join(self.Name, 'umap.pkl'), 'wb') as f:
-                pickle.dump(X_2, f, protocol=4)
-        else:
-            with open(os.path.join(self.Name, 'umap.pkl'), 'rb') as f:
-                X_2 = pickle.load(f)
-
-        df_plot = pd.DataFrame()
-        df_plot['x'] = X_2[:, 0]
-        df_plot['y'] = X_2[:, 1]
-        df_plot['Class'] = self.class_id
-        df_plot['Sample'] = self.sample_id
-        if hasattr(self,'Cluster_Assignments'):
-            IDX = self.Cluster_Assignments
-            IDX[IDX == -1] = np.max(IDX) + 1
-            IDX = ['Cluster_' + str(I) for I in IDX]
-            df_plot['Cluster'] = IDX
-
-        if freq_weight is True:
-            freq = self.freq
-            s = freq * scale
-        else:
-            s = scale
-
-        if show_legend is True:
-            legend = 'full'
-        else:
-            legend = False
-
-        if by_class is True:
-            hue = 'Class'
-        elif by_cluster is True:
-            hue = 'Cluster'
-        elif by_sample is True:
-            hue = 'Sample'
-        else:
-            hue = None
-
-        sns.scatterplot(data=df_plot, x='x', y='y', s=s, hue=hue, legend=legend, alpha=alpha, linewidth=0.0)
-        plt.xticks([])
-        plt.yticks([])
-        plt.xlabel('')
-        plt.ylabel('')
 
 class DeepTCR_S_base(DeepTCR_base):
     def AUC_Curve(self,show_all=True,filename='AUC.tif',title=None):
