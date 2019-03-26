@@ -379,7 +379,6 @@ def Get_Seq_Features_Indices(self,batch_size,GO,sess):
 
 def Get_Sequence_Pred(self,batch_size,GO,sess):
     predicted_list = []
-    i = np.asarray(range(len(self.Y)))
     freq = np.ones_like(self.freq)
     idx = []
     for vars in get_batches(self.test, batch_size=batch_size, random=False):
