@@ -698,7 +698,7 @@ class feature_analytics_class(object):
 
         self.Structural_Diversity_DF = df_out
 
-    def Cluster(self, clustering_method='phenograph', t=None, criterion='distance',
+    def Cluster(self,set='all', clustering_method='phenograph', t=None, criterion='distance',
                 linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1):
 
         """
@@ -711,6 +711,11 @@ class feature_analytics_class(object):
 
         Inputs
         ---------------------------------------
+
+        set: str
+            To choose which set of sequences to analye, enter either
+            'all','train', 'valid',or 'test'. Since the sequences in the train set
+            may be overfit, it preferable to generally examine the test set on its own.
 
         clustering_method: str
             Clustering algorithm to use to cluster TCR sequences. Options include
@@ -758,8 +763,57 @@ class feature_analytics_class(object):
         ---------------------------------------
 
         """
-        # Normalize Features
-        features = self.features
+        if set == 'all':
+            features = self.features
+            class_id = self.class_id
+            sample_id = self.sample_id
+            freq = self.freq
+            alpha_sequences = self.alpha_sequences
+            beta_sequences = self.beta_sequences
+            v_alpha = self.v_alpha
+            j_alpha = self.j_alpha
+            v_beta = self.v_beta
+            d_beta = self.d_beta
+            j_beta = self.j_beta
+
+        elif set == 'train':
+            features = self.features[self.train_idx]
+            class_id = self.class_id[self.train_idx]
+            sample_id = self.sample_id[self.train_idx]
+            freq = self.freq[self.train_idx]
+            alpha_sequences = self.alpha_sequences[self.train_idx]
+            beta_sequences = self.beta_sequences[self.train_idx]
+            v_alpha = self.v_alpha[self.train_idx]
+            j_alpha = self.j_alpha[self.train_idx]
+            v_beta = self.v_beta[self.train_idx]
+            d_beta = self.d_beta[self.train_idx]
+            j_beta = self.j_beta[self.train_idx]
+
+        elif set == 'valid':
+            features = self.features[self.valid_idx]
+            class_id = self.class_id[self.valid_idx]
+            sample_id = self.sample_id[self.valid_idx]
+            freq = self.freq[self.valid_idx]
+            alpha_sequences = self.alpha_sequences[self.valid_idx]
+            beta_sequences = self.beta_sequences[self.valid_idx]
+            v_alpha = self.v_alpha[self.valid_idx]
+            j_alpha = self.j_alpha[self.valid_idx]
+            v_beta = self.v_beta[self.valid_idx]
+            d_beta = self.d_beta[self.valid_idx]
+            j_beta = self.j_beta[self.valid_idx]
+
+        elif set == 'test':
+            features = self.features[self.test_idx]
+            class_id = self.class_id[self.test_idx]
+            sample_id = self.sample_id[self.test_idx]
+            freq = self.freq[self.test_idx]
+            alpha_sequences = self.alpha_sequences[self.test_idx]
+            beta_sequences = self.beta_sequences[self.test_idx]
+            v_alpha = self.v_alpha[self.test_idx]
+            j_alpha = self.j_alpha[self.test_idx]
+            v_beta = self.v_beta[self.test_idx]
+            d_beta = self.d_beta[self.test_idx]
+            j_beta = self.j_beta[self.test_idx]
 
         if sample is not None:
             idx_sel = np.random.choice(range(len(features)), sample, replace=False)
@@ -806,18 +860,18 @@ class feature_analytics_class(object):
 
         DFs = []
         DF_Sum = pd.DataFrame()
-        DF_Sum['Sample'] = self.sample_list
+        DF_Sum['Sample'] = np.unique(sample_id)
         DF_Sum.set_index('Sample', inplace=True)
         var_list_alpha = []
         var_list_beta = []
         for i in np.unique(IDX):
             if i != -1:
                 sel = IDX == i
-                seq_alpha = self.alpha_sequences[sel]
-                seq_beta = self.beta_sequences[sel]
-                label = self.class_id[sel]
-                file = self.sample_id[sel]
-                freq = self.freq[sel]
+                seq_alpha = alpha_sequences[sel]
+                seq_beta = beta_sequences[sel]
+                label = class_id[sel]
+                file = sample_id[sel]
+                freq_sel = freq[sel]
 
                 if self.use_alpha is True:
                     len_sel = [len(x) for x in seq_alpha]
@@ -838,12 +892,12 @@ class feature_analytics_class(object):
                 df['Beta_Sequences'] = seq_beta
                 df['Labels'] = label
                 df['Sample'] = file
-                df['Frequency'] = freq
-                df['V_alpha'] = self.v_alpha[sel]
-                df['J_alpha'] = self.j_alpha[sel]
-                df['V_beta'] = self.v_beta[sel]
-                df['D_beta'] = self.d_beta[sel]
-                df['J_beta'] = self.j_beta[sel]
+                df['Frequency'] = freq_sel
+                df['V_alpha'] = v_alpha[sel]
+                df['J_alpha'] = j_alpha[sel]
+                df['V_beta'] = v_beta[sel]
+                df['D_beta'] = d_beta[sel]
+                df['J_beta'] = j_beta[sel]
 
                 df_sum = df.groupby(by='Sample', sort=False).agg({'Frequency': 'sum'})
 
@@ -1087,7 +1141,7 @@ class vis_class(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results, filename))
 
-    def Repertoire_Dendogram(self, distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
+    def Repertoire_Dendogram(self,set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
                              dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward',
                              gridsize=10, Load_Prev_Data=False):
         """
@@ -1102,6 +1156,11 @@ class vis_class(object):
 
         Inputs
         ---------------------------------------
+
+        set: str
+            To choose which set of sequences to analye, enter either
+            'all','train', 'valid',or 'test'. Since the sequences in the train set
+            may be overfit, it preferable to generally examine the test set on its own.
 
         distance_metric = str
             Provided distance metric to determine repertoire-level distance from cluster proportions.
@@ -1143,10 +1202,26 @@ class vis_class(object):
         ---------------------------------------
 
         """
+        if set == 'all':
+            features = self.features
+            class_id = self.class_id
+            sample_id = self.sample_id
+        elif set == 'train':
+            features = self.features[self.train_idx]
+            class_id = self.class_id[self.train_idx]
+            sample_id = self.sample_id[self.train_idx]
+        elif set == 'valid':
+            features = self.features[self.valid_idx]
+            class_id = self.class_id[self.valid_idx]
+            sample_id = self.sample_id[self.valid_idx]
+        elif set == 'test':
+            features = self.features[self.test_idx]
+            class_id = self.class_id[self.test_idx]
+            sample_id = self.sample_id[self.test_idx]
 
         if Load_Prev_Data is False:
-            X_2 = umap.UMAP().fit_transform(self.features)
-            self.Cluster(sample=sample, n_jobs=n_jobs)
+            X_2 = umap.UMAP().fit_transform(features)
+            self.Cluster(sample=sample, n_jobs=n_jobs,set=set)
             prop = self.Cluster_Frequencies
             with open(os.path.join(self.Name, 'dendro.pkl'), 'wb') as f:
                 pickle.dump([X_2, prop], f)
@@ -1174,18 +1249,18 @@ class vis_class(object):
 
         labels = []
         for i in prop.index:
-            labels.append(self.class_id[np.where(self.sample_id == i)[0][0]])
+            labels.append(class_id[np.where(sample_id == i)[0][0]])
 
         samples = prop.index.tolist()
 
         if color_dict is None:
-            N = len(np.unique(self.class_id))
+            N = len(np.unique(class_id))
             HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
             np.random.shuffle(HSV_tuples)
             RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
+            color_dict = dict(zip(np.unique(class_id), RGB_tuples))
 
-        rad_plot(X_2, squareform(pairwise_distances), samples, labels, self.sample_id, color_dict,
+        rad_plot(X_2, squareform(pairwise_distances), samples, labels, sample_id, color_dict,
                  gridsize=gridsize, dg_radius=dendrogram_radius, linkage_method=linkage_method,
                  figsize=8, axes_radius=repertoire_radius)
 
@@ -1203,9 +1278,9 @@ class vis_class(object):
         ---------------------------------------
 
         set: str
-            To choose which set of sequences to plot in latent space, enter either
-            'all','train', 'valid',or 'test'. Viewing the latent space of the sequences in the train set
-            may be overfit so it preferable to view the latent space in the test set.
+            To choose which set of sequences to analye, enter either
+            'all','train', 'valid',or 'test'. Since the sequences in the train set
+            may be overfit, it preferable to generally examine the test set on its own.
 
         by_class: bool
             To color the points by their class label, set to True.
