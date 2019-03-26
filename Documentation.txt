@@ -31,16 +31,20 @@ DESCRIPTION
 CLASSES
     builtins.object
         DeepTCR_base
-            DeepTCR_S_base
+            DeepTCR_S_base(DeepTCR_base, feature_analytics_class, vis_class)
                 DeepTCR_SS
                 DeepTCR_WF
-            DeepTCR_U
+            DeepTCR_U(DeepTCR_base, feature_analytics_class, vis_class)
+        feature_analytics_class
+        vis_class
     
     class DeepTCR_SS(DeepTCR_S_base)
      |  Method resolution order:
      |      DeepTCR_SS
      |      DeepTCR_S_base
      |      DeepTCR_base
+     |      feature_analytics_class
+     |      vis_class
      |      builtins.object
      |  
      |  Methods defined here:
@@ -244,15 +248,14 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_S_base:
      |  
-     |  AUC_Curve(self, show_all=True, filename='AUC.tif', title=None)
+     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None)
      |      AUC Curve for both Sequence and Repertoire/Sample Classifiers
      |      
      |      Inputs
      |      ---------------------------------------
-     |      show_all: bool
-     |          In the case there is only two classes, the method defaults
-     |          to producing an curve for only one class. If one desires
-     |          to see curves for all classes, set to True.
+     |      by: str
+     |          To show AUC curve for only one class, set this parameter
+     |          to the name of the class label one wants to plot.
      |      
      |      filename: str
      |          Filename to save tif file of AUC curve.
@@ -261,31 +264,10 @@ CLASSES
      |          Optional Title to put on ROC Curve.
      |      
      |      Returns
+     |      
+     |      In addition to plotting the ROC Curve, the AUC's are saved
+     |      to a csv file in the results directory called 'AUC.csv'
      |      ---------------------------------------
-     |  
-     |  Motif_Identification(self, group, p_val_threshold=0.05)
-     |      Motif Identification Supervised Classifiers
-     |      
-     |      This method looks for enriched features in the predetermined gropu
-     |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
-     |      to produce seqlogos.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      group: string
-     |          Class for analyzing enriched motifs.
-     |      
-     |      p_val_threshold: float
-     |          Significance threshold for enriched features/motifs for
-     |          Mann-Whitney UTest.
-     |      
-     |      Returns
-     |      ---------------------------------------
-     |      
-     |      self.(alpha/beta)_group_features: Pandas Dataframe
-     |          Sequences used to determine motifs in fasta files
-     |          are stored in this dataframe where column names represent
-     |          the feature number.
      |  
      |  Representative_Sequences(self, top_seq=10)
      |      Identify most highly predicted sequences for each class.
@@ -303,49 +285,6 @@ CLASSES
      |      self.Rep_Seq: dictionary of dataframes
      |          This dictionary of dataframes holds for each class the top sequences and their respective
      |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
-     |      
-     |      ---------------------------------------
-     |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
-     |      UMAP vizualisation of TCR Sequences
-     |      
-     |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
-     |      class label or sample_label. Size of points can also be made to be proportional to frequency of sequence within sample.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      
-     |      set: str
-     |          To choose which set of sequences to plot in latent space, enter either
-     |          'all','train', or 'test'. Viewing the latent space of the sequences in the train set
-     |          may be overfit so it preferable to view the latent space in the test set.
-     |      
-     |      by_class: bool
-     |          To color the points by their class label, set to True.
-     |      
-     |      by_sample: bool
-     |          To color the points by their sample lebel, set to True.
-     |      
-     |      freq_weight: bool
-     |          To scale size of points proportionally to their frequency, set to True.
-     |      
-     |      show_legend: bool
-     |          To display legend, set to True.
-     |      
-     |      scale: float
-     |          To change size of points, change scale parameter. Is particularly useful
-     |          when finding good display size when points are scaled by frequency.
-     |      
-     |      Load_Prev_Data: bool
-     |          If method was run before, one can rerun this method with this parameter set
-     |          to True to bypass recomputing the UMAP projection. Useful for generating
-     |          different versions of the plot on the same UMAP representation.
-     |      
-     |      alpha: float
-     |          Value between 0-1 that controls transparency of points.
-     |      
-     |      
-     |      Returns
      |      
      |      ---------------------------------------
      |  
@@ -556,337 +495,11 @@ CLASSES
      |  
      |  __weakref__
      |      list of weak references to the object (if defined)
-    
-    class DeepTCR_S_base(DeepTCR_base)
-     |  Method resolution order:
-     |      DeepTCR_S_base
-     |      DeepTCR_base
-     |      builtins.object
-     |  
-     |  Methods defined here:
-     |  
-     |  AUC_Curve(self, show_all=True, filename='AUC.tif', title=None)
-     |      AUC Curve for both Sequence and Repertoire/Sample Classifiers
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      show_all: bool
-     |          In the case there is only two classes, the method defaults
-     |          to producing an curve for only one class. If one desires
-     |          to see curves for all classes, set to True.
-     |      
-     |      filename: str
-     |          Filename to save tif file of AUC curve.
-     |      
-     |      title: str
-     |          Optional Title to put on ROC Curve.
-     |      
-     |      Returns
-     |      ---------------------------------------
-     |  
-     |  Motif_Identification(self, group, p_val_threshold=0.05)
-     |      Motif Identification Supervised Classifiers
-     |      
-     |      This method looks for enriched features in the predetermined gropu
-     |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
-     |      to produce seqlogos.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      group: string
-     |          Class for analyzing enriched motifs.
-     |      
-     |      p_val_threshold: float
-     |          Significance threshold for enriched features/motifs for
-     |          Mann-Whitney UTest.
-     |      
-     |      Returns
-     |      ---------------------------------------
-     |      
-     |      self.(alpha/beta)_group_features: Pandas Dataframe
-     |          Sequences used to determine motifs in fasta files
-     |          are stored in this dataframe where column names represent
-     |          the feature number.
-     |  
-     |  Representative_Sequences(self, top_seq=10)
-     |      Identify most highly predicted sequences for each class.
-     |      
-     |      This method allows the user to query which sequences were most predicted to belong to a given class.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      
-     |      top_seq: int
-     |          The number of top sequences to show for each class.
-     |      
-     |      Returns
-     |      
-     |      self.Rep_Seq: dictionary of dataframes
-     |          This dictionary of dataframes holds for each class the top sequences and their respective
-     |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
-     |      
-     |      ---------------------------------------
-     |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
-     |      UMAP vizualisation of TCR Sequences
-     |      
-     |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
-     |      class label or sample_label. Size of points can also be made to be proportional to frequency of sequence within sample.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      
-     |      set: str
-     |          To choose which set of sequences to plot in latent space, enter either
-     |          'all','train', or 'test'. Viewing the latent space of the sequences in the train set
-     |          may be overfit so it preferable to view the latent space in the test set.
-     |      
-     |      by_class: bool
-     |          To color the points by their class label, set to True.
-     |      
-     |      by_sample: bool
-     |          To color the points by their sample lebel, set to True.
-     |      
-     |      freq_weight: bool
-     |          To scale size of points proportionally to their frequency, set to True.
-     |      
-     |      show_legend: bool
-     |          To display legend, set to True.
-     |      
-     |      scale: float
-     |          To change size of points, change scale parameter. Is particularly useful
-     |          when finding good display size when points are scaled by frequency.
-     |      
-     |      Load_Prev_Data: bool
-     |          If method was run before, one can rerun this method with this parameter set
-     |          to True to bypass recomputing the UMAP projection. Useful for generating
-     |          different versions of the plot on the same UMAP representation.
-     |      
-     |      alpha: float
-     |          Value between 0-1 that controls transparency of points.
-     |      
-     |      
-     |      Returns
-     |      
-     |      ---------------------------------------
      |  
      |  ----------------------------------------------------------------------
-     |  Methods inherited from DeepTCR_base:
+     |  Methods inherited from feature_analytics_class:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None)
-     |      Get Data for DeepTCR
-     |      
-     |      Parse Data into appropriate inputs for neural network from directories where data is stored.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      directory: str
-     |          Path to directory with folders with tsv files are present
-     |          for analysis. Folders names become labels for files within them.
-     |      
-     |      Load_Prev_Data: bool
-     |          Loads Previous Data.
-     |      
-     |      classes: list
-     |          Optional selection of input of which sub-directories to use for analysis.
-     |      
-     |      
-     |      type_of_data_cut: str
-     |          Method by which one wants to sample from the TCRSeq File.
-     |      
-     |          Options are:
-     |              Fraction_Response: A fraction (0 - 1) that samples the top fraction of the file by reads. For example,
-     |              if one wants to sample the top 25% of reads, one would use this threshold with a data_cut = 0.25. The idea
-     |              of this sampling is akin to sampling a fraction of cells from the file.
-     |      
-     |              Frequency_Cut: If one wants to select clones above a given frequency threshold, one would use this threshold.
-     |              For example, if one wanted to only use clones about 1%, one would enter a data_cut value of 0.01.
-     |      
-     |              Num_Seq: If one wants to take the top N number of clones, one would use this threshold. For example,
-     |              if one wanted to select the top 10 amino acid clones from each file, they would enter a data_cut value of 10.
-     |      
-     |              Read_Cut: If one wants to take amino acid clones with at least a certain number of reads, one would use
-     |              this threshold. For example, if one wanted to only use clones with at least 10 reads,they would enter a data_cut value of 10.
-     |      
-     |              Read_Sum: IF one wants to take a given number of reads from each file, one would use this threshold. For example,
-     |              if one wants to use the sequences comprising the top 100 reads of hte file, they would enter a data_cut value of 100.
-     |      
-     |      data_cut: float or int
-     |          Value  associated with type_of_data_cut parameter.
-     |      
-     |      n_jobs: int
-     |          Number of processes to use for parallelized operations.
-     |      
-     |      aa_column_alpha: int
-     |          Column where alpha chain amino acid data is stored. (0-indexed)
-     |      
-     |      aa_column_beta: int
-     |          Column where beta chain amino acid data is stored.(0-indexed)
-     |      
-     |      count_column: int
-     |          Column where counts are stored.
-     |      
-     |      sep: str
-     |          Type of delimiter used in file with TCRSeq data.
-     |      
-     |      aggregate_by_aa: bool
-     |          Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
-     |          of the same amino acid sequence given it comes from different nucleotide clones.
-     |      
-     |      v_alpha_column: int
-     |          Column where v_alpha gene information is stored.
-     |      
-     |      j_alpha_column: int
-     |          Column where j_alpha gene information is stored.
-     |      
-     |      v_beta_column: int
-     |          Column where v_beta gene information is stored.
-     |      
-     |      d_beta_column: int
-     |          Column where d_beta gene information is stored.
-     |      
-     |      j_beta_column: int
-     |          Column where j_beta gene information is stored.
-     |      
-     |      p: multiprocessing pool object
-     |          For parellelized operations, one can pass a multiprocessing pool object
-     |          to this method.
-     |      
-     |      
-     |      Returns
-     |      
-     |      self.alpha_sequences: ndarray
-     |          array with alpha sequences (if provided)
-     |      
-     |      self.beta_sequences: ndarray
-     |          array with beta sequences (if provided)
-     |      
-     |      self.class_id: ndarray
-     |          array with sequence class labels
-     |      
-     |      self.sample_id: ndarray
-     |          array with sequence file labels
-     |      
-     |      self.freq: ndarray
-     |          array with sequence frequencies from samples
-     |      
-     |      self.counts: ndarray
-     |          array with sequence counts from samples
-     |      
-     |      self.(v/d/j)_(alpha/beta): ndarray
-     |          array with sequence (v/d/j)-(alpha/beta) usage
-     |      
-     |      ---------------------------------------
-     |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None)
-     |      Load Data programatically into DeepTCR.
-     |      
-     |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
-     |      a user can load numpy arrays with relevant TCRSeq data for analysis.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      
-     |      alpha_sequences: ndarray of strings
-     |          A 1d array with the sequences for inference for the alpha chain.
-     |      
-     |      beta_sequences: ndarray of strings
-     |          A 1d array with the sequences for inference for the beta chain.
-     |      
-     |      v_beta: ndarray of strings
-     |          A 1d array with the v-beta genes for inference.
-     |      
-     |      d_beta: ndarray of strings
-     |          A 1d array with the d-beta genes for inference.
-     |      
-     |      j_beta: ndarray of strings
-     |          A 1d array with the j-beta genes for inference.
-     |      
-     |      v_alpha: ndarray of strings
-     |          A 1d array with the v-alpha genes for inference.
-     |      
-     |      j_alpha: ndarray of strings
-     |          A 1d array with the j-alpha genes for inference.
-     |      
-     |      class_labels: ndarray of strings
-     |          A 1d array with class labels for the sequence (i.e. antigen-specificities)
-     |      
-     |      sample_labels: ndarray of strings
-     |          A 1d array with sample labels for the sequence. (i.e. when loading data from differnet samples)
-     |      
-     |      counts: ndarray of ints
-     |          A 1d array with the counts for each sequence, in the case they come from samples.
-     |      
-     |      freq: ndarray of float values
-     |          A 1d array with the frequencies for each sequence, in the case they come from samples.
-     |      
-     |      p: multiprocessing pool object
-     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
-     |      
-     |      
-     |      Returns
-     |      
-     |      self.alpha_sequences: ndarray
-     |          array with alpha sequences (if provided)
-     |      
-     |      self.beta_sequences: ndarray
-     |          array with beta sequences (if provided)
-     |      
-     |      self.label_id: ndarray
-     |          array with sequence class labels
-     |      
-     |      self.file_id: ndarray
-     |          array with sequence file labels
-     |      
-     |      self.freq: ndarray
-     |          array with sequence frequencies from samples
-     |      
-     |      self.counts: ndarray
-     |          array with sequence counts from samples
-     |      
-     |      self.(v/d/j)_(alpha/beta): ndarray
-     |          array with sequence (v/d/j)-(alpha/beta) usage
-     |      
-     |      ---------------------------------------
-     |  
-     |  __init__(self, Name, max_length=40, device='/gpu:0')
-     |      Initialize Training Object.
-     |      
-     |      Initializes object and sets initial parameters.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      Name: str
-     |          Name of the object.
-     |      
-     |      max_length: int
-     |          maximum length of CDR3 sequence
-     |      
-     |      device: str
-     |          In the case user is using tensorflow-gpu, one can
-     |          specify the particular device to build the graphs on.
-     |      
-     |      Returns
-     |      ---------------------------------------
-     |  
-     |  ----------------------------------------------------------------------
-     |  Data descriptors inherited from DeepTCR_base:
-     |  
-     |  __dict__
-     |      dictionary for instance variables (if defined)
-     |  
-     |  __weakref__
-     |      list of weak references to the object (if defined)
-    
-    class DeepTCR_U(DeepTCR_base)
-     |  Method resolution order:
-     |      DeepTCR_U
-     |      DeepTCR_base
-     |      builtins.object
-     |  
-     |  Methods defined here:
-     |  
-     |  Cluster(self, clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
+     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
      |      Clustering Sequences by Latent Features
      |      
      |      This method clusters all sequences by learned latent features from
@@ -896,6 +509,11 @@ CLASSES
      |      
      |      Inputs
      |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
      |      
      |      clustering_method: str
      |          Clustering algorithm to use to cluster TCR sequences. Options include
@@ -941,6 +559,62 @@ CLASSES
      |          Array with cluster assignments by number.
      |      
      |      ---------------------------------------
+     |  
+     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False)
+     |      Motif Identification Supervised Classifiers
+     |      
+     |      This method looks for enriched features in the predetermined gropu
+     |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
+     |      to produce seqlogos.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      group: string
+     |          Class for analyzing enriched motifs.
+     |      
+     |      p_val_threshold: float
+     |          Significance threshold for enriched features/motifs for
+     |          Mann-Whitney UTest.
+     |      
+     |      by_samples: bool
+     |          To run a motif identification that looks for enriched motifs at the sample
+     |          instead of the seuence level, set this parameter to True. Otherwise, the enrichment
+     |          analysis will be done at the sequence level.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |      
+     |      self.(alpha/beta)_group_features: Pandas Dataframe
+     |          Sequences used to determine motifs in fasta files
+     |          are stored in this dataframe where column names represent
+     |          the feature number.
+     |  
+     |  Structural_Diversity(self, sample=None, n_jobs=1)
+     |      Structural Diversity Measurements
+     |      
+     |      This method first clusters sequences via the phenograph algorithm before computing
+     |      the number of clusters and entropy of the data over these clusters to obtain a measurement
+     |      of the structural diversity within a repertoire.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      Returns
+     |      
+     |      self.Structural_Diversity_DF: Pandas dataframe
+     |          A dataframe containing the number of clusters and entropy in each sample
+     |      
+     |      ---------------------------------------
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from vis_class:
      |  
      |  HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
      |      HeatMap of Samples
@@ -991,6 +665,652 @@ CLASSES
      |      
      |      Returns
      |      ---------------------------------------
+     |  
+     |  Repertoire_Dendogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |      Repertoire Dendrogram
+     |      
+     |      This method creates a visualization that shows and compares the distribution
+     |      of the sample repertoires via UMAP and provided distance metric. The underlying
+     |      algorithm first applied phenograph clustering to determine the proportions of the sample
+     |      within a given cluster. Then a distance metric is used to compare how far two samples are
+     |      based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
+     |      Correlation, and Euclidean.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      distance_metric = str
+     |          Provided distance metric to determine repertoire-level distance from cluster proportions.
+     |          Options include = (KL,correlation,euclidean,wasserstein,JS).
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      dendrogram_radius: float
+     |          The radius of the dendrogram in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      repertoire_radius: float
+     |          The radius of the repertoire plots in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      linkage_method: str
+     |          linkage method used by scipy's linkage function
+     |      
+     |      gridsize: int
+     |          This parameter modifies the granularity of the hexbins for the repertoire density plots.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method has been run before, one can load previous data used to construct the figure for
+     |          faster figure creation. This is helpful when trying to format the figure correctly and will require
+     |          the user to run the method multiple times.
+     |      
+     |      Returns
+     |      
+     |      self.pairwise_distances: Pandas dataframe
+     |          Pairwise distances of all samples
+     |      ---------------------------------------
+     |  
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |      UMAP vizualisation of TCR Sequences
+     |      
+     |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
+     |      class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional
+     |      to frequency of sequence within sample.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      by_class: bool
+     |          To color the points by their class label, set to True.
+     |      
+     |      by_sample: bool
+     |          To color the points by their sample lebel, set to True.
+     |      
+     |      by_cluster:bool
+     |          To color the points by the prior computed clustering solution, set to True.
+     |      
+     |      freq_weight: bool
+     |          To scale size of points proportionally to their frequency, set to True.
+     |      
+     |      show_legend: bool
+     |          To display legend, set to True.
+     |      
+     |      scale: float
+     |          To change size of points, change scale parameter. Is particularly useful
+     |          when finding good display size when points are scaled by frequency.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method was run before, one can rerun this method with this parameter set
+     |          to True to bypass recomputing the UMAP projection. Useful for generating
+     |          different versions of the plot on the same UMAP representation.
+     |      
+     |      alpha: float
+     |          Value between 0-1 that controls transparency of points.
+     |      
+     |      
+     |      Returns
+     |      
+     |      ---------------------------------------
+    
+    class DeepTCR_S_base(DeepTCR_base, feature_analytics_class, vis_class)
+     |  Method resolution order:
+     |      DeepTCR_S_base
+     |      DeepTCR_base
+     |      feature_analytics_class
+     |      vis_class
+     |      builtins.object
+     |  
+     |  Methods defined here:
+     |  
+     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None)
+     |      AUC Curve for both Sequence and Repertoire/Sample Classifiers
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      by: str
+     |          To show AUC curve for only one class, set this parameter
+     |          to the name of the class label one wants to plot.
+     |      
+     |      filename: str
+     |          Filename to save tif file of AUC curve.
+     |      
+     |      title: str
+     |          Optional Title to put on ROC Curve.
+     |      
+     |      Returns
+     |      
+     |      In addition to plotting the ROC Curve, the AUC's are saved
+     |      to a csv file in the results directory called 'AUC.csv'
+     |      ---------------------------------------
+     |  
+     |  Representative_Sequences(self, top_seq=10)
+     |      Identify most highly predicted sequences for each class.
+     |      
+     |      This method allows the user to query which sequences were most predicted to belong to a given class.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      top_seq: int
+     |          The number of top sequences to show for each class.
+     |      
+     |      Returns
+     |      
+     |      self.Rep_Seq: dictionary of dataframes
+     |          This dictionary of dataframes holds for each class the top sequences and their respective
+     |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
+     |      
+     |      ---------------------------------------
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from DeepTCR_base:
+     |  
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None)
+     |      Get Data for DeepTCR
+     |      
+     |      Parse Data into appropriate inputs for neural network from directories where data is stored.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      directory: str
+     |          Path to directory with folders with tsv files are present
+     |          for analysis. Folders names become labels for files within them.
+     |      
+     |      Load_Prev_Data: bool
+     |          Loads Previous Data.
+     |      
+     |      classes: list
+     |          Optional selection of input of which sub-directories to use for analysis.
+     |      
+     |      
+     |      type_of_data_cut: str
+     |          Method by which one wants to sample from the TCRSeq File.
+     |      
+     |          Options are:
+     |              Fraction_Response: A fraction (0 - 1) that samples the top fraction of the file by reads. For example,
+     |              if one wants to sample the top 25% of reads, one would use this threshold with a data_cut = 0.25. The idea
+     |              of this sampling is akin to sampling a fraction of cells from the file.
+     |      
+     |              Frequency_Cut: If one wants to select clones above a given frequency threshold, one would use this threshold.
+     |              For example, if one wanted to only use clones about 1%, one would enter a data_cut value of 0.01.
+     |      
+     |              Num_Seq: If one wants to take the top N number of clones, one would use this threshold. For example,
+     |              if one wanted to select the top 10 amino acid clones from each file, they would enter a data_cut value of 10.
+     |      
+     |              Read_Cut: If one wants to take amino acid clones with at least a certain number of reads, one would use
+     |              this threshold. For example, if one wanted to only use clones with at least 10 reads,they would enter a data_cut value of 10.
+     |      
+     |              Read_Sum: IF one wants to take a given number of reads from each file, one would use this threshold. For example,
+     |              if one wants to use the sequences comprising the top 100 reads of hte file, they would enter a data_cut value of 100.
+     |      
+     |      data_cut: float or int
+     |          Value  associated with type_of_data_cut parameter.
+     |      
+     |      n_jobs: int
+     |          Number of processes to use for parallelized operations.
+     |      
+     |      aa_column_alpha: int
+     |          Column where alpha chain amino acid data is stored. (0-indexed)
+     |      
+     |      aa_column_beta: int
+     |          Column where beta chain amino acid data is stored.(0-indexed)
+     |      
+     |      count_column: int
+     |          Column where counts are stored.
+     |      
+     |      sep: str
+     |          Type of delimiter used in file with TCRSeq data.
+     |      
+     |      aggregate_by_aa: bool
+     |          Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
+     |          of the same amino acid sequence given it comes from different nucleotide clones.
+     |      
+     |      v_alpha_column: int
+     |          Column where v_alpha gene information is stored.
+     |      
+     |      j_alpha_column: int
+     |          Column where j_alpha gene information is stored.
+     |      
+     |      v_beta_column: int
+     |          Column where v_beta gene information is stored.
+     |      
+     |      d_beta_column: int
+     |          Column where d_beta gene information is stored.
+     |      
+     |      j_beta_column: int
+     |          Column where j_beta gene information is stored.
+     |      
+     |      p: multiprocessing pool object
+     |          For parellelized operations, one can pass a multiprocessing pool object
+     |          to this method.
+     |      
+     |      
+     |      Returns
+     |      
+     |      self.alpha_sequences: ndarray
+     |          array with alpha sequences (if provided)
+     |      
+     |      self.beta_sequences: ndarray
+     |          array with beta sequences (if provided)
+     |      
+     |      self.class_id: ndarray
+     |          array with sequence class labels
+     |      
+     |      self.sample_id: ndarray
+     |          array with sequence file labels
+     |      
+     |      self.freq: ndarray
+     |          array with sequence frequencies from samples
+     |      
+     |      self.counts: ndarray
+     |          array with sequence counts from samples
+     |      
+     |      self.(v/d/j)_(alpha/beta): ndarray
+     |          array with sequence (v/d/j)-(alpha/beta) usage
+     |      
+     |      ---------------------------------------
+     |  
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None)
+     |      Load Data programatically into DeepTCR.
+     |      
+     |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
+     |      a user can load numpy arrays with relevant TCRSeq data for analysis.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      class_labels: ndarray of strings
+     |          A 1d array with class labels for the sequence (i.e. antigen-specificities)
+     |      
+     |      sample_labels: ndarray of strings
+     |          A 1d array with sample labels for the sequence. (i.e. when loading data from differnet samples)
+     |      
+     |      counts: ndarray of ints
+     |          A 1d array with the counts for each sequence, in the case they come from samples.
+     |      
+     |      freq: ndarray of float values
+     |          A 1d array with the frequencies for each sequence, in the case they come from samples.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      
+     |      Returns
+     |      
+     |      self.alpha_sequences: ndarray
+     |          array with alpha sequences (if provided)
+     |      
+     |      self.beta_sequences: ndarray
+     |          array with beta sequences (if provided)
+     |      
+     |      self.label_id: ndarray
+     |          array with sequence class labels
+     |      
+     |      self.file_id: ndarray
+     |          array with sequence file labels
+     |      
+     |      self.freq: ndarray
+     |          array with sequence frequencies from samples
+     |      
+     |      self.counts: ndarray
+     |          array with sequence counts from samples
+     |      
+     |      self.(v/d/j)_(alpha/beta): ndarray
+     |          array with sequence (v/d/j)-(alpha/beta) usage
+     |      
+     |      ---------------------------------------
+     |  
+     |  __init__(self, Name, max_length=40, device='/gpu:0')
+     |      Initialize Training Object.
+     |      
+     |      Initializes object and sets initial parameters.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      Name: str
+     |          Name of the object.
+     |      
+     |      max_length: int
+     |          maximum length of CDR3 sequence
+     |      
+     |      device: str
+     |          In the case user is using tensorflow-gpu, one can
+     |          specify the particular device to build the graphs on.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from DeepTCR_base:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from feature_analytics_class:
+     |  
+     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
+     |      Clustering Sequences by Latent Features
+     |      
+     |      This method clusters all sequences by learned latent features from
+     |      either the variational autoencoder Several clustering algorithms are included including
+     |      Phenograph, DBSCAN, or hierarchical clustering. DBSCAN is implemented from the
+     |      sklearn package. Hierarchical clustering is implemented from the scipy package.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      clustering_method: str
+     |          Clustering algorithm to use to cluster TCR sequences. Options include
+     |          phenograph, dbscan, or hierarchical. When using dbscan or hierarchical clustering,
+     |          a variety of thresholds are used to find an optimimum silhoutte score before using a final
+     |          clustering threshold when t value is not provided.
+     |      
+     |      t: float
+     |          If t is provided, this is used as a distance threshold for hierarchical clustering or the eps
+     |          value for dbscan.
+     |      
+     |      criterion: str
+     |          Clustering criterion as allowed by fcluster function
+     |          in scipy.cluster.hierarchy module. (Used in hierarchical clustering).
+     |      
+     |      linkage_method: str
+     |          method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+     |      
+     |      write_to_sheets: bool
+     |          To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
+     |          Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
+     |          of each cluster to each sample.
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      Returns
+     |      
+     |      self.Cluster_DFs: list of Pandas dataframes
+     |          Clusters by sequences/label
+     |      
+     |      self.var: list
+     |          Variance of lengths in each cluster
+     |      
+     |      self.Cluster_Frequencies: Pandas dataframe
+     |          A dataframe containing the frequency contribution of each cluster to each sample.
+     |      
+     |      self.Cluster_Assignments: ndarray
+     |          Array with cluster assignments by number.
+     |      
+     |      ---------------------------------------
+     |  
+     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False)
+     |      Motif Identification Supervised Classifiers
+     |      
+     |      This method looks for enriched features in the predetermined gropu
+     |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
+     |      to produce seqlogos.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      group: string
+     |          Class for analyzing enriched motifs.
+     |      
+     |      p_val_threshold: float
+     |          Significance threshold for enriched features/motifs for
+     |          Mann-Whitney UTest.
+     |      
+     |      by_samples: bool
+     |          To run a motif identification that looks for enriched motifs at the sample
+     |          instead of the seuence level, set this parameter to True. Otherwise, the enrichment
+     |          analysis will be done at the sequence level.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |      
+     |      self.(alpha/beta)_group_features: Pandas Dataframe
+     |          Sequences used to determine motifs in fasta files
+     |          are stored in this dataframe where column names represent
+     |          the feature number.
+     |  
+     |  Structural_Diversity(self, sample=None, n_jobs=1)
+     |      Structural Diversity Measurements
+     |      
+     |      This method first clusters sequences via the phenograph algorithm before computing
+     |      the number of clusters and entropy of the data over these clusters to obtain a measurement
+     |      of the structural diversity within a repertoire.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      Returns
+     |      
+     |      self.Structural_Diversity_DF: Pandas dataframe
+     |          A dataframe containing the number of clusters and entropy in each sample
+     |      
+     |      ---------------------------------------
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from vis_class:
+     |  
+     |  HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
+     |      HeatMap of Samples
+     |      
+     |      This method creates a heatmap/clustermap for samples by latent features
+     |      for the unsupervised deep learning methods.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      filename: str
+     |          Name of file to save heatmap.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      labels: bool
+     |          Option to show names of samples on y-axis of heatmap.
+     |      
+     |      font_scale: float
+     |          This parameter controls the font size of the row labels. If there are many rows, one can make this value
+     |          smaller to get better labeling of the rows.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |  
+     |  HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None, color_dict=None)
+     |      HeatMap of Sequences
+     |      
+     |      This method creates a heatmap/clustermap for sequences by latent features
+     |      for the unsupervised deep lerning methods.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      filename: str
+     |          Name of file to save heatmap.
+     |      
+     |      sample_num: int
+     |          Number of events to randomly sample for heatmap.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |  
+     |  Repertoire_Dendogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |      Repertoire Dendrogram
+     |      
+     |      This method creates a visualization that shows and compares the distribution
+     |      of the sample repertoires via UMAP and provided distance metric. The underlying
+     |      algorithm first applied phenograph clustering to determine the proportions of the sample
+     |      within a given cluster. Then a distance metric is used to compare how far two samples are
+     |      based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
+     |      Correlation, and Euclidean.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      distance_metric = str
+     |          Provided distance metric to determine repertoire-level distance from cluster proportions.
+     |          Options include = (KL,correlation,euclidean,wasserstein,JS).
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      dendrogram_radius: float
+     |          The radius of the dendrogram in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      repertoire_radius: float
+     |          The radius of the repertoire plots in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      linkage_method: str
+     |          linkage method used by scipy's linkage function
+     |      
+     |      gridsize: int
+     |          This parameter modifies the granularity of the hexbins for the repertoire density plots.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method has been run before, one can load previous data used to construct the figure for
+     |          faster figure creation. This is helpful when trying to format the figure correctly and will require
+     |          the user to run the method multiple times.
+     |      
+     |      Returns
+     |      
+     |      self.pairwise_distances: Pandas dataframe
+     |          Pairwise distances of all samples
+     |      ---------------------------------------
+     |  
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |      UMAP vizualisation of TCR Sequences
+     |      
+     |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
+     |      class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional
+     |      to frequency of sequence within sample.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      by_class: bool
+     |          To color the points by their class label, set to True.
+     |      
+     |      by_sample: bool
+     |          To color the points by their sample lebel, set to True.
+     |      
+     |      by_cluster:bool
+     |          To color the points by the prior computed clustering solution, set to True.
+     |      
+     |      freq_weight: bool
+     |          To scale size of points proportionally to their frequency, set to True.
+     |      
+     |      show_legend: bool
+     |          To display legend, set to True.
+     |      
+     |      scale: float
+     |          To change size of points, change scale parameter. Is particularly useful
+     |          when finding good display size when points are scaled by frequency.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method was run before, one can rerun this method with this parameter set
+     |          to True to bypass recomputing the UMAP projection. Useful for generating
+     |          different versions of the plot on the same UMAP representation.
+     |      
+     |      alpha: float
+     |          Value between 0-1 that controls transparency of points.
+     |      
+     |      
+     |      Returns
+     |      
+     |      ---------------------------------------
+    
+    class DeepTCR_U(DeepTCR_base, feature_analytics_class, vis_class)
+     |  Method resolution order:
+     |      DeepTCR_U
+     |      DeepTCR_base
+     |      feature_analytics_class
+     |      vis_class
+     |      builtins.object
+     |  
+     |  Methods defined here:
      |  
      |  Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
      |      Predicting features on new data
@@ -1121,83 +1441,7 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendogram(self, distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
-     |      Repertoire Dendrogram
-     |      
-     |      This method creates a visualization that shows and compares the distribution
-     |      of the sample repertoires via UMAP and provided distance metric. The underlying
-     |      algorithm first applied phenograph clustering to determine the proportions of the sample
-     |      within a given cluster. Then a distance metric is used to compare how far two samples are
-     |      based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
-     |      Correlation, and Euclidean.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      
-     |      distance_metric = str
-     |          Provided distance metric to determine repertoire-level distance from cluster proportions.
-     |          Options include = (KL,correlation,euclidean,wasserstein,JS).
-     |      
-     |      sample: int
-     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
-     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
-     |      
-     |      n_jobs:int
-     |          Number of processes to use for parallel operations.
-     |      
-     |      color_dict: dict
-     |          Optional dictionary to provide specified colors for classes.
-     |      
-     |      dendrogram_radius: float
-     |          The radius of the dendrogram in the figure. This will usually require some adjustment
-     |          given the number of samples.
-     |      
-     |      repertoire_radius: float
-     |          The radius of the repertoire plots in the figure. This will usually require some adjustment
-     |          given the number of samples.
-     |      
-     |      linkage_method: str
-     |          linkage method used by scipy's linkage function
-     |      
-     |      gridsize: int
-     |          This parameter modifies the granularity of the hexbins for the repertoire density plots.
-     |      
-     |      Load_Prev_Data: bool
-     |          If method has been run before, one can load previous data used to construct the figure for
-     |          faster figure creation. This is helpful when trying to format the figure correctly and will require
-     |          the user to run the method multiple times.
-     |      
-     |      Returns
-     |      
-     |      self.pairwise_distances: Pandas dataframe
-     |          Pairwise distances of all samples
-     |      ---------------------------------------
-     |  
-     |  Structural_Diversity(self, sample=None, n_jobs=1)
-     |      Structural Diversity Measurements
-     |      
-     |      This method first clusters sequences via the phenograph algorithm before computing
-     |      the number of clusters and entropy of the data over these clusters to obtain a measurement
-     |      of the structural diversity within a repertoire.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      
-     |      sample: int
-     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
-     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
-     |      
-     |      n_jobs:int
-     |          Number of processes to use for parallel operations.
-     |      
-     |      Returns
-     |      
-     |      self.Structural_Diversity_DF: Pandas dataframe
-     |          A dataframe containing the number of clusters and entropy in each sample
-     |      
-     |      ---------------------------------------
-     |  
-     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, epochs_min=10, stop_criterion=0.0001)
+     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, epochs_min=10, stop_criterion=0.0001, kernel=3)
      |      Train Variational Autoencoder (VAE)
      |      
      |      This method trains the network and saves features values for sequences
@@ -1240,52 +1484,14 @@ CLASSES
      |          Minimum percent decrease in determined interval (below) to continue
      |          training. Used as early stopping criterion.
      |      
+     |      kernel: int
+     |          To specify the motif k-mer of the first layer of the autoencoder, change this
+     |          parameter.
+     |      
      |      Returns
      |      
      |      self.vae_features: array
      |          An array that contains n x latent_dim containing features for all sequences
-     |      
-     |      ---------------------------------------
-     |  
-     |  UMAP_Plot(self, by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
-     |      UMAP vizualisation of TCR Sequences
-     |      
-     |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
-     |      class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional
-     |      to frequency of sequence within sample.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      
-     |      by_class: bool
-     |          To color the points by their class label, set to True.
-     |      
-     |      by_sample: bool
-     |          To color the points by their sample lebel, set to True.
-     |      
-     |      by_cluster:bool
-     |          To color the points by the prior computed clustering solution, set to True.
-     |      
-     |      freq_weight: bool
-     |          To scale size of points proportionally to their frequency, set to True.
-     |      
-     |      show_legend: bool
-     |          To display legend, set to True.
-     |      
-     |      scale: float
-     |          To change size of points, change scale parameter. Is particularly useful
-     |          when finding good display size when points are scaled by frequency.
-     |      
-     |      Load_Prev_Data: bool
-     |          If method was run before, one can rerun this method with this parameter set
-     |          to True to bypass recomputing the UMAP projection. Useful for generating
-     |          different versions of the plot on the same UMAP representation.
-     |      
-     |      alpha: float
-     |          Value between 0-1 that controls transparency of points.
-     |      
-     |      
-     |      Returns
      |      
      |      ---------------------------------------
      |  
@@ -1496,12 +1702,288 @@ CLASSES
      |  
      |  __weakref__
      |      list of weak references to the object (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from feature_analytics_class:
+     |  
+     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
+     |      Clustering Sequences by Latent Features
+     |      
+     |      This method clusters all sequences by learned latent features from
+     |      either the variational autoencoder Several clustering algorithms are included including
+     |      Phenograph, DBSCAN, or hierarchical clustering. DBSCAN is implemented from the
+     |      sklearn package. Hierarchical clustering is implemented from the scipy package.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      clustering_method: str
+     |          Clustering algorithm to use to cluster TCR sequences. Options include
+     |          phenograph, dbscan, or hierarchical. When using dbscan or hierarchical clustering,
+     |          a variety of thresholds are used to find an optimimum silhoutte score before using a final
+     |          clustering threshold when t value is not provided.
+     |      
+     |      t: float
+     |          If t is provided, this is used as a distance threshold for hierarchical clustering or the eps
+     |          value for dbscan.
+     |      
+     |      criterion: str
+     |          Clustering criterion as allowed by fcluster function
+     |          in scipy.cluster.hierarchy module. (Used in hierarchical clustering).
+     |      
+     |      linkage_method: str
+     |          method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+     |      
+     |      write_to_sheets: bool
+     |          To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
+     |          Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
+     |          of each cluster to each sample.
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      Returns
+     |      
+     |      self.Cluster_DFs: list of Pandas dataframes
+     |          Clusters by sequences/label
+     |      
+     |      self.var: list
+     |          Variance of lengths in each cluster
+     |      
+     |      self.Cluster_Frequencies: Pandas dataframe
+     |          A dataframe containing the frequency contribution of each cluster to each sample.
+     |      
+     |      self.Cluster_Assignments: ndarray
+     |          Array with cluster assignments by number.
+     |      
+     |      ---------------------------------------
+     |  
+     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False)
+     |      Motif Identification Supervised Classifiers
+     |      
+     |      This method looks for enriched features in the predetermined gropu
+     |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
+     |      to produce seqlogos.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      group: string
+     |          Class for analyzing enriched motifs.
+     |      
+     |      p_val_threshold: float
+     |          Significance threshold for enriched features/motifs for
+     |          Mann-Whitney UTest.
+     |      
+     |      by_samples: bool
+     |          To run a motif identification that looks for enriched motifs at the sample
+     |          instead of the seuence level, set this parameter to True. Otherwise, the enrichment
+     |          analysis will be done at the sequence level.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |      
+     |      self.(alpha/beta)_group_features: Pandas Dataframe
+     |          Sequences used to determine motifs in fasta files
+     |          are stored in this dataframe where column names represent
+     |          the feature number.
+     |  
+     |  Structural_Diversity(self, sample=None, n_jobs=1)
+     |      Structural Diversity Measurements
+     |      
+     |      This method first clusters sequences via the phenograph algorithm before computing
+     |      the number of clusters and entropy of the data over these clusters to obtain a measurement
+     |      of the structural diversity within a repertoire.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      Returns
+     |      
+     |      self.Structural_Diversity_DF: Pandas dataframe
+     |          A dataframe containing the number of clusters and entropy in each sample
+     |      
+     |      ---------------------------------------
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from vis_class:
+     |  
+     |  HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
+     |      HeatMap of Samples
+     |      
+     |      This method creates a heatmap/clustermap for samples by latent features
+     |      for the unsupervised deep learning methods.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      filename: str
+     |          Name of file to save heatmap.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      labels: bool
+     |          Option to show names of samples on y-axis of heatmap.
+     |      
+     |      font_scale: float
+     |          This parameter controls the font size of the row labels. If there are many rows, one can make this value
+     |          smaller to get better labeling of the rows.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |  
+     |  HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None, color_dict=None)
+     |      HeatMap of Sequences
+     |      
+     |      This method creates a heatmap/clustermap for sequences by latent features
+     |      for the unsupervised deep lerning methods.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      filename: str
+     |          Name of file to save heatmap.
+     |      
+     |      sample_num: int
+     |          Number of events to randomly sample for heatmap.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |  
+     |  Repertoire_Dendogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |      Repertoire Dendrogram
+     |      
+     |      This method creates a visualization that shows and compares the distribution
+     |      of the sample repertoires via UMAP and provided distance metric. The underlying
+     |      algorithm first applied phenograph clustering to determine the proportions of the sample
+     |      within a given cluster. Then a distance metric is used to compare how far two samples are
+     |      based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
+     |      Correlation, and Euclidean.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      distance_metric = str
+     |          Provided distance metric to determine repertoire-level distance from cluster proportions.
+     |          Options include = (KL,correlation,euclidean,wasserstein,JS).
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      dendrogram_radius: float
+     |          The radius of the dendrogram in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      repertoire_radius: float
+     |          The radius of the repertoire plots in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      linkage_method: str
+     |          linkage method used by scipy's linkage function
+     |      
+     |      gridsize: int
+     |          This parameter modifies the granularity of the hexbins for the repertoire density plots.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method has been run before, one can load previous data used to construct the figure for
+     |          faster figure creation. This is helpful when trying to format the figure correctly and will require
+     |          the user to run the method multiple times.
+     |      
+     |      Returns
+     |      
+     |      self.pairwise_distances: Pandas dataframe
+     |          Pairwise distances of all samples
+     |      ---------------------------------------
+     |  
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |      UMAP vizualisation of TCR Sequences
+     |      
+     |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
+     |      class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional
+     |      to frequency of sequence within sample.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      by_class: bool
+     |          To color the points by their class label, set to True.
+     |      
+     |      by_sample: bool
+     |          To color the points by their sample lebel, set to True.
+     |      
+     |      by_cluster:bool
+     |          To color the points by the prior computed clustering solution, set to True.
+     |      
+     |      freq_weight: bool
+     |          To scale size of points proportionally to their frequency, set to True.
+     |      
+     |      show_legend: bool
+     |          To display legend, set to True.
+     |      
+     |      scale: float
+     |          To change size of points, change scale parameter. Is particularly useful
+     |          when finding good display size when points are scaled by frequency.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method was run before, one can rerun this method with this parameter set
+     |          to True to bypass recomputing the UMAP projection. Useful for generating
+     |          different versions of the plot on the same UMAP representation.
+     |      
+     |      alpha: float
+     |          Value between 0-1 that controls transparency of points.
+     |      
+     |      
+     |      Returns
+     |      
+     |      ---------------------------------------
     
     class DeepTCR_WF(DeepTCR_S_base)
      |  Method resolution order:
      |      DeepTCR_WF
      |      DeepTCR_S_base
      |      DeepTCR_base
+     |      feature_analytics_class
+     |      vis_class
      |      builtins.object
      |  
      |  Methods defined here:
@@ -1706,15 +2188,14 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_S_base:
      |  
-     |  AUC_Curve(self, show_all=True, filename='AUC.tif', title=None)
+     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None)
      |      AUC Curve for both Sequence and Repertoire/Sample Classifiers
      |      
      |      Inputs
      |      ---------------------------------------
-     |      show_all: bool
-     |          In the case there is only two classes, the method defaults
-     |          to producing an curve for only one class. If one desires
-     |          to see curves for all classes, set to True.
+     |      by: str
+     |          To show AUC curve for only one class, set this parameter
+     |          to the name of the class label one wants to plot.
      |      
      |      filename: str
      |          Filename to save tif file of AUC curve.
@@ -1723,31 +2204,10 @@ CLASSES
      |          Optional Title to put on ROC Curve.
      |      
      |      Returns
+     |      
+     |      In addition to plotting the ROC Curve, the AUC's are saved
+     |      to a csv file in the results directory called 'AUC.csv'
      |      ---------------------------------------
-     |  
-     |  Motif_Identification(self, group, p_val_threshold=0.05)
-     |      Motif Identification Supervised Classifiers
-     |      
-     |      This method looks for enriched features in the predetermined gropu
-     |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
-     |      to produce seqlogos.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      group: string
-     |          Class for analyzing enriched motifs.
-     |      
-     |      p_val_threshold: float
-     |          Significance threshold for enriched features/motifs for
-     |          Mann-Whitney UTest.
-     |      
-     |      Returns
-     |      ---------------------------------------
-     |      
-     |      self.(alpha/beta)_group_features: Pandas Dataframe
-     |          Sequences used to determine motifs in fasta files
-     |          are stored in this dataframe where column names represent
-     |          the feature number.
      |  
      |  Representative_Sequences(self, top_seq=10)
      |      Identify most highly predicted sequences for each class.
@@ -1765,49 +2225,6 @@ CLASSES
      |      self.Rep_Seq: dictionary of dataframes
      |          This dictionary of dataframes holds for each class the top sequences and their respective
      |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
-     |      
-     |      ---------------------------------------
-     |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
-     |      UMAP vizualisation of TCR Sequences
-     |      
-     |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
-     |      class label or sample_label. Size of points can also be made to be proportional to frequency of sequence within sample.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      
-     |      set: str
-     |          To choose which set of sequences to plot in latent space, enter either
-     |          'all','train', or 'test'. Viewing the latent space of the sequences in the train set
-     |          may be overfit so it preferable to view the latent space in the test set.
-     |      
-     |      by_class: bool
-     |          To color the points by their class label, set to True.
-     |      
-     |      by_sample: bool
-     |          To color the points by their sample lebel, set to True.
-     |      
-     |      freq_weight: bool
-     |          To scale size of points proportionally to their frequency, set to True.
-     |      
-     |      show_legend: bool
-     |          To display legend, set to True.
-     |      
-     |      scale: float
-     |          To change size of points, change scale parameter. Is particularly useful
-     |          when finding good display size when points are scaled by frequency.
-     |      
-     |      Load_Prev_Data: bool
-     |          If method was run before, one can rerun this method with this parameter set
-     |          to True to bypass recomputing the UMAP projection. Useful for generating
-     |          different versions of the plot on the same UMAP representation.
-     |      
-     |      alpha: float
-     |          Value between 0-1 that controls transparency of points.
-     |      
-     |      
-     |      Returns
      |      
      |      ---------------------------------------
      |  
@@ -2018,6 +2435,280 @@ CLASSES
      |  
      |  __weakref__
      |      list of weak references to the object (if defined)
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from feature_analytics_class:
+     |  
+     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
+     |      Clustering Sequences by Latent Features
+     |      
+     |      This method clusters all sequences by learned latent features from
+     |      either the variational autoencoder Several clustering algorithms are included including
+     |      Phenograph, DBSCAN, or hierarchical clustering. DBSCAN is implemented from the
+     |      sklearn package. Hierarchical clustering is implemented from the scipy package.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      clustering_method: str
+     |          Clustering algorithm to use to cluster TCR sequences. Options include
+     |          phenograph, dbscan, or hierarchical. When using dbscan or hierarchical clustering,
+     |          a variety of thresholds are used to find an optimimum silhoutte score before using a final
+     |          clustering threshold when t value is not provided.
+     |      
+     |      t: float
+     |          If t is provided, this is used as a distance threshold for hierarchical clustering or the eps
+     |          value for dbscan.
+     |      
+     |      criterion: str
+     |          Clustering criterion as allowed by fcluster function
+     |          in scipy.cluster.hierarchy module. (Used in hierarchical clustering).
+     |      
+     |      linkage_method: str
+     |          method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+     |      
+     |      write_to_sheets: bool
+     |          To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
+     |          Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
+     |          of each cluster to each sample.
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      Returns
+     |      
+     |      self.Cluster_DFs: list of Pandas dataframes
+     |          Clusters by sequences/label
+     |      
+     |      self.var: list
+     |          Variance of lengths in each cluster
+     |      
+     |      self.Cluster_Frequencies: Pandas dataframe
+     |          A dataframe containing the frequency contribution of each cluster to each sample.
+     |      
+     |      self.Cluster_Assignments: ndarray
+     |          Array with cluster assignments by number.
+     |      
+     |      ---------------------------------------
+     |  
+     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False)
+     |      Motif Identification Supervised Classifiers
+     |      
+     |      This method looks for enriched features in the predetermined gropu
+     |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
+     |      to produce seqlogos.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      group: string
+     |          Class for analyzing enriched motifs.
+     |      
+     |      p_val_threshold: float
+     |          Significance threshold for enriched features/motifs for
+     |          Mann-Whitney UTest.
+     |      
+     |      by_samples: bool
+     |          To run a motif identification that looks for enriched motifs at the sample
+     |          instead of the seuence level, set this parameter to True. Otherwise, the enrichment
+     |          analysis will be done at the sequence level.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |      
+     |      self.(alpha/beta)_group_features: Pandas Dataframe
+     |          Sequences used to determine motifs in fasta files
+     |          are stored in this dataframe where column names represent
+     |          the feature number.
+     |  
+     |  Structural_Diversity(self, sample=None, n_jobs=1)
+     |      Structural Diversity Measurements
+     |      
+     |      This method first clusters sequences via the phenograph algorithm before computing
+     |      the number of clusters and entropy of the data over these clusters to obtain a measurement
+     |      of the structural diversity within a repertoire.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      Returns
+     |      
+     |      self.Structural_Diversity_DF: Pandas dataframe
+     |          A dataframe containing the number of clusters and entropy in each sample
+     |      
+     |      ---------------------------------------
+     |  
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from vis_class:
+     |  
+     |  HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
+     |      HeatMap of Samples
+     |      
+     |      This method creates a heatmap/clustermap for samples by latent features
+     |      for the unsupervised deep learning methods.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      filename: str
+     |          Name of file to save heatmap.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      labels: bool
+     |          Option to show names of samples on y-axis of heatmap.
+     |      
+     |      font_scale: float
+     |          This parameter controls the font size of the row labels. If there are many rows, one can make this value
+     |          smaller to get better labeling of the rows.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |  
+     |  HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None, color_dict=None)
+     |      HeatMap of Sequences
+     |      
+     |      This method creates a heatmap/clustermap for sequences by latent features
+     |      for the unsupervised deep lerning methods.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      filename: str
+     |          Name of file to save heatmap.
+     |      
+     |      sample_num: int
+     |          Number of events to randomly sample for heatmap.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |  
+     |  Repertoire_Dendogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |      Repertoire Dendrogram
+     |      
+     |      This method creates a visualization that shows and compares the distribution
+     |      of the sample repertoires via UMAP and provided distance metric. The underlying
+     |      algorithm first applied phenograph clustering to determine the proportions of the sample
+     |      within a given cluster. Then a distance metric is used to compare how far two samples are
+     |      based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
+     |      Correlation, and Euclidean.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      distance_metric = str
+     |          Provided distance metric to determine repertoire-level distance from cluster proportions.
+     |          Options include = (KL,correlation,euclidean,wasserstein,JS).
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      dendrogram_radius: float
+     |          The radius of the dendrogram in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      repertoire_radius: float
+     |          The radius of the repertoire plots in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      linkage_method: str
+     |          linkage method used by scipy's linkage function
+     |      
+     |      gridsize: int
+     |          This parameter modifies the granularity of the hexbins for the repertoire density plots.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method has been run before, one can load previous data used to construct the figure for
+     |          faster figure creation. This is helpful when trying to format the figure correctly and will require
+     |          the user to run the method multiple times.
+     |      
+     |      Returns
+     |      
+     |      self.pairwise_distances: Pandas dataframe
+     |          Pairwise distances of all samples
+     |      ---------------------------------------
+     |  
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |      UMAP vizualisation of TCR Sequences
+     |      
+     |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
+     |      class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional
+     |      to frequency of sequence within sample.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      by_class: bool
+     |          To color the points by their class label, set to True.
+     |      
+     |      by_sample: bool
+     |          To color the points by their sample lebel, set to True.
+     |      
+     |      by_cluster:bool
+     |          To color the points by the prior computed clustering solution, set to True.
+     |      
+     |      freq_weight: bool
+     |          To scale size of points proportionally to their frequency, set to True.
+     |      
+     |      show_legend: bool
+     |          To display legend, set to True.
+     |      
+     |      scale: float
+     |          To change size of points, change scale parameter. Is particularly useful
+     |          when finding good display size when points are scaled by frequency.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method was run before, one can rerun this method with this parameter set
+     |          to True to bypass recomputing the UMAP projection. Useful for generating
+     |          different versions of the plot on the same UMAP representation.
+     |      
+     |      alpha: float
+     |          Value between 0-1 that controls transparency of points.
+     |      
+     |      
+     |      Returns
+     |      
+     |      ---------------------------------------
     
     class DeepTCR_base(builtins.object)
      |  Methods defined here:
@@ -2216,6 +2907,298 @@ CLASSES
      |          specify the particular device to build the graphs on.
      |      
      |      Returns
+     |      ---------------------------------------
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+    
+    class feature_analytics_class(builtins.object)
+     |  Methods defined here:
+     |  
+     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
+     |      Clustering Sequences by Latent Features
+     |      
+     |      This method clusters all sequences by learned latent features from
+     |      either the variational autoencoder Several clustering algorithms are included including
+     |      Phenograph, DBSCAN, or hierarchical clustering. DBSCAN is implemented from the
+     |      sklearn package. Hierarchical clustering is implemented from the scipy package.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      clustering_method: str
+     |          Clustering algorithm to use to cluster TCR sequences. Options include
+     |          phenograph, dbscan, or hierarchical. When using dbscan or hierarchical clustering,
+     |          a variety of thresholds are used to find an optimimum silhoutte score before using a final
+     |          clustering threshold when t value is not provided.
+     |      
+     |      t: float
+     |          If t is provided, this is used as a distance threshold for hierarchical clustering or the eps
+     |          value for dbscan.
+     |      
+     |      criterion: str
+     |          Clustering criterion as allowed by fcluster function
+     |          in scipy.cluster.hierarchy module. (Used in hierarchical clustering).
+     |      
+     |      linkage_method: str
+     |          method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+     |      
+     |      write_to_sheets: bool
+     |          To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
+     |          Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
+     |          of each cluster to each sample.
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      Returns
+     |      
+     |      self.Cluster_DFs: list of Pandas dataframes
+     |          Clusters by sequences/label
+     |      
+     |      self.var: list
+     |          Variance of lengths in each cluster
+     |      
+     |      self.Cluster_Frequencies: Pandas dataframe
+     |          A dataframe containing the frequency contribution of each cluster to each sample.
+     |      
+     |      self.Cluster_Assignments: ndarray
+     |          Array with cluster assignments by number.
+     |      
+     |      ---------------------------------------
+     |  
+     |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False)
+     |      Motif Identification Supervised Classifiers
+     |      
+     |      This method looks for enriched features in the predetermined gropu
+     |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
+     |      to produce seqlogos.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      group: string
+     |          Class for analyzing enriched motifs.
+     |      
+     |      p_val_threshold: float
+     |          Significance threshold for enriched features/motifs for
+     |          Mann-Whitney UTest.
+     |      
+     |      by_samples: bool
+     |          To run a motif identification that looks for enriched motifs at the sample
+     |          instead of the seuence level, set this parameter to True. Otherwise, the enrichment
+     |          analysis will be done at the sequence level.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |      
+     |      self.(alpha/beta)_group_features: Pandas Dataframe
+     |          Sequences used to determine motifs in fasta files
+     |          are stored in this dataframe where column names represent
+     |          the feature number.
+     |  
+     |  Structural_Diversity(self, sample=None, n_jobs=1)
+     |      Structural Diversity Measurements
+     |      
+     |      This method first clusters sequences via the phenograph algorithm before computing
+     |      the number of clusters and entropy of the data over these clusters to obtain a measurement
+     |      of the structural diversity within a repertoire.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      Returns
+     |      
+     |      self.Structural_Diversity_DF: Pandas dataframe
+     |          A dataframe containing the number of clusters and entropy in each sample
+     |      
+     |      ---------------------------------------
+     |  
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |  
+     |  __dict__
+     |      dictionary for instance variables (if defined)
+     |  
+     |  __weakref__
+     |      list of weak references to the object (if defined)
+    
+    class vis_class(builtins.object)
+     |  Methods defined here:
+     |  
+     |  HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
+     |      HeatMap of Samples
+     |      
+     |      This method creates a heatmap/clustermap for samples by latent features
+     |      for the unsupervised deep learning methods.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      filename: str
+     |          Name of file to save heatmap.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      labels: bool
+     |          Option to show names of samples on y-axis of heatmap.
+     |      
+     |      font_scale: float
+     |          This parameter controls the font size of the row labels. If there are many rows, one can make this value
+     |          smaller to get better labeling of the rows.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |  
+     |  HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None, color_dict=None)
+     |      HeatMap of Sequences
+     |      
+     |      This method creates a heatmap/clustermap for sequences by latent features
+     |      for the unsupervised deep lerning methods.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      filename: str
+     |          Name of file to save heatmap.
+     |      
+     |      sample_num: int
+     |          Number of events to randomly sample for heatmap.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |  
+     |  Repertoire_Dendogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |      Repertoire Dendrogram
+     |      
+     |      This method creates a visualization that shows and compares the distribution
+     |      of the sample repertoires via UMAP and provided distance metric. The underlying
+     |      algorithm first applied phenograph clustering to determine the proportions of the sample
+     |      within a given cluster. Then a distance metric is used to compare how far two samples are
+     |      based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
+     |      Correlation, and Euclidean.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      distance_metric = str
+     |          Provided distance metric to determine repertoire-level distance from cluster proportions.
+     |          Options include = (KL,correlation,euclidean,wasserstein,JS).
+     |      
+     |      sample: int
+     |          For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+     |          a number of sequences and then use k-nearest neighbors to assign other sequences.
+     |      
+     |      n_jobs:int
+     |          Number of processes to use for parallel operations.
+     |      
+     |      color_dict: dict
+     |          Optional dictionary to provide specified colors for classes.
+     |      
+     |      dendrogram_radius: float
+     |          The radius of the dendrogram in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      repertoire_radius: float
+     |          The radius of the repertoire plots in the figure. This will usually require some adjustment
+     |          given the number of samples.
+     |      
+     |      linkage_method: str
+     |          linkage method used by scipy's linkage function
+     |      
+     |      gridsize: int
+     |          This parameter modifies the granularity of the hexbins for the repertoire density plots.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method has been run before, one can load previous data used to construct the figure for
+     |          faster figure creation. This is helpful when trying to format the figure correctly and will require
+     |          the user to run the method multiple times.
+     |      
+     |      Returns
+     |      
+     |      self.pairwise_distances: Pandas dataframe
+     |          Pairwise distances of all samples
+     |      ---------------------------------------
+     |  
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |      UMAP vizualisation of TCR Sequences
+     |      
+     |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
+     |      class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional
+     |      to frequency of sequence within sample.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      by_class: bool
+     |          To color the points by their class label, set to True.
+     |      
+     |      by_sample: bool
+     |          To color the points by their sample lebel, set to True.
+     |      
+     |      by_cluster:bool
+     |          To color the points by the prior computed clustering solution, set to True.
+     |      
+     |      freq_weight: bool
+     |          To scale size of points proportionally to their frequency, set to True.
+     |      
+     |      show_legend: bool
+     |          To display legend, set to True.
+     |      
+     |      scale: float
+     |          To change size of points, change scale parameter. Is particularly useful
+     |          when finding good display size when points are scaled by frequency.
+     |      
+     |      Load_Prev_Data: bool
+     |          If method was run before, one can rerun this method with this parameter set
+     |          to True to bypass recomputing the UMAP projection. Useful for generating
+     |          different versions of the plot on the same UMAP representation.
+     |      
+     |      alpha: float
+     |          Value between 0-1 that controls transparency of points.
+     |      
+     |      
+     |      Returns
+     |      
      |      ---------------------------------------
      |  
      |  ----------------------------------------------------------------------
