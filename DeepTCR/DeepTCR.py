@@ -2143,7 +2143,7 @@ class DeepTCR_S_base(DeepTCR_base):
 
         set: str
             To choose which set of sequences to plot in latent space, enter either
-            'all','train', or 'test'. Viewing the latent space of the sequences in the train set
+            'all','train', 'valid',or 'test'. Viewing the latent space of the sequences in the train set
             may be overfit so it preferable to view the latent space in the test set.
 
         by_class: bool
@@ -2182,16 +2182,20 @@ class DeepTCR_S_base(DeepTCR_base):
             sample_id = self.sample_id
             freq = self.freq
         elif set == 'train':
-            features = self.features[self.train[self.var_dict['seq_index']]]
-            class_id = self.class_id[self.train[self.var_dict['seq_index']]]
-            sample_id = self.sample_id[self.train[self.var_dict['seq_index']]]
-            freq = self.freq[self.train[self.var_dict['seq_index']]]
-
+            features = self.features[self.train_idx]
+            class_id = self.class_id[self.train_idx]
+            sample_id = self.sample_id[self.train_idx]
+            freq = self.freq[self.train_idx]
+        elif set == 'valid':
+            features = self.features[self.valid_idx]
+            class_id = self.class_id[self.valid_idx]
+            sample_id = self.sample_id[self.valid_idx]
+            freq = self.freq[self.valid_idx]
         elif set == 'test':
-            features = self.features[self.test[self.var_dict['seq_index']]]
-            class_id = self.class_id[self.test[self.var_dict['seq_index']]]
-            sample_id = self.sample_id[self.test[self.var_dict['seq_index']]]
-            freq = self.freq[self.test[self.var_dict['seq_index']]]
+            features = self.features[self.test_idx]
+            class_id = self.class_id[self.test_idx]
+            sample_id = self.sample_id[self.test_idx]
+            freq = self.freq[self.test_idx]
 
         if Load_Prev_Data is False:
             X_2 = umap.UMAP().fit_transform(features)
@@ -2389,6 +2393,11 @@ class DeepTCR_SS(DeepTCR_S_base):
 
             Get_Seq_Features_Indices(self,batch_size,GO,sess)
             self.features = Get_Latent_Features(self,batch_size,GO,sess)
+
+            idx_base = np.asarray(range(len(self.sample_id)))
+            self.train_idx = np.isin(idx_base,self.train[self.var_dict['seq_index']])
+            self.valid_idx = np.isin(idx_base,self.valid[self.var_dict['seq_index']])
+            self.test_idx = np.isin(idx_base,self.test[self.var_dict['seq_index']])
 
             if hasattr(self,'predicted'):
                 self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
@@ -2849,6 +2858,10 @@ class DeepTCR_WF(DeepTCR_S_base):
             pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
             self.predicted[idx] += pred
             self.seq_idx = idx
+
+            self.train_idx = np.isin(self.sample_id,self.train[0])
+            self.valid_idx = np.isin(self.sample_id,self.valid[0])
+            self.test_idx = np.isin(self.sample_id,self.test[0])
 
             self.kernel = kernel
             #
