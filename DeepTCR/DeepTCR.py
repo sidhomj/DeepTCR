@@ -2764,7 +2764,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         GO = graph_object()
         with tf.device(self.device):
             with graph_model.as_default():
-                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,units,use_only_seq,use_only_gene,num_fc_layers,units_fc)
+                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
                 GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
                 GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
                 GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
