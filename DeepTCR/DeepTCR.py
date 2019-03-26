@@ -1983,8 +1983,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             else:
                 sns.catplot(data=df_out, x='Metric', y='Value', kind=plot_type)
 
-
-class DeepTCR_S_base(DeepTCR_base):
+class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
     def AUC_Curve(self,show_all=True,filename='AUC.tif',title=None):
         """
         AUC Curve for both Sequence and Repertoire/Sample Classifiers
@@ -2158,111 +2157,6 @@ class DeepTCR_S_base(DeepTCR_base):
 
 
         print('Motif Identification Completed')
-
-    def UMAP_Plot(self, set='all',by_class=False, by_sample=False, freq_weight=False, show_legend=True,
-                  scale=100,Load_Prev_Data=False, alpha=1.0):
-
-        """
-        UMAP vizualisation of TCR Sequences
-
-        This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
-        class label or sample_label. Size of points can also be made to be proportional to frequency of sequence within sample.
-
-        Inputs
-        ---------------------------------------
-
-        set: str
-            To choose which set of sequences to plot in latent space, enter either
-            'all','train', 'valid',or 'test'. Viewing the latent space of the sequences in the train set
-            may be overfit so it preferable to view the latent space in the test set.
-
-        by_class: bool
-            To color the points by their class label, set to True.
-
-        by_sample: bool
-            To color the points by their sample lebel, set to True.
-
-        freq_weight: bool
-            To scale size of points proportionally to their frequency, set to True.
-
-        show_legend: bool
-            To display legend, set to True.
-
-        scale: float
-            To change size of points, change scale parameter. Is particularly useful
-            when finding good display size when points are scaled by frequency.
-
-        Load_Prev_Data: bool
-            If method was run before, one can rerun this method with this parameter set
-            to True to bypass recomputing the UMAP projection. Useful for generating
-            different versions of the plot on the same UMAP representation.
-
-        alpha: float
-            Value between 0-1 that controls transparency of points.
-
-
-        Returns
-
-        ---------------------------------------
-
-        """
-        if set == 'all':
-            features = self.features
-            class_id = self.class_id
-            sample_id = self.sample_id
-            freq = self.freq
-        elif set == 'train':
-            features = self.features[self.train_idx]
-            class_id = self.class_id[self.train_idx]
-            sample_id = self.sample_id[self.train_idx]
-            freq = self.freq[self.train_idx]
-        elif set == 'valid':
-            features = self.features[self.valid_idx]
-            class_id = self.class_id[self.valid_idx]
-            sample_id = self.sample_id[self.valid_idx]
-            freq = self.freq[self.valid_idx]
-        elif set == 'test':
-            features = self.features[self.test_idx]
-            class_id = self.class_id[self.test_idx]
-            sample_id = self.sample_id[self.test_idx]
-            freq = self.freq[self.test_idx]
-
-        if Load_Prev_Data is False:
-            X_2 = umap.UMAP().fit_transform(features)
-            with open(os.path.join(self.Name, 'umap.pkl'), 'wb') as f:
-                pickle.dump(X_2, f, protocol=4)
-        else:
-            with open(os.path.join(self.Name, 'umap.pkl'), 'rb') as f:
-                X_2 = pickle.load(f)
-
-        df_plot = pd.DataFrame()
-        df_plot['x'] = X_2[:, 0]
-        df_plot['y'] = X_2[:, 1]
-        df_plot['Class'] = class_id
-        df_plot['Sample'] = sample_id
-
-        if freq_weight is True:
-            s = freq * scale
-        else:
-            s = scale
-
-        if show_legend is True:
-            legend = 'full'
-        else:
-            legend = False
-
-        if by_class is True:
-            hue = 'Class'
-        elif by_sample is True:
-            hue = 'Sample'
-        else:
-            hue = None
-
-        sns.scatterplot(data=df_plot, x='x', y='y', s=s, hue=hue, legend=legend, alpha=alpha, linewidth=0.0)
-        plt.xticks([])
-        plt.yticks([])
-        plt.xlabel('')
-        plt.ylabel('')
 
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
