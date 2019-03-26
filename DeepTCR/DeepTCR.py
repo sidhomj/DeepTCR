@@ -2101,7 +2101,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         self.Rep_Seq = dict(zip(self.lb.classes_[keep], Rep_Seq))
 
-    def Motif_Identification(self,group,p_val_threshold=0.05):
+    def Motif_Identification(self,group,p_val_threshold=0.05,by_samples=False):
         """
         Motif Identification Supervised Classifiers
 
@@ -2118,6 +2118,11 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             Significance threshold for enriched features/motifs for
             Mann-Whitney UTest.
 
+        by_samples: bool
+            To run a motif identification that looks for enriched motifs at the sample
+            instead of the seuence level, set this parameter to True. Otherwise, the enrichment
+            analysis will be done at the sequence level.
+
         Returns
         ---------------------------------------
 
@@ -2128,8 +2133,8 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         """
         #Get Saved Features, Indices, and Sequences
-        with open(os.path.join(self.Name,self.Name) + '_features.pkl', 'rb') as f:
-            self.y_pred, self.y_test, self.kernel,self.sample_avg = pickle.load(f)
+        with open(os.path.join(self.Name,self.Name) + '_kernel.pkl', 'rb') as f:
+            self.kernel = pickle.load(f)
 
         if self.use_alpha is True:
             with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'rb') as f:
@@ -2148,12 +2153,12 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         if self.use_alpha is True:
             self.alpha_group_features = Diff_Features(self.alpha_features, self.alpha_indices, self.alpha_sequences,
                                                          'alpha', self.sample_id,p_val_threshold, idx_pos, idx_neg,
-                                                        self.directory_results, group, self.kernel,self.sample_avg)
+                                                        self.directory_results, group, self.kernel,by_samples)
 
         if self.use_beta is True:
             self.beta_group_features = Diff_Features(self.beta_features, self.beta_indices, self.beta_sequences,
                                                         'beta',self.sample_id,p_val_threshold, idx_pos, idx_neg,
-                                                        self.directory_results, group, self.kernel,self.sample_avg)
+                                                        self.directory_results, group, self.kernel,by_samples)
 
 
         print('Motif Identification Completed')
@@ -2338,10 +2343,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                 with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
                     pickle.dump(var_save, f)
 
-            self.sample_avg = False
-            var_save = [self.y_pred,self.y_test,self.kernel,self.sample_avg]
-            with open(os.path.join(self.Name, self.Name) + '_features.pkl', 'wb') as f:
-                pickle.dump(var_save, f)
+            with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
+                pickle.dump(self.kernel, f)
 
             print('Done Training')
 
@@ -2799,10 +2802,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                 with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
                     pickle.dump(var_save, f)
 
-            self.sample_avg = True
-            var_save = [self.y_pred,self.y_test,self.kernel,self.sample_avg]
-            with open(os.path.join(self.Name, self.Name) + '_features.pkl', 'wb') as f:
-                pickle.dump(var_save, f)
+            with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
+                pickle.dump(self.kernel, f)
 
             print('Done Training')
 
