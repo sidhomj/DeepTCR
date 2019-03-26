@@ -265,8 +265,12 @@ CLASSES
      |      
      |      Returns
      |      
+     |      self.AUC_DF: Pandas Dataframe
+     |          AUC scores are returned for each class.
+     |      
      |      In addition to plotting the ROC Curve, the AUC's are saved
      |      to a csv file in the results directory called 'AUC.csv'
+     |      
      |      ---------------------------------------
      |  
      |  Representative_Sequences(self, top_seq=10)
@@ -797,8 +801,12 @@ CLASSES
      |      
      |      Returns
      |      
+     |      self.AUC_DF: Pandas Dataframe
+     |          AUC scores are returned for each class.
+     |      
      |      In addition to plotting the ROC Curve, the AUC's are saved
      |      to a csv file in the results directory called 'AUC.csv'
+     |      
      |      ---------------------------------------
      |  
      |  Representative_Sequences(self, top_seq=10)
@@ -2205,8 +2213,12 @@ CLASSES
      |      
      |      Returns
      |      
+     |      self.AUC_DF: Pandas Dataframe
+     |          AUC scores are returned for each class.
+     |      
      |      In addition to plotting the ROC Curve, the AUC's are saved
      |      to a csv file in the results directory called 'AUC.csv'
+     |      
      |      ---------------------------------------
      |  
      |  Representative_Sequences(self, top_seq=10)
