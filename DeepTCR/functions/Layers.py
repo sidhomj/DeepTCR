@@ -234,7 +234,31 @@ def Get_Gene_Loss(fc,embedding_layer,X_OH):
 
     return loss,accuracy
 
+#Layers for Repertoire Classifier
 
+def anlu(x, init=0., name='anlu_s', s=None):
+    def fn(_x, _s):
+        return (_x + (((2. ** _s) + (_x ** 2.)) ** (1 / 2))) / 2.
 
+    if s is None:
+        s = tf.Variable(name=name, initial_value=tf.zeros([x.shape[-1].value, ]) + init, trainable=True)
+        return fn(x, s)
+    else:
+        return fn(x, s)
+
+def DeepVectorQuantization(d, n_c, bias_init=10.):
+    # centroids
+    c = tf.Variable(name='centroids', initial_value=tf.zeros([n_c, d.shape[-1].value]), trainable=True)
+
+    # euclidean distance all rows of d to all rows of c
+    seq_to_centroids_dist = tf.reduce_sum(tf.pow(d[:, tf.newaxis, :] - c[tf.newaxis, :, :], 2), axis=2)
+
+    # get trainable bias terms per centroid
+    anlu_bias = tf.Variable(name='anlu_bias', initial_value=tf.zeros([n_c, ]) + bias_init, trainable=True)
+
+    # anlu activation (anlu has internal s parameters also per centroid
+    seq_to_centroids_act = anlu(anlu_bias - seq_to_centroids_dist)
+
+    return seq_to_centroids_act
 
 
