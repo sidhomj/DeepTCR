@@ -64,6 +64,16 @@ pip3 install git+https://github.com/sidhomj/DeepTCR.git
 
 ```
 
+## Release Details
+
+# 1.1
+Initial release including two methods for unsupervised learning (VAE & GAN). Also included
+ability to handle paired alpha/beta data.
+
+# 1.2
+Second release included major refactoring in code to streamline and share methods across 
+classes. Included ability for algorithm to accept v/d/j gene usage. Added more analytical fetures and
+visualization methods.
 
 
 
