@@ -73,7 +73,7 @@ ability to handle paired alpha/beta data.
 ### 1.2
 Second release included major refactoring in code to streamline and share methods across 
 classes. Included ability for algorithm to accept v/d/j gene usage. Added more analytical fetures and
-visualization methods.
+visualization methods. Removed GAN from unsupervised learning techniques. 
 
 
 
