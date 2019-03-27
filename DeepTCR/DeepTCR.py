@@ -2861,6 +2861,9 @@ class DeepTCR_WF(DeepTCR_S_base):
             Get_Seq_Features_Indices(self,batch_size,GO,sess)
             self.features = Get_Latent_Features(self,batch_size,GO,sess)
             pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
+            if len(idx.shape) == 0:
+                idx = idx.reshape(-1,1)
+
             self.predicted[idx] += pred
             self.seq_idx = idx
 
