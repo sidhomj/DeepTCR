@@ -144,6 +144,10 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
     df['Frequency'] = df['counts'] / np.sum(df['counts'])
 
     #Threshold
-    df = Cut_DF(df=df, type_cut=type_of_data_cut, cut=data_cut)
+    df_temp = Cut_DF(df=df, type_cut=type_of_data_cut, cut=data_cut)
+    if len(df_temp)==0:
+        df = df.iloc[0].to_frame().T
+    else:
+        df = df_temp
 
     return df
