@@ -2811,6 +2811,10 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 GO.Features_W = GO.Features_c*GO.X_Freq[:,tf.newaxis]
                 GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
+                #GO.Features_Agg = GO.Features_Agg/tf.reduce_sum(GO.Features_Agg,1)[:,tf.newaxis]
+                # entropy = -tf.reduce_sum(f_norm*tf.log(f_norm),-1)[:,tf.newaxis]
+                # entropy = tf.layers.dense(entropy,3,tf.nn.relu)
+                # GO.Features_Agg = tf.concat((GO.Features_Agg,entropy),axis=1)
                 GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
                 if weight_by_class is True:
