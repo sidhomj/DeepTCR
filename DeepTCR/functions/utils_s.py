@@ -420,8 +420,10 @@ def Get_Sequence_Pred(self,batch_size,GO,sess):
 
 def Get_Latent_Features(self,batch_size,GO,sess):
     Vars = [self.X_Seq_alpha, self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
-            self.v_alpha_num,self.v_alpha_num]
+            self.v_alpha_num,self.v_alpha_num,self.freq]
     Features = []
+    Features_c = []
+    Features_w = []
     for vars in get_batches(Vars, batch_size=batch_size, random=False):
         feed_dict = {}
         if self.use_alpha is True:
@@ -444,7 +446,39 @@ def Get_Latent_Features(self,batch_size,GO,sess):
         if self.use_j_alpha is True:
             feed_dict[GO.X_j_alpha] = vars[6]
 
+        feed_dict[GO.X_Freq] = vars[7]
+
         Features.append(sess.run(GO.Features,feed_dict=feed_dict))
+        Features_c.append(sess.run(GO.Features_c,feed_dict=feed_dict))
+        Features_w.append(sess.run(GO.Features_W,feed_dict=feed_dict))
+
+
+    Features = np.vstack(Features)
+    # Features_c = np.vstack(Features_c)
+    # Features_w = np.vstack(Features_w)
+    #
+    # features_agg = []
+    # labels = []
+    # for s in np.unique(self.sample_id):
+    #     idx = self.sample_id == s
+    #     labels.append(self.class_id[idx][0])
+    #     agg = np.sum(Features_w[idx],0)
+    #     sns.distplot(agg,hist=False)
+    #     features_agg.append(agg)
+    #
+    # features_agg = np.vstack(features_agg)
+    # color_dict = {'Control':'g','9H10':'y','RT':'r','Combo':'b'}
+    # row_colors = [color_dict[x] for x in labels]
+    # sns.clustermap(features_agg,standard_scale=1,cmap='bwr',row_colors=row_colors)
+    #
+    # ft = Features_c
+    # sel = np.random.choice(range(ft.shape[1]),3,replace=False)
+    # for s in sel:
+    #     plt.figure()
+    #     for c in np.unique(self.class_id):
+    #         idx = self.class_id == c
+    #         sns.distplot(ft[idx,s],norm_hist=True,hist=False)
+
 
     return np.vstack(Features)
 

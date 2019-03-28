@@ -1319,40 +1319,32 @@ class vis_class(object):
         ---------------------------------------
 
         """
-        if set == 'all':
-            features = self.features
-            class_id = self.class_id
-            sample_id = self.sample_id
-            freq = self.freq
-        elif set == 'train':
-            features = self.features[self.train_idx]
-            class_id = self.class_id[self.train_idx]
-            sample_id = self.sample_id[self.train_idx]
-            freq = self.freq[self.train_idx]
-        elif set == 'valid':
-            features = self.features[self.valid_idx]
-            class_id = self.class_id[self.valid_idx]
-            sample_id = self.sample_id[self.valid_idx]
-            freq = self.freq[self.valid_idx]
-        elif set == 'test':
-            features = self.features[self.test_idx]
-            class_id = self.class_id[self.test_idx]
-            sample_id = self.sample_id[self.test_idx]
-            freq = self.freq[self.test_idx]
+        features = self.features
+        class_id = self.class_id
+        sample_id = self.sample_id
+        freq = self.freq
 
         if Load_Prev_Data is False:
-            X_2 = umap.UMAP().fit_transform(features)
+            umap_obj = umap.UMAP()
+            X_2 = umap_obj.fit_transform(features)
+            centroids = umap_obj.transform(self.centroids)
             with open(os.path.join(self.Name, 'umap.pkl'), 'wb') as f:
-                pickle.dump(X_2, f, protocol=4)
+                pickle.dump([X_2,centroids], f, protocol=4)
         else:
             with open(os.path.join(self.Name, 'umap.pkl'), 'rb') as f:
-                X_2 = pickle.load(f)
+                X_2,centroids = pickle.load(f)
 
         df_plot = pd.DataFrame()
         df_plot['x'] = X_2[:, 0]
         df_plot['y'] = X_2[:, 1]
         df_plot['Class'] = class_id
         df_plot['Sample'] = sample_id
+        df_plot['Set'] = None
+        with pd.option_context('mode.chained_assignment',None):
+            df_plot['Set'].iloc[np.where(self.train_idx)[0]] = 'train'
+            df_plot['Set'].iloc[np.where(self.valid_idx)[0]] = 'valid'
+            df_plot['Set'].iloc[np.where(self.test_idx)[0]] = 'test'
+
         if hasattr(self,'Cluster_Assignments'):
             IDX = self.Cluster_Assignments
             IDX[IDX == -1] = np.max(IDX) + 1
@@ -1378,12 +1370,22 @@ class vis_class(object):
         else:
             hue = None
 
+        if set == 'all':
+            df_plot_sel = df_plot
+        elif set == 'train':
+            df_plot_sel = df_plot[df_plot['Set']=='train']
+        elif set == 'valid':
+            df_plot_sel = df_plot[df_plot['Set']=='valid']
+        elif set == 'test':
+            df_plot_sel = df_plot[df_plot['Set']=='test']
+
         plt.figure()
-        sns.scatterplot(data=df_plot, x='x', y='y', s=s, hue=hue, legend=legend, alpha=alpha, linewidth=0.0)
+        sns.scatterplot(data=df_plot_sel, x='x', y='y', s=s, hue=hue, legend=legend, alpha=alpha, linewidth=0.0)
         plt.xticks([])
         plt.yticks([])
         plt.xlabel('')
         plt.ylabel('')
+        plt.scatter(x=centroids[:,0],y=centroids[:,1],s=100,c='k')
 
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
@@ -2335,7 +2337,15 @@ class DeepTCR_SS(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
-                GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
+                num_centroids=24
+                on_graph_clustering = True
+                if on_graph_clustering is True:
+                    #GO.Features_c,GO.centroids,GO.s = gaussian(GO.Features,num_centroids)
+                    GO.Features_c,GO.centroids,GO.vq_bias,GO.s = DeepVectorQuantization(GO.Features,num_centroids)
+                else:
+                    GO.Features_c = GO.Features
+
+                GO.logits = tf.layers.dense(GO.Features_c, self.Y.shape[1])
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
@@ -2348,7 +2358,19 @@ class DeepTCR_SS(DeepTCR_S_base):
                 #     #GO.ortho_loss = Get_Ortho_Loss(GO.Features, alpha=alpha)
                 #     GO.ortho_loss = alpha*tf.reduce_mean(tf.norm(GO.Features,ord=1,axis=1))
                 #     GO.loss = GO.loss+GO.ortho_loss
-                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
+                var_train = tf.trainable_variables()
+                if on_graph_clustering is True:
+                    var_train_graph = [GO.vq_bias,GO.s,GO.centroids]
+                    GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.01).minimize(GO.loss,var_list=var_train_graph)
+                    [var_train.remove(x) for x in var_train_graph]
+
+                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
+
+                if on_graph_clustering is True:
+                    GO.opt = tf.group(GO.opt,GO.opt_c)
+
+                #GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
+
 
                 with tf.name_scope('Accuracy_Measurements'):
                     GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
@@ -2380,6 +2402,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                 self.y_pred = test_predicted
                 self.y_test = self.test[-1]
 
+
                 if suppress_output is False:
                     print("Training_Statistics: \n",
                           "Epoch: {}/{}".format(e + 1, epochs),
@@ -2409,6 +2432,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                 self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
 
             self.kernel = kernel
+            self.centroids = GO.centroids.eval()
             #
             if self.use_alpha is True:
                 var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
@@ -2776,8 +2800,14 @@ class DeepTCR_WF(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
-                GO.Features = DeepVectorQuantization(GO.Features,12,bias_init=0)
-                GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
+                num_centroids=12
+                on_graph_clustering = True
+                if on_graph_clustering is True:
+                    GO.Features_c,GO.centroids,GO.vq_bias,GO.s = DeepVectorQuantization(GO.Features,num_centroids)
+                else:
+                    GO.Features_c = GO.Features
+
+                GO.Features_W = GO.Features_c*GO.X_Freq[:,tf.newaxis]
                 GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
                 GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
@@ -2788,7 +2818,16 @@ class DeepTCR_WF(DeepTCR_S_base):
                 else:
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
-                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
+                var_train = tf.trainable_variables()
+                if on_graph_clustering is True:
+                    var_train_graph = [GO.centroids,GO.s,GO.vq_bias]
+                    GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
+                    [var_train.remove(x) for x in var_train_graph]
+
+                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
+
+                if on_graph_clustering is True:
+                    GO.opt = tf.group(GO.opt,GO.opt_c)
 
                 # Operations for validation/test accuracy
                 GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
@@ -2873,6 +2912,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             self.test_idx = np.isin(self.sample_id,self.test[0])
 
             self.kernel = kernel
+            self.centroids = GO.centroids.eval()
             #
             if self.use_alpha is True:
                 var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]

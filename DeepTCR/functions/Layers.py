@@ -236,29 +236,45 @@ def Get_Gene_Loss(fc,embedding_layer,X_OH):
 
 #Layers for Repertoire Classifier
 
-def anlu(x, init=0., name='anlu_s', s=None):
-    def fn(_x, _s):
-        return (_x + (((2. ** _s) + (_x ** 2.)) ** (1 / 2))) / 2.
+def aisru(x, s_init=0., a_init=0., low=0., high=1.):
+    s = tf.Variable(name='aisru_s', initial_value=tf.zeros([x.shape[-1].value, ]) + s_init, trainable=False)
+    a = tf.Variable(name='aisru_a', initial_value=tf.zeros([x.shape[-1].value, ]) + a_init, trainable=True)
+    return low + ((high - low) / 2.) * (1. + ((x + a) / (tf.pow(tf.pow(2., s) + tf.pow(x, 2.), 1. / 2.) + tf.pow(tf.pow(a, 2.), 1. / 2.))))
 
-    if s is None:
-        s = tf.Variable(name=name, initial_value=tf.zeros([x.shape[-1].value, ]) + init, trainable=True)
-        return fn(x, s)
-    else:
-        return fn(x, s)
+def anlu(x, s_init=0.):
+    s = tf.Variable(name='anlu_s', initial_value=tf.zeros([x.shape[-1].value, ]) + s_init, trainable=True)
+    return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s
 
-def DeepVectorQuantization(d, n_c, bias_init=10.):
+def tun_sigmoid(x, s_init=0.):
+    s = tf.Variable(name='tune_sigmoid_s', initial_value=tf.zeros([x.shape[-1].value, ]) + s_init, trainable=True)
+    return 1 / (1 + tf.exp(-tf.exp(-2 + (4 / (1 + tf.exp(-s)))) * x)),s
+
+def gaussian(x,n_c):
+    n_f = x.shape[-1].value
+    mu = tf.Variable(name='mu', initial_value=tf.random_uniform([n_c, n_f]), trainable=True)
+    d = tf.sqrt(tf.reduce_sum(tf.pow(x[:,tf.newaxis,:] - mu[tf.newaxis,:,:],2),-1))
+    sigma = tf.Variable(name='sigma', initial_value=tf.random_uniform([1,n_c]), trainable=True)
+    return tf.exp(-d*sigma),mu,sigma
+
+def DeepVectorQuantization(d, n_c, vq_bias_init=0., activation=anlu):
     # centroids
-    c = tf.Variable(name='centroids', initial_value=tf.zeros([n_c, d.shape[-1].value]), trainable=True)
+    c = tf.Variable(name='centroids', initial_value=tf.random_uniform([n_c, d.shape[-1].value]), trainable=True)
 
     # euclidean distance all rows of d to all rows of c
     seq_to_centroids_dist = tf.reduce_sum(tf.pow(d[:, tf.newaxis, :] - c[tf.newaxis, :, :], 2), axis=2)
 
     # get trainable bias terms per centroid
-    anlu_bias = tf.Variable(name='anlu_bias', initial_value=tf.zeros([n_c, ]) + bias_init, trainable=True)
+    vq_bias = tf.Variable(name='vq_bias', initial_value=tf.zeros([n_c, ]) + vq_bias_init, trainable=True)
 
-    # anlu activation (anlu has internal s parameters also per centroid
-    seq_to_centroids_act = anlu(anlu_bias - seq_to_centroids_dist)
+    # activation (these have internal parameters also per centroid)'
+    seq_to_centroids_act,s = activation(vq_bias - seq_to_centroids_dist)
 
-    return seq_to_centroids_act
+    return seq_to_centroids_act,c,vq_bias,s
 
 
+def Pairwise_Distance_TF(A):
+    A = tf.squeeze(A,1)
+    r = tf.reduce_sum(A*A,1)
+    r = tf.reshape(r,[-1,1])
+    D = r - 2*tf.matmul(A,tf.transpose(A)) + tf.transpose(r)
+    return D
