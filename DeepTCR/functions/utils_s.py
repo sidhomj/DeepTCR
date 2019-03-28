@@ -449,8 +449,8 @@ def Get_Latent_Features(self,batch_size,GO,sess):
         feed_dict[GO.X_Freq] = vars[7]
 
         Features.append(sess.run(GO.Features,feed_dict=feed_dict))
-        Features_c.append(sess.run(GO.Features_c,feed_dict=feed_dict))
-        Features_w.append(sess.run(GO.Features_W,feed_dict=feed_dict))
+        # Features_c.append(sess.run(GO.Features_c,feed_dict=feed_dict))
+        # Features_w.append(sess.run(GO.Features_W,feed_dict=feed_dict))
 
 
     Features = np.vstack(Features)
