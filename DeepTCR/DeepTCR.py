@@ -2733,8 +2733,8 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
 
-    def Train(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,
-                 weight_by_class=False,trainable_embedding = True,accuracy_min = None,
+    def Train(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,kernel=5,on_graph_clustering=False,
+              num_clusters=12,weight_by_class=False,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
               use_only_seq=False,use_only_gene=False):
 
@@ -2758,10 +2758,14 @@ class DeepTCR_WF(DeepTCR_S_base):
             training. Used as early stopping criterion.
 
         kernel: int
-            Size of convolutional kernel.
+            Size of convolutional kernel for first layer of convolutions.
 
-        units: int
-            Number of filters to be used for convolutional kernel.
+        on_graph_clustering: bool
+            To implement on-graph clustering algorithm, set this parameter to True.
+            In certain settings, this algorithm shows improved classification performance.
+
+        num_clusters: int
+            Number of clusters to train with 'on-graph clustering' algorithm.
 
         weight_by_class: bool
             Option to weight loss by the inverse of the class frequency. Useful for
@@ -2800,10 +2804,8 @@ class DeepTCR_WF(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
-                num_centroids=12
-                on_graph_clustering = True
                 if on_graph_clustering is True:
-                    GO.Features_c,GO.centroids,GO.vq_bias,GO.s = DeepVectorQuantization(GO.Features,num_centroids)
+                    GO.Features_c,GO.centroids,GO.vq_bias,GO.s = DeepVectorQuantization(GO.Features,num_clusters)
                 else:
                     GO.Features_c = GO.Features
 
@@ -2912,7 +2914,8 @@ class DeepTCR_WF(DeepTCR_S_base):
             self.test_idx = np.isin(self.sample_id,self.test[0])
 
             self.kernel = kernel
-            self.centroids = GO.centroids.eval()
+            if on_graph_clustering is True:
+                self.centroids = GO.centroids.eval()
             #
             if self.use_alpha is True:
                 var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
