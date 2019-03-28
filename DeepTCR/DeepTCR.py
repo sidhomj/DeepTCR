@@ -2969,9 +2969,12 @@ class DeepTCR_WF(DeepTCR_S_base):
         kernel: int
             Size of convolutional kernel.
 
-        units: int
-            Number of filters to be used for convolutional kernel.
+        on_graph_clustering: bool
+            To implement on-graph clustering algorithm, set this parameter to True.
+            In certain settings, this algorithm shows improved classification performance.
 
+        num_clusters: int
+            Number of clusters to train with 'on-graph clustering' algorithm.
 
         weight_by_class: bool
             Option to weight loss by the inverse of the class frequency. Useful for
@@ -3072,8 +3075,12 @@ class DeepTCR_WF(DeepTCR_S_base):
         kernel: int
             Size of convolutional kernel.
 
-        units: int
-            Number of filters to be used for convolutional kernel.
+        on_graph_clustering: bool
+            To implement on-graph clustering algorithm, set this parameter to True.
+            In certain settings, this algorithm shows improved classification performance.
+
+        num_clusters: int
+            Number of clusters to train with 'on-graph clustering' algorithm.
 
         weight_by_class: bool
             Option to weight loss by the inverse of the class frequency. Useful for
