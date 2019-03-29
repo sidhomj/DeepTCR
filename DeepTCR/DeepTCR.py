@@ -625,6 +625,7 @@ class DeepTCR_base(object):
         self.Y = Y
         self.seq_index = np.asarray(list(range(len(self.Y))))
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        self.sample_list = np.unique(self.sample_id)
         print('Data Loaded')
 
 class feature_analytics_class(object):
@@ -1357,11 +1358,12 @@ class vis_class(object):
         df_plot['y'] = X_2[:, 1]
         df_plot['Class'] = class_id
         df_plot['Sample'] = sample_id
-        df_plot['Set'] = None
-        with pd.option_context('mode.chained_assignment',None):
-            df_plot['Set'].iloc[np.where(self.train_idx)[0]] = 'train'
-            df_plot['Set'].iloc[np.where(self.valid_idx)[0]] = 'valid'
-            df_plot['Set'].iloc[np.where(self.test_idx)[0]] = 'test'
+        if set != 'all':
+            df_plot['Set'] = None
+            with pd.option_context('mode.chained_assignment',None):
+                df_plot['Set'].iloc[np.where(self.train_idx)[0]] = 'train'
+                df_plot['Set'].iloc[np.where(self.valid_idx)[0]] = 'valid'
+                df_plot['Set'].iloc[np.where(self.test_idx)[0]] = 'test'
 
         if hasattr(self,'Cluster_Assignments'):
             IDX = self.Cluster_Assignments
