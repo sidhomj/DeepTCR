@@ -263,6 +263,7 @@ class DeepTCR_base(object):
                                 [v_alpha_column]*num_ins,
                                 [j_alpha_column]*num_ins))
 
+                print('Loading Data...')
                 DF = p.starmap(Get_DF_Data, args)
 
                 for df, file in zip(DF, files_read):
@@ -308,6 +309,7 @@ class DeepTCR_base(object):
             OH = OneHotEncoder(sparse=False,categories='auto')
             Y = OH.fit_transform(Y.reshape(-1,1))
 
+            print('Embedding Sequences...')
             #transform sequences into numerical space
             if aa_column_alpha is not None:
                 args = list(zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
