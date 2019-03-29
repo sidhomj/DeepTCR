@@ -117,8 +117,8 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
         df = df.iloc[:,cols_to_keep]
 
         df.columns = column_names
+        df.dropna(subset=['counts'],inplace=True)
         df['counts']=df['counts'].astype(int)
-
 
         #Process Sequences
         if aa_column_alpha is not None:
