@@ -504,6 +504,7 @@ class DeepTCR_base(object):
             p = Pool(40)
 
         if alpha_sequences is not None:
+            self.alpha_sequences = alpha_sequences
             args = list(zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
             result = p.starmap(Embed_Seq_Num, args)
             sequences_num = np.vstack(result)
@@ -514,6 +515,7 @@ class DeepTCR_base(object):
             self.alpha_sequences = np.asarray([None] * len_input)
 
         if beta_sequences is not None:
+            self.beta_sequences = beta_sequences
             args = list(zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length] * len(beta_sequences)))
             result = p.starmap(Embed_Seq_Num, args)
             sequences_num = np.vstack(result)
@@ -524,6 +526,7 @@ class DeepTCR_base(object):
             self.beta_sequences = np.asarray([None] * len_input)
 
         if v_beta is not None:
+            self.v_beta = v_beta
             self.lb_v_beta = LabelEncoder()
             self.v_beta_num = self.lb_v_beta.fit_transform(v_beta)
             self.use_v_beta = True
@@ -532,6 +535,7 @@ class DeepTCR_base(object):
             self.v_beta = np.asarray([None] * len_input)
 
         if d_beta is not None:
+            self.d_beta = d_beta
             self.lb_d_beta = LabelEncoder()
             self.d_beta_num = self.lb_d_beta.fit_transform(d_beta)
             self.use_d_beta = True
@@ -540,6 +544,7 @@ class DeepTCR_base(object):
             self.d_beta = np.asarray([None] * len_input)
 
         if j_beta is not None:
+            self.j_beta = j_beta
             self.lb_j_beta = LabelEncoder()
             self.j_beta_num = self.lb_j_beta.fit_transform(j_beta)
             self.use_j_beta = True
@@ -548,6 +553,7 @@ class DeepTCR_base(object):
             self.j_beta = np.asarray([None] * len_input)
 
         if v_alpha is not None:
+            self.v_alpha = v_alpha
             self.lb_v_alpha = LabelEncoder()
             self.v_alpha_num = self.lb_v_alpha.fit_transform(v_alpha)
             self.use_v_alpha = True
@@ -556,6 +562,7 @@ class DeepTCR_base(object):
             self.v_alpha = np.asarray([None] * len_input)
 
         if j_alpha is not None:
+            self.j_alpha = j_alpha
             self.lb_j_alpha = LabelEncoder()
             self.j_alpha_num = self.lb_j_alpha.fit_transform(j_alpha)
             self.use_j_alpha = True
