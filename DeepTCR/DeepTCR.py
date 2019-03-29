@@ -2330,6 +2330,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         epochs = 10000
         graph_model = tf.Graph()
         GO = graph_object()
+        GO.on_graph_clustering=False
 
         with tf.device(self.device):
             with graph_model.as_default():
