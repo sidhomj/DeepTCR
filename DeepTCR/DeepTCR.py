@@ -21,6 +21,7 @@ import pickle
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
 import shutil
+import warnings
 
 class DeepTCR_base(object):
 
@@ -1626,8 +1627,10 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                                 break
                         else:
                             a, b, c = -50, -45, -5
-                            if (np.mean(recon_loss_list[a:b]) - np.mean(recon_loss_list[c:])) / np.mean(recon_loss_list[a:b]) < stop_criterion:
-                                break
+                            with warnings.catch_warnings():
+                                warnings.simplefilter("ignore")
+                                if (np.mean(recon_loss_list[a:b]) - np.mean(recon_loss_list[c:])) / np.mean(recon_loss_list[a:b]) < stop_criterion:
+                                    break
 
 
 
