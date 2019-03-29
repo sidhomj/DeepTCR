@@ -75,6 +75,9 @@ Second release included major refactoring in code to streamline and share method
 classes. Included ability for algorithm to accept v/d/j gene usage. Added more analytical fetures and
 visualization methods. Removed GAN from unsupervised learning techniques. 
 
+#### 1.2.7
+On-graph clustering method introduced for repertoire classifier to improve classification performance.
+
 
 
 

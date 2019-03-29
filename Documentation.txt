@@ -67,7 +67,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, kernel=5, units=12, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, iterations=None, use_only_seq=False, use_only_gene=False)
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, iterations=None, use_only_seq=False, use_only_gene=False)
      |      K_Fold Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -92,10 +92,7 @@ CLASSES
      |          training. Used as early stopping criterion.
      |      
      |      kernel: int
-     |          Size of convolutional kernel.
-     |      
-     |      units: int
-     |          Number of filters to be used for convolutional kernel.
+     |          Size of convolutional kernel for first layer of convolutions.
      |      
      |      trainable_embedding; bool
      |          Toggle to control whether a trainable embedding layer is used or native
@@ -129,7 +126,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, kernel=5, units=12, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False)
      |      Monte Carlo Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -160,10 +157,7 @@ CLASSES
      |          training. Used as early stopping criterion.
      |      
      |      kernel: int
-     |          Size of convolutional kernel.
-     |      
-     |      units: int
-     |          Number of filters to be used for convolutional kernel.
+     |          Size of convolutional kernel for first layer of convolutions.
      |      
      |      trainable_embedding; bool
      |          Toggle to control whether a trainable embedding layer is used or native
@@ -193,7 +187,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, kernel=5, units=12, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False)
+     |  Train(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False)
      |      Train Single-Sequence Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -213,9 +207,6 @@ CLASSES
      |      
      |      kernel: int
      |          Size of convolutional kernel.
-     |      
-     |      units: int
-     |          Number of filters to be used for convolutional kernel.
      |      
      |      trainable_embedding; bool
      |          Toggle to control whether a trainable embedding layer is used or native
@@ -2042,7 +2033,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=5, batch_size=25, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=5, batch_size=25, stop_criterion=0.001, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2066,10 +2057,14 @@ CLASSES
      |          training. Used as early stopping criterion.
      |      
      |      kernel: int
-     |          Size of convolutional kernel.
+     |          Size of convolutional kernel for first layer of convolutions.
      |      
-     |      units: int
-     |          Number of filters to be used for convolutional kernel.
+     |      on_graph_clustering: bool
+     |          To implement on-graph clustering algorithm, set this parameter to True.
+     |          In certain settings, this algorithm shows improved classification performance.
+     |      
+     |      num_clusters: int
+     |          Number of clusters to train with 'on-graph clustering' algorithm.
      |      
      |      weight_by_class: bool
      |          Option to weight loss by the inverse of the class frequency. Useful for
@@ -2103,7 +2098,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None, stop_criterion=0.001, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2133,11 +2128,14 @@ CLASSES
      |          training. Used as early stopping criterion.
      |      
      |      kernel: int
-     |          Size of convolutional kernel.
+     |          Size of convolutional kernel for first layer of convolutions.
      |      
-     |      units: int
-     |          Number of filters to be used for convolutional kernel.
+     |      on_graph_clustering: bool
+     |          To implement on-graph clustering algorithm, set this parameter to True.
+     |          In certain settings, this algorithm shows improved classification performance.
      |      
+     |      num_clusters: int
+     |          Number of clusters to train with 'on-graph clustering' algorithm.
      |      
      |      weight_by_class: bool
      |          Option to weight loss by the inverse of the class frequency. Useful for
@@ -2167,7 +2165,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train(self, batch_size=25, epochs_min=10, stop_criterion=0.001, kernel=5, units=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False)
+     |  Train(self, batch_size=25, epochs_min=10, stop_criterion=0.001, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False)
      |      Train Whole-Sample Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -2186,10 +2184,14 @@ CLASSES
      |          training. Used as early stopping criterion.
      |      
      |      kernel: int
-     |          Size of convolutional kernel.
+     |          Size of convolutional kernel for first layer of convolutions.
      |      
-     |      units: int
-     |          Number of filters to be used for convolutional kernel.
+     |      on_graph_clustering: bool
+     |          To implement on-graph clustering algorithm, set this parameter to True.
+     |          In certain settings, this algorithm shows improved classification performance.
+     |      
+     |      num_clusters: int
+     |          Number of clusters to train with 'on-graph clustering' algorithm.
      |      
      |      weight_by_class: bool
      |          Option to weight loss by the inverse of the class frequency. Useful for
