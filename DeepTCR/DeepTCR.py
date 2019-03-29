@@ -59,6 +59,7 @@ class DeepTCR_base(object):
         self.use_j_beta = False
         self.use_v_alpha = False
         self.use_j_alpha = False
+        self.use_hla = False
 
         #Create dataframes for assigning AA to ints
         aa_idx, aa_mat = make_aa_df()
@@ -80,7 +81,7 @@ class DeepTCR_base(object):
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
                     v_alpha_column=None,j_alpha_column=None,
-                    v_beta_column=None,j_beta_column=None,d_beta_column=None,p=None):
+                    v_beta_column=None,j_beta_column=None,d_beta_column=None,p=None,hla=None):
         """
         Get Data for DeepTCR
 
@@ -378,13 +379,45 @@ class DeepTCR_base(object):
                 j_alpha_num = np.zeros(shape=[num_seq])
                 j_alpha = np.asarray([None]*len(label_id))
 
+            if hla is not None:
+                self.use_hla = True
+                hla_df = pd.read_csv(hla)
+                hla_df = hla_df.set_index('File')
+                hla_id = []
+                hla_data = []
+                for i in hla_df.iterrows():
+                    hla_id.append(i[0])
+                    temp = i[1].dropna().tolist()
+                    while len(temp) < 6:
+                        temp.extend(['None'])
+                    hla_data.append(temp)
+
+                hla_id = np.asarray(hla_id)
+                hla_data = np.vstack(hla_data)
+                self.lb_hla = LabelEncoder()
+                self.lb_hla.fit(np.unique(hla_data))
+                hla_data_num = []
+                for h in hla_data.T:
+                    hla_data_num.append(self.lb_hla.transform(h))
+                hla_data_num = np.vstack(hla_data_num).T
+                keep,idx_1,idx_2 = np.intersect1d(file_list,hla_id,return_indices=True)
+                file_list = keep
+                hla_data = hla_data[idx_2]
+                hla_data_num = hla_data_num[idx_2]
+            else:
+                self.lb_hla = LabelEncoder()
+                file_list = np.asarray(file_list)
+                hla_data = np.asarray([])
+                hla_data_num = np.asarray([])
+
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
                 pickle.dump([X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,
                              self.lb,file_list,self.use_alpha,self.use_beta,
                              self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,
                              v_beta, d_beta,j_beta,v_alpha,j_alpha,
                              v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,
-                             self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha],f,protocol=4)
+                             self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,
+                             self.lb_hla, hla_data, hla_data_num],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
@@ -393,7 +426,8 @@ class DeepTCR_base(object):
                     self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,\
                     v_beta, d_beta,j_beta,v_alpha,j_alpha,\
                     v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,\
-                    self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha = pickle.load(f)
+                    self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,\
+                    self.lb_hla, hla_data_,hla_data_num = pickle.load(f)
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
@@ -417,6 +451,8 @@ class DeepTCR_base(object):
         self.j_alpha_num = j_alpha_num
         self.seq_index = np.asarray(list(range(len(self.Y))))
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        self.hla_data = hla_data
+        self.hla_data_num = hla_data_num
         print('Data Loaded')
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
