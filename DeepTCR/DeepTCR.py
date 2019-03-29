@@ -1163,7 +1163,7 @@ class vis_class(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results, filename))
 
-    def Repertoire_Dendogram(self,set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
+    def Repertoire_Dendrogram(self,set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
                              dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward',
                              gridsize=10, Load_Prev_Data=False):
         """
