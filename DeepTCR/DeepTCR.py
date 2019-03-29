@@ -1327,7 +1327,9 @@ class vis_class(object):
 
         if Load_Prev_Data is False:
             umap_obj = umap.UMAP()
-            X_2 = umap_obj.fit_transform(features)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                X_2 = umap_obj.fit_transform(features)
             with open(os.path.join(self.Name, 'umap.pkl'), 'wb') as f:
                 pickle.dump(X_2, f, protocol=4)
         else:
