@@ -449,35 +449,9 @@ def Get_Latent_Features(self,batch_size,GO,sess):
         if GO.on_graph_clustering is True:
             Features_c.append(sess.run(GO.Features_c,feed_dict=feed_dict))
 
-
-
     Features = np.vstack(Features)
     if GO.on_graph_clustering is True:
         Features_c = np.vstack(Features_c)
-    # Features_w = np.vstack(Features_w)
-    #
-    # features_agg = []
-    # labels = []
-    # for s in np.unique(self.sample_id):
-    #     idx = self.sample_id == s
-    #     labels.append(self.class_id[idx][0])
-    #     agg = np.sum(Features_w[idx],0)
-    #     sns.distplot(agg,hist=False)
-    #     features_agg.append(agg)
-    #
-    # features_agg = np.vstack(features_agg)
-    # color_dict = {'Control':'g','9H10':'y','RT':'r','Combo':'b'}
-    # row_colors = [color_dict[x] for x in labels]
-    # sns.clustermap(features_agg,standard_scale=1,cmap='bwr',row_colors=row_colors)
-    #
-    # ft = Features_c
-    # sel = np.random.choice(range(ft.shape[1]),3,replace=False)
-    # for s in sel:
-    #     plt.figure()
-    #     for c in np.unique(self.class_id):
-    #         idx = self.class_id == c
-    #         sns.distplot(ft[idx,s],norm_hist=True,hist=False)
-
 
     return Features, Features_c
 

@@ -2938,7 +2938,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             training. Used as early stopping criterion.
 
         kernel: int
-            Size of convolutional kernel.
+            Size of convolutional kernel for first layer of convolutions.
 
         on_graph_clustering: bool
             To implement on-graph clustering algorithm, set this parameter to True.
@@ -3044,7 +3044,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             training. Used as early stopping criterion.
 
         kernel: int
-            Size of convolutional kernel.
+            Size of convolutional kernel for first layer of convolutions.
 
         on_graph_clustering: bool
             To implement on-graph clustering algorithm, set this parameter to True.
