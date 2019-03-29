@@ -1327,12 +1327,11 @@ class vis_class(object):
         if Load_Prev_Data is False:
             umap_obj = umap.UMAP()
             X_2 = umap_obj.fit_transform(features)
-            centroids = umap_obj.transform(self.centroids)
             with open(os.path.join(self.Name, 'umap.pkl'), 'wb') as f:
-                pickle.dump([X_2,centroids], f, protocol=4)
+                pickle.dump(X_2, f, protocol=4)
         else:
             with open(os.path.join(self.Name, 'umap.pkl'), 'rb') as f:
-                X_2,centroids = pickle.load(f)
+                X_2 = pickle.load(f)
 
         df_plot = pd.DataFrame()
         df_plot['x'] = X_2[:, 0]
