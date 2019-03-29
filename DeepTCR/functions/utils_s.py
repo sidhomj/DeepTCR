@@ -423,7 +423,6 @@ def Get_Latent_Features(self,batch_size,GO,sess):
             self.v_alpha_num,self.v_alpha_num,self.freq]
     Features = []
     Features_c = []
-    Features_w = []
     for vars in get_batches(Vars, batch_size=batch_size, random=False):
         feed_dict = {}
         if self.use_alpha is True:
@@ -446,15 +445,15 @@ def Get_Latent_Features(self,batch_size,GO,sess):
         if self.use_j_alpha is True:
             feed_dict[GO.X_j_alpha] = vars[6]
 
-        feed_dict[GO.X_Freq] = vars[7]
-
         Features.append(sess.run(GO.Features,feed_dict=feed_dict))
-        # Features_c.append(sess.run(GO.Features_c,feed_dict=feed_dict))
-        # Features_w.append(sess.run(GO.Features_W,feed_dict=feed_dict))
+        if GO.on_graph_clustering is True:
+            Features_c.append(sess.run(GO.Features_c,feed_dict=feed_dict))
+
 
 
     Features = np.vstack(Features)
-    # Features_c = np.vstack(Features_c)
+    if GO.on_graph_clustering is True:
+        Features_c = np.vstack(Features_c)
     # Features_w = np.vstack(Features_w)
     #
     # features_agg = []
@@ -480,7 +479,7 @@ def Get_Latent_Features(self,batch_size,GO,sess):
     #         sns.distplot(ft[idx,s],norm_hist=True,hist=False)
 
 
-    return np.vstack(Features)
+    return Features, Features_c
 
 
 

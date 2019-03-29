@@ -69,85 +69,88 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
                 d_beta_column=None,j_beta_columns=None,
                 v_alpha_column=None,j_alpha_column=None):
 
-    df = pd.read_csv(file, sep=sep)
+    with pd.option_context('mode.chained_assignment', None):
 
-    #First collect columns in dataframe based on user preferences
-    cols_to_keep = []
-    column_names = []
-    sequence_columns = []
-    if aa_column_alpha is not None:
-        cols_to_keep.append(aa_column_alpha)
-        column_names.append('alpha')
-        sequence_columns.append('alpha')
-    if aa_column_beta is not None:
-        cols_to_keep.append(aa_column_beta)
-        column_names.append('beta')
-        sequence_columns.append('beta')
+        df = pd.read_csv(file, sep=sep,dtype=object)
+        #First collect columns in dataframe based on user preferences
+        cols_to_keep = []
+        column_names = []
+        sequence_columns = []
+        if aa_column_alpha is not None:
+            cols_to_keep.append(aa_column_alpha)
+            column_names.append('alpha')
+            sequence_columns.append('alpha')
+        if aa_column_beta is not None:
+            cols_to_keep.append(aa_column_beta)
+            column_names.append('beta')
+            sequence_columns.append('beta')
 
-    if count_column is not None:
-        cols_to_keep.append(count_column)
-        column_names.append('counts')
-    else:
-        df['counts'] = 1
-        cols_to_keep.append(np.where(df.columns=='counts')[0][0])
-        column_names.append('counts')
+        if count_column is not None:
+            cols_to_keep.append(count_column)
+            column_names.append('counts')
+        else:
+            df['counts'] = 1
+            cols_to_keep.append(np.where(df.columns=='counts')[0][0])
+            column_names.append('counts')
 
-    if v_alpha_column is not None:
-        cols_to_keep.append(v_alpha_column)
-        column_names.append('v_alpha')
+        if v_alpha_column is not None:
+            cols_to_keep.append(v_alpha_column)
+            column_names.append('v_alpha')
 
-    if j_alpha_column is not None:
-        cols_to_keep.append(j_alpha_column)
-        column_names.append('j_alpha')
+        if j_alpha_column is not None:
+            cols_to_keep.append(j_alpha_column)
+            column_names.append('j_alpha')
 
-    if v_beta_column is not None:
-        cols_to_keep.append(v_beta_column)
-        column_names.append('v_beta')
+        if v_beta_column is not None:
+            cols_to_keep.append(v_beta_column)
+            column_names.append('v_beta')
 
-    if d_beta_column is not None:
-        cols_to_keep.append(d_beta_column)
-        column_names.append('d_beta')
+        if d_beta_column is not None:
+            cols_to_keep.append(d_beta_column)
+            column_names.append('d_beta')
 
-    if j_beta_columns is not None:
-        cols_to_keep.append(j_beta_columns)
-        column_names.append('j_beta')
+        if j_beta_columns is not None:
+            cols_to_keep.append(j_beta_columns)
+            column_names.append('j_beta')
 
 
-    df = df.iloc[:,cols_to_keep]
+        df = df.iloc[:,cols_to_keep]
 
-    df.columns = column_names
+        df.columns = column_names
+        df['counts']=df['counts'].astype(int)
 
-    #Process Sequences
-    if aa_column_alpha is not None:
-        df = Process_Seq(df,'alpha')
 
-    if aa_column_beta is not None:
-        df = Process_Seq(df,'beta')
+        #Process Sequences
+        if aa_column_alpha is not None:
+            df = Process_Seq(df,'alpha')
 
-    #Aggregate or not by unique NT
-    if aggregate_by_aa is True:
-        agg_dict = {}
-        agg_dict['counts']='sum'
-        for col in df.columns:
-            if (not col in sequence_columns) and (col != 'counts'):
-                agg_dict[col] = 'first'
+        if aa_column_beta is not None:
+            df = Process_Seq(df,'beta')
 
-        df = df.groupby(sequence_columns).agg(agg_dict)
-        df = df.sort_values(['counts'], ascending=False)
-        df.reset_index(inplace=True)
+        #Aggregate or not by unique NT
+        if aggregate_by_aa is True:
+            agg_dict = {}
+            agg_dict['counts']='sum'
+            for col in df.columns:
+                if (not col in sequence_columns) and (col != 'counts'):
+                    agg_dict[col] = 'first'
 
-    #Remove sequences with greater than max_length
-    for seq in sequence_columns:
-        df = df[df[seq].str.len() <= max_length]
+            df = df.groupby(sequence_columns).agg(agg_dict)
+            df = df.sort_values(['counts'], ascending=False)
+            df.reset_index(inplace=True)
 
-    #Compute frequencies
-    df['Frequency'] = df['counts'] / np.sum(df['counts'])
+        #Remove sequences with greater than max_length
+        for seq in sequence_columns:
+            df = df[df[seq].str.len() <= max_length]
 
-    #Threshold
-    df_temp = Cut_DF(df=df, type_cut=type_of_data_cut, cut=data_cut)
-    if len(df_temp)==0:
-        df = df.iloc[0].to_frame().T
-    else:
-        df = df_temp
+        #Compute frequencies
+        df['Frequency'] = df['counts'] / np.sum(df['counts'])
+
+        #Threshold
+        df_temp = Cut_DF(df=df, type_cut=type_of_data_cut, cut=data_cut)
+        if len(df_temp)==0:
+            df = df.iloc[0].to_frame().T
+        else:
+            df = df_temp
 
     return df

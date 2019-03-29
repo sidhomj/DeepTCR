@@ -1319,7 +1319,8 @@ class vis_class(object):
         ---------------------------------------
 
         """
-        features = self.features
+        features = self.features_c
+        features_c = self.features_c
         class_id = self.class_id
         sample_id = self.sample_id
         freq = self.freq
@@ -1351,10 +1352,15 @@ class vis_class(object):
             IDX = ['Cluster_' + str(I) for I in IDX]
             df_plot['Cluster'] = IDX
 
+        for ii,c in enumerate(features_c.T,0):
+            df_plot[ii]=c
+
         if freq_weight is True:
             s = freq * scale
         else:
             s = scale
+
+        df_plot['s']=s
 
         if show_legend is True:
             legend = 'full'
@@ -1380,12 +1386,34 @@ class vis_class(object):
             df_plot_sel = df_plot[df_plot['Set']=='test']
 
         plt.figure()
-        sns.scatterplot(data=df_plot_sel, x='x', y='y', s=s, hue=hue, legend=legend, alpha=alpha, linewidth=0.0)
+        sns.scatterplot(data=df_plot_sel, x='x', y='y', s=df_plot_sel['s'], hue=hue, legend=legend, alpha=alpha, linewidth=0.0)
         plt.xticks([])
         plt.yticks([])
         plt.xlabel('')
         plt.ylabel('')
         plt.scatter(x=centroids[:,0],y=centroids[:,1],s=100,c='k')
+
+        fig,ax = plt.subplots(4,3)
+        ax = np.ndarray.flatten(ax)
+        for ii in range(len(features_c.T)):
+            x = np.array(df_plot_sel['x'].tolist())
+            y = np.array(df_plot_sel['y'].tolist())
+            z = np.array(df_plot_sel[ii].tolist())
+            ax[ii].scatter(x,y,c=z,s=5)
+
+        plt.countourf()
+        from mpl_toolkits.mplot3d import Axes3D
+        x = np.array(df_plot_sel['x'].tolist())
+        y = np.array(df_plot_sel['y'].tolist())
+        z = np.array(df_plot_sel[3].tolist())
+
+        #plt.scatter(y,z)
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        idx = np.random.choice(range(len(df_plot_sel)),1000,replace=False)
+        ax.scatter(x[idx],y[idx],z[idx])
+
+        plt.contourf([x,y], z)
 
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
@@ -2337,10 +2365,10 @@ class DeepTCR_SS(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
-                num_centroids=24
-                on_graph_clustering = True
+                num_centroids=256
+                on_graph_clustering = False
+                GO.on_graph_clustering = on_graph_clustering
                 if on_graph_clustering is True:
-                    #GO.Features_c,GO.centroids,GO.s = gaussian(GO.Features,num_centroids)
                     GO.Features_c,GO.centroids,GO.vq_bias,GO.s = DeepVectorQuantization(GO.Features,num_centroids)
                 else:
                     GO.Features_c = GO.Features
@@ -2361,16 +2389,13 @@ class DeepTCR_SS(DeepTCR_S_base):
                 var_train = tf.trainable_variables()
                 if on_graph_clustering is True:
                     var_train_graph = [GO.vq_bias,GO.s,GO.centroids]
-                    GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.01).minimize(GO.loss,var_list=var_train_graph)
+                    GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
                     [var_train.remove(x) for x in var_train_graph]
 
                 GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
 
                 if on_graph_clustering is True:
                     GO.opt = tf.group(GO.opt,GO.opt_c)
-
-                #GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
-
 
                 with tf.name_scope('Accuracy_Measurements'):
                     GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
@@ -2421,7 +2446,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
 
             Get_Seq_Features_Indices(self,batch_size,GO,sess)
-            self.features = Get_Latent_Features(self,batch_size,GO,sess)
+            self.features,self.features_c = Get_Latent_Features(self,batch_size,GO,sess)
 
             idx_base = np.asarray(range(len(self.sample_id)))
             self.train_idx = np.isin(idx_base,self.train[self.var_dict['seq_index']])
@@ -2432,7 +2457,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                 self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
 
             self.kernel = kernel
-            self.centroids = GO.centroids.eval()
+            if on_graph_clustering is True:
+                self.centroids = GO.centroids.eval()
             #
             if self.use_alpha is True:
                 var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
@@ -2800,6 +2826,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         epochs = 10000
         graph_model = tf.Graph()
         GO = graph_object()
+        GO.on_graph_clustering = on_graph_clustering
         with tf.device(self.device):
             with graph_model.as_default():
                 GO.net = 'sup'
@@ -2809,12 +2836,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                 else:
                     GO.Features_c = GO.Features
 
+                GO.Features = GO.Features_c
                 GO.Features_W = GO.Features_c*GO.X_Freq[:,tf.newaxis]
                 GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
-                #GO.Features_Agg = GO.Features_Agg/tf.reduce_sum(GO.Features_Agg,1)[:,tf.newaxis]
-                # entropy = -tf.reduce_sum(f_norm*tf.log(f_norm),-1)[:,tf.newaxis]
-                # entropy = tf.layers.dense(entropy,3,tf.nn.relu)
-                # GO.Features_Agg = tf.concat((GO.Features_Agg,entropy),axis=1)
                 GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
                 if weight_by_class is True:
@@ -2904,8 +2928,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                             if np.mean(train_accuracy_total[-100:]) == 1.0:
                                 break
 
-            Get_Seq_Features_Indices(self,batch_size,GO,sess)
-            self.features = Get_Latent_Features(self,batch_size,GO,sess)
+            batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
+            Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
+            self.features,self.features_c = Get_Latent_Features(self,batch_size_seq,GO,sess)
             pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
             if len(idx.shape) == 0:
                 idx = idx.reshape(-1,1)
