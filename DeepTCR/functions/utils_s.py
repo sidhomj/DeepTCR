@@ -303,6 +303,9 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
                      GO.X_Freq: self.freq[var_idx],
                      GO.sp: sp}
 
+        if self.use_hla:
+            feed_dict[GO.X_hla] = vars[1]
+
         if drop_out_rate is not None:
             feed_dict[GO.prob] = drop_out_rate
 

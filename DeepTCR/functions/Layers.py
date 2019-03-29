@@ -254,3 +254,11 @@ def DeepVectorQuantization(d, n_c, vq_bias_init=0., activation=anlu):
     seq_to_centroids_act,s = activation(vq_bias - seq_to_centroids_dist)
 
     return seq_to_centroids_act,c,vq_bias,s
+
+def Get_HLA_Features(self,GO,embedding_dim):
+    GO.X_hla = tf.placeholder(tf.int64, shape=[None, 6], name='HLA')
+    GO.X_hla_OH = tf.one_hot(GO.X_hla, depth=len(self.lb_hla.classes_))
+    embedding_layer_hla = tf.get_variable(name='Embedding_HLA',
+                                          shape=[len(self.lb_hla.classes_), embedding_dim])
+    GO.X_hla_embed = tf.tensordot(GO.X_hla_OH,embedding_layer_hla,axes=(2,0))
+    GO.HLA_Features = tf.reduce_mean(GO.X_hla_embed,1)

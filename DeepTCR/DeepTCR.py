@@ -417,7 +417,7 @@ class DeepTCR_base(object):
                              v_beta, d_beta,j_beta,v_alpha,j_alpha,
                              v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,
                              self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,
-                             self.lb_hla, hla_data, hla_data_num],f,protocol=4)
+                             self.lb_hla, hla_data, hla_data_num,self.use_hla],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
@@ -427,7 +427,7 @@ class DeepTCR_base(object):
                     v_beta, d_beta,j_beta,v_alpha,j_alpha,\
                     v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,\
                     self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,\
-                    self.lb_hla, hla_data_,hla_data_num = pickle.load(f)
+                    self.lb_hla, hla_data,hla_data_num,self.use_hla = pickle.load(f)
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
@@ -2739,7 +2739,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             Y.append(self.Y[np.where(self.sample_id==s)[0][0]])
         Y = np.vstack(Y)
 
-        Vars = [np.asarray(self.sample_list)]
+        Vars = [np.asarray(self.sample_list),self.hla_data_num]
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
 
@@ -2813,6 +2813,9 @@ class DeepTCR_WF(DeepTCR_S_base):
         GO.on_graph_clustering = on_graph_clustering
         with tf.device(self.device):
             with graph_model.as_default():
+                if self.use_hla:
+                    Get_HLA_Features(self,GO,12)
+
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
                 if on_graph_clustering is True:
@@ -2823,6 +2826,11 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.Features = GO.Features_c
                 GO.Features_W = GO.Features_c*GO.X_Freq[:,tf.newaxis]
                 GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
+                if self.use_hla:
+                    GO.Features_Agg = tf.concat((GO.Features_Agg,GO.HLA_Features),axis=1)
+                    GO.Features_Agg = tf.layers.dense(GO.Features_Agg,12,tf.nn.relu)
+                    GO.Features_Agg = tf.layers.dense(GO.Features_Agg,12,tf.nn.relu)
+
                 GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
                 if weight_by_class is True:
@@ -2915,12 +2923,12 @@ class DeepTCR_WF(DeepTCR_S_base):
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
             self.features,self.features_c = Get_Latent_Features(self,batch_size_seq,GO,sess)
-            pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
-            if len(idx.shape) == 0:
-                idx = idx.reshape(-1,1)
-
-            self.predicted[idx] += pred
-            self.seq_idx = idx
+            # pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
+            # if len(idx.shape) == 0:
+            #     idx = idx.reshape(-1,1)
+            #
+            # self.predicted[idx] += pred
+            # self.seq_idx = idx
 
             self.train_idx = np.isin(self.sample_id,self.train[0])
             self.valid_idx = np.isin(self.sample_id,self.valid[0])
