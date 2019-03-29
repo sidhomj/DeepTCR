@@ -2852,27 +2852,27 @@ class DeepTCR_WF(DeepTCR_S_base):
                           "Testing Accuracy: {:.5}".format(test_accuracy),
                           'Testing AUC: {:.5}'.format(test_auc))
 
-
-                if e > epochs_min:
-                    if accuracy_min is not None:
-                        if np.mean(train_accuracy_total[-3:]) >= accuracy_min:
-                            break
-
-                    else:
-                        if self.LOO is None:
-                            a, b, c = -10, -7, -3
-                            if val_loss_total:
-                                if (np.mean(val_loss_total[a:b]) - np.mean(val_loss_total[c:])) / np.mean(val_loss_total[a:b]) < stop_criterion:
-                                    break
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore')
+                    if e > epochs_min:
+                        if accuracy_min is not None:
+                            if np.mean(train_accuracy_total[-3:]) >= accuracy_min:
+                                break
 
                         else:
-                            a, b, c = -10, -7, -3
-                            if train_loss_total:
-                                if (np.mean(train_loss_total[a:b]) - np.mean(train_loss_total[c:])) / np.mean(train_loss_total[a:b]) < stop_criterion:
-                                    break
+                            if self.LOO is None:
+                                a, b, c = -10, -7, -3
+                                if val_loss_total:
+                                    if (np.mean(val_loss_total[a:b]) - np.mean(val_loss_total[c:])) / np.mean(val_loss_total[a:b]) < stop_criterion:
+                                        break
 
-                            if np.mean(train_accuracy_total[-100:]) == 1.0:
-                                break
+                            else:
+                                a, b, c = -10, -7, -3
+                                if train_loss_total:
+                                    if (np.mean(train_loss_total[a:b]) - np.mean(train_loss_total[c:])) / np.mean(train_loss_total[a:b]) < stop_criterion:
+                                        break
+                                if np.mean(train_accuracy_total[-100:]) == 1.0:
+                                    break
 
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
