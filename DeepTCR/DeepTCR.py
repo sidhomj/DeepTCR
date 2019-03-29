@@ -2273,7 +2273,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False,LOO=LOO)
 
-    def Train(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,units=12,
+    def Train(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,
                  trainable_embedding=True,weight_by_class=False,
                  num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                  use_only_seq=False,use_only_gene=False):
@@ -2297,9 +2297,6 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         kernel: int
             Size of convolutional kernel.
-
-        units: int
-            Number of filters to be used for convolutional kernel.
 
         trainable_embedding; bool
             Toggle to control whether a trainable embedding layer is used or native
@@ -2338,15 +2335,7 @@ class DeepTCR_SS(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
-                num_centroids=256
-                on_graph_clustering = False
-                GO.on_graph_clustering = on_graph_clustering
-                if on_graph_clustering is True:
-                    GO.Features_c,GO.centroids,GO.vq_bias,GO.s = DeepVectorQuantization(GO.Features,num_centroids)
-                else:
-                    GO.Features_c = GO.Features
-
-                GO.logits = tf.layers.dense(GO.Features_c, self.Y.shape[1])
+                GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
@@ -2355,20 +2344,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                 else:
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
-                # if ortho_norm is True:
-                #     #GO.ortho_loss = Get_Ortho_Loss(GO.Features, alpha=alpha)
-                #     GO.ortho_loss = alpha*tf.reduce_mean(tf.norm(GO.Features,ord=1,axis=1))
-                #     GO.loss = GO.loss+GO.ortho_loss
-                var_train = tf.trainable_variables()
-                if on_graph_clustering is True:
-                    var_train_graph = [GO.vq_bias,GO.s,GO.centroids]
-                    GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
-                    [var_train.remove(x) for x in var_train_graph]
-
-                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
-
-                if on_graph_clustering is True:
-                    GO.opt = tf.group(GO.opt,GO.opt_c)
+                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
 
                 with tf.name_scope('Accuracy_Measurements'):
                     GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
@@ -2430,8 +2406,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                 self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
 
             self.kernel = kernel
-            if on_graph_clustering is True:
-                self.centroids = GO.centroids.eval()
+
             #
             if self.use_alpha is True:
                 var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
@@ -2448,7 +2423,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
             print('Done Training')
 
-    def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
+    def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,
                                 trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                                 use_only_seq=False,use_only_gene=False):
 
@@ -2483,10 +2458,7 @@ class DeepTCR_SS(DeepTCR_S_base):
             training. Used as early stopping criterion.
 
         kernel: int
-            Size of convolutional kernel.
-
-        units: int
-            Number of filters to be used for convolutional kernel.
+            Size of convolutional kernel for first layer of convolutions.
 
         trainable_embedding; bool
             Toggle to control whether a trainable embedding layer is used or native
@@ -2528,7 +2500,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                 print(i)
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO)
             self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
-                          kernel=kernel,units=units,weight_by_class=weight_by_class,
+                          kernel=kernel,weight_by_class=weight_by_class,
                           trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
                           use_only_seq=use_only_seq,use_only_gene=use_only_gene)
@@ -2557,7 +2529,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
-    def K_Fold_CrossVal(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,units=12,
+    def K_Fold_CrossVal(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,
                            trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                            iterations=None,use_only_seq=False,use_only_gene=False):
         '''
@@ -2585,10 +2557,7 @@ class DeepTCR_SS(DeepTCR_S_base):
             training. Used as early stopping criterion.
 
         kernel: int
-            Size of convolutional kernel.
-
-        units: int
-            Number of filters to be used for convolutional kernel.
+            Size of convolutional kernel for first layer of convolutions.
 
         trainable_embedding; bool
             Toggle to control whether a trainable embedding layer is used or native
@@ -2666,7 +2635,7 @@ class DeepTCR_SS(DeepTCR_S_base):
             self.LOO = True
 
             self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
-                          kernel=kernel,units=units,weight_by_class=weight_by_class,
+                          kernel=kernel,weight_by_class=weight_by_class,
                           trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
                           use_only_gene=use_only_gene,use_only_seq=use_only_seq)
