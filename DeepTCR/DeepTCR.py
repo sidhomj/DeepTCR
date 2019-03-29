@@ -1319,8 +1319,7 @@ class vis_class(object):
         ---------------------------------------
 
         """
-        features = self.features_c
-        features_c = self.features_c
+        features = self.features
         class_id = self.class_id
         sample_id = self.sample_id
         freq = self.freq
@@ -1351,9 +1350,6 @@ class vis_class(object):
             IDX[IDX == -1] = np.max(IDX) + 1
             IDX = ['Cluster_' + str(I) for I in IDX]
             df_plot['Cluster'] = IDX
-
-        for ii,c in enumerate(features_c.T,0):
-            df_plot[ii]=c
 
         if freq_weight is True:
             s = freq * scale
@@ -1391,29 +1387,6 @@ class vis_class(object):
         plt.yticks([])
         plt.xlabel('')
         plt.ylabel('')
-        plt.scatter(x=centroids[:,0],y=centroids[:,1],s=100,c='k')
-
-        fig,ax = plt.subplots(4,3)
-        ax = np.ndarray.flatten(ax)
-        for ii in range(len(features_c.T)):
-            x = np.array(df_plot_sel['x'].tolist())
-            y = np.array(df_plot_sel['y'].tolist())
-            z = np.array(df_plot_sel[ii].tolist())
-            ax[ii].scatter(x,y,c=z,s=5)
-
-        plt.countourf()
-        from mpl_toolkits.mplot3d import Axes3D
-        x = np.array(df_plot_sel['x'].tolist())
-        y = np.array(df_plot_sel['y'].tolist())
-        z = np.array(df_plot_sel[3].tolist())
-
-        #plt.scatter(y,z)
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        idx = np.random.choice(range(len(df_plot_sel)),1000,replace=False)
-        ax.scatter(x[idx],y[idx],z[idx])
-
-        plt.contourf([x,y], z)
 
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
