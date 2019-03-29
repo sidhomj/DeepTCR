@@ -245,6 +245,7 @@ class DeepTCR_base(object):
             freq = []
             counts=[]
             file_list = []
+            print('Loading Data...')
             for type in self.classes:
                 files_read = glob.glob(os.path.join(directory, type, ext))
                 num_ins = len(files_read)
@@ -263,7 +264,6 @@ class DeepTCR_base(object):
                                 [v_alpha_column]*num_ins,
                                 [j_alpha_column]*num_ins))
 
-                print('Loading Data...')
                 DF = p.starmap(Get_DF_Data, args)
 
                 for df, file in zip(DF, files_read):
