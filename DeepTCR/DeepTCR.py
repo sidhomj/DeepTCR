@@ -1633,7 +1633,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                                     break
 
 
-
                 features_list = []
                 accuracy_list = []
                 alpha_features_list = []
