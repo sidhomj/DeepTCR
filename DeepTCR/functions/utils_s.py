@@ -457,7 +457,7 @@ def Get_Latent_Features(self,batch_size,GO,sess):
 
     return Features, Features_c
 
-def inference_method(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,
+def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,
                      p,batch_size,self):
 
     inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha]

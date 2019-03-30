@@ -679,7 +679,7 @@ class DeepTCR_base(object):
                 self.use_v_beta,self.use_d_beta,self.use_j_beta,\
                 self.use_v_alaph,self.use_j_alpha = pickle.load(f)
 
-        out = inference_method(get,alpha_sequences,beta_sequences,
+        out = inference_method_ss(get,alpha_sequences,beta_sequences,
                                v_beta,d_beta,j_beta,v_alpha,j_alpha,
                                 p,batch_size,self)
 
