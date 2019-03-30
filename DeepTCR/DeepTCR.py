@@ -685,7 +685,6 @@ class DeepTCR_base(object):
 
         return out
 
-
 class feature_analytics_class(object):
     def Structural_Diversity(self, sample=None, n_jobs=1):
         """
