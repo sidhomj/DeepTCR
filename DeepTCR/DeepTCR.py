@@ -628,13 +628,13 @@ class DeepTCR_base(object):
         self.sample_list = np.unique(self.sample_id)
         print('Data Loaded')
 
-    def Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
+    def Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
                   v_alpha=None, j_alpha=None, p=None, batch_size=10000):
         """
         Predicting outputs of various models on new data
 
         This method allows a user to take a pre-trained autoencoder/single-ss classifier
-         or repertoire classifier and generate outputs from the model on new data.
+        and generate outputs from the model on new data.
 
         Inputs
         ---------------------------------------
