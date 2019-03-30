@@ -2734,7 +2734,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
                 GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
 
-                saver = tf.train.Saver()
+                GO.saver = tf.train.Saver()
 
         tf.reset_default_graph()
         config = tf.ConfigProto()
@@ -2829,6 +2829,11 @@ class DeepTCR_WF(DeepTCR_S_base):
             with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
                 pickle.dump(self.kernel, f)
 
+            GO.saver.save(sess, os.path.join(self.Name, 'model', 'model.ckpt'))
+            with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
+                pickle.dump(['WF',GO.predicted.name,self.use_alpha, self.use_beta,
+                             self.use_v_beta, self.use_d_beta, self.use_j_beta,
+                             self.use_v_alpha, self.use_j_alpha], f)
             print('Done Training')
 
     def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,
