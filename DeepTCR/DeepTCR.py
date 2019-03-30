@@ -631,10 +631,12 @@ class DeepTCR_base(object):
     def Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
                   v_alpha=None, j_alpha=None, p=None, batch_size=10000):
         """
-        Predicting outputs of various models on new data
+        Predicting outputs of sequence models on new data
 
-        This method allows a user to take a pre-trained autoencoder/single-ss classifier
-        and generate outputs from the model on new data.
+        This method allows a user to take a pre-trained autoencoder/sequence classifier
+        and generate outputs from the model on new data. For the autoencoder, this returns
+        the features from the latent space. For the sequence classifier, it is the probability
+        of belonging to each class.
 
         Inputs
         ---------------------------------------
