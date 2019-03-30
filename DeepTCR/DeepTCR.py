@@ -1,6 +1,5 @@
 import sys
 sys.path.append('../')
-from DeepTCR.functions.data_processing import *
 from DeepTCR.functions.Layers import *
 from DeepTCR.functions.utils_u import *
 from DeepTCR.functions.utils_s import *
