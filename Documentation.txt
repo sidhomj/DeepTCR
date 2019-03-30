@@ -470,6 +470,49 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |      Predicting outputs of various models on new data
+     |      
+     |      This method allows a user to take a pre-trained autoencoder/single-ss classifier
+     |      and generate outputs from the model on new data.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      batch_size: int
+     |          Batch size for inference.
+     |      
+     |      Returns
+     |      
+     |      features: array
+     |          An array that contains n x latent_dim containing features for all sequences
+     |      
+     |      ---------------------------------------
+     |  
      |  __init__(self, Name, max_length=40, device='/gpu:0')
      |      Initialize Training Object.
      |      
@@ -1017,6 +1060,49 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |      Predicting outputs of various models on new data
+     |      
+     |      This method allows a user to take a pre-trained autoencoder/single-ss classifier
+     |      and generate outputs from the model on new data.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      batch_size: int
+     |          Batch size for inference.
+     |      
+     |      Returns
+     |      
+     |      features: array
+     |          An array that contains n x latent_dim containing features for all sequences
+     |      
+     |      ---------------------------------------
+     |  
      |  __init__(self, Name, max_length=40, device='/gpu:0')
      |      Initialize Training Object.
      |      
@@ -1334,49 +1420,6 @@ CLASSES
      |  
      |  Methods defined here:
      |  
-     |  Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
-     |      Predicting features on new data
-     |      
-     |      This method allows a user to take a pre-trained autoencoder and generate feature values
-     |      on new data.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      
-     |      alpha_sequences: ndarray of strings
-     |          A 1d array with the sequences for inference for the alpha chain.
-     |      
-     |      beta_sequences: ndarray of strings
-     |          A 1d array with the sequences for inference for the beta chain.
-     |      
-     |      v_beta: ndarray of strings
-     |          A 1d array with the v-beta genes for inference.
-     |      
-     |      d_beta: ndarray of strings
-     |          A 1d array with the d-beta genes for inference.
-     |      
-     |      j_beta: ndarray of strings
-     |          A 1d array with the j-beta genes for inference.
-     |      
-     |      v_alpha: ndarray of strings
-     |          A 1d array with the v-alpha genes for inference.
-     |      
-     |      j_alpha: ndarray of strings
-     |          A 1d array with the j-alpha genes for inference.
-     |      
-     |      p: multiprocessing pool object
-     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
-     |      
-     |      batch_size: int
-     |          Batch size for inference.
-     |      
-     |      Returns
-     |      
-     |      features: array
-     |          An array that contains n x latent_dim containing features for all sequences
-     |      
-     |      ---------------------------------------
-     |  
      |  KNN_Repertoire_Classifier(self, distance_metric='KL', sample=None, n_jobs=1, plot_metrics=False, plot_type='violin', by_class=False, Load_Prev_Data=False, metrics=['Recall', 'Precision', 'F1_Score', 'AUC'])
      |      K-Nearest Neighbor Repertoire Classifier
      |      
@@ -1693,6 +1736,49 @@ CLASSES
      |      
      |      self.(v/d/j)_(alpha/beta): ndarray
      |          array with sequence (v/d/j)-(alpha/beta) usage
+     |      
+     |      ---------------------------------------
+     |  
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |      Predicting outputs of various models on new data
+     |      
+     |      This method allows a user to take a pre-trained autoencoder/single-ss classifier
+     |      and generate outputs from the model on new data.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      batch_size: int
+     |          Batch size for inference.
+     |      
+     |      Returns
+     |      
+     |      features: array
+     |          An array that contains n x latent_dim containing features for all sequences
      |      
      |      ---------------------------------------
      |  
@@ -2455,6 +2541,49 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |      Predicting outputs of various models on new data
+     |      
+     |      This method allows a user to take a pre-trained autoencoder/single-ss classifier
+     |      and generate outputs from the model on new data.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      batch_size: int
+     |          Batch size for inference.
+     |      
+     |      Returns
+     |      
+     |      features: array
+     |          An array that contains n x latent_dim containing features for all sequences
+     |      
+     |      ---------------------------------------
+     |  
      |  __init__(self, Name, max_length=40, device='/gpu:0')
      |      Initialize Training Object.
      |      
@@ -2938,6 +3067,49 @@ CLASSES
      |      
      |      self.(v/d/j)_(alpha/beta): ndarray
      |          array with sequence (v/d/j)-(alpha/beta) usage
+     |      
+     |      ---------------------------------------
+     |  
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |      Predicting outputs of various models on new data
+     |      
+     |      This method allows a user to take a pre-trained autoencoder/single-ss classifier
+     |      and generate outputs from the model on new data.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      batch_size: int
+     |          Batch size for inference.
+     |      
+     |      Returns
+     |      
+     |      features: array
+     |          An array that contains n x latent_dim containing features for all sequences
      |      
      |      ---------------------------------------
      |  
