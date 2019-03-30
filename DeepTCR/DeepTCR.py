@@ -1228,18 +1228,22 @@ class vis_class(object):
             features = self.features
             class_id = self.class_id
             sample_id = self.sample_id
+            counts = self.counts
         elif set == 'train':
             features = self.features[self.train_idx]
             class_id = self.class_id[self.train_idx]
             sample_id = self.sample_id[self.train_idx]
+            counts = self.counts[self.train_idx]
         elif set == 'valid':
             features = self.features[self.valid_idx]
             class_id = self.class_id[self.valid_idx]
             sample_id = self.sample_id[self.valid_idx]
+            counts = self.counts[self.valid_idx]
         elif set == 'test':
             features = self.features[self.test_idx]
             class_id = self.class_id[self.test_idx]
             sample_id = self.sample_id[self.test_idx]
+            counts = self.counts[self.test_idx]
 
         if Load_Prev_Data is False:
             X_2 = umap.UMAP().fit_transform(features)
@@ -1281,6 +1285,15 @@ class vis_class(object):
             np.random.shuffle(HSV_tuples)
             RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
             color_dict = dict(zip(np.unique(class_id), RGB_tuples))
+
+        temp_x = []
+        temp_s = []
+        for ii,(x,s) in enumerate(zip(X_2,sample_id),0):
+            temp_x.append(counts[ii]*[x])
+            temp_s.append(counts[ii]*[s])
+
+        X_2 = np.vstack(temp_x)
+        sample_id = np.hstack(temp_s)
 
         rad_plot(X_2, squareform(pairwise_distances), samples, labels, sample_id, color_dict,
                  gridsize=gridsize, dg_radius=dendrogram_radius, linkage_method=linkage_method,
