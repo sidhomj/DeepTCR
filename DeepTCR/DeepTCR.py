@@ -1567,7 +1567,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                     recon_losses = []
                     accuracies = []
-                    if self.use_beta is True:
+                    if self.use_beta:
                         upsample1_beta = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
                         upsample2_beta = tf.layers.conv2d_transpose(upsample1_beta, 64, (1, 3), (1, 2), activation=tf.nn.relu)
 
@@ -1589,7 +1589,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         accuracy_beta = tf.reduce_mean(correct_ae_beta, axis=0)
                         accuracies.append(accuracy_beta)
 
-                    if self.use_alpha is True:
+                    if self.use_alpha:
                         upsample1_alpha = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
                         upsample2_alpha = tf.layers.conv2d_transpose(upsample1_alpha, 64, (1, 3), (1, 2),activation=tf.nn.relu)
 
@@ -1636,8 +1636,13 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         gene_loss.append(j_alpha_loss)
                         accuracies.append(j_alpha_acc)
 
-
                     recon_losses = recon_losses + gene_loss
+
+                    if use_only_gene:
+                        recon_losses = gene_loss
+                    if use_only_seq:
+                        recon_losses=recon_losses
+
                     temp = []
                     for l in recon_losses:
                         l = l[:,tf.newaxis]
