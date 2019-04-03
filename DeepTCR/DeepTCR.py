@@ -1641,7 +1641,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     if use_only_gene:
                         recon_losses = gene_loss
                     if use_only_seq:
-                        recon_losses  =seq_losses
+                        recon_losses = seq_losses
 
                     temp = []
                     for l in recon_losses:
