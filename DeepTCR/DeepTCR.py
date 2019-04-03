@@ -381,7 +381,7 @@ class DeepTCR_base(object):
             if hla is not None:
                 self.use_hla = True
                 hla_df = pd.read_csv(hla)
-                hla_df = hla_df.set_index('File')
+                hla_df = hla_df.set_index(hla_df.columns[0])
                 hla_id = []
                 hla_data = []
                 for i in hla_df.iterrows():
@@ -403,6 +403,11 @@ class DeepTCR_base(object):
                 file_list = keep
                 hla_data = hla_data[idx_2]
                 hla_data_num = hla_data_num[idx_2]
+
+                hla_data_seq = np.zeros(shape=[file_id.shape[0],6])
+                for file,h in zip(file_list,hla_data_num):
+                    hla_data_seq[file_id==file] = h
+
             else:
                 self.lb_hla = LabelEncoder()
                 file_list = np.asarray(file_list)
@@ -416,7 +421,7 @@ class DeepTCR_base(object):
                              v_beta, d_beta,j_beta,v_alpha,j_alpha,
                              v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,
                              self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,
-                             self.lb_hla, hla_data, hla_data_num,self.use_hla],f,protocol=4)
+                             self.lb_hla, hla_data, hla_data_num,hla_data_seq,self.use_hla],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
@@ -426,7 +431,7 @@ class DeepTCR_base(object):
                     v_beta, d_beta,j_beta,v_alpha,j_alpha,\
                     v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,\
                     self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,\
-                    self.lb_hla, hla_data,hla_data_num,self.use_hla = pickle.load(f)
+                    self.lb_hla, hla_data,hla_data_num,hla_data_seq,self.use_hla = pickle.load(f)
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
@@ -452,6 +457,7 @@ class DeepTCR_base(object):
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         self.hla_data = hla_data
         self.hla_data_num = hla_data_num
+        self.hla_data_seq = hla_data_seq
         print('Data Loaded')
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
