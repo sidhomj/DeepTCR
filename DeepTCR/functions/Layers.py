@@ -197,6 +197,10 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gen
     else:
         Features = gene_features
 
+    if self.use_hla:
+        HLA_Features = Get_HLA_Features(self,GO,12)
+        Features = tf.concat((Features,HLA_Features),axis=1)
+
     fc = Features
     if num_fc_layers != 0:
         for lyr in range(num_fc_layers):
@@ -262,3 +266,4 @@ def Get_HLA_Features(self,GO,embedding_dim):
                                           shape=[len(self.lb_hla.classes_), embedding_dim])
     GO.X_hla_embed = tf.tensordot(GO.X_hla_OH,embedding_layer_hla,axes=(2,0))
     GO.HLA_Features = tf.reduce_mean(GO.X_hla_embed,1)
+    return GO.HLA_Features

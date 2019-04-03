@@ -413,6 +413,7 @@ class DeepTCR_base(object):
                 file_list = np.asarray(file_list)
                 hla_data = np.asarray([])
                 hla_data_num = np.asarray([])
+                hla_data_seq = np.asarray([])
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
                 pickle.dump([X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,
