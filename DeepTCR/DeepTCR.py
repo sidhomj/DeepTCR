@@ -1608,9 +1608,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     fc_up_flat = fc_up
                     fc_up = tf.reshape(fc_up, shape=[-1, 1, 4, 64])
 
-                    recon_losses = []
+                    seq_losses = []
                     accuracies = []
-                    if self.use_beta is True:
+                    if self.use_beta:
                         upsample1_beta = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
                         upsample2_beta = tf.layers.conv2d_transpose(upsample1_beta, 64, (1, 3), (1, 2), activation=tf.nn.relu)
 
@@ -1622,7 +1622,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                             logits_AE_beta = tf.layers.conv2d_transpose(upsample2_beta, 21, (1, 4),(1, 2), activation=tf.nn.relu)
 
                         recon_cost_beta = Recon_Loss(GO.X_Seq_beta, logits_AE_beta)
-                        recon_losses.append(recon_cost_beta)
+                        seq_losses.append(recon_cost_beta)
 
                         predicted_beta = tf.squeeze(tf.argmax(logits_AE_beta, axis=3), axis=1)
                         actual_ae_beta = tf.squeeze(GO.X_Seq_beta, axis=1)
@@ -1632,7 +1632,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         accuracy_beta = tf.reduce_mean(correct_ae_beta, axis=0)
                         accuracies.append(accuracy_beta)
 
-                    if self.use_alpha is True:
+                    if self.use_alpha:
                         upsample1_alpha = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
                         upsample2_alpha = tf.layers.conv2d_transpose(upsample1_alpha, 64, (1, 3), (1, 2),activation=tf.nn.relu)
 
@@ -1644,7 +1644,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                             logits_AE_alpha = tf.layers.conv2d_transpose(upsample2_alpha, 21, (1, 4), (1, 2),activation=tf.nn.relu)
 
                         recon_cost_alpha = Recon_Loss(GO.X_Seq_alpha, logits_AE_alpha)
-                        recon_losses.append(recon_cost_alpha)
+                        seq_losses.append(recon_cost_alpha)
 
                         predicted_alpha = tf.squeeze(tf.argmax(logits_AE_alpha, axis=3), axis=1)
                         actual_ae_alpha = tf.squeeze(GO.X_Seq_alpha, axis=1)
@@ -1679,8 +1679,13 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         gene_loss.append(j_alpha_loss)
                         accuracies.append(j_alpha_acc)
 
+                    recon_losses = seq_losses + gene_loss
 
-                    recon_losses = recon_losses + gene_loss
+                    if use_only_gene:
+                        recon_losses = gene_loss
+                    if use_only_seq:
+                        recon_losses = seq_losses
+
                     temp = []
                     for l in recon_losses:
                         l = l[:,tf.newaxis]
@@ -1704,7 +1709,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         accuracy += a
                     accuracy = accuracy/num_acc
                     latent_cost = tf.reduce_sum(latent_cost)
-
 
                     opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
 
