@@ -14,7 +14,7 @@ import sklearn
 import phenograph
 from scipy.spatial import distance
 import glob
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, MultiLabelBinarizer
 from multiprocessing import Pool
 import pickle
 import matplotlib.pyplot as plt
@@ -386,40 +386,32 @@ class DeepTCR_base(object):
                 hla_data = []
                 for i in hla_df.iterrows():
                     hla_id.append(i[0])
-                    temp = i[1].dropna().tolist()
-                    while len(temp) < 6:
-                        temp.extend(['None'])
+                    temp = np.asarray(i[1].dropna().tolist())
                     hla_data.append(temp)
 
                 hla_id = np.asarray(hla_id)
-                hla_data = np.vstack(hla_data)
-                self.lb_hla = LabelEncoder()
-                self.lb_hla.fit(np.unique(hla_data))
-                hla_data_num = []
-                for h in hla_data.T:
-                    hla_data_num.append(self.lb_hla.transform(h))
-                hla_data_num = np.vstack(hla_data_num).T
+                hla_data = np.asarray(hla_data)
+
                 keep,idx_1,idx_2 = np.intersect1d(file_list,hla_id,return_indices=True)
                 file_list = keep
                 hla_data = hla_data[idx_2]
-                hla_data_num = hla_data_num[idx_2]
 
-                hla_data_seq_num = np.zeros(shape=[file_id.shape[0],6])
+                self.lb_hla = MultiLabelBinarizer()
+                hla_data_num = self.lb_hla.fit_transform(hla_data)
+
+                hla_data_seq_num = np.zeros(shape=[file_id.shape[0],hla_data_num.shape[1]])
                 for file,h in zip(file_list,hla_data_num):
                     hla_data_seq_num[file_id==file] = h
                 hla_data_seq_num = hla_data_seq_num.astype(int)
-
-                temp = []
-                for t in hla_data_seq_num.T:
-                    temp.append(self.lb_hla.inverse_transform(t))
-                hla_data_seq = np.vstack(temp).T
+                hla_data_seq = np.asarray(self.lb_hla.inverse_transform(hla_data_seq_num))
 
             else:
-                self.lb_hla = LabelEncoder()
+                self.lb_hla = MultiLabelBinarizer()
                 file_list = np.asarray(file_list)
                 hla_data = np.asarray([])
                 hla_data_num = np.asarray([])
                 hla_data_seq = np.asarray([])
+                hla_data_seq_num = np.asarray([])
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
                 pickle.dump([X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,
@@ -1661,7 +1653,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         accuracies.append(accuracy_alpha)
 
                     if self.use_hla:
-                        hla_loss, hla_acc = Get_HLA_Loss(fc_up_flat,GO.embedding_layer_hla,GO.X_hla)
+                        hla_loss, hla_acc = Get_HLA_Loss(fc_up_flat,GO.embedding_layer_hla,GO.X_hla_OH)
+                        accuracies.append(hla_acc)
 
                     gene_loss = []
                     if self.use_v_beta is True:
@@ -1689,13 +1682,13 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         gene_loss.append(j_alpha_loss)
                         accuracies.append(j_alpha_acc)
 
-                    recon_losses = seq_losses + gene_loss + hla_loss
+                    recon_losses = seq_losses + gene_loss + [hla_loss]
 
                     if use_only_gene:
                         recon_losses = gene_loss
                     if use_only_seq:
                         recon_losses = seq_losses
-                    use_only_hla = True
+                    use_only_hla = False
                     if use_only_hla:
                         recon_losses = hla_loss
 
@@ -1738,7 +1731,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 recon_loss_list = []
                 for e in range(epochs):
                     accuracy_list = []
-                    Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num]
+                    Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
+                            self.v_alpha_num,self.j_alpha_num,self.hla_data_seq_num]
+
                     for vars in get_batches(Vars, batch_size=batch_size):
                         feed_dict = {}
                         if self.use_alpha is True:
@@ -1760,6 +1755,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                         if self.use_j_alpha is True:
                             feed_dict[GO.X_j_alpha] = vars[6]
+
+                        if self.use_hla:
+                            feed_dict[GO.X_hla] = vars[7]
 
                         train_loss, recon_loss, latent_loss, accuracy_check, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
                         accuracy_list.append(accuracy_check)
