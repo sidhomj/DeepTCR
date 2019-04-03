@@ -1,6 +1,5 @@
 import sys
 sys.path.append('../')
-from DeepTCR.functions.data_processing import *
 from DeepTCR.functions.Layers import *
 from DeepTCR.functions.utils_u import *
 from DeepTCR.functions.utils_s import *
@@ -540,54 +539,68 @@ class DeepTCR_base(object):
             p = Pool(40)
 
         if alpha_sequences is not None:
+            self.alpha_sequences = alpha_sequences
             args = list(zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
             result = p.starmap(Embed_Seq_Num, args)
             sequences_num = np.vstack(result)
             self.X_Seq_alpha = np.expand_dims(sequences_num, 1)
+            self.use_alpha = True
         else:
             self.X_Seq_alpha = np.zeros(shape=[len_input])
             self.alpha_sequences = np.asarray([None] * len_input)
 
         if beta_sequences is not None:
+            self.beta_sequences = beta_sequences
             args = list(zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length] * len(beta_sequences)))
             result = p.starmap(Embed_Seq_Num, args)
             sequences_num = np.vstack(result)
             self.X_Seq_beta = np.expand_dims(sequences_num, 1)
+            self.use_beta = True
         else:
             self.X_Seq_beta = np.zeros(shape=[len_input])
             self.beta_sequences = np.asarray([None] * len_input)
 
         if v_beta is not None:
+            self.v_beta = v_beta
             self.lb_v_beta = LabelEncoder()
             self.v_beta_num = self.lb_v_beta.fit_transform(v_beta)
+            self.use_v_beta = True
         else:
             self.v_beta_num = np.zeros(shape=[len_input])
             self.v_beta = np.asarray([None] * len_input)
 
         if d_beta is not None:
+            self.d_beta = d_beta
             self.lb_d_beta = LabelEncoder()
             self.d_beta_num = self.lb_d_beta.fit_transform(d_beta)
+            self.use_d_beta = True
         else:
             self.d_beta_num = np.zeros(shape=[len_input])
             self.d_beta = np.asarray([None] * len_input)
 
         if j_beta is not None:
+            self.j_beta = j_beta
             self.lb_j_beta = LabelEncoder()
             self.j_beta_num = self.lb_j_beta.fit_transform(j_beta)
+            self.use_j_beta = True
         else:
             self.j_beta_num = np.zeros(shape=[len_input])
             self.j_beta = np.asarray([None] * len_input)
 
         if v_alpha is not None:
+            self.v_alpha = v_alpha
             self.lb_v_alpha = LabelEncoder()
             self.v_alpha_num = self.lb_v_alpha.fit_transform(v_alpha)
+            self.use_v_alpha = True
         else:
             self.v_alpha_num = np.zeros(shape=[len_input])
             self.v_alpha = np.asarray([None] * len_input)
 
         if j_alpha is not None:
+            self.j_alpha = j_alpha
             self.lb_j_alpha = LabelEncoder()
             self.j_alpha_num = self.lb_j_alpha.fit_transform(j_alpha)
+            self.use_j_alpha = True
         else:
             self.j_alpha_num = np.zeros(shape=[len_input])
             self.j_alpha = np.asarray([None] * len_input)
@@ -647,7 +660,67 @@ class DeepTCR_base(object):
         self.Y = Y
         self.seq_index = np.asarray(list(range(len(self.Y))))
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        self.sample_list = np.unique(self.sample_id)
         print('Data Loaded')
+
+    def Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
+                  v_alpha=None, j_alpha=None, p=None, batch_size=10000):
+        """
+        Predicting outputs of sequence models on new data
+
+        This method allows a user to take a pre-trained autoencoder/sequence classifier
+        and generate outputs from the model on new data. For the autoencoder, this returns
+        the features from the latent space. For the sequence classifier, it is the probability
+        of belonging to each class.
+
+        Inputs
+        ---------------------------------------
+
+        alpha_sequences: ndarray of strings
+            A 1d array with the sequences for inference for the alpha chain.
+
+        beta_sequences: ndarray of strings
+            A 1d array with the sequences for inference for the beta chain.
+
+        v_beta: ndarray of strings
+            A 1d array with the v-beta genes for inference.
+
+        d_beta: ndarray of strings
+            A 1d array with the d-beta genes for inference.
+
+        j_beta: ndarray of strings
+            A 1d array with the j-beta genes for inference.
+
+        v_alpha: ndarray of strings
+            A 1d array with the v-alpha genes for inference.
+
+        j_alpha: ndarray of strings
+            A 1d array with the j-alpha genes for inference.
+
+        p: multiprocessing pool object
+            a pre-formed pool object can be passed to method for multiprocessing tasks.
+
+        batch_size: int
+            Batch size for inference.
+
+        Returns
+
+        features: array
+            An array that contains n x latent_dim containing features for all sequences
+
+        ---------------------------------------
+
+        """
+        with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'rb') as f:
+            model_type,get,self.use_alpha,self.use_beta,\
+                self.use_v_beta,self.use_d_beta,self.use_j_beta,\
+                self.use_v_alaph,self.use_j_alpha = pickle.load(f)
+
+        out = inference_method_ss(get,alpha_sequences,beta_sequences,
+                               v_beta,d_beta,j_beta,v_alpha,j_alpha,
+                                p,batch_size,self)
+
+        return out
 
 class feature_analytics_class(object):
     def Structural_Diversity(self, sample=None, n_jobs=1):
@@ -1184,7 +1257,7 @@ class vis_class(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results, filename))
 
-    def Repertoire_Dendogram(self,set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
+    def Repertoire_Dendrogram(self,set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
                              dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward',
                              gridsize=10, Load_Prev_Data=False):
         """
@@ -1249,21 +1322,27 @@ class vis_class(object):
             features = self.features
             class_id = self.class_id
             sample_id = self.sample_id
+            counts = self.counts
         elif set == 'train':
             features = self.features[self.train_idx]
             class_id = self.class_id[self.train_idx]
             sample_id = self.sample_id[self.train_idx]
+            counts = self.counts[self.train_idx]
         elif set == 'valid':
             features = self.features[self.valid_idx]
             class_id = self.class_id[self.valid_idx]
             sample_id = self.sample_id[self.valid_idx]
+            counts = self.counts[self.valid_idx]
         elif set == 'test':
             features = self.features[self.test_idx]
             class_id = self.class_id[self.test_idx]
             sample_id = self.sample_id[self.test_idx]
+            counts = self.counts[self.test_idx]
 
         if Load_Prev_Data is False:
-            X_2 = umap.UMAP().fit_transform(features)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                X_2 = umap.UMAP().fit_transform(features)
             self.Cluster(sample=sample, n_jobs=n_jobs,set=set)
             prop = self.Cluster_Frequencies
             with open(os.path.join(self.Name, 'dendro.pkl'), 'wb') as f:
@@ -1302,6 +1381,15 @@ class vis_class(object):
             np.random.shuffle(HSV_tuples)
             RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
             color_dict = dict(zip(np.unique(class_id), RGB_tuples))
+
+        temp_x = []
+        temp_s = []
+        for ii,(x,s) in enumerate(zip(X_2,sample_id),0):
+            temp_x.append(counts[ii]*[x])
+            temp_s.append(counts[ii]*[s])
+
+        X_2 = np.vstack(temp_x)
+        sample_id = np.hstack(temp_s)
 
         rad_plot(X_2, squareform(pairwise_distances), samples, labels, sample_id, color_dict,
                  gridsize=gridsize, dg_radius=dendrogram_radius, linkage_method=linkage_method,
@@ -1379,11 +1467,12 @@ class vis_class(object):
         df_plot['y'] = X_2[:, 1]
         df_plot['Class'] = class_id
         df_plot['Sample'] = sample_id
-        df_plot['Set'] = None
-        with pd.option_context('mode.chained_assignment',None):
-            df_plot['Set'].iloc[np.where(self.train_idx)[0]] = 'train'
-            df_plot['Set'].iloc[np.where(self.valid_idx)[0]] = 'valid'
-            df_plot['Set'].iloc[np.where(self.test_idx)[0]] = 'test'
+        if set != 'all':
+            df_plot['Set'] = None
+            with pd.option_context('mode.chained_assignment',None):
+                df_plot['Set'].iloc[np.where(self.train_idx)[0]] = 'train'
+                df_plot['Set'].iloc[np.where(self.valid_idx)[0]] = 'valid'
+                df_plot['Set'].iloc[np.where(self.test_idx)[0]] = 'test'
 
         if hasattr(self,'Cluster_Assignments'):
             IDX = self.Cluster_Assignments
@@ -1761,7 +1850,10 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 embed_dict = dict(zip(name_keep,embedding_keep))
 
                 saver.save(sess,os.path.join(self.Name,'model','model.ckpt'))
-
+                with open(os.path.join(self.Name,'model','model_type.pkl'),'wb') as f:
+                    pickle.dump(['VAE',z_mean.name,self.use_alpha,self.use_beta,
+                                self.use_v_beta,self.use_d_beta,self.use_j_beta,
+                                self.use_v_alpha,self.use_j_alpha],f)
 
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
                 pickle.dump([features,embed_dict], f,protocol=4)
@@ -1783,181 +1875,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         self.features = self.vae_features
         self.embed_dict = embed_dict
         print('Training Done')
-
-    def Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
-                  v_alpha=None, j_alpha=None, p=None, batch_size=10000):
-        """
-        Predicting features on new data
-
-        This method allows a user to take a pre-trained autoencoder and generate feature values
-        on new data.
-
-        Inputs
-        ---------------------------------------
-
-        alpha_sequences: ndarray of strings
-            A 1d array with the sequences for inference for the alpha chain.
-
-        beta_sequences: ndarray of strings
-            A 1d array with the sequences for inference for the beta chain.
-
-        v_beta: ndarray of strings
-            A 1d array with the v-beta genes for inference.
-
-        d_beta: ndarray of strings
-            A 1d array with the d-beta genes for inference.
-
-        j_beta: ndarray of strings
-            A 1d array with the j-beta genes for inference.
-
-        v_alpha: ndarray of strings
-            A 1d array with the v-alpha genes for inference.
-
-        j_alpha: ndarray of strings
-            A 1d array with the j-alpha genes for inference.
-
-        p: multiprocessing pool object
-            a pre-formed pool object can be passed to method for multiprocessing tasks.
-
-        batch_size: int
-            Batch size for inference.
-
-        Returns
-
-        features: array
-            An array that contains n x latent_dim containing features for all sequences
-
-        ---------------------------------------
-
-        """
-
-        inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha]
-        for i in inputs:
-            if i is not None:
-                len_input = len(i)
-                break
-
-        if p is None:
-            p = Pool(40)
-
-        if alpha_sequences is not None:
-            args = list(
-                zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
-            result = p.starmap(Embed_Seq_Num, args)
-            sequences_num = np.vstack(result)
-            X_Seq_alpha = np.expand_dims(sequences_num, 1)
-        else:
-            X_Seq_alpha = np.zeros(shape=[len_input])
-            alpha_sequences = np.asarray([None] * len_input)
-
-        if beta_sequences is not None:
-            args = list(
-                zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length] * len(beta_sequences)))
-            result = p.starmap(Embed_Seq_Num, args)
-            sequences_num = np.vstack(result)
-            X_Seq_beta = np.expand_dims(sequences_num, 1)
-        else:
-            X_Seq_beta = np.zeros(shape=[len_input])
-            beta_sequences = np.asarray([None] * len_input)
-
-        if v_beta is not None:
-            v_beta_num = self.lb_v_beta.fit_transform(v_beta)
-        else:
-            v_beta_num = np.zeros(shape=[len_input])
-            v_beta = np.asarray([None] * len_input)
-
-        if d_beta is not None:
-            d_beta_num = self.lb_d_beta.fit_transform(d_beta)
-        else:
-            d_beta_num = np.zeros(shape=[len_input])
-            d_beta = np.asarray([None] * len_input)
-
-        if j_beta is not None:
-            j_beta_num = self.lb_j_beta.fit_transform(j_beta)
-        else:
-            j_beta_num = np.zeros(shape=[len_input])
-            j_beta = np.asarray([None] * len_input)
-
-        if v_alpha is not None:
-            v_alpha_num = self.lb_v_alpha.fit_transform(v_alpha)
-        else:
-            v_alpha_num = np.zeros(shape=[len_input])
-            v_alpha = np.asarray([None] * len_input)
-
-        if j_alpha is not None:
-            j_alpha_num = self.lb_j_alpha.fit_transform(j_alpha)
-        else:
-            j_alpha_num = np.zeros(shape=[len_input])
-            j_alpha = np.asarray([None] * len_input)
-
-        if p is None:
-            p.close()
-            p.join()
-
-        tf.reset_default_graph()
-        config = tf.ConfigProto()
-        config.gpu_options.allow_growth = True
-        with tf.Session(config=config) as sess:
-            saver = tf.train.import_meta_graph(os.path.join(self.Name, 'model', 'model.ckpt.meta'))
-            saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name, 'model')))
-            graph = tf.get_default_graph()
-
-            if self.use_alpha is True:
-                X_Seq_alpha_v = graph.get_tensor_by_name('Input_Alpha:0')
-
-            if self.use_beta is True:
-                X_Seq_beta_v = graph.get_tensor_by_name('Input_Beta:0')
-
-            if self.use_v_beta is True:
-                X_v_beta = graph.get_tensor_by_name('Input_V_Beta:0')
-
-            if self.use_d_beta is True:
-                X_d_beta = graph.get_tensor_by_name('Input_D_Beta:0')
-
-            if self.use_j_beta is True:
-                X_j_beta = graph.get_tensor_by_name('Input_J_Beta:0')
-
-            if self.use_v_alpha is True:
-                X_v_alpha = graph.get_tensor_by_name('Input_V_Alpha:0')
-
-            if self.use_j_alpha is True:
-                X_j_alpha = graph.get_tensor_by_name('Input_J_Alpha:0')
-
-            z_mean = graph.get_tensor_by_name('z_mean/BiasAdd:0')
-
-            features_list = []
-            Vars = [X_Seq_alpha, X_Seq_beta, v_beta_num, d_beta_num, j_beta_num,
-                    v_alpha_num, j_alpha_num]
-
-            for vars in get_batches(Vars, batch_size=batch_size):
-                feed_dict = {}
-                if self.use_alpha is True:
-                    feed_dict[X_Seq_alpha_v] = vars[0]
-                if self.use_beta is True:
-                    feed_dict[X_Seq_beta_v] = vars[1]
-
-                if self.use_v_beta is True:
-                    feed_dict[X_v_beta] = vars[2]
-
-                if self.use_d_beta is True:
-                    feed_dict[X_d_beta] = vars[3]
-
-                if self.use_j_beta is True:
-                    feed_dict[X_j_beta] = vars[4]
-
-                if self.use_v_alpha is True:
-                    feed_dict[X_v_alpha] = vars[5]
-
-                if self.use_j_alpha is True:
-                    feed_dict[X_j_alpha] = vars[6]
-
-                get = z_mean
-                features_ind = sess.run(get, feed_dict=feed_dict)
-                features_list.append(features_ind)
-
-            features = np.vstack(features_list)
-            return features
-
 
     def KNN_Sequence_Classifier(self, k_values=list(range(1, 500, 25)), rep=5, plot_metrics=False, by_class=False,
                                 plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC']):
@@ -2464,6 +2381,11 @@ class DeepTCR_SS(DeepTCR_S_base):
                 pickle.dump(self.kernel, f)
 
             print('Done Training')
+            GO.saver.save(sess, os.path.join(self.Name, 'model', 'model.ckpt'))
+            with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
+                pickle.dump(['SS',GO.predicted.name,self.use_alpha, self.use_beta,
+                             self.use_v_beta, self.use_d_beta, self.use_j_beta,
+                             self.use_v_alpha, self.use_j_alpha], f)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,
                                 trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
@@ -2856,7 +2778,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
                 GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
 
-                saver = tf.train.Saver()
+                GO.saver = tf.train.Saver()
 
         tf.reset_default_graph()
         config = tf.ConfigProto()
@@ -2951,6 +2873,11 @@ class DeepTCR_WF(DeepTCR_S_base):
             with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
                 pickle.dump(self.kernel, f)
 
+            GO.saver.save(sess, os.path.join(self.Name, 'model', 'model.ckpt'))
+            with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
+                pickle.dump(['WF',GO.predicted.name,self.use_alpha, self.use_beta,
+                             self.use_v_beta, self.use_d_beta, self.use_j_beta,
+                             self.use_v_alpha, self.use_j_alpha], f)
             print('Done Training')
 
     def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,

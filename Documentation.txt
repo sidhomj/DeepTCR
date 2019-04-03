@@ -27,6 +27,7 @@ DESCRIPTION
     # import matplotlib.pyplot as plt
     # from sklearn.metrics import roc_curve, roc_auc_score
     # import shutil
+    # import warnings
 
 CLASSES
     builtins.object
@@ -469,6 +470,51 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |      Predicting outputs of sequence models on new data
+     |      
+     |      This method allows a user to take a pre-trained autoencoder/sequence classifier
+     |      and generate outputs from the model on new data. For the autoencoder, this returns
+     |      the features from the latent space. For the sequence classifier, it is the probability
+     |      of belonging to each class.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      batch_size: int
+     |          Batch size for inference.
+     |      
+     |      Returns
+     |      
+     |      features: array
+     |          An array that contains n x latent_dim containing features for all sequences
+     |      
+     |      ---------------------------------------
+     |  
      |  __init__(self, Name, max_length=40, device='/gpu:0')
      |      Initialize Training Object.
      |      
@@ -672,7 +718,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -1016,6 +1062,51 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |      Predicting outputs of sequence models on new data
+     |      
+     |      This method allows a user to take a pre-trained autoencoder/sequence classifier
+     |      and generate outputs from the model on new data. For the autoencoder, this returns
+     |      the features from the latent space. For the sequence classifier, it is the probability
+     |      of belonging to each class.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      batch_size: int
+     |          Batch size for inference.
+     |      
+     |      Returns
+     |      
+     |      features: array
+     |          An array that contains n x latent_dim containing features for all sequences
+     |      
+     |      ---------------------------------------
+     |  
      |  __init__(self, Name, max_length=40, device='/gpu:0')
      |      Initialize Training Object.
      |      
@@ -1219,7 +1310,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -1332,49 +1423,6 @@ CLASSES
      |      builtins.object
      |  
      |  Methods defined here:
-     |  
-     |  Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
-     |      Predicting features on new data
-     |      
-     |      This method allows a user to take a pre-trained autoencoder and generate feature values
-     |      on new data.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      
-     |      alpha_sequences: ndarray of strings
-     |          A 1d array with the sequences for inference for the alpha chain.
-     |      
-     |      beta_sequences: ndarray of strings
-     |          A 1d array with the sequences for inference for the beta chain.
-     |      
-     |      v_beta: ndarray of strings
-     |          A 1d array with the v-beta genes for inference.
-     |      
-     |      d_beta: ndarray of strings
-     |          A 1d array with the d-beta genes for inference.
-     |      
-     |      j_beta: ndarray of strings
-     |          A 1d array with the j-beta genes for inference.
-     |      
-     |      v_alpha: ndarray of strings
-     |          A 1d array with the v-alpha genes for inference.
-     |      
-     |      j_alpha: ndarray of strings
-     |          A 1d array with the j-alpha genes for inference.
-     |      
-     |      p: multiprocessing pool object
-     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
-     |      
-     |      batch_size: int
-     |          Batch size for inference.
-     |      
-     |      Returns
-     |      
-     |      features: array
-     |          An array that contains n x latent_dim containing features for all sequences
-     |      
-     |      ---------------------------------------
      |  
      |  KNN_Repertoire_Classifier(self, distance_metric='KL', sample=None, n_jobs=1, plot_metrics=False, plot_type='violin', by_class=False, Load_Prev_Data=False, metrics=['Recall', 'Precision', 'F1_Score', 'AUC'])
      |      K-Nearest Neighbor Repertoire Classifier
@@ -1695,6 +1743,51 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |      Predicting outputs of sequence models on new data
+     |      
+     |      This method allows a user to take a pre-trained autoencoder/sequence classifier
+     |      and generate outputs from the model on new data. For the autoencoder, this returns
+     |      the features from the latent space. For the sequence classifier, it is the probability
+     |      of belonging to each class.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      batch_size: int
+     |          Batch size for inference.
+     |      
+     |      Returns
+     |      
+     |      features: array
+     |          An array that contains n x latent_dim containing features for all sequences
+     |      
+     |      ---------------------------------------
+     |  
      |  __init__(self, Name, max_length=40, device='/gpu:0')
      |      Initialize Training Object.
      |      
@@ -1898,7 +1991,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -2454,6 +2547,51 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |      Predicting outputs of sequence models on new data
+     |      
+     |      This method allows a user to take a pre-trained autoencoder/sequence classifier
+     |      and generate outputs from the model on new data. For the autoencoder, this returns
+     |      the features from the latent space. For the sequence classifier, it is the probability
+     |      of belonging to each class.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      batch_size: int
+     |          Batch size for inference.
+     |      
+     |      Returns
+     |      
+     |      features: array
+     |          An array that contains n x latent_dim containing features for all sequences
+     |      
+     |      ---------------------------------------
+     |  
      |  __init__(self, Name, max_length=40, device='/gpu:0')
      |      Initialize Training Object.
      |      
@@ -2657,7 +2795,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -2940,6 +3078,51 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |      Predicting outputs of sequence models on new data
+     |      
+     |      This method allows a user to take a pre-trained autoencoder/sequence classifier
+     |      and generate outputs from the model on new data. For the autoencoder, this returns
+     |      the features from the latent space. For the sequence classifier, it is the probability
+     |      of belonging to each class.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      batch_size: int
+     |          Batch size for inference.
+     |      
+     |      Returns
+     |      
+     |      features: array
+     |          An array that contains n x latent_dim containing features for all sequences
+     |      
+     |      ---------------------------------------
+     |  
      |  __init__(self, Name, max_length=40, device='/gpu:0')
      |      Initialize Training Object.
      |      
@@ -3152,7 +3335,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution

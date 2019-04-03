@@ -12,6 +12,8 @@ import seaborn as sns
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import tensorflow as tf
+from multiprocessing import Pool
+from DeepTCR.functions.data_processing import *
 
 def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None):
 
@@ -457,6 +459,134 @@ def Get_Latent_Features(self,batch_size,GO,sess):
         Features_c = np.vstack(Features_c)
 
     return Features, Features_c
+
+def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,
+                     p,batch_size,self):
+
+    inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha]
+    for i in inputs:
+        if i is not None:
+            len_input = len(i)
+            break
+
+    if p is None:
+        p = Pool(40)
+
+    if alpha_sequences is not None:
+        args = list(
+            zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
+        result = p.starmap(Embed_Seq_Num, args)
+        sequences_num = np.vstack(result)
+        X_Seq_alpha = np.expand_dims(sequences_num, 1)
+    else:
+        X_Seq_alpha = np.zeros(shape=[len_input])
+        alpha_sequences = np.asarray([None] * len_input)
+
+    if beta_sequences is not None:
+        args = list(
+            zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length] * len(beta_sequences)))
+        result = p.starmap(Embed_Seq_Num, args)
+        sequences_num = np.vstack(result)
+        X_Seq_beta = np.expand_dims(sequences_num, 1)
+    else:
+        X_Seq_beta = np.zeros(shape=[len_input])
+        beta_sequences = np.asarray([None] * len_input)
+
+    if v_beta is not None:
+        v_beta_num = self.lb_v_beta.fit_transform(v_beta)
+    else:
+        v_beta_num = np.zeros(shape=[len_input])
+        v_beta = np.asarray([None] * len_input)
+
+    if d_beta is not None:
+        d_beta_num = self.lb_d_beta.fit_transform(d_beta)
+    else:
+        d_beta_num = np.zeros(shape=[len_input])
+        d_beta = np.asarray([None] * len_input)
+
+    if j_beta is not None:
+        j_beta_num = self.lb_j_beta.fit_transform(j_beta)
+    else:
+        j_beta_num = np.zeros(shape=[len_input])
+        j_beta = np.asarray([None] * len_input)
+
+    if v_alpha is not None:
+        v_alpha_num = self.lb_v_alpha.fit_transform(v_alpha)
+    else:
+        v_alpha_num = np.zeros(shape=[len_input])
+        v_alpha = np.asarray([None] * len_input)
+
+    if j_alpha is not None:
+        j_alpha_num = self.lb_j_alpha.fit_transform(j_alpha)
+    else:
+        j_alpha_num = np.zeros(shape=[len_input])
+        j_alpha = np.asarray([None] * len_input)
+
+    if p is None:
+        p.close()
+        p.join()
+
+    tf.reset_default_graph()
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    with tf.Session(config=config) as sess:
+        saver = tf.train.import_meta_graph(os.path.join(self.Name, 'model', 'model.ckpt.meta'))
+        saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name, 'model')))
+        graph = tf.get_default_graph()
+
+        if self.use_alpha is True:
+            X_Seq_alpha_v = graph.get_tensor_by_name('Input_Alpha:0')
+
+        if self.use_beta is True:
+            X_Seq_beta_v = graph.get_tensor_by_name('Input_Beta:0')
+
+        if self.use_v_beta is True:
+            X_v_beta = graph.get_tensor_by_name('Input_V_Beta:0')
+
+        if self.use_d_beta is True:
+            X_d_beta = graph.get_tensor_by_name('Input_D_Beta:0')
+
+        if self.use_j_beta is True:
+            X_j_beta = graph.get_tensor_by_name('Input_J_Beta:0')
+
+        if self.use_v_alpha is True:
+            X_v_alpha = graph.get_tensor_by_name('Input_V_Alpha:0')
+
+        if self.use_j_alpha is True:
+            X_j_alpha = graph.get_tensor_by_name('Input_J_Alpha:0')
+
+        get_obj = graph.get_tensor_by_name(get)
+
+        out_list = []
+        Vars = [X_Seq_alpha, X_Seq_beta, v_beta_num, d_beta_num, j_beta_num,
+                v_alpha_num, j_alpha_num]
+
+        for vars in get_batches(Vars, batch_size=batch_size):
+            feed_dict = {}
+            if self.use_alpha is True:
+                feed_dict[X_Seq_alpha_v] = vars[0]
+            if self.use_beta is True:
+                feed_dict[X_Seq_beta_v] = vars[1]
+
+            if self.use_v_beta is True:
+                feed_dict[X_v_beta] = vars[2]
+
+            if self.use_d_beta is True:
+                feed_dict[X_d_beta] = vars[3]
+
+            if self.use_j_beta is True:
+                feed_dict[X_j_beta] = vars[4]
+
+            if self.use_v_alpha is True:
+                feed_dict[X_v_alpha] = vars[5]
+
+            if self.use_j_alpha is True:
+                feed_dict[X_j_alpha] = vars[6]
+
+            get_ind = sess.run(get_obj, feed_dict=feed_dict)
+            out_list.append(get_ind)
+
+        return np.vstack(out_list)
 
 
 
