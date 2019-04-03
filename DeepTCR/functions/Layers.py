@@ -114,7 +114,8 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
         else:
             return tf.concat((conv_out,conv_2_out,conv_3_out),axis=1),conv_out,indices
 
-def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene, num_fc_layers=0, units_fc=12):
+def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
+               use_only_gene,use_only_hla, num_fc_layers=0, units_fc=12):
     if self.use_alpha is True:
         GO.X_Seq_alpha = tf.placeholder(tf.int64,
                                         shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],
@@ -200,6 +201,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gen
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,12)
         Features = tf.concat((Features,HLA_Features),axis=1)
+        if use_only_hla:
+            Features = HLA_Features
 
     fc = Features
     if num_fc_layers != 0:
@@ -238,17 +241,14 @@ def Get_Gene_Loss(fc,embedding_layer,X_OH):
 
     return loss,accuracy
 
-def Get_HLA_Loss(fc,embedding_layer,X_OH):
+def Get_HLA_Loss(fc,embedding_layer,X_OH,alpha=1.0):
     upsample1 = tf.layers.dense(fc, 128, tf.nn.relu)
     upsample2 = tf.layers.dense(upsample1, 64, tf.nn.relu)
     upsample3 = tf.layers.dense(upsample2, embedding_layer.shape[1], tf.nn.relu)
     logits = tf.matmul(upsample3, tf.transpose(embedding_layer))
-    loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=X_OH, logits=logits)
+    loss = alpha*tf.nn.softmax_cross_entropy_with_logits_v2(labels=X_OH, logits=logits)
 
-    predicted = tf.argmax(logits,1)
-    actual = tf.argmax(X_OH,1)
-    accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted,actual),tf.float32))
-
+    accuracy = tf.reduce_mean(X_OH - logits)
     return loss, accuracy
 
 
@@ -274,10 +274,8 @@ def DeepVectorQuantization(d, n_c, vq_bias_init=0., activation=anlu):
     return seq_to_centroids_act,c,vq_bias,s
 
 def Get_HLA_Features(self,GO,embedding_dim):
-    GO.X_hla = tf.placeholder(tf.int64, shape=[None, 6], name='HLA')
-    GO.X_hla_OH = tf.one_hot(GO.X_hla, depth=len(self.lb_hla.classes_))
+    GO.X_hla = tf.placeholder(tf.float32, shape=[None, self.hla_data_seq_num.shape[1]], name='HLA')
     GO.embedding_layer_hla = tf.get_variable(name='Embedding_HLA',
                                           shape=[len(self.lb_hla.classes_), embedding_dim])
-    GO.X_hla_embed = tf.tensordot(GO.X_hla_OH,GO.embedding_layer_hla,axes=(2,0))
-    GO.HLA_Features = tf.reduce_mean(GO.X_hla_embed,1)
+    GO.HLA_Features = tf.matmul(GO.X_hla,GO.embedding_layer_hla)
     return GO.HLA_Features

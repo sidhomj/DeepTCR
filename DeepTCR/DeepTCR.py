@@ -1585,13 +1585,13 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         """
 
         if Load_Prev_Data is False:
-
+            use_only_hla = True
             GO = graph_object()
             with tf.device(self.device):
                 graph_model_AE = tf.Graph()
                 with graph_model_AE.as_default():
                     GO.net = 'ae'
-                    GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene)
+                    GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla)
                     fc = tf.layers.dense(GO.Features, 256)
                     fc = tf.layers.dense(fc, 128)
                     z_mean = tf.layers.dense(fc, latent_dim, activation=None, name='z_mean')
@@ -1608,7 +1608,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     fc_up = tf.reshape(fc_up, shape=[-1, 1, 4, 64])
 
                     seq_losses = []
-                    accuracies = []
+                    seq_accuracies = []
                     if self.use_beta:
                         upsample1_beta = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
                         upsample2_beta = tf.layers.conv2d_transpose(upsample1_beta, 64, (1, 3), (1, 2), activation=tf.nn.relu)
@@ -1629,7 +1629,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         correct_ae_beta = tf.reduce_sum(w * tf.cast(tf.equal(predicted_beta, actual_ae_beta), tf.float32),axis=1) / tf.reduce_sum(w, axis=1)
 
                         accuracy_beta = tf.reduce_mean(correct_ae_beta, axis=0)
-                        accuracies.append(accuracy_beta)
+                        seq_accuracies.append(accuracy_beta)
 
                     if self.use_alpha:
                         upsample1_alpha = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
@@ -1650,47 +1650,54 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         w = tf.cast(tf.squeeze(tf.greater(GO.X_Seq_alpha, 0), 1), tf.float32)
                         correct_ae_alpha = tf.reduce_sum(w * tf.cast(tf.equal(predicted_alpha, actual_ae_alpha), tf.float32), axis=1) / tf.reduce_sum(w, axis=1)
                         accuracy_alpha = tf.reduce_mean(correct_ae_alpha, axis=0)
-                        accuracies.append(accuracy_alpha)
+                        seq_accuracies.append(accuracy_alpha)
 
+                    hla_accuracies = []
+                    hla_losses = []
                     if self.use_hla:
-                        hla_loss, hla_acc = Get_HLA_Loss(fc_up_flat,GO.embedding_layer_hla,GO.X_hla_OH)
-                        accuracies.append(hla_acc)
+                        hla_loss, hla_acc = Get_HLA_Loss(fc_up_flat,GO.embedding_layer_hla,GO.X_hla)
+                        hla_losses.append(hla_loss)
+                        hla_accuracies.append(hla_acc)
 
                     gene_loss = []
+                    gene_accuracies = []
                     if self.use_v_beta is True:
                         v_beta_loss,v_beta_acc = Get_Gene_Loss(fc_up_flat,GO.embedding_layer_v_beta,GO.X_v_beta_OH)
                         gene_loss.append(v_beta_loss)
-                        accuracies.append(v_beta_acc)
+                        gene_accuracies.append(v_beta_acc)
 
                     if self.use_d_beta is True:
                         d_beta_loss, d_beta_acc = Get_Gene_Loss(fc_up_flat,GO.embedding_layer_d_beta,GO.X_d_beta_OH)
                         gene_loss.append(d_beta_loss)
-                        accuracies.append(d_beta_acc)
+                        gene_accuracies.append(d_beta_acc)
 
                     if self.use_j_beta is True:
                         j_beta_loss,j_beta_acc = Get_Gene_Loss(fc_up_flat,GO.embedding_layer_j_beta,GO.X_j_beta_OH)
                         gene_loss.append(j_beta_loss)
-                        accuracies.append(j_beta_acc)
+                        gene_accuracies.append(j_beta_acc)
 
                     if self.use_v_alpha is True:
                         v_alpha_loss,v_alpha_acc = Get_Gene_Loss(fc_up_flat,GO.embedding_layer_v_alpha,GO.X_v_alpha_OH)
                         gene_loss.append(v_alpha_loss)
-                        accuracies.append(v_alpha_acc)
+                        gene_accuracies.append(v_alpha_acc)
 
                     if self.use_j_alpha is True:
                         j_alpha_loss,j_alpha_acc = Get_Gene_Loss(fc_up_flat,GO.embedding_layer_j_alpha,GO.X_j_alpha_OH)
                         gene_loss.append(j_alpha_loss)
-                        accuracies.append(j_alpha_acc)
+                        gene_accuracies.append(j_alpha_acc)
 
-                    recon_losses = seq_losses + gene_loss + [hla_loss]
+                    recon_losses = seq_losses + gene_loss + hla_losses
+                    accuracies = seq_accuracies + gene_accuracies + hla_accuracies
 
                     if use_only_gene:
                         recon_losses = gene_loss
+                        accuracies = gene_accuracies
                     if use_only_seq:
                         recon_losses = seq_losses
-                    use_only_hla = False
+                        accuracies = seq_accuracies
                     if use_only_hla:
-                        recon_losses = hla_loss
+                        recon_losses = hla_losses
+                        accuracies = hla_accuracies
 
                     temp = []
                     for l in recon_losses:
@@ -1709,6 +1716,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     total_cost = tf.concat(total_cost,1)
                     total_cost = tf.reduce_sum(total_cost,1)
                     total_cost = tf.reduce_mean(total_cost)
+
                     num_acc = len(accuracies)
                     accuracy = 0
                     for a in accuracies:
@@ -1790,7 +1798,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 alpha_indices_list = []
                 beta_features_list = []
                 beta_indices_list = []
-                Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,self.v_alpha_num, self.j_alpha_num]
+                Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,
+                        self.v_alpha_num, self.j_alpha_num,self.hla_data_seq_num]
 
                 for vars in get_batches(Vars, batch_size=batch_size, random=False):
                     feed_dict = {}
@@ -1814,6 +1823,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     if self.use_j_alpha is True:
                         feed_dict[GO.X_j_alpha] = vars[6]
 
+                    if self.use_hla:
+                        feed_dict[GO.X_hla] = vars[7]
 
                     get = z_mean
                     features_ind, accuracy_check = sess.run([get, accuracy], feed_dict=feed_dict)
