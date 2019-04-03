@@ -238,6 +238,20 @@ def Get_Gene_Loss(fc,embedding_layer,X_OH):
 
     return loss,accuracy
 
+def Get_HLA_Loss(fc,embedding_layer,X_OH):
+    upsample1 = tf.layers.dense(fc, 128, tf.nn.relu)
+    upsample2 = tf.layers.dense(upsample1, 64, tf.nn.relu)
+    upsample3 = tf.layers.dense(upsample2, embedding_layer.shape[1], tf.nn.relu)
+    logits = tf.matmul(upsample3, tf.transpose(embedding_layer))
+    loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=X_OH, logits=logits)
+
+    predicted = tf.argmax(logits,1)
+    actual = tf.argmax(X_OH,1)
+    accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted,actual),tf.float32))
+
+    return loss, accuracy
+
+
 #Layers for Repertoire Classifier
 
 def anlu(x, s_init=0.):
@@ -262,8 +276,8 @@ def DeepVectorQuantization(d, n_c, vq_bias_init=0., activation=anlu):
 def Get_HLA_Features(self,GO,embedding_dim):
     GO.X_hla = tf.placeholder(tf.int64, shape=[None, 6], name='HLA')
     GO.X_hla_OH = tf.one_hot(GO.X_hla, depth=len(self.lb_hla.classes_))
-    embedding_layer_hla = tf.get_variable(name='Embedding_HLA',
+    GO.embedding_layer_hla = tf.get_variable(name='Embedding_HLA',
                                           shape=[len(self.lb_hla.classes_), embedding_dim])
-    GO.X_hla_embed = tf.tensordot(GO.X_hla_OH,embedding_layer_hla,axes=(2,0))
+    GO.X_hla_embed = tf.tensordot(GO.X_hla_OH,GO.embedding_layer_hla,axes=(2,0))
     GO.HLA_Features = tf.reduce_mean(GO.X_hla_embed,1)
     return GO.HLA_Features

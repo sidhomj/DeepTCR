@@ -404,9 +404,15 @@ class DeepTCR_base(object):
                 hla_data = hla_data[idx_2]
                 hla_data_num = hla_data_num[idx_2]
 
-                hla_data_seq = np.zeros(shape=[file_id.shape[0],6])
+                hla_data_seq_num = np.zeros(shape=[file_id.shape[0],6])
                 for file,h in zip(file_list,hla_data_num):
-                    hla_data_seq[file_id==file] = h
+                    hla_data_seq_num[file_id==file] = h
+                hla_data_seq_num = hla_data_seq_num.astype(int)
+
+                temp = []
+                for t in hla_data_seq_num.T:
+                    temp.append(self.lb_hla.inverse_transform(t))
+                hla_data_seq = np.vstack(temp).T
 
             else:
                 self.lb_hla = LabelEncoder()
@@ -422,7 +428,7 @@ class DeepTCR_base(object):
                              v_beta, d_beta,j_beta,v_alpha,j_alpha,
                              v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,
                              self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,
-                             self.lb_hla, hla_data, hla_data_num,hla_data_seq,self.use_hla],f,protocol=4)
+                             self.lb_hla, hla_data, hla_data_num,hla_data_seq,hla_data_seq_num,self.use_hla],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
@@ -432,7 +438,7 @@ class DeepTCR_base(object):
                     v_beta, d_beta,j_beta,v_alpha,j_alpha,\
                     v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,\
                     self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,\
-                    self.lb_hla, hla_data,hla_data_num,hla_data_seq,self.use_hla = pickle.load(f)
+                    self.lb_hla, hla_data,hla_data_num,hla_data_seq,hla_data_seq_num,self.use_hla = pickle.load(f)
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
@@ -459,6 +465,7 @@ class DeepTCR_base(object):
         self.hla_data = hla_data
         self.hla_data_num = hla_data_num
         self.hla_data_seq = hla_data_seq
+        self.hla_data_seq_num = hla_data_seq_num
         print('Data Loaded')
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
@@ -1653,6 +1660,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         accuracy_alpha = tf.reduce_mean(correct_ae_alpha, axis=0)
                         accuracies.append(accuracy_alpha)
 
+                    if self.use_hla:
+                        hla_loss, hla_acc = Get_HLA_Loss(fc_up_flat,GO.embedding_layer_hla,GO.X_hla)
+
                     gene_loss = []
                     if self.use_v_beta is True:
                         v_beta_loss,v_beta_acc = Get_Gene_Loss(fc_up_flat,GO.embedding_layer_v_beta,GO.X_v_beta_OH)
@@ -1679,12 +1689,15 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         gene_loss.append(j_alpha_loss)
                         accuracies.append(j_alpha_acc)
 
-                    recon_losses = seq_losses + gene_loss
+                    recon_losses = seq_losses + gene_loss + hla_loss
 
                     if use_only_gene:
                         recon_losses = gene_loss
                     if use_only_seq:
                         recon_losses = seq_losses
+                    use_only_hla = True
+                    if use_only_hla:
+                        recon_losses = hla_loss
 
                     temp = []
                     for l in recon_losses:
