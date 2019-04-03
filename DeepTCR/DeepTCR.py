@@ -1667,7 +1667,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     accuracy = accuracy/num_acc
                     latent_cost = tf.reduce_sum(latent_cost)
 
-
                     opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
 
                     saver = tf.train.Saver()
