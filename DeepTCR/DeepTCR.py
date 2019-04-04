@@ -1408,8 +1408,9 @@ class vis_class(object):
                  gridsize=gridsize, dg_radius=dendrogram_radius, linkage_method=linkage_method,
                  figsize=8, axes_radius=repertoire_radius)
 
-    def UMAP_Plot(self, set='all',by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True,
-                  scale=100,Load_Prev_Data=False, alpha=1.0):
+    def UMAP_Plot(self, set='all',by_class=False, by_cluster=False,
+                  by_sample=False, freq_weight=False, show_legend=True,
+                  scale=100,Load_Prev_Data=False, alpha=1.0,sample=None):
 
         """
         UMAP vizualisation of TCR Sequences
@@ -1453,16 +1454,35 @@ class vis_class(object):
         alpha: float
             Value between 0-1 that controls transparency of points.
 
+        sample: int
+            Number of events to sub-sample for visualization.
+
 
         Returns
 
         ---------------------------------------
 
         """
-        features = self.features
-        class_id = self.class_id
-        sample_id = self.sample_id
-        freq = self.freq
+        if sample is None:
+            idx = None
+            features = self.features
+            class_id = self.class_id
+            sample_id = self.sample_id
+            freq = self.freq
+            if hasattr(self, 'Cluster_Assignments'):
+                IDX = self.Cluster_Assignments
+            else:
+                IDX = None
+        else:
+            idx = np.random.choice(range(len(self.features)),sample,replace=False)
+            features = self.features[idx]
+            class_id = self.class_id[idx]
+            sample_id = self.sample_id[idx]
+            freq = self.freq[idx]
+            if hasattr(self, 'Cluster_Assignments'):
+                IDX = self.Cluster_Assignments[idx]
+            else:
+                IDX = None
 
         if Load_Prev_Data is False:
             umap_obj = umap.UMAP()
@@ -1470,10 +1490,10 @@ class vis_class(object):
                 warnings.simplefilter('ignore')
                 X_2 = umap_obj.fit_transform(features)
             with open(os.path.join(self.Name, 'umap.pkl'), 'wb') as f:
-                pickle.dump(X_2, f, protocol=4)
+                pickle.dump([X_2,features,class_id,sample_id,freq,IDX,idx], f, protocol=4)
         else:
             with open(os.path.join(self.Name, 'umap.pkl'), 'rb') as f:
-                X_2 = pickle.load(f)
+                X_2,features,class_id,sample_id,freq,IDX,idx = pickle.load(f)
 
         df_plot = pd.DataFrame()
         df_plot['x'] = X_2[:, 0]
@@ -1487,8 +1507,7 @@ class vis_class(object):
                 df_plot['Set'].iloc[np.where(self.valid_idx)[0]] = 'valid'
                 df_plot['Set'].iloc[np.where(self.test_idx)[0]] = 'test'
 
-        if hasattr(self,'Cluster_Assignments'):
-            IDX = self.Cluster_Assignments
+        if IDX is not None:
             IDX[IDX == -1] = np.max(IDX) + 1
             IDX = ['Cluster_' + str(I) for I in IDX]
             df_plot['Cluster'] = IDX
