@@ -893,6 +893,7 @@ class feature_analytics_class(object):
             v_beta = self.v_beta
             d_beta = self.d_beta
             j_beta = self.j_beta
+            hla_data_seq = self.hla_data_seq
 
         elif set == 'train':
             features = self.features[self.train_idx]
@@ -906,6 +907,7 @@ class feature_analytics_class(object):
             v_beta = self.v_beta[self.train_idx]
             d_beta = self.d_beta[self.train_idx]
             j_beta = self.j_beta[self.train_idx]
+            hla_data_seq = self.hla_data_seq[self.train_idx]
 
         elif set == 'valid':
             features = self.features[self.valid_idx]
@@ -919,6 +921,8 @@ class feature_analytics_class(object):
             v_beta = self.v_beta[self.valid_idx]
             d_beta = self.d_beta[self.valid_idx]
             j_beta = self.j_beta[self.valid_idx]
+            hla_data_seq = self.hla_data_seq[self.valid_idx]
+
 
         elif set == 'test':
             features = self.features[self.test_idx]
@@ -932,6 +936,8 @@ class feature_analytics_class(object):
             v_beta = self.v_beta[self.test_idx]
             d_beta = self.d_beta[self.test_idx]
             j_beta = self.j_beta[self.test_idx]
+            hla_data_seq = self.hla_data_seq[self.test_idx]
+
 
         if sample is not None:
             idx_sel = np.random.choice(range(len(features)), sample, replace=False)
@@ -1016,6 +1022,7 @@ class feature_analytics_class(object):
                 df['V_beta'] = v_beta[sel]
                 df['D_beta'] = d_beta[sel]
                 df['J_beta'] = j_beta[sel]
+                df['HLA'] = hla_data_seq[sel]
 
                 df_sum = df.groupby(by='Sample', sort=False).agg({'Frequency': 'sum'})
 
@@ -1585,7 +1592,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         """
 
         if Load_Prev_Data is False:
-            use_only_hla = False
+            use_only_hla = True
             GO = graph_object()
             with tf.device(self.device):
                 graph_model_AE = tf.Graph()
