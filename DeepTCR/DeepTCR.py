@@ -1022,7 +1022,7 @@ class feature_analytics_class(object):
                 df['V_beta'] = v_beta[sel]
                 df['D_beta'] = d_beta[sel]
                 df['J_beta'] = j_beta[sel]
-                df['HLA'] = hla_data_seq[sel]
+                df['HLA'] = list(map(list,hla_data_seq[sel].tolist()))
 
                 df_sum = df.groupby(by='Sample', sort=False).agg({'Frequency': 'sum'})
 
