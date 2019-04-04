@@ -1585,7 +1585,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         """
 
         if Load_Prev_Data is False:
-            use_only_hla = True
+            use_only_hla = False
             GO = graph_object()
             with tf.device(self.device):
                 graph_model_AE = tf.Graph()

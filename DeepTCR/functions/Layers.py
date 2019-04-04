@@ -199,7 +199,7 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         Features = gene_features
 
     if self.use_hla:
-        HLA_Features = Get_HLA_Features(self,GO,12)
+        HLA_Features = Get_HLA_Features(self,GO,256)
         Features = tf.concat((Features,HLA_Features),axis=1)
         if use_only_hla:
             Features = HLA_Features
@@ -246,9 +246,10 @@ def Get_HLA_Loss(fc,embedding_layer,X_OH,alpha=1.0):
     upsample2 = tf.layers.dense(upsample1, 64, tf.nn.relu)
     upsample3 = tf.layers.dense(upsample2, embedding_layer.shape[1], tf.nn.relu)
     logits = tf.matmul(upsample3, tf.transpose(embedding_layer))
-    loss = alpha*tf.nn.softmax_cross_entropy_with_logits_v2(labels=X_OH, logits=logits)
+    loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=X_OH, logits=logits),-1)
 
-    accuracy = tf.reduce_mean(X_OH - logits)
+    predicted = tf.greater(logits,0.9)
+    accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted,tf.cast(X_OH,tf.bool)),tf.float32))
     return loss, accuracy
 
 
