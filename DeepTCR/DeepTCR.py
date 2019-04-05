@@ -2242,7 +2242,8 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         df_temp['Sample'] = self.sample_id
         df_temp['Freq'] = self.freq
         df_temp['Counts'] = self.counts
-        df_temp['HLA'] = self.hla_data_seq
+        df_temp['HLA'] = list(map(list, self.hla_data_seq.tolist()))
+
 
         for ii, sample in enumerate(self.lb.classes_, 0):
             df_temp[sample] = self.predicted[:, ii]
