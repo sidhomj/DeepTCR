@@ -199,10 +199,10 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         Features = gene_features
 
     if self.use_hla:
-        HLA_Features = Get_HLA_Features(self,GO,64)
+        HLA_Features = Get_HLA_Features(self,GO,12)
         Features = tf.concat((Features,HLA_Features),axis=1)
         Features = tf.layers.dropout(Features,GO.prob)
-        Features = tf.layers.dense(Features,64,tf.nn.relu)
+        Features = tf.layers.dense(Features,256,tf.nn.relu)
         if use_only_hla:
             Features = HLA_Features
 
