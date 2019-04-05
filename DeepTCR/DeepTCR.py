@@ -408,10 +408,10 @@ class DeepTCR_base(object):
             else:
                 self.lb_hla = MultiLabelBinarizer()
                 file_list = np.asarray(file_list)
-                hla_data = np.asarray([])
-                hla_data_num = np.asarray([])
-                hla_data_seq = np.asarray([])
-                hla_data_seq_num = np.asarray([])
+                hla_data = np.asarray(['None']*len(file_list))
+                hla_data_num = np.asarray(['None']*len(file_list))
+                hla_data_seq = np.asarray(['None']*len(file_id))
+                hla_data_seq_num = np.asarray(['None']*len(file_id))
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
                 pickle.dump([X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,
@@ -1611,7 +1611,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         """
 
         if Load_Prev_Data is False:
-            use_only_hla = True
+            use_only_hla = False
             GO = graph_object()
             with tf.device(self.device):
                 graph_model_AE = tf.Graph()
@@ -2242,6 +2242,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         df_temp['Sample'] = self.sample_id
         df_temp['Freq'] = self.freq
         df_temp['Counts'] = self.counts
+        df_temp['HLA'] = self.hla_data_seq
 
         for ii, sample in enumerate(self.lb.classes_, 0):
             df_temp[sample] = self.predicted[:, ii]
@@ -2720,7 +2721,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             Y.append(self.Y[np.where(self.sample_id==s)[0][0]])
         Y = np.vstack(Y)
 
-        Vars = [np.asarray(self.sample_list),self.hla_data_num]
+        Vars = [np.asarray(self.sample_list)]
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
 
@@ -2789,16 +2790,16 @@ class DeepTCR_WF(DeepTCR_S_base):
         """
 
         epochs = 10000
+        use_only_hla = False
         graph_model = tf.Graph()
         GO = graph_object()
         GO.on_graph_clustering = on_graph_clustering
         with tf.device(self.device):
             with graph_model.as_default():
-                if self.use_hla:
-                    Get_HLA_Features(self,GO,12)
-
                 GO.net = 'sup'
-                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
+                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
+                                         use_only_seq,use_only_gene,use_only_hla,
+                                         num_fc_layers,units_fc)
                 if on_graph_clustering is True:
                     GO.Features_c,GO.centroids,GO.vq_bias,GO.s = DeepVectorQuantization(GO.Features,num_clusters)
                 else:
@@ -2807,11 +2808,6 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.Features = GO.Features_c
                 GO.Features_W = GO.Features_c*GO.X_Freq[:,tf.newaxis]
                 GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
-                if self.use_hla:
-                    GO.Features_Agg = tf.concat((GO.Features_Agg,GO.HLA_Features),axis=1)
-                    GO.Features_Agg = tf.layers.dense(GO.Features_Agg,12,tf.nn.relu)
-                    GO.Features_Agg = tf.layers.dense(GO.Features_Agg,12,tf.nn.relu)
-
                 GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
                 if weight_by_class is True:
@@ -2904,12 +2900,12 @@ class DeepTCR_WF(DeepTCR_S_base):
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
             self.features,self.features_c = Get_Latent_Features(self,batch_size_seq,GO,sess)
-            # pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
-            # if len(idx.shape) == 0:
-            #     idx = idx.reshape(-1,1)
-            #
-            # self.predicted[idx] += pred
-            # self.seq_idx = idx
+            pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
+            if len(idx.shape) == 0:
+                idx = idx.reshape(-1,1)
+
+            self.predicted[idx] += pred
+            self.seq_idx = idx
 
             self.train_idx = np.isin(self.sample_id,self.train[0])
             self.valid_idx = np.isin(self.sample_id,self.valid[0])

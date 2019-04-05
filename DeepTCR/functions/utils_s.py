@@ -305,9 +305,6 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
                      GO.X_Freq: self.freq[var_idx],
                      GO.sp: sp}
 
-        if self.use_hla:
-            feed_dict[GO.X_hla] = vars[1]
-
         if drop_out_rate is not None:
             feed_dict[GO.prob] = drop_out_rate
 
@@ -330,6 +327,9 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
 
         if self.use_j_alpha is True:
             feed_dict[GO.X_j_alpha] = self.j_alpha_num[var_idx]
+
+        if self.use_hla:
+            feed_dict[GO.X_hla] = self.hla_data_seq_num[var_idx]
 
         if train is True:
             loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted],
@@ -418,6 +418,9 @@ def Get_Sequence_Pred(self,batch_size,GO,sess):
         if self.use_j_alpha is True:
             feed_dict[GO.X_j_alpha] = self.j_alpha_num[var_idx]
 
+        if self.use_hla:
+            feed_dict[GO.X_hla] = self.hla_data_seq_num[var_idx]
+
         predicted_list.append(sess.run(GO.predicted,feed_dict=feed_dict))
         idx.append(var_idx)
 
@@ -425,7 +428,7 @@ def Get_Sequence_Pred(self,batch_size,GO,sess):
 
 def Get_Latent_Features(self,batch_size,GO,sess):
     Vars = [self.X_Seq_alpha, self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
-            self.v_alpha_num,self.v_alpha_num,self.freq]
+            self.v_alpha_num,self.v_alpha_num,self.hla_data_seq_num]
     Features = []
     Features_c = []
     for vars in get_batches(Vars, batch_size=batch_size, random=False):
@@ -449,6 +452,9 @@ def Get_Latent_Features(self,batch_size,GO,sess):
 
         if self.use_j_alpha is True:
             feed_dict[GO.X_j_alpha] = vars[6]
+
+        if self.use_hla:
+            feed_dict[GO.X_hla] = vars[7]
 
         Features.append(sess.run(GO.Features,feed_dict=feed_dict))
         if GO.on_graph_clustering is True:
