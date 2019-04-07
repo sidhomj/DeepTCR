@@ -1353,9 +1353,18 @@ class vis_class(object):
             counts = self.counts[self.test_idx]
 
         if Load_Prev_Data is False:
+            print('UMAP transformation...')
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
-                X_2 = umap.UMAP().fit_transform(features)
+                if sample is not None:
+                    s_idx = np.random.choice(range(len(features)),sample,replace=False)
+                    u_obj = umap.UMAP()
+                    u_obj.fit(features[s_idx])
+                    X_2 = u_obj.transform(features)
+                else:
+                    X_2 = umap.UMAP().fit_transform(features)
+
+            print('PhenoGraph Clustering...')
             self.Cluster(sample=sample, n_jobs=n_jobs,set=set)
             prop = self.Cluster_Frequencies
             with open(os.path.join(self.Name, 'dendro.pkl'), 'wb') as f:
