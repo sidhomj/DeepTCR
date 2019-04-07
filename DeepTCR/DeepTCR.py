@@ -1563,7 +1563,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
                   trainable_embedding=True,use_only_gene=False,use_only_seq=False,use_only_hla=False,
                   epochs_min=10,stop_criterion=0.0001,
-                  kernel=3):
+                  kernel=3,size_of_net = 'medium'):
         """
         Train Variational Autoencoder (VAE)
 
@@ -1622,6 +1622,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
         if Load_Prev_Data is False:
             GO = graph_object()
+            GO.size_of_net = size_of_net
             with tf.device(self.device):
                 graph_model_AE = tf.Graph()
                 with graph_model_AE.as_default():
@@ -2304,7 +2305,7 @@ class DeepTCR_SS(DeepTCR_S_base):
     def Train(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,
                  trainable_embedding=True,weight_by_class=False,
                  num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
-                 use_only_seq=False,use_only_gene=False,use_only_hla=False):
+                 use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
         """
         Train Single-Sequence Classifier
 
@@ -2359,6 +2360,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         graph_model = tf.Graph()
         GO = graph_object()
         GO.on_graph_clustering=False
+        GO.size_of_net = size_of_net
 
         with tf.device(self.device):
             with graph_model.as_default():
@@ -2460,7 +2462,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,
                                 trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
-                                use_only_seq=False,use_only_gene=False,use_only_hla=False):
+                                use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
 
         '''
         Monte Carlo Cross-Validation for Single-Sequence Classifier
@@ -2538,7 +2540,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                           kernel=kernel,weight_by_class=weight_by_class,
                           trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
-                          use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla)
+                          use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
+                       size_of_net=size_of_net)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -2566,7 +2569,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
     def K_Fold_CrossVal(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,kernel=5,
                            trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
-                           iterations=None,use_only_seq=False,use_only_gene=False,use_only_hla=False):
+                           iterations=None,use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
         '''
         K_Fold Cross-Validation for Single-Sequence Classifier
 
@@ -2678,7 +2681,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                           kernel=kernel,weight_by_class=weight_by_class,
                           trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
-                          use_only_gene=use_only_gene,use_only_seq=use_only_seq,use_only_hla=use_only_hla)
+                          use_only_gene=use_only_gene,use_only_seq=use_only_seq,use_only_hla=use_only_hla,
+                       size_of_net=size_of_net)
 
 
             y_test.append(self.y_test)
@@ -2744,7 +2748,7 @@ class DeepTCR_WF(DeepTCR_S_base):
     def Train(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,kernel=5,on_graph_clustering=False,
               num_clusters=12,weight_by_class=False,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
-              use_only_seq=False,use_only_gene=False,use_only_hla=False):
+              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
 
 
         """
@@ -2808,6 +2812,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         epochs = 10000
         graph_model = tf.Graph()
         GO = graph_object()
+        GO.size_of_net = size_of_net
         GO.on_graph_clustering = on_graph_clustering
         with tf.device(self.device):
             with graph_model.as_default():
@@ -2953,7 +2958,7 @@ class DeepTCR_WF(DeepTCR_S_base):
     def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,
                              kernel=5,on_graph_clustering=False,num_clusters=12,weight_by_class=False, trainable_embedding=True,accuracy_min = None,
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
-                             use_only_seq=False,use_only_gene=False,use_only_hla=False):
+                             use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
 
 
         """
@@ -3039,7 +3044,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                           trainable_embedding=trainable_embedding,accuracy_min=accuracy_min,
                           num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
-                            use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla)
+                            use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
+                       size_of_net=size_of_net)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -3068,7 +3074,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                         on_graph_clustering=False,num_clusters=12, weight_by_class=False, iterations=None,
                         trainable_embedding=True, accuracy_min = None,
                         num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
-                        use_only_seq=False,use_only_gene=False,use_only_hla=False):
+                        use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
 
         """
         K_Fold Cross-Validation for Whole Sample Classifier
@@ -3185,7 +3191,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                           trainable_embedding=trainable_embedding,accuracy_min = accuracy_min,
                           num_fc_layers=num_fc_layers,units_fc=units_fc,
                           drop_out_rate=drop_out_rate,suppress_output=suppress_output,
-                            use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla)
+                            use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
+                       size_of_net=size_of_net)
 
 
             y_test.append(self.y_test)
