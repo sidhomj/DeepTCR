@@ -3152,10 +3152,14 @@ class DeepTCR_WF(DeepTCR_S_base):
             if suppress_output is False:
                 print(ii)
             train_idx = np.setdiff1d(idx,test_idx[ii])
+            valid_idx = np.random.choice(train_idx,len(train_idx)//(folds-1),replace=False)
+            train_idx = np.setdiff1d(train_idx,valid_idx)
 
-            self.train, self.test = Get_Train_Test(Vars=Vars,train_idx=train_idx,test_idx = test_idx[ii],Y=Y)
-            self.valid = self.test
-            self.LOO = True
+            self.train,self.valid,self.test = Get_Train_Valid_Test_KFold(Vars=Vars,
+                                                               train_idx=train_idx,
+                                                               valid_idx = valid_idx,
+                                                               test_idx = test_idx[ii],Y=Y)
+            self.LOO = False
 
             self.Train(epochs_min=epochs_min, batch_size=batch_size,
                           stop_criterion=stop_criterion, kernel=kernel,

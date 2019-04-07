@@ -112,18 +112,21 @@ def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None)
 
     return var_train,var_valid,var_test
 
-def Get_Train_Test(Vars,test_idx,train_idx,Y=None):
+def Get_Train_Valid_Test_KFold(Vars,test_idx,valid_idx,train_idx,Y=None):
     var_train = []
+    var_valid = []
     var_test = []
     for var in Vars:
         var_train.append(var[train_idx])
+        var_valid.append(var[valid_idx])
         var_test.append(var[test_idx])
 
     if Y is not None:
         var_train.append(Y[train_idx])
+        var_valid.append(Y[valid_idx])
         var_test.append(Y[test_idx])
 
-    return var_train, var_test
+    return var_train, var_valid, var_test
 
 def get_batches(Vars, batch_size=10,random=False):
     """ Return a generator that yields batches from vars. """
