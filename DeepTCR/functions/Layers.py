@@ -76,6 +76,13 @@ def Get_Gene_Features(self,embedding_dim_genes,gene_features):
             X_j_alpha,X_j_alpha_OH,embedding_layer_j_alpha,\
             gene_features
 
+def Get_HLA_Features(self,GO,embedding_dim):
+    GO.X_hla = tf.placeholder(tf.float32, shape=[None, self.hla_data_seq_num.shape[1]], name='HLA')
+    GO.embedding_layer_hla = tf.get_variable(name='Embedding_HLA',
+                                          shape=[len(self.lb_hla.classes_), embedding_dim])
+    GO.HLA_Features = tf.matmul(GO.X_hla,GO.embedding_layer_hla)
+    return GO.HLA_Features
+
 def Get_Ortho_Loss(x,alpha=1e-6):
     loss = tf.abs(tf.matmul(x,x,transpose_b=True) - tf.eye(tf.shape(x)[-2]))
     indices = tf.constant(list(range(x.shape[1])))
@@ -184,27 +191,34 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     if Seq_Features:
         Seq_Features = tf.concat(Seq_Features, axis=1)
 
-    if not isinstance(Seq_Features, list):
-        if not isinstance(gene_features, list):
-            Features = tf.concat((Seq_Features, gene_features), axis=1)
-        else:
-            Features = Seq_Features
-
-        if use_only_seq is True:
-            Features = Seq_Features
-
-        if use_only_gene is True:
-            Features = gene_features
-    else:
-        Features = gene_features
-
+    HLA_Features = []
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,12)
-        Features = tf.concat((Features,HLA_Features),axis=1)
+
+    Features = [Seq_Features,gene_features,HLA_Features]
+    for ii,f in enumerate(Features,0):
+        if not isinstance(f,list):
+            f_temp = f
+            break
+
+    for jj in range(ii+1,len(Features)):
+        if not isinstance(Features[jj],list):
+            f_temp = tf.concat((f_temp,Features[jj]),axis=1)
+
+    Features = f_temp
+
+    if use_only_seq:
+        Features = Seq_Features
+
+    if use_only_gene:
+        Features = gene_features
+
+    if use_only_hla:
+        Features = HLA_Features
+
+    if self.use_hla:
         Features = tf.layers.dropout(Features,GO.prob)
         Features = tf.layers.dense(Features,256,tf.nn.relu)
-        if use_only_hla:
-            Features = HLA_Features
 
     fc = Features
     if num_fc_layers != 0:
@@ -262,6 +276,7 @@ def anlu(x, s_init=0.):
     return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s
 
 def DeepVectorQuantization(d, n_c, vq_bias_init=0., activation=anlu):
+    d = tf.layers.dense(d,12,tf.nn.relu)
     # centroids
     c = tf.Variable(name='centroids', initial_value=tf.random_uniform([n_c, d.shape[-1].value]), trainable=True)
 
@@ -276,9 +291,4 @@ def DeepVectorQuantization(d, n_c, vq_bias_init=0., activation=anlu):
 
     return seq_to_centroids_act,c,vq_bias,s
 
-def Get_HLA_Features(self,GO,embedding_dim):
-    GO.X_hla = tf.placeholder(tf.float32, shape=[None, self.hla_data_seq_num.shape[1]], name='HLA')
-    GO.embedding_layer_hla = tf.get_variable(name='Embedding_HLA',
-                                          shape=[len(self.lb_hla.classes_), embedding_dim])
-    GO.HLA_Features = tf.matmul(GO.X_hla,GO.embedding_layer_hla)
-    return GO.HLA_Features
+

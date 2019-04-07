@@ -1561,7 +1561,8 @@ class vis_class(object):
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
-                  trainable_embedding=True,use_only_gene=False,use_only_seq=False,epochs_min=10,stop_criterion=0.0001,
+                  trainable_embedding=True,use_only_gene=False,use_only_seq=False,use_only_hla=False,
+                  epochs_min=10,stop_criterion=0.0001,
                   kernel=3):
         """
         Train Variational Autoencoder (VAE)
@@ -1620,7 +1621,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         """
 
         if Load_Prev_Data is False:
-            use_only_hla = False
             GO = graph_object()
             with tf.device(self.device):
                 graph_model_AE = tf.Graph()
@@ -2304,7 +2304,7 @@ class DeepTCR_SS(DeepTCR_S_base):
     def Train(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,
                  trainable_embedding=True,weight_by_class=False,
                  num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
-                 use_only_seq=False,use_only_gene=False):
+                 use_only_seq=False,use_only_gene=False,use_only_hla=False):
         """
         Train Single-Sequence Classifier
 
@@ -2363,7 +2363,8 @@ class DeepTCR_SS(DeepTCR_S_base):
         with tf.device(self.device):
             with graph_model.as_default():
                 GO.net = 'sup'
-                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,num_fc_layers,units_fc)
+                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,use_only_hla,
+                                         num_fc_layers,units_fc)
                 GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
 
                 if weight_by_class is True:
@@ -2743,7 +2744,7 @@ class DeepTCR_WF(DeepTCR_S_base):
     def Train(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,kernel=5,on_graph_clustering=False,
               num_clusters=12,weight_by_class=False,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
-              use_only_seq=False,use_only_gene=False):
+              use_only_seq=False,use_only_gene=False,use_only_hla=False):
 
 
         """
@@ -2805,7 +2806,6 @@ class DeepTCR_WF(DeepTCR_S_base):
         """
 
         epochs = 10000
-        use_only_hla = False
         graph_model = tf.Graph()
         GO = graph_object()
         GO.on_graph_clustering = on_graph_clustering
