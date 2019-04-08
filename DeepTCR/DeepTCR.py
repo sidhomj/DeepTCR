@@ -1600,12 +1600,13 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             one-hot representation for convolutional layers.
 
         use_only_gene: bool
-            To only use gene-usage features, set to True. This will turn off features from
-            the sequences.
+            To only use gene-usage features, set to True.
 
         use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
+            To only use sequence feaures, set to True.
+
+        use_only_hla: bool
+            To only use hla feaures, set to True.
 
         epochs_min: int
             The minimum number of epochs to train the autoencoder.
@@ -1614,9 +1615,22 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             Minimum percent decrease in determined interval (below) to continue
             training. Used as early stopping criterion.
 
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
         kernel: int
             To specify the motif k-mer of the first layer of the autoencoder, change this
             parameter.
+
+        size_of_net: list or str
+            The convolutional layers of this network have 3 layers for which the use can
+            modify the number of neurons per layer. The user can either specify the size of the network
+            with the following options:
+                - small == [12,32,64] neurons for the 3 respective layers
+                - medium == [32,64,128] neurons for the 3 respective layers
+                - large == [64,128,256] neurons for the 3 respective layers
+                - custom, where the user supplies a list with the number of nuerons for the respective layers
+                    i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
         Returns
 
@@ -2330,6 +2344,9 @@ class DeepTCR_SS(DeepTCR_S_base):
             Minimum percent decrease in determined interval (below) to continue
             training. Used as early stopping criterion.
 
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
         kernel: int
             Size of convolutional kernel.
 
@@ -2350,12 +2367,23 @@ class DeepTCR_SS(DeepTCR_S_base):
             To suppress command line output with training statisitcs, set to True.
 
         use_only_gene: bool
-            To only use gene-usage features, set to True. This will turn off features from
-            the sequences.
+            To only use gene-usage features, set to True.
 
         use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
+            To only use sequence feaures, set to True.
+
+        use_only_hla: bool
+            To only use hla feaures, set to True.
+
+        size_of_net: list or str
+            The convolutional layers of this network have 3 layers for which the use can
+            modify the number of neurons per layer. The user can either specify the size of the network
+            with the following options:
+                - small == [12,32,64] neurons for the 3 respective layers
+                - medium == [32,64,128] neurons for the 3 respective layers
+                - large == [64,128,256] neurons for the 3 respective layers
+                - custom, where the user supplies a list with the number of nuerons for the respective layers
+                    i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
 
         Returns
@@ -2494,10 +2522,12 @@ class DeepTCR_SS(DeepTCR_S_base):
         batch_size: int
             Size of batch to be used for each training iteration of the net.
 
-
         stop_criterion: float
             Minimum percent decrease in determined interval (below) to continue
             training. Used as early stopping criterion.
+
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
 
         kernel: int
             Size of convolutional kernel for first layer of convolutions.
@@ -2519,12 +2549,23 @@ class DeepTCR_SS(DeepTCR_S_base):
             To suppress command line output with training statisitcs, set to True.
 
         use_only_gene: bool
-            To only use gene-usage features, set to True. This will turn off features from
-            the sequences.
+            To only use gene-usage features, set to True.
 
         use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
+            To only use sequence feaures, set to True.
+
+        use_only_hla: bool
+            To only use hla feaures, set to True.
+
+        size_of_net: list or str
+            The convolutional layers of this network have 3 layers for which the use can
+            modify the number of neurons per layer. The user can either specify the size of the network
+            with the following options:
+                - small == [12,32,64] neurons for the 3 respective layers
+                - medium == [32,64,128] neurons for the 3 respective layers
+                - large == [64,128,256] neurons for the 3 respective layers
+                - custom, where the user supplies a list with the number of nuerons for the respective layers
+                    i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
 
         Returns
@@ -2599,6 +2640,9 @@ class DeepTCR_SS(DeepTCR_S_base):
             Minimum percent decrease in determined interval (below) to continue
             training. Used as early stopping criterion.
 
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
         kernel: int
             Size of convolutional kernel for first layer of convolutions.
 
@@ -2629,6 +2673,19 @@ class DeepTCR_SS(DeepTCR_S_base):
         use_only_seq: bool
             To only use sequence feaures, set to True. This will turn off features learned
             from gene usage.
+
+        use_only_hla: bool
+            To only use hla feaures, set to True.
+
+        size_of_net: list or str
+            The convolutional layers of this network have 3 layers for which the use can
+            modify the number of neurons per layer. The user can either specify the size of the network
+            with the following options:
+                - small == [12,32,64] neurons for the 3 respective layers
+                - medium == [32,64,128] neurons for the 3 respective layers
+                - large == [64,128,256] neurons for the 3 respective layers
+                - custom, where the user supplies a list with the number of nuerons for the respective layers
+                    i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
 
         Returns
@@ -2774,6 +2831,9 @@ class DeepTCR_WF(DeepTCR_S_base):
             Minimum percent decrease in determined interval (below) to continue
             training. Used as early stopping criterion.
 
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
         kernel: int
             Size of convolutional kernel for first layer of convolutions.
 
@@ -2807,6 +2867,27 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         suppress_output: bool
             To suppress command line output with training statisitcs, set to True.
+
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
+
+        use_only_hla: bool
+            To only use hla feaures, set to True.
+
+        size_of_net: list or str
+            The convolutional layers of this network have 3 layers for which the use can
+            modify the number of neurons per layer. The user can either specify the size of the network
+            with the following options:
+                - small == [12,32,64] neurons for the 3 respective layers
+                - medium == [32,64,128] neurons for the 3 respective layers
+                - large == [64,128,256] neurons for the 3 respective layers
+                - custom, where the user supplies a list with the number of nuerons for the respective layers
+                    i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
 
         Returns
@@ -2991,6 +3072,9 @@ class DeepTCR_WF(DeepTCR_S_base):
             Minimum percent decrease in determined interval (below) to continue
             training. Used as early stopping criterion.
 
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
         kernel: int
             Size of convolutional kernel for first layer of convolutions.
 
@@ -3024,6 +3108,27 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         suppress_output: bool
             To suppress command line output with training statisitcs, set to True.
+
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
+
+        use_only_hla: bool
+            To only use hla feaures, set to True.
+
+        size_of_net: list or str
+            The convolutional layers of this network have 3 layers for which the use can
+            modify the number of neurons per layer. The user can either specify the size of the network
+            with the following options:
+                - small == [12,32,64] neurons for the 3 respective layers
+                - medium == [32,64,128] neurons for the 3 respective layers
+                - large == [64,128,256] neurons for the 3 respective layers
+                - custom, where the user supplies a list with the number of nuerons for the respective layers
+                    i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
 
         Returns
