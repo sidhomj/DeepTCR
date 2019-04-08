@@ -65,7 +65,11 @@ def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None)
                     test_idx = np.random.choice(idx, LOO, replace=False)
 
                 train_idx = np.setdiff1d(idx,test_idx)
-                valid_idx = test_idx
+                if LOO ==1:
+                    valid_idx = np.random.choice(train_idx,LOO, replace=False)[0]
+                else:
+                    valid_idx = np.random.choice(train_idx,LOO, replace=False)
+                train_idx = np.setdiff1d(train_idx,valid_idx)
 
                 for var in Vars:
                     var_train.append(var[train_idx])
