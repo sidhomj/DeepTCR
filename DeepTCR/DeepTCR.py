@@ -160,6 +160,13 @@ class DeepTCR_base(object):
             For parellelized operations, one can pass a multiprocessing pool object
             to this method.
 
+        hla: str
+            In order to use HLA information as part of the TCR-seq representation, one can provide
+            a csv file where the first column is the file name and the remaining columsn hold HLA alleles
+            for each file. By including HLA information for each repertoire being analyzed, one is able to
+            find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
+            backgrounds.
+
 
         Returns
 
