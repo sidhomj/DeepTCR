@@ -1562,7 +1562,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
                   trainable_embedding=True,use_only_gene=False,use_only_seq=False,use_only_hla=False,
-                  epochs_min=10,stop_criterion=0.0001,
+                  epochs_min=10,stop_criterion=0.0001,stop_criterion_window=10,
                   kernel=3,size_of_net = 'medium'):
         """
         Train Variational Autoencoder (VAE)
@@ -1821,10 +1821,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                             if np.mean(accuracy_list[-10:]) > accuracy_min:
                                 break
                         else:
-                            a, b, c = -50, -45, -5
                             with warnings.catch_warnings():
                                 warnings.simplefilter("ignore")
-                                if (np.mean(recon_loss_list[a:b]) - np.mean(recon_loss_list[c:])) / np.mean(recon_loss_list[a:b]) < stop_criterion:
+                                if stop_check(recon_loss_list,stop_criterion,stop_criterion_window):
                                     break
 
 
@@ -2302,7 +2301,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False,LOO=LOO)
 
-    def Train(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,kernel=5,
+    def Train(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
                  trainable_embedding=True,weight_by_class=False,
                  num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                  use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
@@ -2421,8 +2420,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
 
                 if e > epochs_min:
-                    a, b, c = -10, -7, -3
-                    if (np.mean(val_loss_total[a:b]) - np.mean(val_loss_total[c:])) / np.mean(val_loss_total[a:b]) < stop_criterion:
+                    if stop_check(val_loss_total,stop_criterion,stop_criterion_window):
                         break
 
 
@@ -2745,7 +2743,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
 
-    def Train(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,kernel=5,on_graph_clustering=False,
+    def Train(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,kernel=5,on_graph_clustering=False,
               num_clusters=12,weight_by_class=False,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
@@ -2904,18 +2902,14 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                         else:
                             if self.LOO is None:
-                                a, b, c = -10, -7, -3
                                 if val_loss_total:
-                                    if (np.mean(val_loss_total[a:b]) - np.mean(val_loss_total[c:])) / np.mean(val_loss_total[a:b]) < stop_criterion:
+                                    if stop_check(val_loss_total,stop_criterion,stop_criterion_window):
                                         break
 
                             else:
-                                a, b, c = -10, -7, -3
                                 if train_loss_total:
-                                    if (np.mean(train_loss_total[a:b]) - np.mean(train_loss_total[c:])) / np.mean(train_loss_total[a:b]) < stop_criterion:
+                                    if stop_check(train_loss_total,stop_criterion,stop_criterion_window):
                                         break
-                                if np.mean(train_accuracy_total[-100:]) == 1.0:
-                                    break
 
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
