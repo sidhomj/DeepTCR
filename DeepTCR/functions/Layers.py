@@ -225,7 +225,7 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
 
     if (self.use_hla) and (not use_only_hla):
         Features = tf.layers.dropout(Features,GO.prob)
-        Features = tf.layers.dense(Features,256,tf.nn.relu)
+        Features = tf.layers.dense(Features,Features.shape[1],tf.nn.relu)
 
     fc = Features
     if num_fc_layers != 0:
@@ -282,8 +282,11 @@ def anlu(x, s_init=0.):
     s = tf.Variable(name='anlu_s', initial_value=tf.zeros([x.shape[-1].value, ]) + s_init, trainable=True)
     return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s
 
-def DeepVectorQuantization(d, n_c, vq_bias_init=0., activation=anlu):
+def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
+    d = tf.layers.dropout(d,prob)
     d = tf.layers.dense(d,12,tf.nn.relu)
+
+    d = tf.layers.dropout(d,prob)
     # centroids
     c = tf.Variable(name='centroids', initial_value=tf.random_uniform([n_c, d.shape[-1].value]), trainable=True)
 

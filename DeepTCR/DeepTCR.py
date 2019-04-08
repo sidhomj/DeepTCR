@@ -2819,7 +2819,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                                          use_only_seq,use_only_gene,use_only_hla,
                                          num_fc_layers,units_fc)
                 if on_graph_clustering is True:
-                    GO.Features_c,GO.centroids,GO.vq_bias,GO.s = DeepVectorQuantization(GO.Features,num_clusters)
+                    GO.Features_c,GO.centroids,GO.vq_bias,GO.s = DeepVectorQuantization(GO.Features,GO.prob,num_clusters)
                 else:
                     GO.Features_c = GO.Features
 
