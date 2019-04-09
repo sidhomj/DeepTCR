@@ -3209,6 +3209,10 @@ class DeepTCR_WF(DeepTCR_S_base):
 
 
         Returns
+
+        self.DFs_pred: dict of dataframes
+            This method returns the samples in the test sets of the Monte-Carlo and their
+            predicted probabilities for each class.
         ---------------------------------------
 
         """
