@@ -3215,6 +3215,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         y_pred = []
         y_test = []
+        files = []
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         counts = np.zeros_like(self.predicted)
         for i in range(0, folds):
@@ -3232,6 +3233,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
+            files.append(self.test[0])
 
             counts[self.seq_idx] += 1
 
@@ -3250,6 +3252,17 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
+        files = np.squeeze(np.vstack(files))
+        DFs =[]
+        for ii,c in enumerate(self.lb.classes_,0):
+            df_out = pd.DataFrame()
+            df_out['Samples'] = files
+            df_out['y_test'] = self.y_test[:,ii]
+            df_out['y_pred'] = self.y_pred[:,ii]
+            DFs.append(df_out)
+
+        self.DFs_pred = dict(zip(self.lb.classes_,DFs))
+
         self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
