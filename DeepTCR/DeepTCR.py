@@ -2346,7 +2346,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False,LOO=LOO)
 
     def Train(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
-                 trainable_embedding=True,weight_by_class=False,
+                 trainable_embedding=True,weight_by_class=False,class_weights=None,
                  num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                  use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
         """
@@ -2376,6 +2376,15 @@ class DeepTCR_SS(DeepTCR_S_base):
         trainable_embedding; bool
             Toggle to control whether a trainable embedding layer is used or native
             one-hot representation for convolutional layers.
+
+        weight_by_class: bool
+            Option to weight loss by the inverse of the class frequency. Useful for
+            unbalanced classes.
+
+        class_weights: dict
+            In order to specify custom weights for each class during training, one
+            can provide a dictionary with these weights.
+                i.e. {'A':1.0,'B':2.0'}
 
         num_fc_layers: int
             Number of fully connected layers following convolutional layer.
@@ -2430,6 +2439,13 @@ class DeepTCR_SS(DeepTCR_S_base):
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
                     weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True), axis=1)
                     GO.loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                elif class_weights is not None:
+                    weights = np.zeros([1,len(self.lb.classes_)]).astype(np.float32)
+                    for key in class_weights:
+                        weights[:,self.lb.transform([key])[0]]=class_weights[key]
+                    class_weights = tf.constant(weights)
+                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
+                    GO.loss = tf.reduce_mean(weights * tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
                 else:
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
@@ -2519,7 +2535,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                              self.lb_v_alpha, self.lb_j_alpha, self.lb_hla], f)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
-                                trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
+                                trainable_embedding=True,weight_by_class=False,class_weights=None,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                                 use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
 
         '''
@@ -2560,6 +2576,15 @@ class DeepTCR_SS(DeepTCR_S_base):
         trainable_embedding; bool
             Toggle to control whether a trainable embedding layer is used or native
             one-hot representation for convolutional layers.
+
+        weight_by_class: bool
+            Option to weight loss by the inverse of the class frequency. Useful for
+            unbalanced classes.
+
+        class_weights: dict
+            In order to specify custom weights for each class during training, one
+            can provide a dictionary with these weights.
+                i.e. {'A':1.0,'B':2.0'}
 
         num_fc_layers: int
             Number of fully connected layers following convolutional layer.
@@ -2608,7 +2633,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                 print(i)
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO)
             self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
-                          kernel=kernel,weight_by_class=weight_by_class,
+                          kernel=kernel,weight_by_class=weight_by_class,class_weights=class_weights,
                           trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
                           use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
@@ -2639,7 +2664,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
-                           trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
+                           trainable_embedding=True,weight_by_class=False,class_weights=None,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                            iterations=None,use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
         '''
         K_Fold Cross-Validation for Single-Sequence Classifier
@@ -2674,6 +2699,15 @@ class DeepTCR_SS(DeepTCR_S_base):
         trainable_embedding; bool
             Toggle to control whether a trainable embedding layer is used or native
             one-hot representation for convolutional layers.
+
+        weight_by_class: bool
+            Option to weight loss by the inverse of the class frequency. Useful for
+            unbalanced classes.
+
+        class_weights: dict
+            In order to specify custom weights for each class during training, one
+            can provide a dictionary with these weights.
+                i.e. {'A':1.0,'B':2.0'}
 
         num_fc_layers: int
             Number of fully connected layers following convolutional layer.
@@ -2765,7 +2799,7 @@ class DeepTCR_SS(DeepTCR_S_base):
             self.LOO = None
 
             self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
-                          kernel=kernel,weight_by_class=weight_by_class,
+                          kernel=kernel,weight_by_class=weight_by_class,class_weights=class_weights,
                           trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
                           use_only_gene=use_only_gene,use_only_seq=use_only_seq,use_only_hla=use_only_hla,
