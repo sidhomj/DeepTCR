@@ -461,8 +461,6 @@ class DeepTCR_base(object):
         self.j_alpha_num = j_alpha_num
         self.seq_index = np.asarray(list(range(len(self.Y))))
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
-        self.hla_data = hla_data
-        self.hla_data_num = hla_data_num
         self.hla_data_seq = hla_data_seq
         self.hla_data_seq_num = hla_data_seq_num
         print('Data Loaded')
@@ -671,6 +669,15 @@ class DeepTCR_base(object):
             self.class_id = class_labels
         else:
             self.class_id = ['None']*len_input
+
+        if hla is not None:
+            self.lb_hla = MultiLabelBinarizer()
+            self.hla_data_seq_num = self.lb_hla.fit_transform(hla)
+            self.hla_data_seq = hla
+        else:
+            self.lb_hla = MultiLabelBinarizer()
+            self.hla_data_seq_num = np.zeros([len_input,1])
+            self.hla_data_seq = np.zeros(len_input)
 
         self.lb = LabelEncoder()
         Y = self.lb.fit_transform(self.class_id)
