@@ -83,17 +83,6 @@ def Get_HLA_Features(self,GO,embedding_dim):
     GO.HLA_Features = tf.matmul(GO.X_hla,GO.embedding_layer_hla)
     return GO.HLA_Features
 
-def Get_Ortho_Loss(x,alpha=1e-6):
-    loss = tf.abs(tf.matmul(x,x,transpose_b=True) - tf.eye(tf.shape(x)[-2]))
-    indices = tf.constant(list(range(x.shape[1])))
-    loss = alpha * tf.reduce_sum(tf.abs(tf.transpose(tf.gather(tf.transpose(loss),indices))))
-    return loss
-
-def Get_Ortho_Loss_dep(x,alpha=1.0):
-    loss = tf.abs(tf.matmul(x,x,transpose_b=True) - tf.eye(tf.shape(x)[-2]))
-    loss = alpha*tf.reduce_sum(loss)
-    return loss
-
 def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Features',kernel=3,net='ae',
                            size_of_net = 'medium'):
     with tf.variable_scope(name,reuse=reuse):
