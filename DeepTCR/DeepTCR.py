@@ -690,7 +690,7 @@ class DeepTCR_base(object):
         print('Data Loaded')
 
     def Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
-                  v_alpha=None, j_alpha=None, p=None, batch_size=10000):
+                  v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10000):
         """
         Predicting outputs of sequence models on new data
 
@@ -723,6 +723,12 @@ class DeepTCR_base(object):
         j_alpha: ndarray of strings
             A 1d array with the j-alpha genes for inference.
 
+        hla: ndarray of tuples
+            To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+            as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+            to the alleles seen for that sequence.
+                ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+
         p: multiprocessing pool object
             a pre-formed pool object can be passed to method for multiprocessing tasks.
 
@@ -740,10 +746,10 @@ class DeepTCR_base(object):
         with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'rb') as f:
             model_type,get,self.use_alpha,self.use_beta,\
                 self.use_v_beta,self.use_d_beta,self.use_j_beta,\
-                self.use_v_alaph,self.use_j_alpha = pickle.load(f)
+                self.use_v_alaph,self.use_j_alpha,self.use_hla = pickle.load(f)
 
         out = inference_method_ss(get,alpha_sequences,beta_sequences,
-                               v_beta,d_beta,j_beta,v_alpha,j_alpha,
+                               v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
                                 p,batch_size,self)
 
         return out
@@ -1955,7 +1961,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 with open(os.path.join(self.Name,'model','model_type.pkl'),'wb') as f:
                     pickle.dump(['VAE',z_mean.name,self.use_alpha,self.use_beta,
                                 self.use_v_beta,self.use_d_beta,self.use_j_beta,
-                                self.use_v_alpha,self.use_j_alpha],f)
+                                self.use_v_alpha,self.use_j_alpha,self.use_hla],f)
 
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
                 pickle.dump([features,embed_dict], f,protocol=4)
@@ -2325,11 +2331,11 @@ class DeepTCR_SS(DeepTCR_S_base):
         """
         Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.sample_id,self.class_id,self.seq_index,
                 self.v_beta_num,self.d_beta_num,self.j_beta_num,self.v_alpha_num,self.j_alpha_num,
-                self.v_beta,self.d_beta,self.j_beta,self.v_alpha,self.j_alpha]
+                self.v_beta,self.d_beta,self.j_beta,self.v_alpha,self.j_alpha,self.hla_data_seq_num]
 
         var_names = ['X_Seq_alpha','X_Seq_beta','alpha_sequences','beta_sequences','sample_id','class_id','seq_index',
                      'v_beta_num','d_beta_num','j_beta_num','v_alpha_num','j_alpha_num','v_beta','d_beta','j_beta',
-                     'v_alpha','j_alpha']
+                     'v_alpha','j_alpha','hla_data_seq_num']
 
         self.var_dict = dict(zip(var_names,list(range(len(var_names)))))
 
@@ -2504,7 +2510,7 @@ class DeepTCR_SS(DeepTCR_S_base):
             with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
                 pickle.dump(['SS',GO.predicted.name,self.use_alpha, self.use_beta,
                              self.use_v_beta, self.use_d_beta, self.use_j_beta,
-                             self.use_v_alpha, self.use_j_alpha], f)
+                             self.use_v_alpha, self.use_j_alpha,self.use_hla], f)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
                                 trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,

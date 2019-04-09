@@ -240,7 +240,8 @@ def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
     loss = []
     accuracy = []
     predicted_list = []
-    var_names = ['X_Seq_alpha','X_Seq_beta','v_beta_num','d_beta_num','j_beta_num','v_alpha_num','j_alpha_num']
+    var_names = ['X_Seq_alpha','X_Seq_beta','v_beta_num','d_beta_num',
+                 'j_beta_num','v_alpha_num','j_alpha_num','hla_data_seq_num']
     Vars = []
     for v in var_names:
         Vars.append(set[self.var_dict[v]])
@@ -271,6 +272,9 @@ def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
 
         if self.use_j_alpha is True:
             feed_dict[GO.X_j_alpha] = vars[6]
+
+        if self.use_hla:
+            feed_dict[GO.X_hla] = vars[7]
 
         if train is True:
             loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted], feed_dict=feed_dict)
@@ -473,10 +477,10 @@ def Get_Latent_Features(self,batch_size,GO,sess):
 
     return Features, Features_c
 
-def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,
+def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
                      p,batch_size,self):
 
-    inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha]
+    inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha,hla]
     for i in inputs:
         if i is not None:
             len_input = len(i)
@@ -506,34 +510,40 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
         beta_sequences = np.asarray([None] * len_input)
 
     if v_beta is not None:
-        v_beta_num = self.lb_v_beta.fit_transform(v_beta)
+        v_beta_num = self.lb_v_beta.transform(v_beta)
     else:
         v_beta_num = np.zeros(shape=[len_input])
         v_beta = np.asarray([None] * len_input)
 
     if d_beta is not None:
-        d_beta_num = self.lb_d_beta.fit_transform(d_beta)
+        d_beta_num = self.lb_d_beta.transform(d_beta)
     else:
         d_beta_num = np.zeros(shape=[len_input])
         d_beta = np.asarray([None] * len_input)
 
     if j_beta is not None:
-        j_beta_num = self.lb_j_beta.fit_transform(j_beta)
+        j_beta_num = self.lb_j_beta.transform(j_beta)
     else:
         j_beta_num = np.zeros(shape=[len_input])
         j_beta = np.asarray([None] * len_input)
 
     if v_alpha is not None:
-        v_alpha_num = self.lb_v_alpha.fit_transform(v_alpha)
+        v_alpha_num = self.lb_v_alpha.transform(v_alpha)
     else:
         v_alpha_num = np.zeros(shape=[len_input])
         v_alpha = np.asarray([None] * len_input)
 
     if j_alpha is not None:
-        j_alpha_num = self.lb_j_alpha.fit_transform(j_alpha)
+        j_alpha_num = self.lb_j_alpha.transform(j_alpha)
     else:
         j_alpha_num = np.zeros(shape=[len_input])
         j_alpha = np.asarray([None] * len_input)
+
+    if hla is not None:
+        hla_data_seq_num = self.lb_hla.transform(hla)
+    else:
+        hla_data_seq_num = np.zeros(shape=[len_input])
+
 
     if p is None:
         p.close()
@@ -568,11 +578,14 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
         if self.use_j_alpha is True:
             X_j_alpha = graph.get_tensor_by_name('Input_J_Alpha:0')
 
+        if self.use_hla:
+            X_hla = graph.get_tensor_by_name('HLA:0')
+
         get_obj = graph.get_tensor_by_name(get)
 
         out_list = []
         Vars = [X_Seq_alpha, X_Seq_beta, v_beta_num, d_beta_num, j_beta_num,
-                v_alpha_num, j_alpha_num]
+                v_alpha_num, j_alpha_num,hla_data_seq_num]
 
         for vars in get_batches(Vars, batch_size=batch_size):
             feed_dict = {}
@@ -595,6 +608,9 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
 
             if self.use_j_alpha is True:
                 feed_dict[X_j_alpha] = vars[6]
+
+            if self.use_hla:
+                feed_dict[X_hla] = vars[7]
 
             get_ind = sess.run(get_obj, feed_dict=feed_dict)
             out_list.append(get_ind)
