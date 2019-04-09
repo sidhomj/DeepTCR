@@ -2833,7 +2833,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.LOO = LOO
 
     def Train(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,kernel=5,on_graph_clustering=False,
-              num_clusters=12,weight_by_class=False,trainable_embedding = True,accuracy_min = None,
+              num_clusters=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
 
@@ -2872,6 +2872,11 @@ class DeepTCR_WF(DeepTCR_S_base):
         weight_by_class: bool
             Option to weight loss by the inverse of the class frequency. Useful for
             unbalanced classes.
+
+        class_weights: dict
+            In order to specify custom weights for each class during training, one
+            can provide a dictionary with these weights.
+                i.e. {'A':1.0,'B':2.0'}
 
         trainable_embedding; bool
             Toggle to control whether a trainable embedding layer is used or native
@@ -2943,6 +2948,13 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
+                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
+                    GO.loss = tf.reduce_mean(weights * tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                elif class_weights is not None:
+                    weights = np.zeros([1,len(self.lb.classes_)]).astype(np.float32)
+                    for key in class_weights:
+                        weights[:,self.lb.transform([key])[0]]=class_weights[key]
+                    class_weights = tf.constant(weights)
                     weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
                     GO.loss = tf.reduce_mean(weights * tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
                 else:
@@ -3024,6 +3036,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                                     if stop_check(train_loss_total,stop_criterion,stop_criterion_window):
                                         break
 
+
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
             self.features,self.features_c = Get_Latent_Features(self,batch_size_seq,GO,sess)
@@ -3063,7 +3076,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             print('Done Training')
 
     def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,stop_criterion_window=10,
-                             kernel=5,on_graph_clustering=False,num_clusters=12,weight_by_class=False, trainable_embedding=True,accuracy_min = None,
+                             kernel=5,on_graph_clustering=False,num_clusters=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
 
@@ -3113,6 +3126,11 @@ class DeepTCR_WF(DeepTCR_S_base):
         weight_by_class: bool
             Option to weight loss by the inverse of the class frequency. Useful for
             unbalanced classes.
+
+        class_weights: dict
+            In order to specify custom weights for each class during training, one
+            can provide a dictionary with these weights.
+                i.e. {'A':1.0,'B':2.0'}
 
         trainable_embedding; bool
             Toggle to control whether a trainable embedding layer is used or native
@@ -3171,7 +3189,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO)
             self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
                           kernel=kernel,on_graph_clustering=on_graph_clustering,num_clusters=num_clusters,
-                       weight_by_class=weight_by_class,
+                       weight_by_class=weight_by_class,class_weights=class_weights,
                           trainable_embedding=trainable_embedding,accuracy_min=accuracy_min,
                           num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
@@ -3202,7 +3220,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal(self,folds=None,epochs_min=5,batch_size=25,stop_criterion=0.001, stop_criterion_window=10,kernel=5,
-                        on_graph_clustering=False,num_clusters=12, weight_by_class=False, iterations=None,
+                        on_graph_clustering=False,num_clusters=12, weight_by_class=False,class_weights=None, iterations=None,
                         trainable_embedding=True, accuracy_min = None,
                         num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                         use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
@@ -3246,6 +3264,11 @@ class DeepTCR_WF(DeepTCR_S_base):
         weight_by_class: bool
             Option to weight loss by the inverse of the class frequency. Useful for
             unbalanced classes.
+
+        class_weights: dict
+            In order to specify custom weights for each class during training, one
+            can provide a dictionary with these weights.
+                i.e. {'A':1.0,'B':2.0'}
 
         iterations: int
             Option to specify how many iterations one wants to complete before
@@ -3342,7 +3365,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             self.Train(epochs_min=epochs_min, batch_size=batch_size,
                           stop_criterion=stop_criterion, kernel=kernel,
                           on_graph_clustering=on_graph_clustering,num_clusters=num_clusters,
-                            weight_by_class=weight_by_class,
+                            weight_by_class=weight_by_class,class_weights=class_weights,
                           trainable_embedding=trainable_embedding,accuracy_min = accuracy_min,
                           num_fc_layers=num_fc_layers,units_fc=units_fc,
                           drop_out_rate=drop_out_rate,suppress_output=suppress_output,

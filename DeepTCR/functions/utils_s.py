@@ -298,6 +298,7 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
     loss = []
     accuracy = []
     predicted_list = []
+    f_list = []
     for vars in get_batches(set, batch_size=batch_size, random=random):
         var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
         lb = LabelEncoder()
@@ -346,7 +347,7 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
             loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted],
                                                           feed_dict=feed_dict)
         else:
-            loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
+            loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.logits],
                                                        feed_dict=feed_dict)
 
         loss.append(loss_i)
