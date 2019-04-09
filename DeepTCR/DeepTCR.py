@@ -162,7 +162,7 @@ class DeepTCR_base(object):
 
         hla: str
             In order to use HLA information as part of the TCR-seq representation, one can provide
-            a csv file where the first column is the file name and the remaining columsn hold HLA alleles
+            a csv file where the first column is the file name and the remaining columns hold HLA alleles
             for each file. By including HLA information for each repertoire being analyzed, one is able to
             find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
             backgrounds.
@@ -468,7 +468,7 @@ class DeepTCR_base(object):
         print('Data Loaded')
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
-                  v_alpha=None,j_alpha=None,class_labels=None,sample_labels=None,freq=None,counts=None,p=None):
+                  v_alpha=None,j_alpha=None,class_labels=None,sample_labels=None,freq=None,counts=None,p=None,hla=None):
         """
         Load Data programatically into DeepTCR.
 
