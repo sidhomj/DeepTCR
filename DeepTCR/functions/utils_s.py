@@ -298,7 +298,6 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
     loss = []
     accuracy = []
     predicted_list = []
-    f_list = []
     for vars in get_batches(set, batch_size=batch_size, random=random):
         var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
         lb = LabelEncoder()
