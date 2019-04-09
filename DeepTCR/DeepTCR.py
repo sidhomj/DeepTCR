@@ -511,6 +511,12 @@ class DeepTCR_base(object):
         freq: ndarray of float values
             A 1d array with the frequencies for each sequence, in the case they come from samples.
 
+        hla: ndarray of tuples
+            To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+            as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+            to the alleles seen for that sequence.
+                ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+
         p: multiprocessing pool object
             a pre-formed pool object can be passed to method for multiprocessing tasks.
 
