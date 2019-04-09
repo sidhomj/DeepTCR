@@ -275,7 +275,6 @@ def Get_HLA_Loss(fc,embedding_layer,X_OH,alpha=1.0):
     accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted,tf.cast(X_OH,tf.bool)),tf.float32))
     return loss, accuracy
 
-
 #Layers for Repertoire Classifier
 
 def anlu(x, s_init=0.):
