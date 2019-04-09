@@ -509,37 +509,37 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
         X_Seq_beta = np.zeros(shape=[len_input])
         beta_sequences = np.asarray([None] * len_input)
 
-    if v_beta is not None:
+    if v_beta[0] is not None:
         v_beta_num = self.lb_v_beta.transform(v_beta)
     else:
         v_beta_num = np.zeros(shape=[len_input])
         v_beta = np.asarray([None] * len_input)
 
-    if d_beta is not None:
+    if d_beta[0] is not None:
         d_beta_num = self.lb_d_beta.transform(d_beta)
     else:
         d_beta_num = np.zeros(shape=[len_input])
         d_beta = np.asarray([None] * len_input)
 
-    if j_beta is not None:
+    if j_beta[0] is not None:
         j_beta_num = self.lb_j_beta.transform(j_beta)
     else:
         j_beta_num = np.zeros(shape=[len_input])
         j_beta = np.asarray([None] * len_input)
 
-    if v_alpha is not None:
+    if v_alpha[0] is not None:
         v_alpha_num = self.lb_v_alpha.transform(v_alpha)
     else:
         v_alpha_num = np.zeros(shape=[len_input])
         v_alpha = np.asarray([None] * len_input)
 
-    if j_alpha is not None:
+    if j_alpha[0] is not None:
         j_alpha_num = self.lb_j_alpha.transform(j_alpha)
     else:
         j_alpha_num = np.zeros(shape=[len_input])
         j_alpha = np.asarray([None] * len_input)
 
-    if hla is not None:
+    if hla[0] is not None:
         hla_data_seq_num = self.lb_hla.transform(hla)
     else:
         hla_data_seq_num = np.zeros(shape=[len_input])

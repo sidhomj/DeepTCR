@@ -746,7 +746,9 @@ class DeepTCR_base(object):
         with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'rb') as f:
             model_type,get,self.use_alpha,self.use_beta,\
                 self.use_v_beta,self.use_d_beta,self.use_j_beta,\
-                self.use_v_alaph,self.use_j_alpha,self.use_hla = pickle.load(f)
+                self.use_v_alaph,self.use_j_alpha,self.use_hla,\
+                self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,\
+                self.lb_v_alpha,self.lb_j_alpha,self.lb_hla= pickle.load(f)
 
         out = inference_method_ss(get,alpha_sequences,beta_sequences,
                                v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
@@ -1961,7 +1963,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 with open(os.path.join(self.Name,'model','model_type.pkl'),'wb') as f:
                     pickle.dump(['VAE',z_mean.name,self.use_alpha,self.use_beta,
                                 self.use_v_beta,self.use_d_beta,self.use_j_beta,
-                                self.use_v_alpha,self.use_j_alpha,self.use_hla],f)
+                                self.use_v_alpha,self.use_j_alpha,self.use_hla,
+                                 self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,
+                                 self.lb_v_alpha,self.lb_j_alpha,self.lb_hla],f)
 
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
                 pickle.dump([features,embed_dict], f,protocol=4)
