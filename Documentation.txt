@@ -6,7 +6,6 @@ NAME
 DESCRIPTION
     # import sys
     # sys.path.append('../')
-    # from DeepTCR.functions.data_processing import *
     # from DeepTCR.functions.Layers import *
     # from DeepTCR.functions.utils_u import *
     # from DeepTCR.functions.utils_s import *
@@ -21,7 +20,7 @@ DESCRIPTION
     # import phenograph
     # from scipy.spatial import distance
     # import glob
-    # from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+    # from sklearn.preprocessing import LabelEncoder, OneHotEncoder, MultiLabelBinarizer
     # from multiprocessing import Pool
     # import pickle
     # import matplotlib.pyplot as plt
@@ -68,7 +67,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, iterations=None, use_only_seq=False, use_only_gene=False)
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, iterations=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      K_Fold Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -91,6 +90,9 @@ CLASSES
      |      stop_criterion: float
      |          Minimum percent decrease in determined interval (below) to continue
      |          training. Used as early stopping criterion.
+     |      
+     |      stop_criterion_window: int
+     |          The window of data to apply the stopping criterion.
      |      
      |      kernel: int
      |          Size of convolutional kernel for first layer of convolutions.
@@ -123,11 +125,24 @@ CLASSES
      |          To only use sequence feaures, set to True. This will turn off features learned
      |          from gene usage.
      |      
+     |      use_only_hla: bool
+     |          To only use hla feaures, set to True.
+     |      
+     |      size_of_net: list or str
+     |          The convolutional layers of this network have 3 layers for which the use can
+     |          modify the number of neurons per layer. The user can either specify the size of the network
+     |          with the following options:
+     |              - small == [12,32,64] neurons for the 3 respective layers
+     |              - medium == [32,64,128] neurons for the 3 respective layers
+     |              - large == [64,128,256] neurons for the 3 respective layers
+     |              - custom, where the user supplies a list with the number of nuerons for the respective layers
+     |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |      
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      Monte Carlo Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -152,10 +167,12 @@ CLASSES
      |      batch_size: int
      |          Size of batch to be used for each training iteration of the net.
      |      
-     |      
      |      stop_criterion: float
      |          Minimum percent decrease in determined interval (below) to continue
      |          training. Used as early stopping criterion.
+     |      
+     |      stop_criterion_window: int
+     |          The window of data to apply the stopping criterion.
      |      
      |      kernel: int
      |          Size of convolutional kernel for first layer of convolutions.
@@ -177,18 +194,29 @@ CLASSES
      |          To suppress command line output with training statisitcs, set to True.
      |      
      |      use_only_gene: bool
-     |          To only use gene-usage features, set to True. This will turn off features from
-     |          the sequences.
+     |          To only use gene-usage features, set to True.
      |      
      |      use_only_seq: bool
-     |          To only use sequence feaures, set to True. This will turn off features learned
-     |          from gene usage.
+     |          To only use sequence feaures, set to True.
+     |      
+     |      use_only_hla: bool
+     |          To only use hla feaures, set to True.
+     |      
+     |      size_of_net: list or str
+     |          The convolutional layers of this network have 3 layers for which the use can
+     |          modify the number of neurons per layer. The user can either specify the size of the network
+     |          with the following options:
+     |              - small == [12,32,64] neurons for the 3 respective layers
+     |              - medium == [32,64,128] neurons for the 3 respective layers
+     |              - large == [64,128,256] neurons for the 3 respective layers
+     |              - custom, where the user supplies a list with the number of nuerons for the respective layers
+     |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
      |      
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False)
+     |  Train(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      Train Single-Sequence Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -205,6 +233,9 @@ CLASSES
      |      stop_criterion: float
      |          Minimum percent decrease in determined interval (below) to continue
      |          training. Used as early stopping criterion.
+     |      
+     |      stop_criterion_window: int
+     |          The window of data to apply the stopping criterion.
      |      
      |      kernel: int
      |          Size of convolutional kernel.
@@ -226,12 +257,23 @@ CLASSES
      |          To suppress command line output with training statisitcs, set to True.
      |      
      |      use_only_gene: bool
-     |          To only use gene-usage features, set to True. This will turn off features from
-     |          the sequences.
+     |          To only use gene-usage features, set to True.
      |      
      |      use_only_seq: bool
-     |          To only use sequence feaures, set to True. This will turn off features learned
-     |          from gene usage.
+     |          To only use sequence feaures, set to True.
+     |      
+     |      use_only_hla: bool
+     |          To only use hla feaures, set to True.
+     |      
+     |      size_of_net: list or str
+     |          The convolutional layers of this network have 3 layers for which the use can
+     |          modify the number of neurons per layer. The user can either specify the size of the network
+     |          with the following options:
+     |              - small == [12,32,64] neurons for the 3 respective layers
+     |              - medium == [32,64,128] neurons for the 3 respective layers
+     |              - large == [64,128,256] neurons for the 3 respective layers
+     |              - custom, where the user supplies a list with the number of nuerons for the respective layers
+     |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
      |      
      |      
      |      Returns
@@ -294,7 +336,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -373,6 +415,13 @@ CLASSES
      |          For parellelized operations, one can pass a multiprocessing pool object
      |          to this method.
      |      
+     |      hla: str
+     |          In order to use HLA information as part of the TCR-seq representation, one can provide
+     |          a csv file where the first column is the file name and the remaining columns hold HLA alleles
+     |          for each file. By including HLA information for each repertoire being analyzed, one is able to
+     |          find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
+     |          backgrounds.
+     |      
      |      
      |      Returns
      |      
@@ -399,7 +448,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None, hla=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -441,6 +490,12 @@ CLASSES
      |      freq: ndarray of float values
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
      |      
+     |      hla: ndarray of tuples
+     |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          to the alleles seen for that sequence.
+     |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
@@ -470,7 +525,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000)
      |      Predicting outputs of sequence models on new data
      |      
      |      This method allows a user to take a pre-trained autoencoder/sequence classifier
@@ -501,6 +556,12 @@ CLASSES
      |      
      |      j_alpha: ndarray of strings
      |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      hla: ndarray of tuples
+     |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          to the alleles seen for that sequence.
+     |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -775,7 +836,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -816,6 +877,9 @@ CLASSES
      |      
      |      alpha: float
      |          Value between 0-1 that controls transparency of points.
+     |      
+     |      sample: int
+     |          Number of events to sub-sample for visualization.
      |      
      |      
      |      Returns
@@ -886,7 +950,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -965,6 +1029,13 @@ CLASSES
      |          For parellelized operations, one can pass a multiprocessing pool object
      |          to this method.
      |      
+     |      hla: str
+     |          In order to use HLA information as part of the TCR-seq representation, one can provide
+     |          a csv file where the first column is the file name and the remaining columns hold HLA alleles
+     |          for each file. By including HLA information for each repertoire being analyzed, one is able to
+     |          find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
+     |          backgrounds.
+     |      
      |      
      |      Returns
      |      
@@ -991,7 +1062,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None, hla=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -1033,6 +1104,12 @@ CLASSES
      |      freq: ndarray of float values
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
      |      
+     |      hla: ndarray of tuples
+     |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          to the alleles seen for that sequence.
+     |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
@@ -1062,7 +1139,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000)
      |      Predicting outputs of sequence models on new data
      |      
      |      This method allows a user to take a pre-trained autoencoder/sequence classifier
@@ -1093,6 +1170,12 @@ CLASSES
      |      
      |      j_alpha: ndarray of strings
      |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      hla: ndarray of tuples
+     |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          to the alleles seen for that sequence.
+     |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -1367,7 +1450,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -1408,6 +1491,9 @@ CLASSES
      |      
      |      alpha: float
      |          Value between 0-1 that controls transparency of points.
+     |      
+     |      sample: int
+     |          Number of events to sub-sample for visualization.
      |      
      |      
      |      Returns
@@ -1510,7 +1596,7 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
-     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, epochs_min=10, stop_criterion=0.0001, kernel=3)
+     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, use_only_hla=False, epochs_min=10, stop_criterion=0.0001, stop_criterion_window=10, kernel=3, size_of_net='medium')
      |      Train Variational Autoencoder (VAE)
      |      
      |      This method trains the network and saves features values for sequences
@@ -1539,12 +1625,13 @@ CLASSES
      |          one-hot representation for convolutional layers.
      |      
      |      use_only_gene: bool
-     |          To only use gene-usage features, set to True. This will turn off features from
-     |          the sequences.
+     |          To only use gene-usage features, set to True.
      |      
      |      use_only_seq: bool
-     |          To only use sequence feaures, set to True. This will turn off features learned
-     |          from gene usage.
+     |          To only use sequence feaures, set to True.
+     |      
+     |      use_only_hla: bool
+     |          To only use hla feaures, set to True.
      |      
      |      epochs_min: int
      |          The minimum number of epochs to train the autoencoder.
@@ -1553,9 +1640,22 @@ CLASSES
      |          Minimum percent decrease in determined interval (below) to continue
      |          training. Used as early stopping criterion.
      |      
+     |      stop_criterion_window: int
+     |          The window of data to apply the stopping criterion.
+     |      
      |      kernel: int
      |          To specify the motif k-mer of the first layer of the autoencoder, change this
      |          parameter.
+     |      
+     |      size_of_net: list or str
+     |          The convolutional layers of this network have 3 layers for which the use can
+     |          modify the number of neurons per layer. The user can either specify the size of the network
+     |          with the following options:
+     |              - small == [12,32,64] neurons for the 3 respective layers
+     |              - medium == [32,64,128] neurons for the 3 respective layers
+     |              - large == [64,128,256] neurons for the 3 respective layers
+     |              - custom, where the user supplies a list with the number of nuerons for the respective layers
+     |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
      |      
      |      Returns
      |      
@@ -1567,7 +1667,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -1646,6 +1746,13 @@ CLASSES
      |          For parellelized operations, one can pass a multiprocessing pool object
      |          to this method.
      |      
+     |      hla: str
+     |          In order to use HLA information as part of the TCR-seq representation, one can provide
+     |          a csv file where the first column is the file name and the remaining columns hold HLA alleles
+     |          for each file. By including HLA information for each repertoire being analyzed, one is able to
+     |          find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
+     |          backgrounds.
+     |      
      |      
      |      Returns
      |      
@@ -1672,7 +1779,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None, hla=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -1714,6 +1821,12 @@ CLASSES
      |      freq: ndarray of float values
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
      |      
+     |      hla: ndarray of tuples
+     |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          to the alleles seen for that sequence.
+     |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
@@ -1743,7 +1856,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000)
      |      Predicting outputs of sequence models on new data
      |      
      |      This method allows a user to take a pre-trained autoencoder/sequence classifier
@@ -1774,6 +1887,12 @@ CLASSES
      |      
      |      j_alpha: ndarray of strings
      |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      hla: ndarray of tuples
+     |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          to the alleles seen for that sequence.
+     |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -2048,7 +2167,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -2090,6 +2209,9 @@ CLASSES
      |      alpha: float
      |          Value between 0-1 that controls transparency of points.
      |      
+     |      sample: int
+     |          Number of events to sub-sample for visualization.
+     |      
      |      
      |      Returns
      |      
@@ -2126,7 +2248,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=5, batch_size=25, stop_criterion=0.001, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=5, batch_size=25, stop_criterion=0.001, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2148,6 +2270,9 @@ CLASSES
      |      stop_criterion: float
      |          Minimum percent decrease in determined interval (below) to continue
      |          training. Used as early stopping criterion.
+     |      
+     |      stop_criterion_window: int
+     |          The window of data to apply the stopping criterion.
      |      
      |      kernel: int
      |          Size of convolutional kernel for first layer of convolutions.
@@ -2187,11 +2312,32 @@ CLASSES
      |      suppress_output: bool
      |          To suppress command line output with training statisitcs, set to True.
      |      
+     |      use_only_gene: bool
+     |          To only use gene-usage features, set to True. This will turn off features from
+     |          the sequences.
+     |      
+     |      use_only_seq: bool
+     |          To only use sequence feaures, set to True. This will turn off features learned
+     |          from gene usage.
+     |      
+     |      use_only_hla: bool
+     |          To only use hla feaures, set to True.
+     |      
+     |      size_of_net: list or str
+     |          The convolutional layers of this network have 3 layers for which the use can
+     |          modify the number of neurons per layer. The user can either specify the size of the network
+     |          with the following options:
+     |              - small == [12,32,64] neurons for the 3 respective layers
+     |              - medium == [32,64,128] neurons for the 3 respective layers
+     |              - large == [64,128,256] neurons for the 3 respective layers
+     |              - custom, where the user supplies a list with the number of nuerons for the respective layers
+     |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |      
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None, stop_criterion=0.001, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None, stop_criterion=0.001, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2220,6 +2366,9 @@ CLASSES
      |          Minimum percent decrease in determined interval (below) to continue
      |          training. Used as early stopping criterion.
      |      
+     |      stop_criterion_window: int
+     |          The window of data to apply the stopping criterion.
+     |      
      |      kernel: int
      |          Size of convolutional kernel for first layer of convolutions.
      |      
@@ -2254,11 +2403,32 @@ CLASSES
      |      suppress_output: bool
      |          To suppress command line output with training statisitcs, set to True.
      |      
+     |      use_only_gene: bool
+     |          To only use gene-usage features, set to True. This will turn off features from
+     |          the sequences.
+     |      
+     |      use_only_seq: bool
+     |          To only use sequence feaures, set to True. This will turn off features learned
+     |          from gene usage.
+     |      
+     |      use_only_hla: bool
+     |          To only use hla feaures, set to True.
+     |      
+     |      size_of_net: list or str
+     |          The convolutional layers of this network have 3 layers for which the use can
+     |          modify the number of neurons per layer. The user can either specify the size of the network
+     |          with the following options:
+     |              - small == [12,32,64] neurons for the 3 respective layers
+     |              - medium == [32,64,128] neurons for the 3 respective layers
+     |              - large == [64,128,256] neurons for the 3 respective layers
+     |              - custom, where the user supplies a list with the number of nuerons for the respective layers
+     |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |      
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train(self, batch_size=25, epochs_min=10, stop_criterion=0.001, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False)
+     |  Train(self, batch_size=25, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      Train Whole-Sample Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -2276,6 +2446,9 @@ CLASSES
      |          Minimum percent decrease in determined interval (below) to continue
      |          training. Used as early stopping criterion.
      |      
+     |      stop_criterion_window: int
+     |          The window of data to apply the stopping criterion.
+     |      
      |      kernel: int
      |          Size of convolutional kernel for first layer of convolutions.
      |      
@@ -2309,6 +2482,27 @@ CLASSES
      |      
      |      suppress_output: bool
      |          To suppress command line output with training statisitcs, set to True.
+     |      
+     |      use_only_gene: bool
+     |          To only use gene-usage features, set to True. This will turn off features from
+     |          the sequences.
+     |      
+     |      use_only_seq: bool
+     |          To only use sequence feaures, set to True. This will turn off features learned
+     |          from gene usage.
+     |      
+     |      use_only_hla: bool
+     |          To only use hla feaures, set to True.
+     |      
+     |      size_of_net: list or str
+     |          The convolutional layers of this network have 3 layers for which the use can
+     |          modify the number of neurons per layer. The user can either specify the size of the network
+     |          with the following options:
+     |              - small == [12,32,64] neurons for the 3 respective layers
+     |              - medium == [32,64,128] neurons for the 3 respective layers
+     |              - large == [64,128,256] neurons for the 3 respective layers
+     |              - custom, where the user supplies a list with the number of nuerons for the respective layers
+     |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
      |      
      |      
      |      Returns
@@ -2371,7 +2565,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -2450,6 +2644,13 @@ CLASSES
      |          For parellelized operations, one can pass a multiprocessing pool object
      |          to this method.
      |      
+     |      hla: str
+     |          In order to use HLA information as part of the TCR-seq representation, one can provide
+     |          a csv file where the first column is the file name and the remaining columns hold HLA alleles
+     |          for each file. By including HLA information for each repertoire being analyzed, one is able to
+     |          find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
+     |          backgrounds.
+     |      
      |      
      |      Returns
      |      
@@ -2476,7 +2677,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None, hla=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -2518,6 +2719,12 @@ CLASSES
      |      freq: ndarray of float values
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
      |      
+     |      hla: ndarray of tuples
+     |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          to the alleles seen for that sequence.
+     |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
@@ -2547,7 +2754,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000)
      |      Predicting outputs of sequence models on new data
      |      
      |      This method allows a user to take a pre-trained autoencoder/sequence classifier
@@ -2578,6 +2785,12 @@ CLASSES
      |      
      |      j_alpha: ndarray of strings
      |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      hla: ndarray of tuples
+     |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          to the alleles seen for that sequence.
+     |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -2852,7 +3065,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -2894,6 +3107,9 @@ CLASSES
      |      alpha: float
      |          Value between 0-1 that controls transparency of points.
      |      
+     |      sample: int
+     |          Number of events to sub-sample for visualization.
+     |      
      |      
      |      Returns
      |      
@@ -2902,7 +3118,7 @@ CLASSES
     class DeepTCR_base(builtins.object)
      |  Methods defined here:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -2981,6 +3197,13 @@ CLASSES
      |          For parellelized operations, one can pass a multiprocessing pool object
      |          to this method.
      |      
+     |      hla: str
+     |          In order to use HLA information as part of the TCR-seq representation, one can provide
+     |          a csv file where the first column is the file name and the remaining columns hold HLA alleles
+     |          for each file. By including HLA information for each repertoire being analyzed, one is able to
+     |          find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
+     |          backgrounds.
+     |      
      |      
      |      Returns
      |      
@@ -3007,7 +3230,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None, hla=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -3049,6 +3272,12 @@ CLASSES
      |      freq: ndarray of float values
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
      |      
+     |      hla: ndarray of tuples
+     |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          to the alleles seen for that sequence.
+     |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
@@ -3078,7 +3307,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, batch_size=10000)
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000)
      |      Predicting outputs of sequence models on new data
      |      
      |      This method allows a user to take a pre-trained autoencoder/sequence classifier
@@ -3109,6 +3338,12 @@ CLASSES
      |      
      |      j_alpha: ndarray of strings
      |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      hla: ndarray of tuples
+     |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          to the alleles seen for that sequence.
+     |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -3392,7 +3627,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -3433,6 +3668,9 @@ CLASSES
      |      
      |      alpha: float
      |          Value between 0-1 that controls transparency of points.
+     |      
+     |      sample: int
+     |          Number of events to sub-sample for visualization.
      |      
      |      
      |      Returns
