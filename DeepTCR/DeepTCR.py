@@ -2514,7 +2514,9 @@ class DeepTCR_SS(DeepTCR_S_base):
             with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
                 pickle.dump(['SS',GO.predicted.name,self.use_alpha, self.use_beta,
                              self.use_v_beta, self.use_d_beta, self.use_j_beta,
-                             self.use_v_alpha, self.use_j_alpha,self.use_hla], f)
+                             self.use_v_alpha, self.use_j_alpha,self.use_hla,
+                             self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
+                             self.lb_v_alpha, self.lb_j_alpha, self.lb_hla], f)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
                                 trainable_embedding=True,weight_by_class=False,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
