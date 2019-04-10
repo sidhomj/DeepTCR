@@ -14,6 +14,8 @@ from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import tensorflow as tf
 from multiprocessing import Pool
 from DeepTCR.functions.data_processing import *
+from sklearn.model_selection import train_test_split
+
 
 def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None):
 
@@ -61,15 +63,17 @@ def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None)
                 idx = list(range(len(Y)))
                 if LOO ==1:
                     test_idx = np.random.choice(idx, LOO, replace=False)[0]
+                    train_idx = np.setdiff1d(idx, test_idx)
                 else:
-                    test_idx = np.random.choice(idx, LOO, replace=False)
+                    train_idx,test_idx,Y_train,_ = train_test_split(idx,Y,test_size=LOO,stratify=Y)
+                    test_idx = np.asarray(test_idx)
+                    train_idx = np.asarray(train_idx)
 
-                train_idx = np.setdiff1d(idx,test_idx)
                 if LOO ==1:
                     valid_idx = np.random.choice(train_idx,LOO, replace=False)[0]
+                    train_idx = np.setdiff1d(train_idx, valid_idx)
                 else:
-                    valid_idx = np.random.choice(train_idx,LOO, replace=False)
-                train_idx = np.setdiff1d(train_idx,valid_idx)
+                    train_idx,valid_idx,_,_ = train_test_split(train_idx,Y_train,test_size=LOO,stratify=Y_train)
 
                 for var in Vars:
                     var_train.append(var[train_idx])
