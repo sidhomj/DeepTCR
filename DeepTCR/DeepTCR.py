@@ -2856,7 +2856,6 @@ class DeepTCR_WF(DeepTCR_S_base):
         ---------------------------------------
 
         """
-
         Y = []
         for s in self.sample_list:
             Y.append(self.Y[np.where(self.sample_id==s)[0][0]])
