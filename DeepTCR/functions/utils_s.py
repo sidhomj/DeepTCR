@@ -16,6 +16,25 @@ from multiprocessing import Pool
 from DeepTCR.functions.data_processing import *
 from sklearn.model_selection import train_test_split
 
+def custom_train_test_split(X,Y,test_size,stratify):
+    num_per_class = test_size//len(np.unique(stratify))
+    idx_test = []
+    for i in np.unique(stratify):
+        idx_test.append(np.random.choice(np.where(stratify == i)[0],num_per_class,replace=False))
+
+    X_left = np.setdiff1d(X,np.hstack(idx_test))
+    if len(idx_test) < test_size:
+        diff = test_size - len(idx_test)
+        idx_test.append(np.random.choice(X_left,diff,replace=False))
+
+    idx_test = np.hstack(idx_test)
+    Y_test = Y[idx_test]
+
+    idx_train = np.setdiff1d(X,idx_test)
+    Y_train = Y[idx_train]
+
+    return idx_train,idx_test,Y_train,Y_test
+
 
 def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None):
 
@@ -61,18 +80,18 @@ def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None)
 
             else:
                 idx = list(range(len(Y)))
-                if LOO ==1:
+                if LOO == 1:
                     test_idx = np.random.choice(idx, LOO, replace=False)[0]
                     train_idx = np.setdiff1d(idx, test_idx)
                 elif LOO < Y.shape[1]:
                     test_idx = np.random.choice(idx, LOO, replace=False)
                     train_idx = np.setdiff1d(idx, test_idx)
                 else:
-                    train_idx,test_idx,Y_train,_ = train_test_split(idx,Y,test_size=LOO,stratify=Y)
+                    train_idx,test_idx,Y_train,Y_test = custom_train_test_split(idx,Y,test_size=LOO,stratify=np.argmax(Y,1))
                     test_idx = np.asarray(test_idx)
                     train_idx = np.asarray(train_idx)
 
-                if LOO ==1:
+                if LOO == 1:
                     valid_idx = np.random.choice(train_idx,LOO, replace=False)[0]
                     train_idx = np.setdiff1d(train_idx, valid_idx)
                 elif LOO < Y.shape[1]:
@@ -121,7 +140,6 @@ def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None)
         var_train.append(Y[train_idx])
         var_valid.append(Y[valid_idx])
         var_test.append(Y[test_idx])
-
 
 
     return var_train,var_valid,var_test
