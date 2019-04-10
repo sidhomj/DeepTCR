@@ -64,6 +64,9 @@ def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None)
                 if LOO ==1:
                     test_idx = np.random.choice(idx, LOO, replace=False)[0]
                     train_idx = np.setdiff1d(idx, test_idx)
+                elif LOO < Y.shape[1]:
+                    test_idx = np.random.choice(idx, LOO, replace=False)
+                    train_idx = np.setdiff1d(idx, test_idx)
                 else:
                     train_idx,test_idx,Y_train,_ = train_test_split(idx,Y,test_size=LOO,stratify=Y)
                     test_idx = np.asarray(test_idx)
