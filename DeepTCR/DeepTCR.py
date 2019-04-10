@@ -3255,7 +3255,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
-        files = np.squeeze(np.vstack(files))
+        files = np.hstack(files)
         DFs =[]
         for ii,c in enumerate(self.lb.classes_,0):
             df_out = pd.DataFrame()
