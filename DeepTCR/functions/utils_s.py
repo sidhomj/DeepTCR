@@ -355,7 +355,9 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
 
         loss.append(loss_i)
         accuracy.append(accuracy_i)
-        predicted_i = predicted_i[sample_idx]
+        pred_temp = np.zeros_like(predicted_i)
+        pred_temp[sample_idx] = predicted_i
+        predicted_i = pred_temp
         predicted_list.append(predicted_i)
 
     loss = np.mean(loss)
