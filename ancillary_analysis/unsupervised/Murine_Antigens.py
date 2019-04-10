@@ -1,5 +1,5 @@
 """This script is used to characterize the performance of various featurization
-methods on TCRSeq data from 9 Murine Antigens"""
+methods on TCRSeq data from 9 Murine Antigens. Fig 2."""
 
 from DeepTCR.DeepTCR import DeepTCR_U
 import numpy as np

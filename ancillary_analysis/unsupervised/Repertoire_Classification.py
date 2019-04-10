@@ -1,6 +1,6 @@
 """This script is used to assess the performance of various featurization methods
 at the sample/repertoire level on TCRSeq data from tumor infiltrating lymphocytes (TIL)
-taken from mice treated with different therapies."""
+taken from mice treated with different therapies. Fig.2"""
 
 from DeepTCR.DeepTCR import DeepTCR_U
 import numpy as np
