@@ -16,7 +16,7 @@ from multiprocessing import Pool
 from DeepTCR.functions.data_processing import *
 from sklearn.model_selection import train_test_split
 
-def custom_train_test_split(X,Y,test_size,stratify,set=None):
+def custom_train_test_split(X,Y,test_size,stratify):
     idx = np.array(range(len(X)))
 
     num_per_class = test_size//len(np.unique(stratify))
@@ -93,8 +93,6 @@ def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None)
                     train_idx = np.setdiff1d(idx, test_idx)
                 else:
                     train_idx,test_idx,Y_train,_ = custom_train_test_split(idx,Y,test_size=LOO,stratify=np.argmax(Y,1))
-                    test_idx = np.asarray(test_idx)
-                    train_idx = np.asarray(train_idx)
 
                 if LOO == 1:
                     valid_idx = np.random.choice(train_idx,LOO, replace=False)[0]
@@ -103,7 +101,7 @@ def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None)
                     valid_idx = np.random.choice(train_idx, LOO, replace=False)
                     train_idx = np.setdiff1d(train_idx, valid_idx)
                 else:
-                    train_idx,valid_idx,_,_ = custom_train_test_split(train_idx,Y_train,test_size=LOO,stratify=np.argmax(Y_train,1),set=1)
+                    train_idx,valid_idx,_,_ = custom_train_test_split(train_idx,Y_train,test_size=LOO,stratify=np.argmax(Y_train,1))
 
                 for var in Vars:
                     var_train.append(var[train_idx])
