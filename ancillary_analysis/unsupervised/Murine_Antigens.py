@@ -1,5 +1,5 @@
 """This script is used to characterize the performance of various featurization
-methods on TCRSeq data from 9 Murine Antigens. Fig 2."""
+methods on TCRSeq data from 9 Murine Antigens."""
 
 from DeepTCR.DeepTCR import DeepTCR_U
 import numpy as np
@@ -13,9 +13,9 @@ import pickle
 import os
 
 #Instantiate training object
-DTCRU = DeepTCR_U('Clustering_Metrics')
+DTCRU = DeepTCR_U('Murine_U')
 #Load Data
-DTCRU.Get_Data(directory='../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
+DTCRU.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
 #Get distances from various methods
@@ -50,26 +50,27 @@ distances_seqalign = distances_seqalign + distances_seqalign.T
 distances_seqalign = squareform(distances_seqalign)
 
 distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene,distances_hamming,distances_kmer,distances_seqalign]
-names = ['VAE-Seq','VAE-Gene','VAE-Seq-Gene','Hamming','K-mer','Global-Seq-Align']
+names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Hamming','K-mer','Global-Seq-Align']
 
-dir_results = 'Murine_Results_ortho'
+dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
-
 #Assess Clustering Quality of Various Methods
-df_cq = Clustering_Quality(distances_list,names,DTCRU.label_id)
-sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=100,hue='Algorithm',alpha=0.75)
-plt.xlabel('Variance Ratio Criterion',fontsize=14)
-plt.ylabel('Adjusted Mutual Information',fontsize=14)
-plt.xticks(fontsize=12)
-plt.yticks(fontsize=12)
-plt.subplots_adjust(bottom=0.15)
+df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
+fig,ax = plt.subplots(figsize=(10,10))
+sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=300,
+                hue='Algorithm',alpha=0.7,linewidth=0,ax=ax)
+plt.xlabel('Variance Ratio Criterion',fontsize=24)
+plt.ylabel('Adjusted Mutual Information',fontsize=24)
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
 plt.title('Clustering Quality',fontsize=24)
+plt.legend(fontsize=14)
 plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 
 #Assess performance metrtics via K-Nearest Neighbors
-df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.label_id,dir_results)
+df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results)
 Plot_Performance(df_metrics,dir_results)
 
 subdir = 'Performance_Summary'
@@ -107,9 +108,9 @@ for n,distances in zip(names,distances_list):
     plt.figure()
     sns.boxplot(x='D_len',y='D_features',data=df)
     plt.title(n)
-    plt.savefig(os.path.join(dir_results,n+'_box.tif'))
+    plt.savefig(os.path.join(dir_results,n+'_box_LD.tif'))
 
 df_out = pd.DataFrame()
 df_out['Methods'] = names
 df_out['SRCC'] = SRCC
-df_out.to_csv(os.path.join(dir_results,'out.csv'),index=False)
+df_out.to_csv(os.path.join(dir_results,'Length_Dep.csv'),index=False)
