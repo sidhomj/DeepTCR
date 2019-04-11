@@ -12,7 +12,8 @@ While DeepTCR will run with Tensorflow-CPU versions, for optimal training times,
 we suggest training these algorithms on GPU's (requiring CUDA, cuDNN, and tensorflow-GPU). 
 
 DeepTCR now has the added functionality of being able to analyze paired alpha/beta chain inputs as well
-as also being able to take in v/d/j gene usage if available. For detailed instructions on 
+as also being able to take in v/d/j gene usage and the contextual HLA information the TCR-Sequences
+were seen in (i.e. HLA alleles for a repertoire from a given human sample). For detailed instructions on 
 how to upload this type of data, refer to the documentation for loading data into DeepTCR.  
 
 For questions or help, email: jsidhom1@jhmi.edu
@@ -77,6 +78,9 @@ visualization methods. Removed GAN from unsupervised learning techniques.
 
 #### 1.2.7
 On-graph clustering method introduced for repertoire classifier to improve classification performance.
+
+#### 1.2.#
+Ability for HLA information to be incorporated in the analysis of TCR-Seq. 
 
 
 
