@@ -748,7 +748,7 @@ class DeepTCR_base(object):
                 self.use_v_beta,self.use_d_beta,self.use_j_beta,\
                 self.use_v_alaph,self.use_j_alpha,self.use_hla,\
                 self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,\
-                self.lb_v_alpha,self.lb_j_alpha,self.lb_hla= pickle.load(f)
+                self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb= pickle.load(f)
 
         out = inference_method_ss(get,alpha_sequences,beta_sequences,
                                v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
@@ -1965,7 +1965,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                                 self.use_v_beta,self.use_d_beta,self.use_j_beta,
                                 self.use_v_alpha,self.use_j_alpha,self.use_hla,
                                  self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,
-                                 self.lb_v_alpha,self.lb_j_alpha,self.lb_hla],f)
+                                 self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb],f)
 
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
                 pickle.dump([features,embed_dict], f,protocol=4)
@@ -2532,7 +2532,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                              self.use_v_beta, self.use_d_beta, self.use_j_beta,
                              self.use_v_alpha, self.use_j_alpha,self.use_hla,
                              self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
-                             self.lb_v_alpha, self.lb_j_alpha, self.lb_hla], f)
+                             self.lb_v_alpha, self.lb_j_alpha, self.lb_hla,self.lb], f)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
                                 trainable_embedding=True,weight_by_class=False,class_weights=None,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
