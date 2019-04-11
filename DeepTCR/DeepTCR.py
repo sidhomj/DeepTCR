@@ -2781,13 +2781,13 @@ class DeepTCR_SS(DeepTCR_S_base):
             Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.alpha_sequences, self.beta_sequences, self.sample_id,
                     self.class_id, self.seq_index,
                     self.v_beta_num, self.d_beta_num, self.j_beta_num, self.v_alpha_num, self.j_alpha_num,
-                    self.v_beta, self.d_beta, self.j_beta, self.v_alpha, self.j_alpha]
+                    self.v_beta, self.d_beta, self.j_beta, self.v_alpha, self.j_alpha,self.hla_data_seq_num]
 
             var_names = ['X_Seq_alpha', 'X_Seq_beta', 'alpha_sequences', 'beta_sequences', 'sample_id', 'class_id',
                          'seq_index',
                          'v_beta_num', 'd_beta_num', 'j_beta_num', 'v_alpha_num', 'j_alpha_num', 'v_beta', 'd_beta',
                          'j_beta',
-                         'v_alpha', 'j_alpha']
+                         'v_alpha', 'j_alpha','hla_data_seq_num']
 
             self.var_dict = dict(zip(var_names, list(range(len(var_names)))))
 
