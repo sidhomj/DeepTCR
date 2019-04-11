@@ -87,11 +87,11 @@ for m in np.unique(df_metrics['Metric']):
     plt.xticks(fontsize=12)
     plt.savefig(os.path.join(dir_results,subdir,m+'.eps'))
 
-method = 'F1_Score'
+method = 'AUC'
 from scipy.stats import ttest_rel
 df_test = df_metrics[df_metrics['Metric']==method]
-idx_1 = df_test['Algorithm'] == 'K-mer'
-idx_2 = df_test['Algorithm'] == 'Hamming'
+idx_1 = df_test['Algorithm'] == 'VAE-VDJ'
+idx_2 = df_test['Algorithm'] == 'VAE-Seq-VDJ'
 t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
 print(p_val)
 
