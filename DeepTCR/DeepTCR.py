@@ -2865,7 +2865,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
 
-    def Train(self,batch_size = 25, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,kernel=5,on_graph_clustering=False,
+    def Train(self,batch_size = 25, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,on_graph_clustering=False,
               num_clusters=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
@@ -3108,7 +3108,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                              self.use_v_alpha, self.use_j_alpha], f)
             print('Done Training')
 
-    def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None,stop_criterion=0.001,stop_criterion_window=10,
+    def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
                              kernel=5,on_graph_clustering=False,num_clusters=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
@@ -3269,7 +3269,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
-    def K_Fold_CrossVal(self,folds=None,epochs_min=5,batch_size=25,stop_criterion=0.001, stop_criterion_window=10,kernel=5,
+    def K_Fold_CrossVal(self,folds=None,epochs_min=25,batch_size=25,stop_criterion=0.25, stop_criterion_window=10,kernel=5,
                         on_graph_clustering=False,num_clusters=12, weight_by_class=False,class_weights=None, iterations=None,
                         trainable_embedding=True, accuracy_min = None,
                         num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
