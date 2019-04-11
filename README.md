@@ -79,7 +79,7 @@ visualization methods. Removed GAN from unsupervised learning techniques.
 #### 1.2.7
 On-graph clustering method introduced for repertoire classifier to improve classification performance.
 
-#### 1.2.#
+#### 1.2.13
 Ability for HLA information to be incorporated in the analysis of TCR-Seq. 
 
 
