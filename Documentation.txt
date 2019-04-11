@@ -67,7 +67,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, iterations=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, iterations=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      K_Fold Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -100,6 +100,15 @@ CLASSES
      |      trainable_embedding; bool
      |          Toggle to control whether a trainable embedding layer is used or native
      |          one-hot representation for convolutional layers.
+     |      
+     |      weight_by_class: bool
+     |          Option to weight loss by the inverse of the class frequency. Useful for
+     |          unbalanced classes.
+     |      
+     |      class_weights: dict
+     |          In order to specify custom weights for each class during training, one
+     |          can provide a dictionary with these weights.
+     |              i.e. {'A':1.0,'B':2.0'}
      |      
      |      num_fc_layers: int
      |          Number of fully connected layers following convolutional layer.
@@ -142,7 +151,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      Monte Carlo Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -181,6 +190,15 @@ CLASSES
      |          Toggle to control whether a trainable embedding layer is used or native
      |          one-hot representation for convolutional layers.
      |      
+     |      weight_by_class: bool
+     |          Option to weight loss by the inverse of the class frequency. Useful for
+     |          unbalanced classes.
+     |      
+     |      class_weights: dict
+     |          In order to specify custom weights for each class during training, one
+     |          can provide a dictionary with these weights.
+     |              i.e. {'A':1.0,'B':2.0'}
+     |      
      |      num_fc_layers: int
      |          Number of fully connected layers following convolutional layer.
      |      
@@ -216,7 +234,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  Train(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      Train Single-Sequence Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -243,6 +261,15 @@ CLASSES
      |      trainable_embedding; bool
      |          Toggle to control whether a trainable embedding layer is used or native
      |          one-hot representation for convolutional layers.
+     |      
+     |      weight_by_class: bool
+     |          Option to weight loss by the inverse of the class frequency. Useful for
+     |          unbalanced classes.
+     |      
+     |      class_weights: dict
+     |          In order to specify custom weights for each class during training, one
+     |          can provide a dictionary with these weights.
+     |              i.e. {'A':1.0,'B':2.0'}
      |      
      |      num_fc_layers: int
      |          Number of fully connected layers following convolutional layer.
@@ -1596,7 +1623,7 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
-     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, use_only_hla=False, epochs_min=10, stop_criterion=0.0001, stop_criterion_window=10, kernel=3, size_of_net='medium')
+     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, use_only_hla=False, epochs_min=10, stop_criterion=0.0001, stop_criterion_window=30, kernel=3, size_of_net='medium')
      |      Train Variational Autoencoder (VAE)
      |      
      |      This method trains the network and saves features values for sequences
@@ -2248,7 +2275,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=5, batch_size=25, stop_criterion=0.001, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, iterations=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=25, batch_size=25, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, iterations=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2287,6 +2314,11 @@ CLASSES
      |      weight_by_class: bool
      |          Option to weight loss by the inverse of the class frequency. Useful for
      |          unbalanced classes.
+     |      
+     |      class_weights: dict
+     |          In order to specify custom weights for each class during training, one
+     |          can provide a dictionary with these weights.
+     |              i.e. {'A':1.0,'B':2.0'}
      |      
      |      iterations: int
      |          Option to specify how many iterations one wants to complete before
@@ -2337,7 +2369,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=5, batch_size=25, LOO=None, stop_criterion=0.001, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, LOO=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2383,6 +2415,11 @@ CLASSES
      |          Option to weight loss by the inverse of the class frequency. Useful for
      |          unbalanced classes.
      |      
+     |      class_weights: dict
+     |          In order to specify custom weights for each class during training, one
+     |          can provide a dictionary with these weights.
+     |              i.e. {'A':1.0,'B':2.0'}
+     |      
      |      trainable_embedding; bool
      |          Toggle to control whether a trainable embedding layer is used or native
      |          one-hot representation for convolutional layers.
@@ -2426,9 +2463,13 @@ CLASSES
      |      
      |      
      |      Returns
+     |      
+     |      self.DFs_pred: dict of dataframes
+     |          This method returns the samples in the test sets of the Monte-Carlo and their
+     |          predicted probabilities for each class.
      |      ---------------------------------------
      |  
-     |  Train(self, batch_size=25, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  Train(self, batch_size=25, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
      |      Train Whole-Sample Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -2462,6 +2503,11 @@ CLASSES
      |      weight_by_class: bool
      |          Option to weight loss by the inverse of the class frequency. Useful for
      |          unbalanced classes.
+     |      
+     |      class_weights: dict
+     |          In order to specify custom weights for each class during training, one
+     |          can provide a dictionary with these weights.
+     |              i.e. {'A':1.0,'B':2.0'}
      |      
      |      trainable_embedding; bool
      |          Toggle to control whether a trainable embedding layer is used or native
@@ -3687,6 +3733,6 @@ CLASSES
      |      list of weak references to the object (if defined)
 
 FILE
-    /home/sidhom/DeepTCR_Github/DeepTCR/DeepTCR/DeepTCR.py
+    /home/jsidhom1/DeepTCR/DeepTCR/DeepTCR.py
 
 
