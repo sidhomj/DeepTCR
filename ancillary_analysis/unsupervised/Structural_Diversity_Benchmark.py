@@ -14,12 +14,12 @@ import pickle
 import matplotlib.pyplot as plt
 
 # Instantiate training object
-DTCRU = DeepTCR_U('Reperoire_Distances')
+DTCRU = DeepTCR_U('Structural_Diversity_U')
 
 # Assess ability for structural entropy to be of measure of number of antigens
 classes_all = np.array(['Db-F2', 'Kb-M38', 'Db-M45', 'Db-NP', 'Db-PA', 'Db-PB1', 'Kb-m139','Kb-SIY','Kb-TRP2'])
 
-DTCRU.Get_Data(directory='../Data/Murine_Antigens', Load_Prev_Data=False, aggregate_by_aa=True,
+DTCRU.Get_Data(directory='../../Data/Murine_Antigens', Load_Prev_Data=False, aggregate_by_aa=True,
                aa_column_beta=0, count_column=1, v_beta_column=2, j_beta_column=3)
 
 # VAE-Gene
@@ -74,7 +74,7 @@ for n, rep in zip(num, reps):
         entropy_list.append(entropy(c_freq))
         num_cluster_list.append(len(c_freq))
         num_list.append(n)
-        method_list.append('VAE-Gene')
+        method_list.append('VAE-VDJ')
 
         #VAE-Seq
         d = d_vae_seq[sel,:]
@@ -92,7 +92,7 @@ for n, rep in zip(num, reps):
         entropy_list.append(entropy(c_freq))
         num_cluster_list.append(len(c_freq))
         num_list.append(n)
-        method_list.append('VAE-Seq-Gene')
+        method_list.append('VAE-Seq-VDJ')
 
 
         #Hamming
