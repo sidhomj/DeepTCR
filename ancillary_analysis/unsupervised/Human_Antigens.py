@@ -48,12 +48,25 @@ distances_seqalign = distances_seqalign + distances_seqalign.T
 distances_seqalign = squareform(distances_seqalign)
 
 distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene,distances_hamming,distances_kmer,distances_seqalign]
-names = ['VAE-Seq','VAE-Gene','VAE-Seq-Gene','Hamming','K-mer','Global-Seq-Align']
+names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Hamming','K-mer','Global-Seq-Align']
 
 
 dir_results = 'Human_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
+
+#Assess Clustering Quality of Various Methods
+df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
+fig,ax = plt.subplots()
+sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=200,
+                hue='Algorithm',alpha=0.5,linewidth=.25,ax=ax)
+plt.xlabel('Variance Ratio Criterion',fontsize=18)
+plt.ylabel('Adjusted Mutual Information',fontsize=18)
+plt.xticks(fontsize=12)
+plt.yticks(fontsize=12)
+plt.title('Clustering Quality',fontsize=22)
+plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
+
 
 #Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results)
@@ -62,6 +75,7 @@ Plot_Performance(df_metrics,dir_results)
 subdir = 'Performance_Summary'
 if not os.path.exists(os.path.join(dir_results,subdir)):
     os.makedirs(os.path.join(dir_results,subdir))
+
 
 for m in np.unique(df_metrics['Metric']):
     sns.catplot(data=df_metrics[df_metrics['Metric']==m],x='Algorithm',y='Value',kind='violin')
@@ -73,11 +87,12 @@ for m in np.unique(df_metrics['Metric']):
     plt.xticks(fontsize=12)
     plt.savefig(os.path.join(dir_results,subdir,m+'.eps'))
 
-method = 'F1_Score'
-from scipy.stats import ttest_rel
-df_test = df_metrics[df_metrics['Metric']==method]
-idx_1 = df_test['Algorithm'] == 'K-mer'
-idx_2 = df_test['Algorithm'] == 'Global-Seq-Align'
-t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
-print(p_val)
+for ii in range(len(names)):
+    method = 'Precision'
+    from scipy.stats import ttest_rel
+    df_test = df_metrics[df_metrics['Metric']==method]
+    idx_1 = df_test['Algorithm'] == names[ii]
+    idx_2 = df_test['Algorithm'] == names[ii+1]
+    t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
+    print(p_val)
 

@@ -58,15 +58,14 @@ if not os.path.exists(dir_results):
 
 #Assess Clustering Quality of Various Methods
 df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
-fig,ax = plt.subplots(figsize=(10,10))
-sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=300,
-                hue='Algorithm',alpha=0.7,linewidth=0,ax=ax)
-plt.xlabel('Variance Ratio Criterion',fontsize=24)
-plt.ylabel('Adjusted Mutual Information',fontsize=24)
-plt.xticks(fontsize=18)
-plt.yticks(fontsize=18)
-plt.title('Clustering Quality',fontsize=24)
-plt.legend(fontsize=14)
+fig,ax = plt.subplots()
+sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=200,
+                hue='Algorithm',alpha=0.5,linewidth=.25,ax=ax)
+plt.xlabel('Variance Ratio Criterion',fontsize=18)
+plt.ylabel('Adjusted Mutual Information',fontsize=18)
+plt.xticks(fontsize=12)
+plt.yticks(fontsize=12)
+plt.title('Clustering Quality',fontsize=22)
 plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 
 #Assess performance metrtics via K-Nearest Neighbors
@@ -87,13 +86,14 @@ for m in np.unique(df_metrics['Metric']):
     plt.xticks(fontsize=12)
     plt.savefig(os.path.join(dir_results,subdir,m+'.eps'))
 
-method = 'AUC'
-from scipy.stats import ttest_rel
-df_test = df_metrics[df_metrics['Metric']==method]
-idx_1 = df_test['Algorithm'] == 'VAE-VDJ'
-idx_2 = df_test['Algorithm'] == 'VAE-Seq-VDJ'
-t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
-print(p_val)
+method = 'F1_Score'
+for ii in range(len(names)):
+    from scipy.stats import ttest_rel
+    df_test = df_metrics[df_metrics['Metric']==method]
+    idx_1 = df_test['Algorithm'] == names[ii]
+    idx_2 = df_test['Algorithm'] == names[ii+1]
+    t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
+    print(p_val)
 
 #Assess Length Dependency of various methods
 SRCC = []
@@ -108,7 +108,7 @@ for n,distances in zip(names,distances_list):
     plt.figure()
     sns.boxplot(x='D_len',y='D_features',data=df)
     plt.title(n)
-    plt.savefig(os.path.join(dir_results,n+'_box_LD.tif'))
+    plt.savefig(os.path.join(dir_results,n+'_box_LD.eps'))
 
 df_out = pd.DataFrame()
 df_out['Methods'] = names
