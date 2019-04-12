@@ -153,6 +153,7 @@ def Plot_Performance(df,dir_results,metrics=None):
             plt.ylabel(m,fontsize=18)
             plt.subplots_adjust(bottom=0.15)
             plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'.eps'))
+            plt.close()
 
 def Plot_Performance_Samples(df,dir_results,metrics=None,distance_methods=None):
     subdir = 'Performance'
