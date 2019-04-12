@@ -14,7 +14,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 # Instantiate training object
-DTCRU = DeepTCR_U('Structural_Diversity_U')
+DTCRU = DeepTCR_U('Structural_Diversity_U',device='/gpu:1')
 
 # Assess ability for structural entropy to be of measure of number of antigens
 classes_all = np.array(['Db-F2', 'Kb-M38', 'Db-M45', 'Db-NP', 'Db-PA', 'Db-PB1', 'Kb-m139','Kb-SIY','Kb-TRP2'])
