@@ -338,10 +338,10 @@ def phenograph_clustering_freq(d,DTCRU,n_jobs=1):
     d_knn, idx = nbrs.kneighbors(d)
     IDX, _, _ = phenograph_local.cluster(d=d_knn, idx=idx, n_jobs=1)
 
-    label_id = DTCRU.label_id
-    file_id = DTCRU.file_id
+    label_id = DTCRU.class_id
+    file_id = DTCRU.sample_id
     freq = DTCRU.freq
-    file_list = DTCRU.file_list
+    file_list = DTCRU.sample_list
 
     DFs = []
     DF_Sum = pd.DataFrame()
