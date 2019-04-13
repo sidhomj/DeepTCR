@@ -15,5 +15,4 @@ DTCR_WF.Get_Data(directory='../../Data/Rudqvist',Load_Prev_Data=False,aggregate_
 
 DTCR_SS.Monte_Carlo_CrossVal(folds=100,LOO=4)
 DTCR_SS.AUC_Curve()
- 
 
