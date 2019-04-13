@@ -1537,7 +1537,7 @@ CLASSES
      |  
      |  Methods defined here:
      |  
-     |  KNN_Repertoire_Classifier(self, distance_metric='KL', sample=None, n_jobs=1, plot_metrics=False, plot_type='violin', by_class=False, Load_Prev_Data=False, metrics=['Recall', 'Precision', 'F1_Score', 'AUC'])
+     |  KNN_Repertoire_Classifier(self, folds=5, distance_metric='KL', sample=None, n_jobs=1, plot_metrics=False, plot_type='violin', by_class=False, Load_Prev_Data=False, metrics=['Recall', 'Precision', 'F1_Score', 'AUC'])
      |      K-Nearest Neighbor Repertoire Classifier
      |      
      |      This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a repertoire
@@ -1546,6 +1546,9 @@ CLASSES
      |      
      |      Inputs
      |      ---------------------------------------
+     |      
+     |      folds: int
+     |          Number of folds to train/test K-Nearest Classifier.
      |      
      |      distance_metric = str
      |          Provided distance metric to determine repertoire-level distance from cluster proportions.
@@ -1585,7 +1588,7 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
-     |  KNN_Sequence_Classifier(self, k_values=[1, 26, 51, 76, 101, 126, 151, 176, 201, 226, 251, 276, 301, 326, 351, 376, 401, 426, 451, 476], rep=5, plot_metrics=False, by_class=False, plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC'])
+     |  KNN_Sequence_Classifier(self, folds=5, k_values=[1, 26, 51, 76, 101, 126, 151, 176, 201, 226, 251, 276, 301, 326, 351, 376, 401, 426, 451, 476], rep=5, plot_metrics=False, by_class=False, plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC'])
      |      K-Nearest Neighbor Sequence Classifier
      |      
      |      This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a sequence
@@ -1594,6 +1597,9 @@ CLASSES
      |      
      |      Inputs
      |      ---------------------------------------
+     |      
+     |      folds: int
+     |          Number of folds to train/test K-Nearest Classifier.
      |      
      |      k_values: list
      |          List of k for KNN algorithm to assess performance metrics across.
