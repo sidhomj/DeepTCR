@@ -12,10 +12,8 @@ import os
 
 #Run VAE
 DTCRU = DeepTCR_U('Sequence_C')
-DTCRU.Get_Data(directory='../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
+DTCRU.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
-# DTCRU.Get_Data(directory='../Data/Human_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
-#                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
 DTCRU.Train_VAE(Load_Prev_Data=False,use_only_gene=True)
 distances_vae_gene = pdist(DTCRU.features, metric='euclidean')
@@ -28,7 +26,7 @@ DTCRU.Train_VAE(Load_Prev_Data=False)
 distances_vae_seq_gene = pdist(DTCRU.features, metric='euclidean')
 
 distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene]
-names = ['VAE-Seq','VAE-Gene','VAE-Seq-Gene']
+names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ']
 
 dir_results = 'sup_v_unsup_results'
 if not os.path.exists(dir_results):
@@ -44,10 +42,8 @@ df_u['Type'] = 'Unsupervised'
 
 #Run Supervised Sequence Classifier
 DTCRS = DeepTCR_SS('Sequence_C')
-DTCRS.Get_Data(directory='../Data/Murine_Antigens',Load_Prev_Data=True,aggregate_by_aa=True,
+DTCRS.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=True,aggregate_by_aa=True,
                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
-# DTCRS.Get_Data(directory='../Data/Human_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
-#                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
 AUC = []
 Class = []
@@ -65,13 +61,13 @@ for i in range(10):
     DTCRS.AUC_Curve(plot=False)
     AUC.extend(DTCRS.AUC_DF['AUC'].tolist())
     Class.extend(DTCRS.AUC_DF['Class'].tolist())
-    Method.extend(['Sup-Gene']*len(DTCRS.AUC_DF))
+    Method.extend(['Sup-VDJ']*len(DTCRS.AUC_DF))
 
     DTCRS.Train(num_fc_layers=1,units_fc=256)
     DTCRS.AUC_Curve(plot=False)
     AUC.extend(DTCRS.AUC_DF['AUC'].tolist())
     Class.extend(DTCRS.AUC_DF['Class'].tolist())
-    Method.extend(['Sup-Seq-Gene']*len(DTCRS.AUC_DF))
+    Method.extend(['Sup-Seq-VDJ']*len(DTCRS.AUC_DF))
 
 
 
@@ -94,9 +90,6 @@ ax = plt.gca()
 ax.legend().remove()
 plt.legend(fontsize=24)
 
-DTCRS.Representative_Sequences()
-DTCRS.Monte_Carlo_CrossVal(folds=20)
-DTCRS.AUC_Curve()
 
 
 

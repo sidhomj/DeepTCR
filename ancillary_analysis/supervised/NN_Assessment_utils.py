@@ -153,6 +153,7 @@ def Plot_Performance(df,dir_results,metrics=None):
             plt.ylabel(m,fontsize=18)
             plt.subplots_adjust(bottom=0.15)
             plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'.eps'))
+            plt.close()
 
 def Plot_Performance_Samples(df,dir_results,metrics=None,distance_methods=None):
     subdir = 'Performance'
@@ -337,10 +338,10 @@ def phenograph_clustering_freq(d,DTCRU,n_jobs=1):
     d_knn, idx = nbrs.kneighbors(d)
     IDX, _, _ = phenograph_local.cluster(d=d_knn, idx=idx, n_jobs=1)
 
-    label_id = DTCRU.label_id
-    file_id = DTCRU.file_id
+    label_id = DTCRU.class_id
+    file_id = DTCRU.sample_id
     freq = DTCRU.freq
-    file_list = DTCRU.file_list
+    file_list = DTCRU.sample_list
 
     DFs = []
     DF_Sum = pd.DataFrame()
