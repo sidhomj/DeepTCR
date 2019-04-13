@@ -18,6 +18,7 @@ antigens = ['GANAB-S5F',
  'MART1-A2L',
  'YFV-LLW']
 
+
 opt = ['alpha','beta','alpha_beta']
 
 for a in antigens:
@@ -30,11 +31,11 @@ for a in antigens:
         elif o == 'beta':
             DTCR = DeepTCR_SS('alpha_v_beta_SS')
             DTCR.Get_Data(directory='../../Data/Zhang/'+a,aa_column_beta=1,p=p)
-        elif o == 'alaph_beta':
+        elif o == 'alpha_beta':
             DTCR = DeepTCR_SS('alpha_v_beta_SS')
             DTCR.Get_Data(directory='../../Data/Zhang/'+a,aa_column_alpha=0,aa_column_beta=1,p=p)
 
-        DTCR.Monte_Carlo_CrossVal(folds=50)
+        DTCR.Monte_Carlo_CrossVal(folds=50,weight_by_class=True)
         y_pred_list.append(DTCR.y_pred)
         y_test_list.append(DTCR.y_test)
 
@@ -53,9 +54,9 @@ for a in antigens:
 
     plt.legend(loc="lower right",fontsize=14)
     plt.title(a,fontsize=22)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     plt.savefig(os.path.join(dir_results,a+ '_AUC.tif'))
     plt.close()
-
-check=1
 
 
