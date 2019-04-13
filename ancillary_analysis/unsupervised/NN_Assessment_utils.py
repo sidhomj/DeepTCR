@@ -3,7 +3,7 @@ from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 from sklearn.metrics import f1_score, recall_score, precision_score, roc_auc_score,accuracy_score
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-from sklearn.model_selection import StratifiedKFold, LeaveOneOut
+from sklearn.model_selection import StratifiedKFold, LeaveOneOut, KFold
 import os
 from scipy.spatial.distance import pdist, squareform
 import matplotlib.pyplot as plt
@@ -368,11 +368,14 @@ def phenograph_clustering_freq(d,DTCRU,n_jobs=1):
     DF_Sum.fillna(0.0, inplace=True)
     return DF_Sum, IDX
 
-def KNN_samples(distances,labels,k,metrics):
+def KNN_samples(distances,labels,k,metrics,folds):
     lb = LabelEncoder()
     labels = lb.fit_transform(labels)
 
-    skf = LeaveOneOut()
+    if folds > np.min(np.bincount(labels)):
+        skf = KFold(n_splits=folds, random_state=None, shuffle=True)
+    else:
+        skf = StratifiedKFold(n_splits=folds, random_state=None, shuffle=True)
     neigh = KNeighborsClassifier(n_neighbors=k, metric='precomputed', weights='distance')
 
     pred_list = []
@@ -463,7 +466,7 @@ def Get_Prop_Distances(prop_list,names,eps = 1e-9):
 
     return distances_list, distances_names_list, method_names
 
-def Assess_Performance_KNN_Samples(distances_list,distances_names,method_names,dir_results,labels):
+def Assess_Performance_KNN_Samples(distances_list,distances_names,method_names,dir_results,labels,folds=5):
     k_values = list(range(1,len(distances_list[0])))
     metrics = ['Recall', 'Precision', 'F1_Score', 'AUC']
 
@@ -476,7 +479,7 @@ def Assess_Performance_KNN_Samples(distances_list,distances_names,method_names,d
     val_list = []
     for k in k_values:
         for d,n_d,n_m in zip(distances_list,distances_names,method_names):
-            classes,metric,value,k_l = KNN_samples(d,labels,k=k,metrics=metrics)
+            classes,metric,value,k_l = KNN_samples(d,labels,k=k,metrics=metrics,folds=folds)
             metric_list.extend(metric)
             val_list.extend(value)
             class_list.extend(classes)
