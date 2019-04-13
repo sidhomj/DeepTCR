@@ -11,7 +11,7 @@ import pickle
 import os
 
 #Run VAE
-DTCRU = DeepTCR_U('Sequence_C')
+DTCRU = DeepTCR_U('Sequence_C',device='/gpu:1')
 DTCRU.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
