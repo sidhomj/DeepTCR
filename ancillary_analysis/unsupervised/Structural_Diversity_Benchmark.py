@@ -67,15 +67,6 @@ for n, rep in zip(num, reps):
         classes = np.random.choice(classes_all, n, replace=False)
         sel = np.isin(DTCRU.class_id, classes)
 
-        #VAE-Gene
-        d = d_vae_gene[sel,:]
-        d = d[:,sel]
-        c_freq = phenograph_clustering(d)
-        entropy_list.append(entropy(c_freq))
-        num_cluster_list.append(len(c_freq))
-        num_list.append(n)
-        method_list.append('VAE-VDJ')
-
         #VAE-Seq
         d = d_vae_seq[sel,:]
         d = d[:,sel]
@@ -85,6 +76,15 @@ for n, rep in zip(num, reps):
         num_list.append(n)
         method_list.append('VAE-Seq')
 
+        #VAE-Gene
+        d = d_vae_gene[sel,:]
+        d = d[:,sel]
+        c_freq = phenograph_clustering(d)
+        entropy_list.append(entropy(c_freq))
+        num_cluster_list.append(len(c_freq))
+        num_list.append(n)
+        method_list.append('VAE-VDJ')
+
         #VAE-Seq-Gene
         d = d_vae_seq_gene[sel,:]
         d = d[:,sel]
@@ -93,7 +93,6 @@ for n, rep in zip(num, reps):
         num_cluster_list.append(len(c_freq))
         num_list.append(n)
         method_list.append('VAE-Seq-VDJ')
-
 
         #Hamming
         d = d_hamming[sel,:]
