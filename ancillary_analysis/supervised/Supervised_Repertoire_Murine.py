@@ -20,3 +20,7 @@ DTCR_WF.AUC_Curve()
 DTCR_WF.Monte_Carlo_CrossVal(folds=100,LOO=4,on_graph_clustering=True)
 DTCR_WF.AUC_Curve()
 
+#Visualize Latent Space
+DTCR_WF.UMAP_Plot(by_class=True,freq_weight=True,show_legend=True,scale=1000,Load_Prev_Data=False,
+                  alpha=0.5)
+
