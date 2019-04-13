@@ -479,13 +479,16 @@ def Assess_Performance_KNN_Samples(distances_list,distances_names,method_names,d
     val_list = []
     for k in k_values:
         for d,n_d,n_m in zip(distances_list,distances_names,method_names):
-            classes,metric,value,k_l = KNN_samples(d,labels,k=k,metrics=metrics,folds=folds)
-            metric_list.extend(metric)
-            val_list.extend(value)
-            class_list.extend(classes)
-            k_list.extend(k_l)
-            algorithm.extend(len(classes) * [n_m])
-            distance_metric.extend(len(classes) * [n_d])
+            try:
+                classes,metric,value,k_l = KNN_samples(d,labels,k=k,metrics=metrics,folds=folds)
+                metric_list.extend(metric)
+                val_list.extend(value)
+                class_list.extend(classes)
+                k_list.extend(k_l)
+                algorithm.extend(len(classes) * [n_m])
+                distance_metric.extend(len(classes) * [n_d])
+            except:
+                continue
 
 
     df_out = pd.DataFrame()
