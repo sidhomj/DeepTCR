@@ -8,7 +8,7 @@ from scipy.cluster.hierarchy import dendrogram, optimal_leaf_ordering, leaves_li
 from scipy.stats import entropy
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-from sklearn.model_selection import StratifiedKFold, LeaveOneOut
+from sklearn.model_selection import StratifiedKFold, LeaveOneOut, KFold
 from sklearn.metrics import f1_score, recall_score, precision_score, roc_auc_score,accuracy_score
 
 
@@ -145,11 +145,15 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,gridsize=5
     dg = dendrogram(Z, no_plot=True)
     polar_dendrogram(dg, fig, ax_radius=dg_radius, log_scale=log_scale)
 
-def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC']):
+def KNN(distances,labels,k=1,folds=5,metrics=['Recall','Precision','F1_Score','AUC']):
     lb = LabelEncoder()
     labels = lb.fit_transform(labels)
 
-    skf = StratifiedKFold(n_splits=5, random_state=None, shuffle=True)
+    if folds > np.min(np.bincount(labels)):
+        skf = KFold(n_splits=folds, random_state=None, shuffle=True)
+    else:
+        skf = StratifiedKFold(n_splits=folds, random_state=None, shuffle=True)
+
     neigh = KNeighborsClassifier(n_neighbors=k, metric='precomputed', weights='distance')
 
     pred_list = []
@@ -210,11 +214,15 @@ def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC']):
 
     return classes,metric,value,k_list
 
-def KNN_samples(distances,labels,k,metrics):
+def KNN_samples(distances,labels,k,metrics,folds):
     lb = LabelEncoder()
     labels = lb.fit_transform(labels)
 
-    skf = LeaveOneOut()
+    if folds > np.min(np.bincount(labels)):
+        skf = KFold(n_splits=folds, random_state=None, shuffle=True)
+    else:
+        skf = StratifiedKFold(n_splits=folds, random_state=None, shuffle=True)
+
     neigh = KNeighborsClassifier(n_neighbors=k, metric='precomputed', weights='distance')
 
     pred_list = []

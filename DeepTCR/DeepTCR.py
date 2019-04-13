@@ -1988,7 +1988,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         self.embed_dict = embed_dict
         print('Training Done')
 
-    def KNN_Sequence_Classifier(self, k_values=list(range(1, 500, 25)), rep=5, plot_metrics=False, by_class=False,
+    def KNN_Sequence_Classifier(self,folds=5, k_values=list(range(1, 500, 25)), rep=5, plot_metrics=False, by_class=False,
                                 plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC']):
         """
         K-Nearest Neighbor Sequence Classifier
@@ -1999,6 +1999,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
         Inputs
         ---------------------------------------
+
+        folds: int
+            Number of folds to train/test K-Nearest Classifier.
 
         k_values: list
             List of k for KNN algorithm to assess performance metrics across.
@@ -2042,11 +2045,14 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         val_list = []
 
         for k in k_values:
-            classes, metric, value, k_l = KNN(distances, self.class_id, k=k, metrics=metrics)
-            metric_list.extend(metric)
-            val_list.extend(value)
-            class_list.extend(classes)
-            k_list.extend(k_l)
+            try:
+                classes, metric, value, k_l = KNN(distances, self.class_id, k=k, metrics=metrics,folds=folds)
+                metric_list.extend(metric)
+                val_list.extend(value)
+                class_list.extend(classes)
+                k_list.extend(k_l)
+            except:
+                continue
 
         df_out = pd.DataFrame()
         df_out['Classes'] = class_list
@@ -2062,7 +2068,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             else:
                 sns.catplot(data=df_out, x='Metric', y='Value', kind=plot_type)
 
-    def KNN_Repertoire_Classifier(self, distance_metric='KL', sample=None, n_jobs=1, plot_metrics=False,
+    def KNN_Repertoire_Classifier(self,folds=5, distance_metric='KL', sample=None, n_jobs=1, plot_metrics=False,
                                   plot_type='violin', by_class=False, Load_Prev_Data=False,
                                   metrics=['Recall', 'Precision', 'F1_Score', 'AUC']):
         """
@@ -2074,6 +2080,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
         Inputs
         ---------------------------------------
+
+        folds: int
+            Number of folds to train/test K-Nearest Classifier.
 
         distance_metric = str
             Provided distance metric to determine repertoire-level distance from cluster proportions.
@@ -2152,11 +2161,14 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         metric_list = []
         val_list = []
         for k in k_values:
-            classes, metric, value, k_l = KNN_samples(pairwise_distances, labels, k=k, metrics=metrics)
-            metric_list.extend(metric)
-            val_list.extend(value)
-            class_list.extend(classes)
-            k_list.extend(k_l)
+            try:
+                classes, metric, value, k_l = KNN_samples(pairwise_distances, labels, k=k, metrics=metrics,folds=folds)
+                metric_list.extend(metric)
+                val_list.extend(value)
+                class_list.extend(classes)
+                k_list.extend(k_l)
+            except:
+                continue
 
         df_out = pd.DataFrame()
         df_out['Classes'] = class_list
