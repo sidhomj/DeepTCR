@@ -131,9 +131,12 @@ df['Method'] = method_list
 sns.catplot(data=df, x='Number Of Antigens', y='Structural Entropy', kind='point',hue='Method')
 plt.xlabel('Number of Antigens',fontsize=16)
 plt.ylabel('Structural Entropy',fontsize=16)
+plt.savefig('SE.eps')
 sns.catplot(data=df, x='Number Of Antigens', y='Number of Clusters', kind='point',hue='Method')
 plt.xlabel('Number of Antigens',fontsize=16)
 plt.ylabel('Number of Clusters',fontsize=16)
+plt.savefig('NC.eps')
+
 
 corr_SE = []
 corr_NC = []
