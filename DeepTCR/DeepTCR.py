@@ -1260,6 +1260,13 @@ class vis_class(object):
         ---------------------------------------
 
         """
+        keep = []
+        for i, column in enumerate(self.features.T, 0):
+            if len(np.unique(column)) > 1:
+                keep.append(i)
+        keep = np.asarray(keep)
+        self.features = self.features[:, keep]
+
         sample_id = np.unique(self.sample_id)
 
         vector = []
@@ -3145,6 +3152,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
             self.features,self.features_c = Get_Latent_Features(self,batch_size_seq,GO,sess)
+
             pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
             if len(idx.shape) == 0:
                 idx = idx.reshape(-1,1)
