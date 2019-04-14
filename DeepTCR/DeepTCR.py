@@ -3546,6 +3546,73 @@ class DeepTCR_WF(DeepTCR_S_base):
     def Sample_Inference(self,sample_labels,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
                   v_alpha=None, j_alpha=None, p=None,hla=None,freq=None,counts=None, batch_size=10):
 
+        """
+        Predicting outputs of sample/repertoire model on new data
+
+        This method allows a user to take a pre-trained sample/repertoire classifier
+        and generate outputs from the model on new data. This will return predicted probabilites
+        for the given classes for the new data.
+
+        Inputs
+        ---------------------------------------
+
+        sample_labels: ndarray of strings
+            A 1d array with sample labels for the sequence.
+
+        alpha_sequences: ndarray of strings
+            A 1d array with the sequences for inference for the alpha chain.
+
+        beta_sequences: ndarray of strings
+            A 1d array with the sequences for inference for the beta chain.
+
+        v_beta: ndarray of strings
+            A 1d array with the v-beta genes for inference.
+
+        d_beta: ndarray of strings
+            A 1d array with the d-beta genes for inference.
+
+        j_beta: ndarray of strings
+            A 1d array with the j-beta genes for inference.
+
+        v_alpha: ndarray of strings
+            A 1d array with the v-alpha genes for inference.
+
+        j_alpha: ndarray of strings
+            A 1d array with the j-alpha genes for inference.
+
+        counts: ndarray of ints
+            A 1d array with the counts for each sequence.
+
+        freq: ndarray of float values
+            A 1d array with the frequencies for each sequence.
+
+        hla: ndarray of tuples
+            To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+            as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+            to the alleles seen for that sequence.
+                ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+
+        p: multiprocessing pool object
+            a pre-formed pool object can be passed to method for multiprocessing tasks.
+
+        batch_size: int
+            Batch size for inference.
+
+        Returns
+
+        out:dict
+            A dictionary of predicted probabilities for the respective classes
+
+        self.Inference_Pred: ndarray
+            An array with the predicted probabilites for all classes
+
+        self.Inference_Sample_List: ndarray
+            An array with the sample list corresponding the predicted probabilities.
+
+        ---------------------------------------
+
+        """
+
         with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'rb') as f:
             model_type,get,self.use_alpha,self.use_beta,\
                 self.use_v_beta,self.use_d_beta,self.use_j_beta,\
@@ -3687,15 +3754,12 @@ class DeepTCR_WF(DeepTCR_S_base):
                 var_idx = np.where(np.isin(sample_labels, vars[0]))[0]
                 lb = LabelEncoder()
                 lb.fit(vars[0])
-                _, _, sample_idx = np.intersect1d(lb.classes_, vars[0], return_indices=True)
-                vars = [v[sample_idx] for v in vars]
                 i = lb.transform(sample_labels[var_idx])
 
                 OH = OneHotEncoder(categories='auto')
                 sp = OH.fit_transform(i.reshape(-1, 1)).T
                 sp = sp.tocoo()
                 indices = np.mat([sp.row, sp.col]).T
-                #sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
 
                 feed_dict = {X_Freq: freq[var_idx],
                              sp_i: indices,
