@@ -67,7 +67,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, iterations=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, iterations=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      K_Fold Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -147,11 +147,20 @@ CLASSES
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
      |      
+     |      embedding_dim_aa: int
+     |          Learned latent dimensionality of amino-acids.
+     |      
+     |      embedding_dim_genes: int
+     |          Learned latent dimensionality of VDJ genes
+     |      
+     |      embedding_dim_hla: int
+     |          Learned latent dimensionality of HLA
+     |      
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      Monte Carlo Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -230,11 +239,20 @@ CLASSES
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
      |      
+     |      embedding_dim_aa: int
+     |          Learned latent dimensionality of amino-acids.
+     |      
+     |      embedding_dim_genes: int
+     |          Learned latent dimensionality of VDJ genes
+     |      
+     |      embedding_dim_hla: int
+     |          Learned latent dimensionality of HLA
+     |      
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Train(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  Train(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      Train Single-Sequence Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -301,6 +319,15 @@ CLASSES
      |              - large == [64,128,256] neurons for the 3 respective layers
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |      
+     |      embedding_dim_aa: int
+     |          Learned latent dimensionality of amino-acids.
+     |      
+     |      embedding_dim_genes: int
+     |          Learned latent dimensionality of VDJ genes
+     |      
+     |      embedding_dim_hla: int
+     |          Learned latent dimensionality of HLA
      |      
      |      
      |      Returns
@@ -509,7 +536,7 @@ CLASSES
      |          A 1d array with class labels for the sequence (i.e. antigen-specificities)
      |      
      |      sample_labels: ndarray of strings
-     |          A 1d array with sample labels for the sequence. (i.e. when loading data from differnet samples)
+     |          A 1d array with sample labels for the sequence. (i.e. when loading data from different samples)
      |      
      |      counts: ndarray of ints
      |          A 1d array with the counts for each sequence, in the case they come from samples.
@@ -1123,7 +1150,7 @@ CLASSES
      |          A 1d array with class labels for the sequence (i.e. antigen-specificities)
      |      
      |      sample_labels: ndarray of strings
-     |          A 1d array with sample labels for the sequence. (i.e. when loading data from differnet samples)
+     |          A 1d array with sample labels for the sequence. (i.e. when loading data from different samples)
      |      
      |      counts: ndarray of ints
      |          A 1d array with the counts for each sequence, in the case they come from samples.
@@ -1629,7 +1656,7 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
-     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, use_only_hla=False, epochs_min=10, stop_criterion=0.0001, stop_criterion_window=30, kernel=3, size_of_net='medium')
+     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, use_only_hla=False, epochs_min=10, stop_criterion=0.0001, stop_criterion_window=30, kernel=3, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      Train Variational Autoencoder (VAE)
      |      
      |      This method trains the network and saves features values for sequences
@@ -1689,6 +1716,15 @@ CLASSES
      |              - large == [64,128,256] neurons for the 3 respective layers
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |      
+     |      embedding_dim_aa: int
+     |          Learned latent dimensionality of amino-acids.
+     |      
+     |      embedding_dim_genes: int
+     |          Learned latent dimensionality of VDJ genes
+     |      
+     |      embedding_dim_hla: int
+     |          Learned latent dimensionality of HLA
      |      
      |      Returns
      |      
@@ -1846,7 +1882,7 @@ CLASSES
      |          A 1d array with class labels for the sequence (i.e. antigen-specificities)
      |      
      |      sample_labels: ndarray of strings
-     |          A 1d array with sample labels for the sequence. (i.e. when loading data from differnet samples)
+     |          A 1d array with sample labels for the sequence. (i.e. when loading data from different samples)
      |      
      |      counts: ndarray of ints
      |          A 1d array with the counts for each sequence, in the case they come from samples.
@@ -2281,7 +2317,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=25, batch_size=25, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, iterations=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=25, batch_size=25, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, iterations=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2371,11 +2407,20 @@ CLASSES
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
      |      
+     |      embedding_dim_aa: int
+     |          Learned latent dimensionality of amino-acids.
+     |      
+     |      embedding_dim_genes: int
+     |          Learned latent dimensionality of VDJ genes
+     |      
+     |      embedding_dim_hla: int
+     |          Learned latent dimensionality of HLA
+     |      
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, LOO=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, LOO=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2467,6 +2512,15 @@ CLASSES
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
      |      
+     |      embedding_dim_aa: int
+     |          Learned latent dimensionality of amino-acids.
+     |      
+     |      embedding_dim_genes: int
+     |          Learned latent dimensionality of VDJ genes
+     |      
+     |      embedding_dim_hla: int
+     |          Learned latent dimensionality of HLA
+     |      
      |      
      |      Returns
      |      
@@ -2475,7 +2529,72 @@ CLASSES
      |          predicted probabilities for each class.
      |      ---------------------------------------
      |  
-     |  Train(self, batch_size=25, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium')
+     |  Sample_Inference(self, sample_labels, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, freq=None, counts=None, batch_size=10)
+     |      Predicting outputs of sample/repertoire model on new data
+     |      
+     |      This method allows a user to take a pre-trained sample/repertoire classifier
+     |      and generate outputs from the model on new data. This will return predicted probabilites
+     |      for the given classes for the new data.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      sample_labels: ndarray of strings
+     |          A 1d array with sample labels for the sequence.
+     |      
+     |      alpha_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the alpha chain.
+     |      
+     |      beta_sequences: ndarray of strings
+     |          A 1d array with the sequences for inference for the beta chain.
+     |      
+     |      v_beta: ndarray of strings
+     |          A 1d array with the v-beta genes for inference.
+     |      
+     |      d_beta: ndarray of strings
+     |          A 1d array with the d-beta genes for inference.
+     |      
+     |      j_beta: ndarray of strings
+     |          A 1d array with the j-beta genes for inference.
+     |      
+     |      v_alpha: ndarray of strings
+     |          A 1d array with the v-alpha genes for inference.
+     |      
+     |      j_alpha: ndarray of strings
+     |          A 1d array with the j-alpha genes for inference.
+     |      
+     |      counts: ndarray of ints
+     |          A 1d array with the counts for each sequence.
+     |      
+     |      freq: ndarray of float values
+     |          A 1d array with the frequencies for each sequence.
+     |      
+     |      hla: ndarray of tuples
+     |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          to the alleles seen for that sequence.
+     |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
+     |      p: multiprocessing pool object
+     |          a pre-formed pool object can be passed to method for multiprocessing tasks.
+     |      
+     |      batch_size: int
+     |          Batch size for inference.
+     |      
+     |      Returns
+     |      
+     |      out:dict
+     |          A dictionary of predicted probabilities for the respective classes
+     |      
+     |      self.Inference_Pred: ndarray
+     |          An array with the predicted probabilites for all classes
+     |      
+     |      self.Inference_Sample_List: ndarray
+     |          An array with the sample list corresponding the predicted probabilities.
+     |      
+     |      ---------------------------------------
+     |  
+     |  Train(self, batch_size=25, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      Train Whole-Sample Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -2555,6 +2674,15 @@ CLASSES
      |              - large == [64,128,256] neurons for the 3 respective layers
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |      
+     |      embedding_dim_aa: int
+     |          Learned latent dimensionality of amino-acids.
+     |      
+     |      embedding_dim_genes: int
+     |          Learned latent dimensionality of VDJ genes
+     |      
+     |      embedding_dim_hla: int
+     |          Learned latent dimensionality of HLA
      |      
      |      
      |      Returns
@@ -2763,7 +2891,7 @@ CLASSES
      |          A 1d array with class labels for the sequence (i.e. antigen-specificities)
      |      
      |      sample_labels: ndarray of strings
-     |          A 1d array with sample labels for the sequence. (i.e. when loading data from differnet samples)
+     |          A 1d array with sample labels for the sequence. (i.e. when loading data from different samples)
      |      
      |      counts: ndarray of ints
      |          A 1d array with the counts for each sequence, in the case they come from samples.
@@ -3316,7 +3444,7 @@ CLASSES
      |          A 1d array with class labels for the sequence (i.e. antigen-specificities)
      |      
      |      sample_labels: ndarray of strings
-     |          A 1d array with sample labels for the sequence. (i.e. when loading data from differnet samples)
+     |          A 1d array with sample labels for the sequence. (i.e. when loading data from different samples)
      |      
      |      counts: ndarray of ints
      |          A 1d array with the counts for each sequence, in the case they come from samples.
