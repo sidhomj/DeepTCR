@@ -650,6 +650,7 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
 
         return np.vstack(out_list)
 
+
 def stop_check(loss,stop_criterion,stop_criterion_window):
     w = loss[-stop_criterion_window:]
     return (w[0]-w[-1])/w[0] < stop_criterion

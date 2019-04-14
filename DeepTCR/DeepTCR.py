@@ -746,7 +746,7 @@ class DeepTCR_base(object):
         with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'rb') as f:
             model_type,get,self.use_alpha,self.use_beta,\
                 self.use_v_beta,self.use_d_beta,self.use_j_beta,\
-                self.use_v_alaph,self.use_j_alpha,self.use_hla,\
+                self.use_v_alpha,self.use_j_alpha,self.use_hla,\
                 self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,\
                 self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb= pickle.load(f)
 
@@ -3177,7 +3177,10 @@ class DeepTCR_WF(DeepTCR_S_base):
             with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
                 pickle.dump(['WF',GO.predicted.name,self.use_alpha, self.use_beta,
                              self.use_v_beta, self.use_d_beta, self.use_j_beta,
-                             self.use_v_alpha, self.use_j_alpha], f)
+                             self.use_v_alpha, self.use_j_alpha,self.use_hla,
+                             self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
+                             self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb], f)
+
             print('Done Training')
 
     def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
@@ -3539,6 +3542,84 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
         print('K-fold Cross Validation Completed')
+
+    def Sample_Inference(self,sample_id,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
+                  v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10):
+
+        with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'rb') as f:
+            model_type,get,self.use_alpha,self.use_beta,\
+                self.use_v_beta,self.use_d_beta,self.use_j_beta,\
+                self.use_v_alpha,self.use_j_alpha,self.use_hla,\
+                self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,\
+                self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb= pickle.load(f)
+
+        inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha, hla]
+        for i in inputs:
+            if i is not None:
+                len_input = len(i)
+                break
+
+        if p is None:
+            p = Pool(40)
+
+        if alpha_sequences is not None:
+            args = list(
+                zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
+            result = p.starmap(Embed_Seq_Num, args)
+            sequences_num = np.vstack(result)
+            X_Seq_alpha = np.expand_dims(sequences_num, 1)
+        else:
+            X_Seq_alpha = np.zeros(shape=[len_input])
+            alpha_sequences = np.asarray([None] * len_input)
+
+        if beta_sequences is not None:
+            args = list(
+                zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length] * len(beta_sequences)))
+            result = p.starmap(Embed_Seq_Num, args)
+            sequences_num = np.vstack(result)
+            X_Seq_beta = np.expand_dims(sequences_num, 1)
+        else:
+            X_Seq_beta = np.zeros(shape=[len_input])
+            beta_sequences = np.asarray([None] * len_input)
+
+        if v_beta is not None:
+            v_beta_num = self.lb_v_beta.transform(v_beta)
+        else:
+            v_beta_num = np.zeros(shape=[len_input])
+            v_beta = np.asarray([None] * len_input)
+
+        if d_beta is not None:
+            d_beta_num = self.lb_d_beta.transform(d_beta)
+        else:
+            d_beta_num = np.zeros(shape=[len_input])
+            d_beta = np.asarray([None] * len_input)
+
+        if j_beta is not None:
+            j_beta_num = self.lb_j_beta.transform(j_beta)
+        else:
+            j_beta_num = np.zeros(shape=[len_input])
+            j_beta = np.asarray([None] * len_input)
+
+        if v_alpha is not None:
+            v_alpha_num = self.lb_v_alpha.transform(v_alpha)
+        else:
+            v_alpha_num = np.zeros(shape=[len_input])
+            v_alpha = np.asarray([None] * len_input)
+
+        if j_alpha is not None:
+            j_alpha_num = self.lb_j_alpha.transform(j_alpha)
+        else:
+            j_alpha_num = np.zeros(shape=[len_input])
+            j_alpha = np.asarray([None] * len_input)
+
+        if hla is not None:
+            hla_data_seq_num = self.lb_hla.transform(hla)
+        else:
+            hla_data_seq_num = np.zeros(shape=[len_input])
+
+        if p is None:
+            p.close()
+            p.join()
 
 
 
