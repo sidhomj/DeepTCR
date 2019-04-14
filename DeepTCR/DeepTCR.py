@@ -1159,11 +1159,19 @@ class vis_class(object):
         Inputs
         ---------------------------------------
 
+        set: str
+            To choose which set of sequences to analye, enter either
+            'all','train', 'valid',or 'test'. Since the sequences in the train set
+            may be overfit, it preferable to generally examine the test set on its own.
+
         filename: str
             Name of file to save heatmap.
 
         sample_num: int
             Number of events to randomly sample for heatmap.
+
+        sample_num_per_class: int
+            Number of events to randomly sample per class for heatmap.
 
         color_dict: dict
             Optional dictionary to provide specified colors for classes.
