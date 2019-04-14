@@ -136,7 +136,6 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     GO.sp = tf.sparse.placeholder(dtype=tf.float32, shape=[None, None])
     GO.X_Freq = tf.placeholder(tf.float32, shape=[None, ], name='Freq')
 
-    GO.embedding_dim_genes = 48
     gene_features = []
     GO.X_v_beta, GO.X_v_beta_OH, GO.embedding_layer_v_beta, \
     GO.X_d_beta, GO.X_d_beta_OH, GO.embedding_layer_d_beta, \
@@ -148,7 +147,6 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     if trainable_embedding is True:
         # AA Embedding
         with tf.variable_scope('AA_Embedding'):
-            GO.embedding_dim_aa = 64
             GO.embedding_layer_seq = tf.get_variable(name='Embedding_Layer_Seq', shape=[21, GO.embedding_dim_aa])
             GO.embedding_layer_seq = tf.expand_dims(tf.expand_dims(GO.embedding_layer_seq, axis=0), axis=0)
             if self.use_alpha is True:
@@ -189,7 +187,7 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
 
     HLA_Features = []
     if self.use_hla:
-        HLA_Features = Get_HLA_Features(self,GO,12)
+        HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
 
     Features = [Seq_Features,gene_features,HLA_Features]
     for ii,f in enumerate(Features,0):

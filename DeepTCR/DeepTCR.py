@@ -1591,7 +1591,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
                   trainable_embedding=True,use_only_gene=False,use_only_seq=False,use_only_hla=False,
                   epochs_min=10,stop_criterion=0.0001,stop_criterion_window=30,
-                  kernel=3,size_of_net = 'medium'):
+                  kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
         """
         Train Variational Autoencoder (VAE)
 
@@ -1653,6 +1653,15 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
         Returns
 
         self.vae_features: array
@@ -1665,6 +1674,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         if Load_Prev_Data is False:
             GO = graph_object()
             GO.size_of_net = size_of_net
+            GO.embedding_dim_genes = embedding_dim_genes
+            GO.embedding_dim_aa = embedding_dim_aa
+            GO.embedding_dim_hla = embedding_dim_hla
             with tf.device(self.device):
                 graph_model_AE = tf.Graph()
                 with graph_model_AE.as_default():
@@ -2360,7 +2372,8 @@ class DeepTCR_SS(DeepTCR_S_base):
     def Train(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
                  trainable_embedding=True,weight_by_class=False,class_weights=None,
                  num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
-                 use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
+                 use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
+                 embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
         """
         Train Single-Sequence Classifier
 
@@ -2429,6 +2442,15 @@ class DeepTCR_SS(DeepTCR_S_base):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
 
         Returns
         ---------------------------------------
@@ -2439,6 +2461,9 @@ class DeepTCR_SS(DeepTCR_S_base):
         GO = graph_object()
         GO.on_graph_clustering=False
         GO.size_of_net = size_of_net
+        GO.embedding_dim_genes = embedding_dim_genes
+        GO.embedding_dim_aa = embedding_dim_aa
+        GO.embedding_dim_hla = embedding_dim_hla
 
         with tf.device(self.device):
             with graph_model.as_default():
@@ -2548,7 +2573,8 @@ class DeepTCR_SS(DeepTCR_S_base):
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
                                 trainable_embedding=True,weight_by_class=False,class_weights=None,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
-                                use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
+                                use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
+                             embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
 
         '''
         Monte Carlo Cross-Validation for Single-Sequence Classifier
@@ -2629,6 +2655,15 @@ class DeepTCR_SS(DeepTCR_S_base):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
 
         Returns
         ---------------------------------------
@@ -2649,7 +2684,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                           trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
                           use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
-                       size_of_net=size_of_net,stop_criterion_window=stop_criterion_window)
+                       size_of_net=size_of_net,stop_criterion_window=stop_criterion_window,
+                       embedding_dim_aa=embedding_dim_aa,embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -2677,7 +2713,8 @@ class DeepTCR_SS(DeepTCR_S_base):
 
     def K_Fold_CrossVal(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
                            trainable_embedding=True,weight_by_class=False,class_weights=None,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
-                           iterations=None,use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
+                           iterations=None,use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
+                        embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
         '''
         K_Fold Cross-Validation for Single-Sequence Classifier
 
@@ -2758,6 +2795,15 @@ class DeepTCR_SS(DeepTCR_S_base):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
 
         Returns
         ---------------------------------------
@@ -2815,7 +2861,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                           trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
                           use_only_gene=use_only_gene,use_only_seq=use_only_seq,use_only_hla=use_only_hla,
-                       size_of_net=size_of_net,stop_criterion_window=stop_criterion_window)
+                       size_of_net=size_of_net,stop_criterion_window=stop_criterion_window,
+                       embedding_dim_aa=embedding_dim_aa,embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla)
 
 
             y_test.append(self.y_test)
@@ -2880,7 +2927,8 @@ class DeepTCR_WF(DeepTCR_S_base):
     def Train(self,batch_size = 25, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,on_graph_clustering=False,
               num_clusters=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
-              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
+              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
+              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
 
 
         """
@@ -2964,6 +3012,15 @@ class DeepTCR_WF(DeepTCR_S_base):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
 
         Returns
         ---------------------------------------
@@ -2974,6 +3031,9 @@ class DeepTCR_WF(DeepTCR_S_base):
         graph_model = tf.Graph()
         GO = graph_object()
         GO.size_of_net = size_of_net
+        GO.embedding_dim_genes = embedding_dim_genes
+        GO.embedding_dim_aa = embedding_dim_aa
+        GO.embedding_dim_hla = embedding_dim_hla
         GO.on_graph_clustering = on_graph_clustering
         with tf.device(self.device):
             with graph_model.as_default():
@@ -3123,7 +3183,8 @@ class DeepTCR_WF(DeepTCR_S_base):
     def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
                              kernel=5,on_graph_clustering=False,num_clusters=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
-                             use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
+                             use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
+                             embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
 
 
         """
@@ -3218,6 +3279,15 @@ class DeepTCR_WF(DeepTCR_S_base):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
 
         Returns
 
@@ -3244,7 +3314,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                           num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
                             use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
-                       size_of_net=size_of_net,stop_criterion_window=stop_criterion_window)
+                       size_of_net=size_of_net,stop_criterion_window=stop_criterion_window,embedding_dim_aa=embedding_dim_aa,
+                       embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -3285,7 +3356,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                         on_graph_clustering=False,num_clusters=12, weight_by_class=False,class_weights=None, iterations=None,
                         trainable_embedding=True, accuracy_min = None,
                         num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
-                        use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium'):
+                        use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
+                        embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
 
         """
         K_Fold Cross-Validation for Whole Sample Classifier
@@ -3377,6 +3449,15 @@ class DeepTCR_WF(DeepTCR_S_base):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
 
         Returns
         ---------------------------------------
@@ -3432,7 +3513,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                           num_fc_layers=num_fc_layers,units_fc=units_fc,
                           drop_out_rate=drop_out_rate,suppress_output=suppress_output,
                             use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
-                       size_of_net=size_of_net,stop_criterion_window=stop_criterion_window)
+                       size_of_net=size_of_net,stop_criterion_window=stop_criterion_window,
+                       embedding_dim_aa=embedding_dim_aa,embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla)
 
 
             y_test.append(self.y_test)
