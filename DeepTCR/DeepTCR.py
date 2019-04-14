@@ -501,7 +501,7 @@ class DeepTCR_base(object):
             A 1d array with class labels for the sequence (i.e. antigen-specificities)
 
         sample_labels: ndarray of strings
-            A 1d array with sample labels for the sequence. (i.e. when loading data from differnet samples)
+            A 1d array with sample labels for the sequence. (i.e. when loading data from different samples)
 
         counts: ndarray of ints
             A 1d array with the counts for each sequence, in the case they come from samples.
@@ -3543,8 +3543,8 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.y_pred = np.vstack(y_pred)
         print('K-fold Cross Validation Completed')
 
-    def Sample_Inference(self,sample_id,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
-                  v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10):
+    def Sample_Inference(self,sample_labels,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
+                  v_alpha=None, j_alpha=None, p=None,hla=None,freq=None,counts=None, batch_size=10):
 
         with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'rb') as f:
             model_type,get,self.use_alpha,self.use_beta,\
@@ -3553,7 +3553,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,\
                 self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb= pickle.load(f)
 
-        len_input = len(sample_id)
+        len_input = len(sample_labels)
 
         if p is None:
             p = Pool(40)
@@ -3627,7 +3627,120 @@ class DeepTCR_WF(DeepTCR_S_base):
             p.close()
             p.join()
 
-        check=1
+        if counts is None:
+            counts = np.ones(shape=len_input)
+
+        count_dict={}
+        for s in np.unique(sample_labels):
+            idx = sample_labels==s
+            count_dict[s]=np.sum(counts[idx])
+
+        freq = []
+        for c,n in zip(counts,sample_labels):
+            freq.append(c/count_dict[n])
+        freq = np.asarray(freq)
+
+
+        tf.reset_default_graph()
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        with tf.Session(config=config) as sess:
+            saver = tf.train.import_meta_graph(os.path.join(self.Name, 'model', 'model.ckpt.meta'))
+            saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name, 'model')))
+            graph = tf.get_default_graph()
+
+            X_Freq = graph.get_tensor_by_name('Freq:0')
+            sp_i = graph.get_tensor_by_name('sp/indices:0')
+            sp_v = graph.get_tensor_by_name('sp/values:0')
+            sp_s = graph.get_tensor_by_name('sp/shape:0')
+
+            if self.use_alpha is True:
+                X_Seq_alpha_v = graph.get_tensor_by_name('Input_Alpha:0')
+
+            if self.use_beta is True:
+                X_Seq_beta_v = graph.get_tensor_by_name('Input_Beta:0')
+
+            if self.use_v_beta is True:
+                X_v_beta = graph.get_tensor_by_name('Input_V_Beta:0')
+
+            if self.use_d_beta is True:
+                X_d_beta = graph.get_tensor_by_name('Input_D_Beta:0')
+
+            if self.use_j_beta is True:
+                X_j_beta = graph.get_tensor_by_name('Input_J_Beta:0')
+
+            if self.use_v_alpha is True:
+                X_v_alpha = graph.get_tensor_by_name('Input_V_Alpha:0')
+
+            if self.use_j_alpha is True:
+                X_j_alpha = graph.get_tensor_by_name('Input_J_Alpha:0')
+
+            if self.use_hla:
+                X_hla = graph.get_tensor_by_name('HLA:0')
+
+            get_obj = graph.get_tensor_by_name(get)
+
+            out_list = []
+            sample_list = np.unique(sample_labels)
+            for vars in get_batches([sample_list], batch_size=batch_size, random=False):
+                var_idx = np.where(np.isin(sample_labels, vars[0]))[0]
+                lb = LabelEncoder()
+                lb.fit(vars[0])
+                _, _, sample_idx = np.intersect1d(lb.classes_, vars[0], return_indices=True)
+                vars = [v[sample_idx] for v in vars]
+                i = lb.transform(sample_labels[var_idx])
+
+                OH = OneHotEncoder(categories='auto')
+                sp = OH.fit_transform(i.reshape(-1, 1)).T
+                sp = sp.tocoo()
+                indices = np.mat([sp.row, sp.col]).T
+                #sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+
+                feed_dict = {X_Freq: freq[var_idx],
+                             sp_i: indices,
+                             sp_v: sp.data,
+                             sp_s: sp.shape}
+
+                if self.use_alpha is True:
+                    feed_dict[X_Seq_alpha_v] = X_Seq_alpha[var_idx]
+                if self.use_beta is True:
+                    feed_dict[X_Seq_beta_v] = X_Seq_beta[var_idx]
+
+                if self.use_v_beta is True:
+                    feed_dict[X_v_beta] = v_beta_num[var_idx]
+
+                if self.use_d_beta is True:
+                    feed_dict[X_d_beta] = d_beta_num[var_idx]
+
+                if self.use_j_beta is True:
+                    feed_dict[X_j_beta] = j_beta_num[var_idx]
+
+                if self.use_v_alpha is True:
+                    feed_dict[X_v_alpha] = v_alpha_num[var_idx]
+
+                if self.use_j_alpha is True:
+                    feed_dict[X_j_alpha] = j_alpha_num[var_idx]
+
+                if self.use_hla:
+                    feed_dict[X_hla] = hla_data_seq_num[var_idx]
+
+                out_list.append(sess.run(get_obj,feed_dict=feed_dict))
+
+        out_list = np.vstack(out_list)
+
+        DFs = []
+        for ii,c in enumerate(self.lb.classes_,0):
+            df_temp = pd.DataFrame()
+            df_temp['Samples'] = sample_list
+            df_temp['Pred'] = out_list[:,ii]
+            DFs.append(df_temp)
+
+        return dict(zip(self.lb.classes_,DFs))
+
+
+
+
+
 
 
 
