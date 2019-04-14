@@ -3553,6 +3553,9 @@ class DeepTCR_WF(DeepTCR_S_base):
         and generate outputs from the model on new data. This will return predicted probabilites
         for the given classes for the new data.
 
+        To load data from directories, one can use the Get_Data method from the base class to automatically
+        format the data into the proper format to be then input into this method.
+
         Inputs
         ---------------------------------------
 
