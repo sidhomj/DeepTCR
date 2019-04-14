@@ -3627,19 +3627,20 @@ class DeepTCR_WF(DeepTCR_S_base):
             p.close()
             p.join()
 
-        if counts is None:
+        if (counts is None) & (freq is None):
             counts = np.ones(shape=len_input)
 
-        count_dict={}
-        for s in np.unique(sample_labels):
-            idx = sample_labels==s
-            count_dict[s]=np.sum(counts[idx])
+        if counts is not None:
+            count_dict={}
+            for s in np.unique(sample_labels):
+                idx = sample_labels==s
+                count_dict[s]=np.sum(counts[idx])
 
-        freq = []
-        for c,n in zip(counts,sample_labels):
-            freq.append(c/count_dict[n])
-        freq = np.asarray(freq)
-
+        if freq is None:
+            freq = []
+            for c,n in zip(counts,sample_labels):
+                freq.append(c/count_dict[n])
+            freq = np.asarray(freq)
 
         tf.reset_default_graph()
         config = tf.ConfigProto()
@@ -3735,6 +3736,8 @@ class DeepTCR_WF(DeepTCR_S_base):
             df_temp['Pred'] = out_list[:,ii]
             DFs.append(df_temp)
 
+        self.Inference_Pred = out_list
+        self.Inference_Sample_List = sample_list
         return dict(zip(self.lb.classes_,DFs))
 
 
