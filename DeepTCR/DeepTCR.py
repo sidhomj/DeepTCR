@@ -3553,11 +3553,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,\
                 self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb= pickle.load(f)
 
-        inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha, hla]
-        for i in inputs:
-            if i is not None:
-                len_input = len(i)
-                break
+        len_input = len(sample_id)
 
         if p is None:
             p = Pool(40)
@@ -3583,30 +3579,40 @@ class DeepTCR_WF(DeepTCR_S_base):
             beta_sequences = np.asarray([None] * len_input)
 
         if v_beta is not None:
+            i_r = np.where(np.invert(np.isin(v_beta,self.lb_v_beta.classes_)))[0]
+            v_beta[i_r]= np.random.choice(self.lb_v_beta.classes_,len(i_r))
             v_beta_num = self.lb_v_beta.transform(v_beta)
         else:
             v_beta_num = np.zeros(shape=[len_input])
             v_beta = np.asarray([None] * len_input)
 
         if d_beta is not None:
+            i_r = np.where(np.invert(np.isin(d_beta,self.lb_d_beta.classes_)))[0]
+            d_beta[i_r]= np.random.choice(self.lb_d_beta.classes_,len(i_r))
             d_beta_num = self.lb_d_beta.transform(d_beta)
         else:
             d_beta_num = np.zeros(shape=[len_input])
             d_beta = np.asarray([None] * len_input)
 
         if j_beta is not None:
+            i_r = np.where(np.invert(np.isin(j_beta,self.lb_j_beta.classes_)))[0]
+            j_beta[i_r]= np.random.choice(self.lb_j_beta.classes_,len(i_r))
             j_beta_num = self.lb_j_beta.transform(j_beta)
         else:
             j_beta_num = np.zeros(shape=[len_input])
             j_beta = np.asarray([None] * len_input)
 
         if v_alpha is not None:
+            i_r = np.where(np.invert(np.isin(v_alpha,self.lb_v_alpha.classes_)))[0]
+            v_alpha[i_r]= np.random.choice(self.lb_v_alpha.classes_,len(i_r))
             v_alpha_num = self.lb_v_alpha.transform(v_alpha)
         else:
             v_alpha_num = np.zeros(shape=[len_input])
             v_alpha = np.asarray([None] * len_input)
 
         if j_alpha is not None:
+            i_r = np.where(np.invert(np.isin(j_alpha,self.lb_j_alpha.classes_)))[0]
+            j_alpha[i_r]= np.random.choice(self.lb_j_alpha.classes_,len(i_r))
             j_alpha_num = self.lb_j_alpha.transform(j_alpha)
         else:
             j_alpha_num = np.zeros(shape=[len_input])
@@ -3620,6 +3626,9 @@ class DeepTCR_WF(DeepTCR_S_base):
         if p is None:
             p.close()
             p.join()
+
+        check=1
+
 
 
 
