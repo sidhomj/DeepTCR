@@ -1147,8 +1147,9 @@ class feature_analytics_class(object):
 
 class vis_class(object):
 
-    def HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None,
-                          color_dict=None):
+    def HeatMap_Sequences(self,set='all', filename='Heatmap_Sequences.tif', sample_num=None,
+                          sample_num_per_class=None,color_dict=None):
+
         """
         HeatMap of Sequences
 
@@ -1172,56 +1173,67 @@ class vis_class(object):
 
         """
 
-        if sample_num_per_seq is not None and sample_num is not None:
-            print("sample_num_per_seq and sample_num cannot be assigned simultaneously")
-            return
+        if set == 'all':
+            features = self.features
+            class_id = self.class_id
+            sample_id = self.sample_id
+        elif set == 'train':
+            features = self.features[self.train_idx]
+            class_id = self.class_id[self.train_idx]
+            sample_id = self.sample_id[self.train_idx]
+        elif set == 'valid':
+            features = self.features[self.valid_idx]
+            class_id = self.class_id[self.valid_idx]
+            sample_id = self.sample_id[self.valid_idx]
+        elif set == 'test':
+            features = self.features[self.test_idx]
+            class_id = self.class_id[self.test_idx]
+            sample_id = self.sample_id[self.test_idx]
 
-        if sample_num is not None:
-            sel = np.random.choice(range(len(self.features)), sample_num, replace=False)
-            self.features = self.features[sel]
-            self.class_id = self.class_id[sel]
-            self.sample_id = self.sample_id[sel]
-            self.alpha_sequences = self.alpha_sequences[sel]
-            self.beta_sequences = self.beta_sequences[sel]
-
-        if sample_num_per_seq is not None:
-            features_temp = []
-            label_temp = []
-            file_temp = []
-            seq_temp_alpha = []
-            seq_temp_beta = []
-            for i in self.lb.classes_:
-                sel = np.where(self.class_id == i)[0]
-                sel = np.random.choice(sel, sample_num_per_seq, replace=False)
-                features_temp.append(self.features[sel])
-                label_temp.append(self.class_id[sel])
-                file_temp.append(self.sample_id[sel])
-                seq_temp_alpha.append(self.alpha_sequences[sel])
-                seq_temp_beta.append(self.beta_sequences[sel])
-
-            self.features = np.vstack(features_temp)
-            self.class_id = np.hstack(label_temp)
-            self.sample_id = np.hstack(file_temp)
-            self.alpha_sequences = np.hstack(seq_temp_alpha)
-            self.beta_sequences = np.hstack(seq_temp_beta)
-
-        keep = []
-        for i, column in enumerate(self.features.T, 0):
+        keep=[]
+        for i,column in enumerate(features.T,0):
             if len(np.unique(column)) > 1:
                 keep.append(i)
         keep = np.asarray(keep)
-        self.features = self.features[:, keep]
+        features = features[:,keep]
+
+        if sample_num_per_class is not None and sample_num is not None:
+            print("sample_num_per_class and sample_num cannot be assigned simultaneously")
+            return
+
+        if sample_num is not None:
+            sel = np.random.choice(range(len(features)), sample_num, replace=False)
+            features = features[sel]
+            class_id = class_id[sel]
+            sample_id = sample_id[sel]
+
+        if sample_num_per_class is not None:
+            features_temp = []
+            label_temp = []
+            file_temp = []
+            for i in self.lb.classes_:
+                sel = np.where(self.class_id == i)[0]
+                sel = np.random.choice(sel, sample_num_per_class, replace=False)
+                features_temp.append(features[sel])
+                label_temp.append(class_id[sel])
+                file_temp.append(sample_id[sel])
+
+
+            features = np.vstack(features_temp)
+            class_id = np.hstack(label_temp)
+            sample_id = np.hstack(file_temp)
+
 
         if color_dict is None:
-            N = len(np.unique(self.class_id))
+            N = len(np.unique(class_id))
             HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
             np.random.shuffle(HSV_tuples)
             RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
+            color_dict = dict(zip(np.unique(class_id), RGB_tuples))
 
-        row_colors = [color_dict[x] for x in self.class_id]
+        row_colors = [color_dict[x] for x in class_id]
         sns.set(font_scale=0.5)
-        CM = sns.clustermap(self.features, standard_scale=1, row_colors=row_colors, cmap='bwr')
+        CM = sns.clustermap(features, standard_scale=1, row_colors=row_colors, cmap='bwr')
         ax = CM.ax_heatmap
         ax.set_xticklabels('')
         ax.set_yticklabels('')
@@ -1995,15 +2007,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
 
         self.features = features
-
-        self.features = features
-        keep=[]
-        for i,column in enumerate(self.features.T,0):
-            if len(np.unique(column)) > 1:
-                keep.append(i)
-        keep = np.asarray(keep)
-        self.vae_features = self.features[:,keep]
-        self.features = self.vae_features
         self.embed_dict = embed_dict
         print('Training Done')
 
