@@ -25,8 +25,8 @@ def custom_train_test_split(X,Y,test_size,stratify):
         idx_test.append(np.random.choice(np.where(stratify == i)[0],num_per_class,replace=False))
 
     idx_left = np.setdiff1d(idx,np.hstack(idx_test))
-    if len(idx_test) < test_size:
-        diff = test_size - len(idx_test)
+    if len(np.hstack(idx_test)) < test_size:
+        diff = test_size - len(np.hstack(idx_test))
         idx_test.append(np.random.choice(idx_left,diff,replace=False))
 
     idx_test = np.hstack(idx_test)
