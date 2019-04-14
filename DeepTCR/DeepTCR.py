@@ -3221,6 +3221,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                 pickle.dump(self.kernel, f)
 
             GO.saver.save(sess, os.path.join(self.Name, 'model', 'model.ckpt'))
+
+            self.HLA_embed = GO.embedding_layer_hla.eval()
+
             with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
                 pickle.dump(['WF',GO.predicted.name,self.use_alpha, self.use_beta,
                              self.use_v_beta, self.use_d_beta, self.use_j_beta,
