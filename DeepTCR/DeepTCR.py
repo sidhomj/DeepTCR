@@ -1248,7 +1248,7 @@ class vis_class(object):
         plt.show()
         plt.savefig(os.path.join(self.directory_results, filename))
 
-    def HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True,
+    def HeatMap_Samples(self, set='all',filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True,
                         font_scale=1.0):
         """
         HeatMap of Samples
@@ -1258,6 +1258,11 @@ class vis_class(object):
 
         Inputs
         ---------------------------------------
+
+        set: str
+            To choose which set of sequences to analye, enter either
+            'all','train', 'valid',or 'test'. Since the sequences in the train set
+            may be overfit, it preferable to generally examine the test set on its own.
 
         filename: str
             Name of file to save heatmap.
@@ -1280,41 +1285,64 @@ class vis_class(object):
         ---------------------------------------
 
         """
+
+        if set == 'all':
+            features = self.features
+            class_id = self.class_id
+            sample_id = self.sample_id
+            freq = self.freq
+        elif set == 'train':
+            features = self.features[self.train_idx]
+            class_id = self.class_id[self.train_idx]
+            sample_id = self.sample_id[self.train_idx]
+            freq = self.freq[self.train_idx]
+        elif set == 'valid':
+            features = self.features[self.valid_idx]
+            class_id = self.class_id[self.valid_idx]
+            sample_id = self.sample_id[self.valid_idx]
+            freq = self.freq[self.valid_idx]
+        elif set == 'test':
+            features = self.features[self.test_idx]
+            class_id = self.class_id[self.test_idx]
+            sample_id = self.sample_id[self.test_idx]
+            freq = self.freq[self.test_idx]
+
+
         keep = []
-        for i, column in enumerate(self.features.T, 0):
+        for i, column in enumerate(features.T, 0):
             if len(np.unique(column)) > 1:
                 keep.append(i)
         keep = np.asarray(keep)
-        self.features = self.features[:, keep]
+        features = features[:, keep]
 
-        sample_id = np.unique(self.sample_id)
+        sample_list = np.unique(sample_id)
 
         vector = []
         file_label = []
-        for id in sample_id:
-            sel = self.sample_id == id
-            sel_idx = self.features[sel]
-            sel_freq = np.expand_dims(self.freq[sel], 1)
+        for id in sample_list:
+            sel = sample_id == id
+            sel_idx = features[sel]
+            sel_freq = np.expand_dims(freq[sel], 1)
             if Weight_by_Freq is True:
                 dist = np.expand_dims(np.sum(sel_idx * sel_freq, 0), 0)
             else:
                 dist = np.expand_dims(np.mean(sel_idx, 0), 0)
-            file_label.append(np.unique(self.class_id[sel])[0])
+            file_label.append(np.unique(class_id[sel])[0])
             vector.append(dist)
 
         vector = np.vstack(vector)
 
         if color_dict is None:
-            N = len(np.unique(self.class_id))
+            N = len(np.unique(class_id))
             HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
             np.random.shuffle(HSV_tuples)
             RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-            color_dict = dict(zip(np.unique(self.class_id), RGB_tuples))
+            color_dict = dict(zip(np.unique(class_id), RGB_tuples))
 
         row_colors = [color_dict[x] for x in file_label]
 
         dfs = pd.DataFrame(vector)
-        dfs.set_index(sample_id, inplace=True)
+        dfs.set_index(sample_list, inplace=True)
         sns.set(font_scale=font_scale)
         CM = sns.clustermap(dfs, standard_scale=1, cmap='bwr', figsize=(12, 10), row_colors=row_colors)
         ax = CM.ax_heatmap
