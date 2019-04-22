@@ -344,6 +344,7 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
 
         feed_dict = {GO.Y: vars[-1],
+                     GO.tmb: vars[1],
                      GO.X_Freq: self.freq[var_idx],
                      GO.sp: sp}
 

@@ -59,6 +59,7 @@ class DeepTCR_base(object):
         self.use_v_alpha = False
         self.use_j_alpha = False
         self.use_hla = False
+        self.use_tmb = False
 
         #Create dataframes for assigning AA to ints
         aa_idx, aa_mat = make_aa_df()
@@ -80,7 +81,7 @@ class DeepTCR_base(object):
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
                     v_alpha_column=None,j_alpha_column=None,
-                    v_beta_column=None,j_beta_column=None,d_beta_column=None,p=None,hla=None):
+                    v_beta_column=None,j_beta_column=None,d_beta_column=None,p=None,hla=None,tmb=None):
         """
         Get Data for DeepTCR
 
@@ -420,6 +421,27 @@ class DeepTCR_base(object):
                 hla_data_seq = np.asarray(['None']*len(file_id))
                 hla_data_seq_num = np.asarray(['None']*len(file_id))
 
+            if tmb is not None:
+                self.use_tmb = True
+                tmb_df = pd.read_csv(tmb)
+
+                tmb_df = tmb_df.set_index(tmb_df.columns[0])
+                tmb_id = []
+                tmb_data = []
+                for i in tmb_df.iterrows():
+                    tmb_id.append(i[0])
+                    tmb_data.append(i[1].iloc[0])
+
+                tmb_id = np.asarray(tmb_id)
+                tmb_data = np.asarray(tmb_data)
+
+                keep,idx_1,idx_2 = np.intersect1d(file_list,tmb_id,return_indices=True)
+                file_list = keep
+                tmb_data = tmb_data[idx_2]
+            else:
+                tmb_data = np.zeros_like(file_list)
+
+
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
                 pickle.dump([X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,
                              self.lb,file_list,self.use_alpha,self.use_beta,
@@ -427,7 +449,8 @@ class DeepTCR_base(object):
                              v_beta, d_beta,j_beta,v_alpha,j_alpha,
                              v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,
                              self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,
-                             self.lb_hla, hla_data, hla_data_num,hla_data_seq,hla_data_seq_num,self.use_hla],f,protocol=4)
+                             self.lb_hla, hla_data, hla_data_num,hla_data_seq,hla_data_seq_num,self.use_hla,
+                             self.use_tmb,tmb_data],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
@@ -437,7 +460,8 @@ class DeepTCR_base(object):
                     v_beta, d_beta,j_beta,v_alpha,j_alpha,\
                     v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,\
                     self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,\
-                    self.lb_hla, hla_data,hla_data_num,hla_data_seq,hla_data_seq_num,self.use_hla = pickle.load(f)
+                    self.lb_hla, hla_data,hla_data_num,hla_data_seq,hla_data_seq_num,self.use_hla,\
+                    self.use_tmb, tmb_data = pickle.load(f)
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
@@ -463,6 +487,7 @@ class DeepTCR_base(object):
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         self.hla_data_seq = hla_data_seq
         self.hla_data_seq_num = hla_data_seq_num
+        self.tmb = tmb_data
         print('Data Loaded')
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
@@ -2966,7 +2991,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             Y.append(self.Y[np.where(self.sample_id==s)[0][0]])
         Y = np.vstack(Y)
 
-        Vars = [np.asarray(self.sample_list)]
+        Vars = [np.asarray(self.sample_list),self.tmb]
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
 
@@ -3095,7 +3120,16 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.Features = GO.Features_c
                 GO.Features_W = GO.Features_c*GO.X_Freq[:,tf.newaxis]
                 GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
-                GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
+                GO.tmb = tf.placeholder(tf.float32,shape=[None,],name='tmb')
+                GO.tmb_features = tf.layers.dense(GO.tmb[:,tf.newaxis],12,tf.nn.relu)
+                GO.tmb_features = tf.layers.dense(GO.tmb_features,12,tf.nn.relu)
+                GO.tmb_features = tf.layers.dense(GO.tmb_features,12,tf.nn.relu)
+                GO.Features_F = tf.concat((GO.Features_Agg,GO.tmb_features),axis=1)
+                GO.Features_F = tf.layers.dense(GO.Features_F,12,tf.nn.relu)
+                GO.Features_F = tf.layers.dense(GO.Features_F,12,tf.nn.relu)
+                GO.Features_F = tf.layers.dense(GO.Features_F,12,tf.nn.relu)
+
+                GO.logits = tf.layers.dense(GO.tmb_features,self.Y.shape[1])
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
@@ -3192,12 +3226,12 @@ class DeepTCR_WF(DeepTCR_S_base):
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
             self.features,self.features_c = Get_Latent_Features(self,batch_size_seq,GO,sess)
 
-            pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
-            if len(idx.shape) == 0:
-                idx = idx.reshape(-1,1)
-
-            self.predicted[idx] += pred
-            self.seq_idx = idx
+            # pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
+            # if len(idx.shape) == 0:
+            #     idx = idx.reshape(-1,1)
+            #
+            # self.predicted[idx] += pred
+            # self.seq_idx = idx
 
             self.train_idx = np.isin(self.sample_id,self.train[0])
             self.valid_idx = np.isin(self.sample_id,self.valid[0])
@@ -3375,7 +3409,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             y_pred.append(self.y_pred)
             files.append(self.test[0])
 
-            counts[self.seq_idx] += 1
+            #counts[self.seq_idx] += 1
 
             y_test2 = np.vstack(y_test)
             y_pred2 = np.vstack(y_pred)
@@ -3403,7 +3437,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         self.DFs_pred = dict(zip(self.lb.classes_,DFs))
 
-        self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
+        #self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal(self,folds=None,epochs_min=25,batch_size=25,stop_criterion=0.25, stop_criterion_window=10,kernel=5,
