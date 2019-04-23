@@ -2984,7 +2984,7 @@ class DeepTCR_WF(DeepTCR_S_base):
     def Train(self,batch_size = 25, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,on_graph_clustering=False,
               num_clusters=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
-              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
+              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='small',
               embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
 
 
