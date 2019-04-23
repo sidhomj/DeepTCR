@@ -62,7 +62,9 @@ CLASSES
      |          Fraction of sample to be used for valid and test set.
      |      
      |      LOO: int
-     |          Number of sequences to leave-out in Leave-One-Out Cross-Validation
+     |          Number of samples to leave-out in Leave-One-Out Cross-Validation. For example,
+     |          when set to 2, 2 samples will be left out for the validation set and 2 samples will be left
+     |          out for the test set.
      |      
      |      Returns
      |      ---------------------------------------
@@ -783,7 +785,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from vis_class:
      |  
-     |  HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
+     |  HeatMap_Samples(self, set='all', filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
      |      HeatMap of Samples
      |      
      |      This method creates a heatmap/clustermap for samples by latent features
@@ -791,6 +793,11 @@ CLASSES
      |      
      |      Inputs
      |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
      |      
      |      filename: str
      |          Name of file to save heatmap.
@@ -812,7 +819,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None, color_dict=None)
+     |  HeatMap_Sequences(self, set='all', filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_class=None, color_dict=None)
      |      HeatMap of Sequences
      |      
      |      This method creates a heatmap/clustermap for sequences by latent features
@@ -821,11 +828,19 @@ CLASSES
      |      Inputs
      |      ---------------------------------------
      |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
      |      filename: str
      |          Name of file to save heatmap.
      |      
      |      sample_num: int
      |          Number of events to randomly sample for heatmap.
+     |      
+     |      sample_num_per_class: int
+     |          Number of events to randomly sample per class for heatmap.
      |      
      |      color_dict: dict
      |          Optional dictionary to provide specified colors for classes.
@@ -1397,7 +1412,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from vis_class:
      |  
-     |  HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
+     |  HeatMap_Samples(self, set='all', filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
      |      HeatMap of Samples
      |      
      |      This method creates a heatmap/clustermap for samples by latent features
@@ -1405,6 +1420,11 @@ CLASSES
      |      
      |      Inputs
      |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
      |      
      |      filename: str
      |          Name of file to save heatmap.
@@ -1426,7 +1446,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None, color_dict=None)
+     |  HeatMap_Sequences(self, set='all', filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_class=None, color_dict=None)
      |      HeatMap of Sequences
      |      
      |      This method creates a heatmap/clustermap for sequences by latent features
@@ -1435,11 +1455,19 @@ CLASSES
      |      Inputs
      |      ---------------------------------------
      |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
      |      filename: str
      |          Name of file to save heatmap.
      |      
      |      sample_num: int
      |          Number of events to randomly sample for heatmap.
+     |      
+     |      sample_num_per_class: int
+     |          Number of events to randomly sample per class for heatmap.
      |      
      |      color_dict: dict
      |          Optional dictionary to provide specified colors for classes.
@@ -2129,7 +2157,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from vis_class:
      |  
-     |  HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
+     |  HeatMap_Samples(self, set='all', filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
      |      HeatMap of Samples
      |      
      |      This method creates a heatmap/clustermap for samples by latent features
@@ -2137,6 +2165,11 @@ CLASSES
      |      
      |      Inputs
      |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
      |      
      |      filename: str
      |          Name of file to save heatmap.
@@ -2158,7 +2191,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None, color_dict=None)
+     |  HeatMap_Sequences(self, set='all', filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_class=None, color_dict=None)
      |      HeatMap of Sequences
      |      
      |      This method creates a heatmap/clustermap for sequences by latent features
@@ -2167,11 +2200,19 @@ CLASSES
      |      Inputs
      |      ---------------------------------------
      |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
      |      filename: str
      |          Name of file to save heatmap.
      |      
      |      sample_num: int
      |          Number of events to randomly sample for heatmap.
+     |      
+     |      sample_num_per_class: int
+     |          Number of events to randomly sample per class for heatmap.
      |      
      |      color_dict: dict
      |          Optional dictionary to provide specified colors for classes.
@@ -2312,7 +2353,9 @@ CLASSES
      |          Fraction of sample to be used for valid and test set.
      |      
      |      LOO: int
-     |          Number of samples to leave-out in Leave-One-Out Cross-Validation
+     |          Number of samples to leave-out in Leave-One-Out Cross-Validation. For example,
+     |          when set to 2, 2 samples will be left out for the validation set and 2 samples will be left
+     |          out for the test set.
      |      
      |      Returns
      |      ---------------------------------------
@@ -3141,7 +3184,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from vis_class:
      |  
-     |  HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
+     |  HeatMap_Samples(self, set='all', filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
      |      HeatMap of Samples
      |      
      |      This method creates a heatmap/clustermap for samples by latent features
@@ -3149,6 +3192,11 @@ CLASSES
      |      
      |      Inputs
      |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
      |      
      |      filename: str
      |          Name of file to save heatmap.
@@ -3170,7 +3218,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None, color_dict=None)
+     |  HeatMap_Sequences(self, set='all', filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_class=None, color_dict=None)
      |      HeatMap of Sequences
      |      
      |      This method creates a heatmap/clustermap for sequences by latent features
@@ -3179,11 +3227,19 @@ CLASSES
      |      Inputs
      |      ---------------------------------------
      |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
      |      filename: str
      |          Name of file to save heatmap.
      |      
      |      sample_num: int
      |          Number of events to randomly sample for heatmap.
+     |      
+     |      sample_num_per_class: int
+     |          Number of events to randomly sample per class for heatmap.
      |      
      |      color_dict: dict
      |          Optional dictionary to provide specified colors for classes.
@@ -3703,7 +3759,7 @@ CLASSES
     class vis_class(builtins.object)
      |  Methods defined here:
      |  
-     |  HeatMap_Samples(self, filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
+     |  HeatMap_Samples(self, set='all', filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True, font_scale=1.0)
      |      HeatMap of Samples
      |      
      |      This method creates a heatmap/clustermap for samples by latent features
@@ -3711,6 +3767,11 @@ CLASSES
      |      
      |      Inputs
      |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
      |      
      |      filename: str
      |          Name of file to save heatmap.
@@ -3732,7 +3793,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  HeatMap_Sequences(self, filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_seq=None, color_dict=None)
+     |  HeatMap_Sequences(self, set='all', filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_class=None, color_dict=None)
      |      HeatMap of Sequences
      |      
      |      This method creates a heatmap/clustermap for sequences by latent features
@@ -3741,11 +3802,19 @@ CLASSES
      |      Inputs
      |      ---------------------------------------
      |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
      |      filename: str
      |          Name of file to save heatmap.
      |      
      |      sample_num: int
      |          Number of events to randomly sample for heatmap.
+     |      
+     |      sample_num_per_class: int
+     |          Number of events to randomly sample per class for heatmap.
      |      
      |      color_dict: dict
      |          Optional dictionary to provide specified colors for classes.
