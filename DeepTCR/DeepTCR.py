@@ -3182,12 +3182,10 @@ class DeepTCR_WF(DeepTCR_S_base):
                         if accuracy_min is not None:
                             if np.mean(train_accuracy_total[-3:]) >= accuracy_min:
                                 break
-
                         else:
                             if val_loss_total:
                                 if stop_check(val_loss_total, stop_criterion, stop_criterion_window):
                                     break
-
 
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
