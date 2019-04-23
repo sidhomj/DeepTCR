@@ -1,10 +1,11 @@
-numpy==1.14.5
-pandas==0.23.1
+numpy==1.16.2
+pandas==0.24.2
 tensorflow==1.11.0
 scikit-learn==0.19.1
 pickleshare==0.7.4
 matplotlib==2.2.2
-scipy==1.1.0
-biopython==1.69
+scipy==1.2.1
+biopython==1.73
 seaborn==0.9.0
 PhenoGraph==1.5.2
+umap-learn==0.3.8

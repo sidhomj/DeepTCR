@@ -28,17 +28,17 @@ https://www.biorxiv.org/content/early/2018/11/26/464107
 ## Dependencies
 
 DeepTCR has the following python library dependencies:
-1. numpy==1.14.5
+1. numpy==1.16.2
 2. pandas==0.23.1
 3. tensorflow==1.11.0
-4. scikit-learn==0.19.1
+4. scikit-learn==0.20.3
 5. pickleshare==0.7.4
 6. matplotlib==2.2.2
-7. scipy==1.1.0
-8. biopython==1.69
+7. scipy==1.2.1
+8. biopython==1.73
 9. seaborn==0.9.0
 10. PhenoGraph==1.5.2
-
+11. umap-learn==0.3.8
 
 ## Installation
 
