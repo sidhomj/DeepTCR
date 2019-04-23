@@ -3129,7 +3129,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.Features_F = tf.layers.dense(GO.Features_F,12,tf.nn.relu)
                 GO.Features_F = tf.layers.dense(GO.Features_F,12,tf.nn.relu)
 
-                GO.logits = tf.layers.dense(GO.tmb_features,self.Y.shape[1])
+                GO.logits = tf.layers.dense(GO.Features_F,self.Y.shape[1])
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
@@ -3211,16 +3211,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                                 break
 
                         else:
-                            if self.LOO is None:
-                                if val_loss_total:
-                                    if stop_check(val_loss_total,stop_criterion,stop_criterion_window):
-                                        break
-
-                            else:
-                                if train_loss_total:
-                                    if stop_check(train_loss_total,stop_criterion,stop_criterion_window):
-                                        break
-
+                            if val_loss_total:
+                                if stop_check(val_loss_total,stop_criterion,stop_criterion_window):
+                                    break
 
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
