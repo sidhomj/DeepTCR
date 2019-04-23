@@ -2397,7 +2397,9 @@ class DeepTCR_SS(DeepTCR_S_base):
             Fraction of sample to be used for valid and test set.
 
         LOO: int
-            Number of sequences to leave-out in Leave-One-Out Cross-Validation
+            Number of samples to leave-out in Leave-One-Out Cross-Validation. For example,
+            when set to 2, 2 samples will be left out for the validation set and 2 samples will be left
+            out for the test set.
 
         Returns
         ---------------------------------------
@@ -2958,7 +2960,9 @@ class DeepTCR_WF(DeepTCR_S_base):
             Fraction of sample to be used for valid and test set.
 
         LOO: int
-            Number of samples to leave-out in Leave-One-Out Cross-Validation
+            Number of samples to leave-out in Leave-One-Out Cross-Validation. For example,
+            when set to 2, 2 samples will be left out for the validation set and 2 samples will be left
+            out for the test set.
 
         Returns
         ---------------------------------------
