@@ -2970,6 +2970,10 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
 
+        if (self.valid[0].size==0) or (self.test[0].size==0):
+            raise Exception('Choose different train/valid/test parameters!')
+
+
     def Train(self,batch_size = 25, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,on_graph_clustering=False,
               num_clusters=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
