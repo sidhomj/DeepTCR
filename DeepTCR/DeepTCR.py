@@ -3184,15 +3184,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                                 break
 
                         else:
-                            if self.LOO is None:
-                                if val_loss_total:
-                                    if stop_check(val_loss_total,stop_criterion,stop_criterion_window):
-                                        break
-
-                            else:
-                                if train_loss_total:
-                                    if stop_check(train_loss_total,stop_criterion,stop_criterion_window):
-                                        break
+                            if val_loss_total:
+                                if stop_check(val_loss_total, stop_criterion, stop_criterion_window):
+                                    break
 
 
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
