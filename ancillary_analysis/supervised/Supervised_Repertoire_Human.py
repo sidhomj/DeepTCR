@@ -27,8 +27,8 @@ DTCR.AUC_Curve()
 
 #Train with both Seq + HLA
 DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
-                          use_only_hla=False,weight_by_class=weight_by_class,size_of_net=size_of_net,
-                          on_graph_clustering=True)
+                          use_only_hla=False,weight_by_class=weight_by_class,size_of_net=size_of_net)
+
 DTCR.AUC_Curve()
 
 
