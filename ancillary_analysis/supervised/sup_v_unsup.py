@@ -9,6 +9,8 @@ import seaborn as sns
 from NN_Assessment_utils import *
 import pickle
 import os
+from scipy.stats import ttest_ind
+
 
 #Run VAE
 DTCRU = DeepTCR_U('Sequence_C',device='/gpu:1')
@@ -80,6 +82,14 @@ df_s['Type'] = 'Supervised'
 
 df_comp = pd.concat((df_u,df_s),axis=0)
 
+dir_results = 'Sup_V_Unsup_Results'
+if not os.path.exists(dir_results):
+    os.makedirs(dir_results)
+
+df_comp.to_csv(os.path.join(dir_results,'df_comp.csv'))
+
+df_comp = pd.read_csv(os.path.join(dir_results,'df_comp.csv'))
+
 sns.violinplot(data=df_comp,x='Class',y='AUC',hue='Method')
 plt.xticks(rotation=45)
 plt.xlabel('')
@@ -91,6 +101,24 @@ ax.legend().remove()
 plt.legend(fontsize=24)
 
 
+
+names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Sup-Seq','Sup-VDJ','Sup-Seq-VDJ']
+antigens =['Db-F2', 'Db-M45', 'Db-NP', 'Db-PA', 'Db-PB1', 'Kb-M38', 'Kb-SIY',
+       'Kb-TRP2', 'Kb-m139']
+antigen = antigens[8]
+df_test = df_comp[df_comp['Class'] == antigen]
+
+for ii in range(len(names)):
+    idx_1 = df_test['Method'] == names[ii]
+    idx_2 = df_test['Method'] == names[ii+1]
+    t,p_val = ttest_ind(df_test[idx_1]['AUC'],df_test[idx_2]['AUC'])
+    print(p_val)
+
+
+idx_1 = df_test['Method'] == names[2]
+idx_2 = df_test['Method'] == names[5]
+t,p_val = ttest_ind(df_test[idx_1]['AUC'],df_test[idx_2]['AUC'])
+print(p_val)
 
 
 
