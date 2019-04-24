@@ -3,6 +3,7 @@ from DeepTCR.DeepTCR import DeepTCR_SS, DeepTCR_WF
 folds = 100
 LOO = 4
 epochs_min = 50
+size_of_net = 'medium'
 
 #Train Sequence Classifier
 DTCR_SS = DeepTCR_SS('Rudqvist')
