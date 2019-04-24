@@ -258,7 +258,8 @@ def Diff_Features(features,indices,sequences,type,sample_id,p_val_threshold,
                 motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
                 motifs.append(motif)
 
-            SeqIO.write(motifs, os.path.join(dir, 'feature_') + str(feature) + '.fasta', 'fasta')
+            mag_write = str(np.around(df_features['Mag'][feature],3))
+            SeqIO.write(motifs, os.path.join(dir, str(mag_write)+'_feature_') + str(feature) +'.fasta', 'fasta')
 
     seq_features_df_pos = pd.DataFrame()
 
