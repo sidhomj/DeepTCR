@@ -10,6 +10,9 @@ from NN_Assessment_utils import *
 import pickle
 import os
 import matplotlib.pyplot as plt
+import pandas as pd
+from scipy.stats import ttest_rel
+
 
 dir_results = 'Repertoire_Classification_Results'
 if not os.path.exists(dir_results):
@@ -66,7 +69,7 @@ prop_seqalign,_ = phenograph_clustering_freq(d_seqalign,DTCRU)
 # #
 prop_list = [prop_vae_seq,prop_vae_gene,prop_vae_seq_gene,prop_hamming,prop_kmer,prop_seqalign]
 names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Hamming','K-mer','Global-Seq-Align']
-# #
+# # #
 with open('Prop.pkl','wb') as f:
     pickle.dump([prop_list,names],f)
 
@@ -83,9 +86,10 @@ for i in prop_list[0].index:
 df_metrics = Assess_Performance_KNN_Samples(distances_list,distances_names,method_names,dir_results,labels)
 Plot_Performance_Samples(df_metrics,dir_results)
 
+df_metrics = pd.read_csv(os.path.join(dir_results,'df.csv'))
+
 #Determine best distance metric across all algorithms
 df_temp = df_metrics[df_metrics['Metric']=='AUC']
-#df_temp = df_temp[df_temp['Classes']=='Combo']
 fig,ax = plt.subplots()
 sns.violinplot(data=df_temp,x='Distance Metric',y='Value',hue='Algorithm',ax=ax)
 plt.xlabel('')
@@ -94,24 +98,23 @@ plt.xticks(fontsize=24)
 plt.yticks(fontsize=24)
 ax.get_legend().remove()
 
-subdir = 'Performance_Summary'
-if not os.path.exists(os.path.join(dir_results,subdir)):
-    os.makedirs(os.path.join(dir_results,subdir))
+#Compute statistics between various algorithms and distance metrics
+method = 'AUC'
+metric = 'Wasserstein'
+for ii in range(len(names)):
+    df_test = df_metrics[df_metrics['Metric']==method]
+    df_test = df_test[df_test['Distance Metric']==metric]
+    idx_1 = df_test['Algorithm'] == names[ii]
+    idx_2 = df_test['Algorithm'] == names[ii+1]
+    t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
+    print(p_val)
 
-for m in np.unique(df_metrics['Metric']):
-    sns.catplot(data=df_metrics[df_metrics['Metric']==m],x='Algorithm',y='Value',kind='violin')
-    plt.ylabel(m)
-    plt.xticks(rotation=45)
-    plt.xlabel('')
-    plt.subplots_adjust(bottom=0.25)
-    plt.ylabel(m,fontsize=14)
-    plt.xticks(fontsize=12)
-    plt.savefig(os.path.join(dir_results,subdir,m+'.eps'))
+distance_names = ['Euclidean', 'Correlation', 'KL-Divergence', 'JS-Divergence', 'Wasserstein']
+method = 'AUC'
+for ii in range(len(distance_names)):
+    df_test = df_metrics[df_metrics['Metric']==method]
+    idx_1 = df_test['Distance Metric'] == distance_names[ii]
+    idx_2 = df_test['Distance Metric'] == distance_names[ii+1]
+    t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
+    print(p_val)
 
-method = 'F1_Score'
-from scipy.stats import ttest_rel
-df_test = df_metrics[df_metrics['Metric']==method]
-idx_1 = df_test['Algorithm'] == 'K-mer'
-idx_2 = df_test['Algorithm'] == 'Hamming'
-t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
-print(p_val)

@@ -13,3 +13,7 @@ color_dict = {'Control':'limegreen','9H10':'red','RT':'darkorange','Combo':'mage
 DTCRU.Repertoire_Dendrogram(n_jobs=40,distance_metric='KL',
                            dendrogram_radius=0.28,repertoire_radius=0.35,Load_Prev_Data=True,gridsize=6,
                             color_dict=color_dict)
+
+import matplotlib.pyplot as plt
+plt.figure()
+plt.scatter(0,0,s=5000,edgecolors='magenta',facecolors='none',linewidths=8)
