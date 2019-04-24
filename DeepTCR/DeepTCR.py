@@ -1502,7 +1502,7 @@ class vis_class(object):
 
     def UMAP_Plot(self, set='all',by_class=False, by_cluster=False,
                   by_sample=False, freq_weight=False, show_legend=True,
-                  scale=100,Load_Prev_Data=False, alpha=1.0,sample=None):
+                  scale=100,Load_Prev_Data=False, alpha=1.0,sample=None,filename=None):
 
         """
         UMAP vizualisation of TCR Sequences
@@ -1548,6 +1548,10 @@ class vis_class(object):
 
         sample: int
             Number of events to sub-sample for visualization.
+
+        filename: str
+            To save umap lot to results folder, enter a name for the file and the umap
+            will be saved to the results directory.
 
 
         Returns
@@ -1640,6 +1644,10 @@ class vis_class(object):
         plt.yticks([])
         plt.xlabel('')
         plt.ylabel('')
+
+        if filename is not None:
+            plt.savefig(os.path.join(self.directory_results, filename))
+
 
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
