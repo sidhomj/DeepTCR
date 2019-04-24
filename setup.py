@@ -8,7 +8,7 @@ if sys.version_info.major != 3:
 setup(
     name="DeepTCR",
     description="Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data",
-    version="1.2.18",
+    version="1.2.19",
     author="John-William Sidhom",
     author_email="jsidhom1@jhmi.edu",
     packages=find_packages(),
