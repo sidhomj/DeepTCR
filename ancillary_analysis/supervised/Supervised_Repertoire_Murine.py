@@ -21,10 +21,10 @@ DTCR_WF.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min)
 DTCR_WF.AUC_Curve()
 
 #Train Repertoire Classifier with on-graph clustering
-DTCR_WF.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,on_graph_clustering=True,epochs_min=epochs_min)
+DTCR_WF.Monte_Carlo_CrossVal(folds=1,LOO=LOO,on_graph_clustering=True,epochs_min=epochs_min)
 DTCR_WF.AUC_Curve()
 
 #Visualize Latent Space
 DTCR_WF.UMAP_Plot(by_class=True,freq_weight=True,show_legend=True,scale=5000,Load_Prev_Data=False,
-                  alpha=0.5)
+                  alpha=0.5,filename='umap_2.eps')
 

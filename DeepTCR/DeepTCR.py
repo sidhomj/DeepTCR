@@ -1552,6 +1552,7 @@ class vis_class(object):
         filename: str
             To save umap lot to results folder, enter a name for the file and the umap
             will be saved to the results directory.
+            i.e. umap.png
 
 
         Returns

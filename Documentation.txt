@@ -905,7 +905,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -949,6 +949,11 @@ CLASSES
      |      
      |      sample: int
      |          Number of events to sub-sample for visualization.
+     |      
+     |      filename: str
+     |          To save umap lot to results folder, enter a name for the file and the umap
+     |          will be saved to the results directory.
+     |          i.e. umap.png
      |      
      |      
      |      Returns
@@ -1532,7 +1537,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -1576,6 +1581,11 @@ CLASSES
      |      
      |      sample: int
      |          Number of events to sub-sample for visualization.
+     |      
+     |      filename: str
+     |          To save umap lot to results folder, enter a name for the file and the umap
+     |          will be saved to the results directory.
+     |          i.e. umap.png
      |      
      |      
      |      Returns
@@ -2277,7 +2287,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -2321,6 +2331,11 @@ CLASSES
      |      
      |      sample: int
      |          Number of events to sub-sample for visualization.
+     |      
+     |      filename: str
+     |          To save umap lot to results folder, enter a name for the file and the umap
+     |          will be saved to the results directory.
+     |          i.e. umap.png
      |      
      |      
      |      Returns
@@ -3304,7 +3319,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -3348,6 +3363,11 @@ CLASSES
      |      
      |      sample: int
      |          Number of events to sub-sample for visualization.
+     |      
+     |      filename: str
+     |          To save umap lot to results folder, enter a name for the file and the umap
+     |          will be saved to the results directory.
+     |          i.e. umap.png
      |      
      |      
      |      Returns
@@ -3879,7 +3899,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -3923,6 +3943,11 @@ CLASSES
      |      
      |      sample: int
      |          Number of events to sub-sample for visualization.
+     |      
+     |      filename: str
+     |          To save umap lot to results folder, enter a name for the file and the umap
+     |          will be saved to the results directory.
+     |          i.e. umap.png
      |      
      |      
      |      Returns
