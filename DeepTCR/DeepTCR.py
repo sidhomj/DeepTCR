@@ -1355,7 +1355,7 @@ class vis_class(object):
 
     def Repertoire_Dendrogram(self,set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
                              dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward',
-                             gridsize=10, Load_Prev_Data=False):
+                             gridsize=10, Load_Prev_Data=False,filename=None):
         """
         Repertoire Dendrogram
 
@@ -1406,6 +1406,11 @@ class vis_class(object):
             If method has been run before, one can load previous data used to construct the figure for
             faster figure creation. This is helpful when trying to format the figure correctly and will require
             the user to run the method multiple times.
+
+        filename: str
+            To save dendrogram plot to results folder, enter a name for the file and the dendrogram
+            will be saved to the results directory.
+            i.e. dendrogram.png
 
         Returns
 
@@ -1496,9 +1501,9 @@ class vis_class(object):
         X_2 = np.vstack(temp_x)
         sample_id = np.hstack(temp_s)
 
-        rad_plot(X_2, squareform(pairwise_distances), samples, labels, sample_id, color_dict,
+        rad_plot(X_2, squareform(pairwise_distances), samples, labels, sample_id, color_dict,self,
                  gridsize=gridsize, dg_radius=dendrogram_radius, linkage_method=linkage_method,
-                 figsize=8, axes_radius=repertoire_radius)
+                 figsize=8, axes_radius=repertoire_radius,filename=filename)
 
     def UMAP_Plot(self, set='all',by_class=False, by_cluster=False,
                   by_sample=False, freq_weight=False, show_legend=True,

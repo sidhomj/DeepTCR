@@ -10,6 +10,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.model_selection import StratifiedKFold, LeaveOneOut, KFold
 from sklearn.metrics import f1_score, recall_score, precision_score, roc_auc_score,accuracy_score
+import os
 
 
 def get_batches(Vars, batch_size=10,random=False):
@@ -105,8 +106,9 @@ def polar_dendrogram(dg, fig, ax_radius=0.2, log_scale=False):
         # ax.set(xticks=np.linspace(0, 2 * np.pi, icoord.shape[0] + 2), xticklabels=dg['ivl'], yticks=[])
         ax.set(xticks=[], yticks=[])
 
-def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,gridsize=50,
-             dg_radius=0.2,axes_radius=0.4,figsize=8,log_scale=False,linkage_method='complete',plot_type='hexbin'):
+def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,gridsize=50,
+             dg_radius=0.2,axes_radius=0.4,figsize=8,log_scale=False,linkage_method='complete',plot_type='hexbin',
+             filename=None):
 
     n_s = len(np.unique(samples))
     clim = np.array([0, .1])
@@ -144,6 +146,9 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,gridsize=5
 
     dg = dendrogram(Z, no_plot=True)
     polar_dendrogram(dg, fig, ax_radius=dg_radius, log_scale=log_scale)
+    if filename is not None:
+        plt.savefig(os.path.join(self.directory_results, filename))
+
 
 def KNN(distances,labels,k=1,folds=5,metrics=['Recall','Precision','F1_Score','AUC']):
     lb = LabelEncoder()
