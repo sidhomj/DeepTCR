@@ -1550,7 +1550,7 @@ class vis_class(object):
             Number of events to sub-sample for visualization.
 
         filename: str
-            To save umap lot to results folder, enter a name for the file and the umap
+            To save umap plot to results folder, enter a name for the file and the umap
             will be saved to the results directory.
             i.e. umap.png
 
