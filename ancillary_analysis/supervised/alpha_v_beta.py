@@ -56,7 +56,9 @@ for a in antigens:
     plt.title(a,fontsize=22)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
-    plt.savefig(os.path.join(dir_results,a+ '_AUC.tif'))
+    plt.savefig(os.path.join(dir_results,a+ '_AUC.eps'))
     plt.close()
+
+check=1
 
 
