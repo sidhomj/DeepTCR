@@ -26,5 +26,5 @@ DTCR_WF.AUC_Curve()
 
 #Visualize Latent Space
 DTCR_WF.UMAP_Plot(by_class=True,freq_weight=True,show_legend=True,scale=5000,Load_Prev_Data=False,
-                  alpha=0.5,filename='umap_2.eps')
+                  alpha=0.5)
 
