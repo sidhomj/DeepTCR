@@ -11,22 +11,24 @@ folds = 100
 LOO = 5
 epochs_min = 50
 weight_by_class = True
+size_of_net = 'small'
 
 #Just train w/ Sequence Information
 DTCR.use_hla = False
 DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
-                          use_only_hla=False,weight_by_class=weight_by_class)
+                          use_only_hla=False,weight_by_class=weight_by_class,size_of_net=size_of_net)
 DTCR.AUC_Curve()
 
 #Just train w/HLA
 DTCR.use_hla = True
 DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
-                          use_only_hla=True,weight_by_class=weight_by_class)
+                          use_only_hla=True,weight_by_class=weight_by_class,size_of_net=size_of_net)
 DTCR.AUC_Curve()
 
 #Train with both Seq + HLA
 DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
-                          use_only_hla=False,weight_by_class=weight_by_class)
+                          use_only_hla=False,weight_by_class=weight_by_class,size_of_net=size_of_net,
+                          on_graph_clustering=True)
 DTCR.AUC_Curve()
 
 
