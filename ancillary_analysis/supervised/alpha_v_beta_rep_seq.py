@@ -17,9 +17,7 @@ antigens = ['GANAB-S5F',
  'YFV-LLW']
 
 for a in antigens:
-    y_pred_list = []
-    y_test_list = []
-    DTCR = DeepTCR_SS('alpha_v_beta_SS')
+    DTCR = DeepTCR_SS(a+'Rep')
     DTCR.Get_Data(directory='../../Data/Zhang/'+a,aa_column_alpha=0,aa_column_beta=1,p=p)
     DTCR.Monte_Carlo_CrossVal(folds=50,weight_by_class=True)
     DTCR.Representative_Sequences()
