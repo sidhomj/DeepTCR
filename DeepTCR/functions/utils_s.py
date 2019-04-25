@@ -10,7 +10,7 @@ import os
 from Bio.Alphabet import IUPAC
 import seaborn as sns
 from sklearn.metrics import roc_auc_score
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder,StandardScaler, MinMaxScaler
 import tensorflow as tf
 from multiprocessing import Pool
 from DeepTCR.functions.data_processing import *
@@ -267,6 +267,58 @@ def Diff_Features(features,indices,sequences,type,sample_id,p_val_threshold,
         seq_features_df_pos[f] = seq_cluster[ii]
 
     return seq_features_df_pos
+
+def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,kernel,top_seq):
+    features = MinMaxScaler().fit_transform(features)
+    DFs = []
+    for item in self.lb.classes_:
+        ft_i = features[self.Rep_Seq[item].index]
+        prob_i = np.expand_dims(np.asarray(self.Rep_Seq[item][item]),1)
+        ft_i = ft_i * prob_i
+        diff = []
+        for jtem in np.setdiff1d(self.lb.classes_, item):
+            ft_o = features[self.Rep_Seq[jtem].index]
+            prob_o = np.expand_dims(np.asarray(self.Rep_Seq[jtem][jtem]),1)
+            ft_o = ft_o *prob_o
+            diff.append(np.mean(ft_i,0)-np.mean(ft_o,0))
+
+        diff = np.vstack(diff)
+        diff = np.mean(diff,0)
+
+        df_temp = pd.DataFrame()
+        df_temp['Feature'] = range(len(diff))
+        df_temp['Magnitude'] = diff
+        df_temp.sort_values(by='Magnitude', inplace=True, ascending=False)
+        df_temp = df_temp[df_temp['Magnitude'] > 0]
+        DFs.append(df_temp)
+
+    Rep_Seq_Features = dict(zip(self.lb.classes_, DFs))
+
+    dir = os.path.join(directory_results,'Motifs',sub_dir)
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+    file_list = [f for f in os.listdir(dir)]
+    [os.remove(os.path.join(dir, f)) for f in file_list]
+
+    for jj,ft in enumerate(features.T,0):
+        sel_ind = np.flip(np.argsort(ft), -1)
+        seq_sel = sequences[sel_ind[:top_seq]]
+        ind_sel = indices[sel_ind[:top_seq],jj]
+
+        motifs = []
+        for ii, i in enumerate(ind_sel, 0):
+            motif = seq_sel[ii][int(i):int(i) + kernel]
+            if len(motif) < kernel:
+                motif = motif + 'X' * (kernel - len(motif))
+            motif = motif.lower()
+            motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
+            motifs.append(motif)
+
+        SeqIO.write(motifs, os.path.join(directory_results,'Motifs',sub_dir,'feature_'+ str(jj) +'.fasta'), 'fasta')
+
+    return Rep_Seq_Features
+
 
 def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=None):
     loss = []
