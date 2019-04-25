@@ -268,22 +268,25 @@ def Diff_Features(features,indices,sequences,type,sample_id,p_val_threshold,
 
     return seq_features_df_pos
 
-def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,kernel,top_seq):
+def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,kernel,unique,motif_seq):
     features = MinMaxScaler().fit_transform(features)
     DFs = []
+    seq_list = []
+    indices_list = []
     for item in self.lb.classes_:
         ft_i = features[self.Rep_Seq[item].index]
-        prob_i = np.expand_dims(np.asarray(self.Rep_Seq[item][item]),1)
-        ft_i = ft_i * prob_i
+        seq_list.append(sequences[self.Rep_Seq[item].index])
+        indices_list.append(np.asarray(self.Rep_Seq[item].index))
         diff = []
         for jtem in np.setdiff1d(self.lb.classes_, item):
             ft_o = features[self.Rep_Seq[jtem].index]
-            prob_o = np.expand_dims(np.asarray(self.Rep_Seq[jtem][jtem]),1)
-            ft_o = ft_o *prob_o
             diff.append(np.mean(ft_i,0)-np.mean(ft_o,0))
 
         diff = np.vstack(diff)
-        diff = np.mean(diff,0)
+        if unique:
+            diff = np.min(diff,0)
+        else:
+            diff = np.mean(diff,0)
 
         df_temp = pd.DataFrame()
         df_temp['Feature'] = range(len(diff))
@@ -298,24 +301,50 @@ def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,ker
     if not os.path.exists(dir):
         os.makedirs(dir)
 
-    file_list = [f for f in os.listdir(dir)]
-    [os.remove(os.path.join(dir, f)) for f in file_list]
+    for seq,ind,c in zip(seq_list,indices_list,self.lb.classes_):
+        dir = os.path.join(directory_results,'Motifs',sub_dir,c)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
 
-    for jj,ft in enumerate(features.T,0):
-        sel_ind = np.flip(np.argsort(ft), -1)
-        seq_sel = sequences[sel_ind[:top_seq]]
-        ind_sel = indices[sel_ind[:top_seq],jj]
+        file_list = [f for f in os.listdir(dir)]
+        [os.remove(os.path.join(dir, f)) for f in file_list]
 
-        motifs = []
-        for ii, i in enumerate(ind_sel, 0):
-            motif = seq_sel[ii][int(i):int(i) + kernel]
-            if len(motif) < kernel:
-                motif = motif + 'X' * (kernel - len(motif))
-            motif = motif.lower()
-            motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
-            motifs.append(motif)
+        df_temp = Rep_Seq_Features[c]
+        for zz,ft in enumerate(df_temp['Feature'].tolist(),0):
+            sel_ind = np.flip(np.argsort(features[ind,ft]))
+            seq_sel = seq[sel_ind[:motif_seq]]
+            ind_sel = indices[ind,ft]
+            ind_sel = ind_sel[sel_ind[:motif_seq]]
 
-        SeqIO.write(motifs, os.path.join(directory_results,'Motifs',sub_dir,'feature_'+ str(jj) +'.fasta'), 'fasta')
+            motifs = []
+            for ii, i in enumerate(ind_sel, 0):
+                motif = seq_sel[ii][int(i):int(i) + kernel]
+                if len(motif) < kernel:
+                    motif = motif + 'X' * (kernel - len(motif))
+                motif = motif.lower()
+                motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
+                motifs.append(motif)
+
+            mag_write =str(np.around(df_temp['Magnitude'].iloc[zz],3))
+            SeqIO.write(motifs, os.path.join(directory_results, 'Motifs', sub_dir,c, mag_write+'_feature_' + str(ft) + '.fasta'),
+                        'fasta')
+
+    #
+    # for jj,ft in enumerate(features.T,0):
+    #     sel_ind = np.flip(np.argsort(ft), -1)
+    #     seq_sel = sequences[sel_ind[:top_seq]]
+    #     ind_sel = indices[sel_ind[:top_seq],jj]
+    #
+    #     motifs = []
+    #     for ii, i in enumerate(ind_sel, 0):
+    #         motif = seq_sel[ii][int(i):int(i) + kernel]
+    #         if len(motif) < kernel:
+    #             motif = motif + 'X' * (kernel - len(motif))
+    #         motif = motif.lower()
+    #         motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
+    #         motifs.append(motif)
+    #
+    #     SeqIO.write(motifs, os.path.join(directory_results,'Motifs',sub_dir,'feature_'+ str(jj) +'.fasta'), 'fasta')
 
     return Rep_Seq_Features
 

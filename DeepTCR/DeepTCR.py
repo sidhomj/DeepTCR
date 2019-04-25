@@ -1083,7 +1083,7 @@ class feature_analytics_class(object):
         """
         Motif Identification Supervised Classifiers
 
-        This method looks for enriched features in the predetermined gropu
+        This method looks for enriched features in the predetermined group
         and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
         to produce seqlogos.
 
@@ -2395,7 +2395,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         self.Rep_Seq = dict(zip(self.lb.classes_[keep], Rep_Seq))
 
-    def Representative_Sequences_Motif(self,top_seq=10):
+    def Representative_Sequences_Motif(self,top_seq=10,motif_seq=5,unique=False):
         """
         Identify most highly predicted sequences for each class and corresponding motifs.
 
@@ -2413,20 +2413,39 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         top_seq: int
             The number of top sequences to show for each class.
 
+        motif_seq: int
+            The number of sequences to use to generate each motif. The more sequences, the possibly more noisy
+            the seq_logo will be.
+
+        unique: bool
+            To only select for uniquely enriched motifs for a given class, set this parameter to True.
+            Otherwise, this method will return the magnitude of enriched motifs of one class vs all other classes.
+            To learn more specific/uniquely defining motifs, set this parameter to True at the expense of returning less
+            motifs.
+
         Returns
 
         self.Rep_Seq: dictionary of dataframes
             This dictionary of dataframes holds for each class the top sequences and their respective
             probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
 
-        self.(alpha/beta)_Rep_Seq_Features: dictionary of dataframes
+        self.Rep_Seq_Features_(alpha/beta): dictionary of dataframes
             This dictionary of dataframes holds information for which features were uniquely enriched
             for each class.
+
+        Furthermore, the motifs are written in the results directory underneath the Motifs folder. To find the beta
+        motifs for a given class, look under Motifs/beta/class_name/. These fasta files are labeled by the magnitude
+        enrichment of that given feature for that given class followed by the number name of the feature. These fasta files
+        can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi"
 
         ---------------------------------------
 
 
         """
+        try:
+            raise(Exception('This method will be deprecated soon. Use...'))
+        except:
+            pass
 
         dir = 'Rep_Sequences'
         dir = os.path.join(self.directory_results, dir)
@@ -2467,12 +2486,12 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         self.Rep_Seq = dict(zip(self.lb.classes_[keep], Rep_Seq))
 
         if self.use_alpha:
-            self.alpha_Req_Seq_Features = Motif_Features(self,self.alpha_features,self.alpha_indices,self.alpha_sequences,self.directory_results,
-                           'alpha',self.kernel,top_seq)
+            self.Req_Seq_Features_alpha = Motif_Features(self,self.alpha_features,self.alpha_indices,self.alpha_sequences,self.directory_results,
+                           'alpha',self.kernel,unique,motif_seq)
 
         if self.use_beta:
-            self.beta_Req_Seq_Features = Motif_Features(self,self.beta_features,self.beta_indices,self.beta_sequences,self.directory_results,
-                           'beta',self.kernel,top_seq)
+            self.Req_Seq_Features_beta = Motif_Features(self,self.beta_features,self.beta_indices,self.beta_sequences,self.directory_results,
+                           'beta',self.kernel,unique,motif_seq)
 
 
 class DeepTCR_SS(DeepTCR_S_base):
