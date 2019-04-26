@@ -210,6 +210,7 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     if use_only_hla:
         Features = HLA_Features
 
+    GO.Features_Base = Features
     if (self.use_hla) and (not use_only_hla):
         Features = tf.layers.dropout(Features,GO.prob)
         Features = tf.layers.dense(Features,Features.shape[1],tf.nn.relu)

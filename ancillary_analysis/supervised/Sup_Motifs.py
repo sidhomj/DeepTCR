@@ -7,16 +7,25 @@ DTCRS = DeepTCR_SS('Sequence_C')
 DTCRS.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
-DTCRS.Monte_Carlo_CrossVal(folds=1,stop_criterion=0.01)
-# indices = DTCRS.beta_indices
-# max_len = np.sum(DTCRS.X_Seq_beta>0,-1)
-# ind_norm = np.ndarray.flatten(indices/max_len)
-# sns.distplot(ind_norm)
+DTCRS.Monte_Carlo_CrossVal(folds=10,stop_criterion=0.01)
+DTCRS.Representative_Sequences(top_seq=10,unique=True)
+from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
+from Bio.Alphabet import IUPAC
 
-#DTCRS.Representative_Sequences()
-DTCRS.Representative_Sequences_Motif(10,unique=True)
-antigens =['Db-F2', 'Db-M45', 'Db-NP', 'Db-PA', 'Db-PB1', 'Kb-M38', 'Kb-SIY',
-       'Kb-TRP2', 'Kb-m139']
 
-for a in antigens:
-    DTCRS.Motif_Identification(group=a)
+for item in DTCRS.Rep_Seq:
+    break
+    t = DTCRS.Rep_Seq[item]
+    t = t.groupby(['beta']).agg({item:'first'})
+    t = t.sort_values(by=item,ascending=False)
+    t.reset_index(inplace=True)
+    seq = t['beta'].tolist()
+    seq = seq[:10]
+    out = []
+    for s in seq:
+        out.append(SeqRecord(Seq(s, IUPAC.protein), s))
+    SeqIO.write(out,item+'.fasta','fasta')
+
+    break

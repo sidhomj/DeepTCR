@@ -558,6 +558,7 @@ def Get_Latent_Features(self,batch_size,GO,sess):
             self.v_alpha_num,self.v_alpha_num,self.hla_data_seq_num]
     Features = []
     Features_c = []
+    Features_Base = []
     for vars in get_batches(Vars, batch_size=batch_size, random=False):
         feed_dict = {}
         if self.use_alpha is True:
@@ -584,10 +585,12 @@ def Get_Latent_Features(self,batch_size,GO,sess):
             feed_dict[GO.X_hla] = vars[7]
 
         Features.append(sess.run(GO.Features,feed_dict=feed_dict))
+        Features_Base.append(sess.run(GO.Features_Base,feed_dict=feed_dict))
         if GO.on_graph_clustering is True:
             Features_c.append(sess.run(GO.Features_c,feed_dict=feed_dict))
 
     Features = np.vstack(Features)
+    self.features_base = np.vstack(Features_Base)
     if GO.on_graph_clustering is True:
         Features_c = np.vstack(Features_c)
 
