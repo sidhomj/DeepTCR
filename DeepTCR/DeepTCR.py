@@ -1507,7 +1507,8 @@ class vis_class(object):
 
     def UMAP_Plot(self, set='all',by_class=False, by_cluster=False,
                   by_sample=False, freq_weight=False, show_legend=True,
-                  scale=100,Load_Prev_Data=False, alpha=1.0,sample=None,filename=None):
+                  scale=100,Load_Prev_Data=False, alpha=1.0,sample=None,filename=None,
+                  prob_plot=None):
 
         """
         UMAP vizualisation of TCR Sequences
@@ -1559,6 +1560,13 @@ class vis_class(object):
             will be saved to the results directory.
             i.e. umap.png
 
+        prob_plot: str
+            To plot the predicted probabilities for the sequences as an additional heatmap, specify
+            the class probability one wants to visualize (i.e. if the class of interest is class A, input
+            'A' as a string). Of note, only probabilities determined from the sequences in the test set are
+            displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
+            when the set parameter is turned to 'test'.
+
 
         Returns
 
@@ -1571,6 +1579,7 @@ class vis_class(object):
             class_id = self.class_id
             sample_id = self.sample_id
             freq = self.freq
+            predicted = self.predicted
             if hasattr(self, 'Cluster_Assignments'):
                 IDX = self.Cluster_Assignments
             else:
@@ -1602,6 +1611,9 @@ class vis_class(object):
         df_plot['y'] = X_2[:, 1]
         df_plot['Class'] = class_id
         df_plot['Sample'] = sample_id
+        if prob_plot is not None:
+            df_plot['Predicted'] = predicted[:,self.lb.transform([prob_plot])[0]]
+
         if set != 'all':
             df_plot['Set'] = None
             with pd.option_context('mode.chained_assignment',None):
@@ -1653,6 +1665,19 @@ class vis_class(object):
 
         if filename is not None:
             plt.savefig(os.path.join(self.directory_results, filename))
+
+        if prob_plot is not None:
+            plt.figure()
+            plt.scatter(df_plot_sel['x'],df_plot_sel['y'],c=df_plot_sel['Predicted'],s=df_plot_sel['s'],
+                    alpha=alpha,cmap='bwr')
+            plt.xticks([])
+            plt.yticks([])
+            plt.xlabel('')
+            plt.ylabel('')
+
+            if filename is not None:
+                plt.savefig(os.path.join(self.directory_results, 'prob_'+filename))
+
 
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
