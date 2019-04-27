@@ -557,7 +557,6 @@ def Get_Latent_Features(self,batch_size,GO,sess):
     Vars = [self.X_Seq_alpha, self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
             self.v_alpha_num,self.v_alpha_num,self.hla_data_seq_num]
     Features = []
-    Features_c = []
     Features_Base = []
     for vars in get_batches(Vars, batch_size=batch_size, random=False):
         feed_dict = {}
@@ -586,15 +585,10 @@ def Get_Latent_Features(self,batch_size,GO,sess):
 
         Features.append(sess.run(GO.Features,feed_dict=feed_dict))
         Features_Base.append(sess.run(GO.Features_Base,feed_dict=feed_dict))
-        if GO.on_graph_clustering is True:
-            Features_c.append(sess.run(GO.Features_c,feed_dict=feed_dict))
 
     Features = np.vstack(Features)
     self.features_base = np.vstack(Features_Base)
-    if GO.on_graph_clustering is True:
-        Features_c = np.vstack(Features_c)
-
-    return Features, Features_c
+    return Features
 
 def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
                      p,batch_size,self):

@@ -118,7 +118,8 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
             return tf.concat((conv_out,conv_2_out,conv_3_out),axis=1),conv_out,indices
 
 def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
-               use_only_gene,use_only_hla, num_fc_layers=0, units_fc=12):
+               use_only_gene,use_only_hla,on_graph_clustering=False,num_clusters=12,
+               num_fc_layers=0, units_fc=12):
     if self.use_alpha is True:
         GO.X_Seq_alpha = tf.placeholder(tf.int64,
                                         shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],
@@ -185,11 +186,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     if Seq_Features:
         Seq_Features = tf.concat(Seq_Features, axis=1)
 
-    HLA_Features = []
-    if self.use_hla:
-        HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
 
-    Features = [Seq_Features,gene_features,HLA_Features]
+    Features = [Seq_Features,gene_features]
     for ii,f in enumerate(Features,0):
         if not isinstance(f,list):
             f_temp = f
@@ -200,6 +198,13 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
             f_temp = tf.concat((f_temp,Features[jj]),axis=1)
 
     Features = f_temp
+
+    if on_graph_clustering:
+        Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+
+    if self.use_hla:
+        HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
+        Features = tf.concat((Features,HLA_Features),axis=1)
 
     if use_only_seq:
         Features = Seq_Features

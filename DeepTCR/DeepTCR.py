@@ -2628,7 +2628,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
 
             Get_Seq_Features_Indices(self,batch_size,GO,sess)
-            self.features,self.features_c = Get_Latent_Features(self,batch_size,GO,sess)
+            self.features = Get_Latent_Features(self,batch_size,GO,sess)
 
             idx_base = np.asarray(range(len(self.sample_id)))
             self.train_idx = np.isin(idx_base,self.train[self.var_dict['seq_index']])
@@ -3137,15 +3137,10 @@ class DeepTCR_WF(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
-                                         use_only_seq,use_only_gene,use_only_hla,
+                                         use_only_seq,use_only_gene,use_only_hla,on_graph_clustering,num_clusters,
                                          num_fc_layers,units_fc)
-                if on_graph_clustering is True:
-                    GO.Features_c,GO.centroids,GO.vq_bias,GO.s = DeepVectorQuantization(GO.Features,GO.prob,num_clusters)
-                else:
-                    GO.Features_c = GO.Features
 
-                GO.Features = GO.Features_c
-                GO.Features_W = GO.Features_c*GO.X_Freq[:,tf.newaxis]
+                GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
                 GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
                 GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
@@ -3234,7 +3229,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
-            self.features,self.features_c = Get_Latent_Features(self,batch_size_seq,GO,sess)
+            self.features = Get_Latent_Features(self,batch_size_seq,GO,sess)
 
             pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
             if len(idx.shape) == 0:
