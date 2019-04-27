@@ -366,14 +366,16 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Representative_Sequences(self, top_seq=10)
-     |      Identify most highly predicted sequences for each class.
+     |  Representative_Sequences(self, top_seq=10, motif_seq=5, unique=False)
+     |      Identify most highly predicted sequences for each class and corresponding motifs.
      |      
-     |      This method allows the user to query which sequences were most predicted to belong to a given class.
+     |      This method allows the user to query which sequences were most predicted to belong to a given class along
+     |      with the motifs that were learned for these representative sequences.
      |      Of note, this method only reports sequences that were in the test set so as not to return highly predicted
      |      sequences that were over-fit in the training set. To obtain the highest predictd sequences in all the data,
-     |      run a K-fold cross-validation before running this method. In this way, the predicted probability will have been
-     |      assigned to a sequence only when it was in the independent test set.
+     |      run a K-fold cross-validation or Monte-Carlo cross-validation before running this method. In this way,
+     |      the predicted probability will have been assigned to a sequence only when it was in the independent test set.
+     |      
      |      
      |      Inputs
      |      ---------------------------------------
@@ -381,11 +383,30 @@ CLASSES
      |      top_seq: int
      |          The number of top sequences to show for each class.
      |      
+     |      motif_seq: int
+     |          The number of sequences to use to generate each motif. The more sequences, the possibly more noisy
+     |          the seq_logo will be.
+     |      
+     |      unique: bool
+     |          To only select for uniquely enriched motifs for a given class, set this parameter to True.
+     |          Otherwise, this method will return the magnitude of enriched motifs of one class vs all other classes.
+     |          To learn more specific/uniquely defining motifs, set this parameter to True at the expense of returning less
+     |          motifs.
+     |      
      |      Returns
      |      
      |      self.Rep_Seq: dictionary of dataframes
      |          This dictionary of dataframes holds for each class the top sequences and their respective
      |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
+     |      
+     |      self.Rep_Seq_Features_(alpha/beta): dictionary of dataframes
+     |          This dictionary of dataframes holds information for which features were uniquely enriched
+     |          for each class.
+     |      
+     |      Furthermore, the motifs are written in the results directory underneath the Motifs folder. To find the beta
+     |      motifs for a given class, look under Motifs/beta/class_name/. These fasta files are labeled by the magnitude
+     |      enrichment of that given feature for that given class followed by the number name of the feature. These fasta files
+     |      can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi"
      |      
      |      ---------------------------------------
      |  
@@ -728,7 +749,7 @@ CLASSES
      |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False, top_seq=10)
      |      Motif Identification Supervised Classifiers
      |      
-     |      This method looks for enriched features in the predetermined gropu
+     |      This method looks for enriched features in the predetermined group
      |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
      |      to produce seqlogos.
      |      
@@ -848,7 +869,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -898,6 +919,11 @@ CLASSES
      |          If method has been run before, one can load previous data used to construct the figure for
      |          faster figure creation. This is helpful when trying to format the figure correctly and will require
      |          the user to run the method multiple times.
+     |      
+     |      filename: str
+     |          To save dendrogram plot to results folder, enter a name for the file and the dendrogram
+     |          will be saved to the results directory.
+     |          i.e. dendrogram.png
      |      
      |      Returns
      |      
@@ -998,14 +1024,16 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Representative_Sequences(self, top_seq=10)
-     |      Identify most highly predicted sequences for each class.
+     |  Representative_Sequences(self, top_seq=10, motif_seq=5, unique=False)
+     |      Identify most highly predicted sequences for each class and corresponding motifs.
      |      
-     |      This method allows the user to query which sequences were most predicted to belong to a given class.
+     |      This method allows the user to query which sequences were most predicted to belong to a given class along
+     |      with the motifs that were learned for these representative sequences.
      |      Of note, this method only reports sequences that were in the test set so as not to return highly predicted
      |      sequences that were over-fit in the training set. To obtain the highest predictd sequences in all the data,
-     |      run a K-fold cross-validation before running this method. In this way, the predicted probability will have been
-     |      assigned to a sequence only when it was in the independent test set.
+     |      run a K-fold cross-validation or Monte-Carlo cross-validation before running this method. In this way,
+     |      the predicted probability will have been assigned to a sequence only when it was in the independent test set.
+     |      
      |      
      |      Inputs
      |      ---------------------------------------
@@ -1013,11 +1041,30 @@ CLASSES
      |      top_seq: int
      |          The number of top sequences to show for each class.
      |      
+     |      motif_seq: int
+     |          The number of sequences to use to generate each motif. The more sequences, the possibly more noisy
+     |          the seq_logo will be.
+     |      
+     |      unique: bool
+     |          To only select for uniquely enriched motifs for a given class, set this parameter to True.
+     |          Otherwise, this method will return the magnitude of enriched motifs of one class vs all other classes.
+     |          To learn more specific/uniquely defining motifs, set this parameter to True at the expense of returning less
+     |          motifs.
+     |      
      |      Returns
      |      
      |      self.Rep_Seq: dictionary of dataframes
      |          This dictionary of dataframes holds for each class the top sequences and their respective
      |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
+     |      
+     |      self.Rep_Seq_Features_(alpha/beta): dictionary of dataframes
+     |          This dictionary of dataframes holds information for which features were uniquely enriched
+     |          for each class.
+     |      
+     |      Furthermore, the motifs are written in the results directory underneath the Motifs folder. To find the beta
+     |      motifs for a given class, look under Motifs/beta/class_name/. These fasta files are labeled by the magnitude
+     |      enrichment of that given feature for that given class followed by the number name of the feature. These fasta files
+     |      can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi"
      |      
      |      ---------------------------------------
      |  
@@ -1360,7 +1407,7 @@ CLASSES
      |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False, top_seq=10)
      |      Motif Identification Supervised Classifiers
      |      
-     |      This method looks for enriched features in the predetermined gropu
+     |      This method looks for enriched features in the predetermined group
      |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
      |      to produce seqlogos.
      |      
@@ -1480,7 +1527,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -1530,6 +1577,11 @@ CLASSES
      |          If method has been run before, one can load previous data used to construct the figure for
      |          faster figure creation. This is helpful when trying to format the figure correctly and will require
      |          the user to run the method multiple times.
+     |      
+     |      filename: str
+     |          To save dendrogram plot to results folder, enter a name for the file and the dendrogram
+     |          will be saved to the results directory.
+     |          i.e. dendrogram.png
      |      
      |      Returns
      |      
@@ -2110,7 +2162,7 @@ CLASSES
      |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False, top_seq=10)
      |      Motif Identification Supervised Classifiers
      |      
-     |      This method looks for enriched features in the predetermined gropu
+     |      This method looks for enriched features in the predetermined group
      |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
      |      to produce seqlogos.
      |      
@@ -2230,7 +2282,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -2280,6 +2332,11 @@ CLASSES
      |          If method has been run before, one can load previous data used to construct the figure for
      |          faster figure creation. This is helpful when trying to format the figure correctly and will require
      |          the user to run the method multiple times.
+     |      
+     |      filename: str
+     |          To save dendrogram plot to results folder, enter a name for the file and the dendrogram
+     |          will be saved to the results directory.
+     |          i.e. dendrogram.png
      |      
      |      Returns
      |      
@@ -2780,14 +2837,16 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Representative_Sequences(self, top_seq=10)
-     |      Identify most highly predicted sequences for each class.
+     |  Representative_Sequences(self, top_seq=10, motif_seq=5, unique=False)
+     |      Identify most highly predicted sequences for each class and corresponding motifs.
      |      
-     |      This method allows the user to query which sequences were most predicted to belong to a given class.
+     |      This method allows the user to query which sequences were most predicted to belong to a given class along
+     |      with the motifs that were learned for these representative sequences.
      |      Of note, this method only reports sequences that were in the test set so as not to return highly predicted
      |      sequences that were over-fit in the training set. To obtain the highest predictd sequences in all the data,
-     |      run a K-fold cross-validation before running this method. In this way, the predicted probability will have been
-     |      assigned to a sequence only when it was in the independent test set.
+     |      run a K-fold cross-validation or Monte-Carlo cross-validation before running this method. In this way,
+     |      the predicted probability will have been assigned to a sequence only when it was in the independent test set.
+     |      
      |      
      |      Inputs
      |      ---------------------------------------
@@ -2795,11 +2854,30 @@ CLASSES
      |      top_seq: int
      |          The number of top sequences to show for each class.
      |      
+     |      motif_seq: int
+     |          The number of sequences to use to generate each motif. The more sequences, the possibly more noisy
+     |          the seq_logo will be.
+     |      
+     |      unique: bool
+     |          To only select for uniquely enriched motifs for a given class, set this parameter to True.
+     |          Otherwise, this method will return the magnitude of enriched motifs of one class vs all other classes.
+     |          To learn more specific/uniquely defining motifs, set this parameter to True at the expense of returning less
+     |          motifs.
+     |      
      |      Returns
      |      
      |      self.Rep_Seq: dictionary of dataframes
      |          This dictionary of dataframes holds for each class the top sequences and their respective
      |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
+     |      
+     |      self.Rep_Seq_Features_(alpha/beta): dictionary of dataframes
+     |          This dictionary of dataframes holds information for which features were uniquely enriched
+     |          for each class.
+     |      
+     |      Furthermore, the motifs are written in the results directory underneath the Motifs folder. To find the beta
+     |      motifs for a given class, look under Motifs/beta/class_name/. These fasta files are labeled by the magnitude
+     |      enrichment of that given feature for that given class followed by the number name of the feature. These fasta files
+     |      can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi"
      |      
      |      ---------------------------------------
      |  
@@ -3142,7 +3220,7 @@ CLASSES
      |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False, top_seq=10)
      |      Motif Identification Supervised Classifiers
      |      
-     |      This method looks for enriched features in the predetermined gropu
+     |      This method looks for enriched features in the predetermined group
      |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
      |      to produce seqlogos.
      |      
@@ -3262,7 +3340,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -3312,6 +3390,11 @@ CLASSES
      |          If method has been run before, one can load previous data used to construct the figure for
      |          faster figure creation. This is helpful when trying to format the figure correctly and will require
      |          the user to run the method multiple times.
+     |      
+     |      filename: str
+     |          To save dendrogram plot to results folder, enter a name for the file and the dendrogram
+     |          will be saved to the results directory.
+     |          i.e. dendrogram.png
      |      
      |      Returns
      |      
@@ -3713,7 +3796,7 @@ CLASSES
      |  Motif_Identification(self, group, p_val_threshold=0.05, by_samples=False, top_seq=10)
      |      Motif Identification Supervised Classifiers
      |      
-     |      This method looks for enriched features in the predetermined gropu
+     |      This method looks for enriched features in the predetermined group
      |      and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
      |      to produce seqlogos.
      |      
@@ -3842,7 +3925,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -3892,6 +3975,11 @@ CLASSES
      |          If method has been run before, one can load previous data used to construct the figure for
      |          faster figure creation. This is helpful when trying to format the figure correctly and will require
      |          the user to run the method multiple times.
+     |      
+     |      filename: str
+     |          To save dendrogram plot to results folder, enter a name for the file and the dendrogram
+     |          will be saved to the results directory.
+     |          i.e. dendrogram.png
      |      
      |      Returns
      |      
