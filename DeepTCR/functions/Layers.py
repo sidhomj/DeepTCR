@@ -197,7 +197,10 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         if not isinstance(Features[jj],list):
             f_temp = tf.concat((f_temp,Features[jj]),axis=1)
 
-    Features = f_temp
+    try:
+        Features = f_temp
+    except:
+        pass
 
     if on_graph_clustering:
         Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
