@@ -3749,7 +3749,8 @@ class DeepTCR_WF(DeepTCR_S_base):
             sequences_num = np.vstack(result)
             X_Seq_alpha = np.expand_dims(sequences_num, 1)
         else:
-            X_Seq_alpha = np.zeros(shape=[len_input])
+            X_Seq_alpha = np.zeros(shape=[len_input,self.max_length])
+            X_Seq_alpha = np.expand_dims(X_Seq_alpha, 1)
             alpha_sequences = np.asarray([None] * len_input)
 
         if beta_sequences is not None:
@@ -3759,7 +3760,8 @@ class DeepTCR_WF(DeepTCR_S_base):
             sequences_num = np.vstack(result)
             X_Seq_beta = np.expand_dims(sequences_num, 1)
         else:
-            X_Seq_beta = np.zeros(shape=[len_input])
+            X_Seq_beta = np.zeros(shape=[len_input,self.max_length])
+            X_Seq_beta = np.expand_dims(X_Seq_beta, 1)
             beta_sequences = np.asarray([None] * len_input)
 
         if v_beta is not None:
@@ -3810,7 +3812,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         if hla is not None:
             hla_data_seq_num = self.lb_hla.transform(hla)
         else:
-            hla_data_seq_num = np.zeros(shape=[len_input])
+            hla_data_seq_num = np.zeros(shape=[len_input,self.lb_hla.classes_.shape[0]])
 
         if p is None:
             p.close()
