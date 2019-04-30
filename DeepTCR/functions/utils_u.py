@@ -150,7 +150,7 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,grids
         plt.savefig(os.path.join(self.directory_results, filename))
 
 
-def KNN(distances,labels,k=1,folds=5,metrics=['Recall','Precision','F1_Score','AUC']):
+def KNN(distances,labels,k=1,folds=5,metrics=['Recall','Precision','F1_Score','AUC'],n_jobs=1):
     lb = LabelEncoder()
     labels = lb.fit_transform(labels)
 
@@ -159,7 +159,7 @@ def KNN(distances,labels,k=1,folds=5,metrics=['Recall','Precision','F1_Score','A
     else:
         skf = StratifiedKFold(n_splits=folds, random_state=None, shuffle=True)
 
-    neigh = KNeighborsClassifier(n_neighbors=k, metric='precomputed', weights='distance')
+    neigh = KNeighborsClassifier(n_neighbors=k, metric='precomputed', weights='distance',n_jobs=n_jobs)
 
     pred_list = []
     pred_prob_list = []
@@ -219,7 +219,7 @@ def KNN(distances,labels,k=1,folds=5,metrics=['Recall','Precision','F1_Score','A
 
     return classes,metric,value,k_list
 
-def KNN_samples(distances,labels,k,metrics,folds):
+def KNN_samples(distances,labels,k,metrics,folds,n_jobs):
     lb = LabelEncoder()
     labels = lb.fit_transform(labels)
 
@@ -228,7 +228,7 @@ def KNN_samples(distances,labels,k,metrics,folds):
     else:
         skf = StratifiedKFold(n_splits=folds, random_state=None, shuffle=True)
 
-    neigh = KNeighborsClassifier(n_neighbors=k, metric='precomputed', weights='distance')
+    neigh = KNeighborsClassifier(n_neighbors=k, metric='precomputed', weights='distance',n_jobs=n_jobs)
 
     pred_list = []
     pred_prob_list = []
