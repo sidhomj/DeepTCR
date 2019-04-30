@@ -108,7 +108,7 @@ def polar_dendrogram(dg, fig, ax_radius=0.2, log_scale=False):
 
 def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,gridsize=50,
              dg_radius=0.2,axes_radius=0.4,figsize=8,log_scale=False,linkage_method='complete',plot_type='hexbin',
-             filename=None):
+             filename=None,sample_labels=False):
 
     n_s = len(np.unique(samples))
     clim = np.array([0, .1])
@@ -133,6 +133,8 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,grids
     for i in range(n_s):
         ax[i] = fig.add_axes([axes_pos[i, 0] - axes_size, axes_pos[i, 1] - axes_size, 2 * axes_size, 2 * axes_size])
         ax[i].plot(c_pos[:, 0], c_pos[:, 1], '-', linewidth=5., color=color_dict[labels[dg_order[i]]])
+        if sample_labels:
+            ax[i].text(.5, 0.2, samples[dg_order[i]], horizontalalignment='center', transform=ax[i].transAxes)
         smp_d = X_2[file_id == samples[dg_order[i]], :]
         if plot_type is 'hexbin':
             ax[i].hexbin(smp_d[:, 0], smp_d[:, 1], gridsize=gridsize, mincnt=1)

@@ -1355,7 +1355,7 @@ class vis_class(object):
 
     def Repertoire_Dendrogram(self,set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
                              dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward',
-                             gridsize=10, Load_Prev_Data=False,filename=None):
+                             gridsize=10, Load_Prev_Data=False,filename=None,sample_labels=False):
         """
         Repertoire Dendrogram
 
@@ -1411,6 +1411,9 @@ class vis_class(object):
             To save dendrogram plot to results folder, enter a name for the file and the dendrogram
             will be saved to the results directory.
             i.e. dendrogram.png
+
+        sample_labels: bool
+            To show the sample labels on the dendrogram, set to True.
 
         Returns
 
@@ -1503,7 +1506,7 @@ class vis_class(object):
 
         rad_plot(X_2, squareform(pairwise_distances), samples, labels, sample_id, color_dict,self,
                  gridsize=gridsize, dg_radius=dendrogram_radius, linkage_method=linkage_method,
-                 figsize=8, axes_radius=repertoire_radius,filename=filename)
+                 figsize=8, axes_radius=repertoire_radius,filename=filename,sample_labels=sample_labels)
 
     def UMAP_Plot(self, set='all',by_class=False, by_cluster=False,
                   by_sample=False, freq_weight=False, show_legend=True,
