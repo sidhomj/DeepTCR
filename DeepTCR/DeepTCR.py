@@ -1922,6 +1922,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             with tf.Session(graph=graph_model_AE,config=config) as sess:
                 sess.run(tf.global_variables_initializer())
                 recon_loss_list = []
+                stop_check_list = []
                 for e in range(epochs):
                     accuracy_list = []
                     Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
@@ -1972,9 +1973,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         else:
                             with warnings.catch_warnings():
                                 warnings.simplefilter("ignore")
-                                if stop_check(recon_loss_list,stop_criterion,stop_criterion_window):
+                                stop_check_list.append(stop_check(recon_loss_list,stop_criterion,stop_criterion_window))
+                                if np.sum(stop_check_list[-3:]) >= 3:
                                     break
-
 
                 features_list = []
                 accuracy_list = []
@@ -2629,6 +2630,7 @@ class DeepTCR_SS(DeepTCR_S_base):
             sess.run(tf.global_variables_initializer())
 
             val_loss_total = []
+            stop_check_list = []
             for e in range(epochs):
                 train_loss, train_accuracy, train_predicted,train_auc = \
                     Run_Graph_SS(self.train,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=drop_out_rate)
@@ -2656,7 +2658,8 @@ class DeepTCR_SS(DeepTCR_S_base):
 
 
                 if e > epochs_min:
-                    if stop_check(val_loss_total,stop_criterion,stop_criterion_window):
+                    stop_check_list.append(stop_check(val_loss_total, stop_criterion, stop_criterion_window))
+                    if np.sum(stop_check_list[-3:]) >= 3:
                         break
 
 
@@ -3218,6 +3221,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             val_loss_total = []
             train_accuracy_total = []
             train_loss_total = []
+            stop_check_list = []
 
             for e in range(epochs):
                 train_loss, train_accuracy, train_predicted,train_auc = \
@@ -3257,7 +3261,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                                 break
                         else:
                             if val_loss_total:
-                                if stop_check(val_loss_total, stop_criterion, stop_criterion_window):
+                                stop_check_list.append(stop_check(val_loss_total, stop_criterion, stop_criterion_window))
+                                if np.sum(stop_check_list[-3:]) >= 3:
                                     break
 
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
