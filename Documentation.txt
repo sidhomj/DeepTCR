@@ -869,7 +869,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None, sample_labels=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -925,13 +925,16 @@ CLASSES
      |          will be saved to the results directory.
      |          i.e. dendrogram.png
      |      
+     |      sample_labels: bool
+     |          To show the sample labels on the dendrogram, set to True.
+     |      
      |      Returns
      |      
      |      self.pairwise_distances: Pandas dataframe
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None, prob_plot=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -980,6 +983,13 @@ CLASSES
      |          To save umap plot to results folder, enter a name for the file and the umap
      |          will be saved to the results directory.
      |          i.e. umap.png
+     |      
+     |      prob_plot: str
+     |          To plot the predicted probabilities for the sequences as an additional heatmap, specify
+     |          the class probability one wants to visualize (i.e. if the class of interest is class A, input
+     |          'A' as a string). Of note, only probabilities determined from the sequences in the test set are
+     |          displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
+     |          when the set parameter is turned to 'test'.
      |      
      |      
      |      Returns
@@ -1527,7 +1537,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None, sample_labels=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -1583,13 +1593,16 @@ CLASSES
      |          will be saved to the results directory.
      |          i.e. dendrogram.png
      |      
+     |      sample_labels: bool
+     |          To show the sample labels on the dendrogram, set to True.
+     |      
      |      Returns
      |      
      |      self.pairwise_distances: Pandas dataframe
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None, prob_plot=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -1638,6 +1651,13 @@ CLASSES
      |          To save umap plot to results folder, enter a name for the file and the umap
      |          will be saved to the results directory.
      |          i.e. umap.png
+     |      
+     |      prob_plot: str
+     |          To plot the predicted probabilities for the sequences as an additional heatmap, specify
+     |          the class probability one wants to visualize (i.e. if the class of interest is class A, input
+     |          'A' as a string). Of note, only probabilities determined from the sequences in the test set are
+     |          displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
+     |          when the set parameter is turned to 'test'.
      |      
      |      
      |      Returns
@@ -1705,7 +1725,7 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
-     |  KNN_Sequence_Classifier(self, folds=5, k_values=[1, 26, 51, 76, 101, 126, 151, 176, 201, 226, 251, 276, 301, 326, 351, 376, 401, 426, 451, 476], rep=5, plot_metrics=False, by_class=False, plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC'])
+     |  KNN_Sequence_Classifier(self, folds=5, k_values=[1, 26, 51, 76, 101, 126, 151, 176, 201, 226, 251, 276, 301, 326, 351, 376, 401, 426, 451, 476], rep=5, plot_metrics=False, by_class=False, plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC'], n_jobs=1)
      |      K-Nearest Neighbor Sequence Classifier
      |      
      |      This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a sequence
@@ -1737,6 +1757,9 @@ CLASSES
      |      metrics: list
      |          List of performance measures one wants to compute.
      |          options include AUC, Precision, Recall, F1_Score
+     |      
+     |      n_jobs: int
+     |          Number of workers to set for KNeighborsClassifier.
      |      
      |      Returns
      |      
@@ -2282,7 +2305,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None, sample_labels=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -2338,13 +2361,16 @@ CLASSES
      |          will be saved to the results directory.
      |          i.e. dendrogram.png
      |      
+     |      sample_labels: bool
+     |          To show the sample labels on the dendrogram, set to True.
+     |      
      |      Returns
      |      
      |      self.pairwise_distances: Pandas dataframe
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None, prob_plot=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -2393,6 +2419,13 @@ CLASSES
      |          To save umap plot to results folder, enter a name for the file and the umap
      |          will be saved to the results directory.
      |          i.e. umap.png
+     |      
+     |      prob_plot: str
+     |          To plot the predicted probabilities for the sequences as an additional heatmap, specify
+     |          the class probability one wants to visualize (i.e. if the class of interest is class A, input
+     |          'A' as a string). Of note, only probabilities determined from the sequences in the test set are
+     |          displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
+     |          when the set parameter is turned to 'test'.
      |      
      |      
      |      Returns
@@ -3340,7 +3373,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None, sample_labels=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -3396,13 +3429,16 @@ CLASSES
      |          will be saved to the results directory.
      |          i.e. dendrogram.png
      |      
+     |      sample_labels: bool
+     |          To show the sample labels on the dendrogram, set to True.
+     |      
      |      Returns
      |      
      |      self.pairwise_distances: Pandas dataframe
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None, prob_plot=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -3451,6 +3487,13 @@ CLASSES
      |          To save umap plot to results folder, enter a name for the file and the umap
      |          will be saved to the results directory.
      |          i.e. umap.png
+     |      
+     |      prob_plot: str
+     |          To plot the predicted probabilities for the sequences as an additional heatmap, specify
+     |          the class probability one wants to visualize (i.e. if the class of interest is class A, input
+     |          'A' as a string). Of note, only probabilities determined from the sequences in the test set are
+     |          displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
+     |          when the set parameter is turned to 'test'.
      |      
      |      
      |      Returns
@@ -3925,7 +3968,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None, sample_labels=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -3981,13 +4024,16 @@ CLASSES
      |          will be saved to the results directory.
      |          i.e. dendrogram.png
      |      
+     |      sample_labels: bool
+     |          To show the sample labels on the dendrogram, set to True.
+     |      
      |      Returns
      |      
      |      self.pairwise_distances: Pandas dataframe
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None, prob_plot=None)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -4036,6 +4082,13 @@ CLASSES
      |          To save umap plot to results folder, enter a name for the file and the umap
      |          will be saved to the results directory.
      |          i.e. umap.png
+     |      
+     |      prob_plot: str
+     |          To plot the predicted probabilities for the sequences as an additional heatmap, specify
+     |          the class probability one wants to visualize (i.e. if the class of interest is class A, input
+     |          'A' as a string). Of note, only probabilities determined from the sequences in the test set are
+     |          displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
+     |          when the set parameter is turned to 'test'.
      |      
      |      
      |      Returns
