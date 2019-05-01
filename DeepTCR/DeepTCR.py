@@ -3821,7 +3821,10 @@ class DeepTCR_WF(DeepTCR_S_base):
         if hla is not None:
             hla_data_seq_num = self.lb_hla.transform(hla)
         else:
-            hla_data_seq_num = np.zeros(shape=[len_input,self.lb_hla.classes_.shape[0]])
+            try:
+                hla_data_seq_num = np.zeros(shape=[len_input,self.lb_hla.classes_.shape[0]])
+            except:
+                pass
 
         if p is None:
             p.close()
