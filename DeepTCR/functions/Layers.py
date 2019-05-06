@@ -211,9 +211,13 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
 
     if use_only_seq:
         Features = Seq_Features
+        if on_graph_clustering:
+            Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
     if use_only_gene:
         Features = gene_features
+        if on_graph_clustering:
+            Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
     if use_only_hla:
         Features = HLA_Features
