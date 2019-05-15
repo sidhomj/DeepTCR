@@ -1928,7 +1928,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
                             self.v_alpha_num,self.j_alpha_num,self.hla_data_seq_num]
 
-                    for vars in get_batches(Vars, batch_size=batch_size):
+                    for vars in get_batches(Vars, batch_size=batch_size,random=True):
                         feed_dict = {}
                         if self.use_alpha is True:
                             feed_dict[GO.X_Seq_alpha] = vars[0]
