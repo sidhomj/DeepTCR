@@ -420,8 +420,10 @@ class DeepTCR_base(object):
                 hla_data_seq = np.asarray(['None']*len(file_id))
                 hla_data_seq_num = np.asarray(['None']*len(file_id))
 
+            A = Get_Sample_Adjacency(file_id)
+
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
-                pickle.dump([X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,
+                pickle.dump([X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,A,
                              self.lb,file_list,self.use_alpha,self.use_beta,
                              self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,
                              v_beta, d_beta,j_beta,v_alpha,j_alpha,
@@ -431,7 +433,7 @@ class DeepTCR_base(object):
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
-                X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,\
+                X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,A,\
                 self.lb,file_list,self.use_alpha,self.use_beta,\
                     self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,\
                     v_beta, d_beta,j_beta,v_alpha,j_alpha,\
@@ -463,6 +465,7 @@ class DeepTCR_base(object):
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         self.hla_data_seq = hla_data_seq
         self.hla_data_seq_num = hla_data_seq_num
+        self.A = A
         print('Data Loaded')
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
@@ -3196,12 +3199,12 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 var_train = tf.trainable_variables()
                 if on_graph_clustering is True:
-                    var_train_graph = [GO.centroids,GO.s,GO.vq_bias]
+                    var_train_graph = GO.params
                     GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
                     [var_train.remove(x) for x in var_train_graph]
 
                 GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
-
+                # # #
                 if on_graph_clustering is True:
                     GO.opt = tf.group(GO.opt,GO.opt_c)
 
@@ -3267,7 +3270,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
-            self.features = Get_Latent_Features(self,batch_size_seq,GO,sess)
+            # self.features = Get_Latent_Features(self,batch_size_seq,GO,sess)
 
             pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
             if len(idx.shape) == 0:
@@ -3281,8 +3284,8 @@ class DeepTCR_WF(DeepTCR_S_base):
             self.test_idx = np.isin(self.sample_id,self.test[0])
 
             self.kernel = kernel
-            if on_graph_clustering is True:
-                self.centroids = GO.centroids.eval()
+            # if on_graph_clustering is True:
+            #     self.centroids = GO.centroids.eval()
             #
             if self.use_alpha is True:
                 var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
@@ -3434,7 +3437,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         files = []
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         counts = np.zeros_like(self.predicted)
-        for i in range(0, folds):
+        for i in tqdm(range(0, folds)):
             if suppress_output is False:
                 print(i)
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO)

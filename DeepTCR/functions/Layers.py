@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 class graph_object(object):
     def __init__(self):
@@ -203,7 +204,10 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         pass
 
     if on_graph_clustering:
-        Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+        Features = GCN_Features(Features,GO,num_concepts=12,num_gcn_layers=1,units_gcn=12)
+
+        #Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+        #GO.graph_clustering_variables = [GO.centroids,GO.vq_bias,GO.s]
 
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
@@ -281,6 +285,27 @@ def anlu(x, s_init=0.):
     s = tf.Variable(name='anlu_s', initial_value=tf.zeros([x.shape[-1].value, ]) + s_init, trainable=True)
     return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s
 
+def anlu2(x, s_init=0.):
+    s = tf.Variable(name='anlu_s', initial_value= s_init, trainable=True)
+    return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s
+
+def airsig(x, init_s=0., init_a=0., low=0., high=1., name='airsig'):
+   s = tf.Variable(name=name + '_s', initial_value=tf.zeros(1) + init_s, trainable=True)
+   a = tf.Variable(name=name + '_a', initial_value=tf.zeros(1) + init_a, trainable=True)
+   return low + ((high - low) / 2.) * (1. + ((x + a) / (tf.pow(tf.pow(2., s) + tf.pow(x, 2.), 1. / 2.) + tf.pow(tf.pow(a, 2.), 1. / 2.))))
+
+def gbell(x, a_init=1.0, b_init=0.0, c_init=0, name='gbell'):
+    a = tf.Variable(name=name + 'a', initial_value= a_init, trainable=True,dtype=tf.float32)
+    b = tf.Variable(name=name + 'b', initial_value= b_init, trainable=True,dtype=tf.float32)
+    c = tf.Variable(name=name + 'c', initial_value=c_init, trainable=False,dtype=tf.float32)
+    return 1 / (1 + (((x - c)/ tf.exp(a)) ** (2 * (tf.exp(b) + 1)))),a,b
+
+def neg_x(x,b_init=0,a_init=0,name='neg_x'):
+    a = tf.Variable(name=name + 'a', initial_value= a_init, trainable=True,dtype=tf.float32)
+    b = tf.Variable(name=name + 'b', initial_value= b_init, trainable=True,dtype=tf.float32)
+    return -(x-b)+a,a,b
+
+
 def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
     d = tf.layers.dropout(d,prob)
     d = tf.layers.dense(d,12,tf.nn.relu)
@@ -299,5 +324,121 @@ def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
     seq_to_centroids_act,s = activation(vq_bias - seq_to_centroids_dist)
 
     return seq_to_centroids_act,c,vq_bias,s
+
+def Pairwise_Distance_TF(A):
+   r = tf.reduce_sum(A*A,1)
+   r = tf.reshape(r,[-1,1])
+   D = tf.sqrt(tf.nn.relu(r - 2 * tf.matmul(A, tf.transpose(A)) + tf.transpose(r)))
+   D = tf.linalg.set_diag(D,tf.zeros(tf.shape(D)[0]))
+   return D
+
+def GCN_Features(Features,GO,num_concepts=1,num_gcn_layers=1,units_gcn=12,latent_feature_dim=12):
+    #Dropout and reduce to lower dimensionality
+    Features = tf.layers.dropout(Features, GO.prob)
+    Features = tf.layers.dense(Features, latent_feature_dim, tf.nn.relu)
+
+    #Get Pairwise Distances
+    Dist = Pairwise_Distance_TF(Features)
+
+    #Create Mask for sequences in the same sample
+    mask = tf.sparse.matmul(tf.sparse.transpose(GO.sp), tf.sparse.to_dense(GO.sp, validate_indices=False))
+    Dist = mask*Dist
+
+    #Get Features for each GCN
+    temp = []
+    GO.params = []
+    for n in range(num_concepts):
+        ft,s,b = GCN(Features,Dist,num_gcn_layers=num_gcn_layers,units=units_gcn)
+        temp.append(ft)
+        GO.params.append(s)
+        GO.params.append(b)
+
+    return tf.concat(temp,axis=-1)
+
+def GCN(Features,Dist,num_gcn_layers=1,units=12):
+    #Transform distance matrix by activation function
+    b = tf.Variable(name='b', initial_value=0.0)
+    A, s = anlu2(-Dist + b)
+
+    #Compute Laplacian
+    D_norm = tf.sqrt(1 / tf.reduce_sum(A, 0))
+    Lap_D = tf.expand_dims(D_norm, 1) * A * tf.expand_dims(D_norm, 0)
+
+    #Computer Graph Convolution Operation
+    for i in range(num_gcn_layers):
+        Features = tf.layers.dense(tf.matmul(Lap_D, Features), units, activation=tf.nn.relu, use_bias=True)
+
+    return Features,s,b
+
+
+# Features = tf.layers.dropout(Features, GO.prob)
+# Features = tf.layers.dense(Features, 12, tf.nn.relu)
+# Dist = Pairwise_Distance_TF(Features)
+# GO.dist = Dist
+# # A,GO.a,GO.b = gbell(Dist)
+# # GO.graph_clustering_variables = [GO.a,GO.b]
+# num_concepts = 1
+# A = []
+# params = []
+# Features_temp = []
+# for n in range(num_concepts):
+#     b = tf.Variable(name='b', initial_value=0.0)
+#     params.append(b)
+#     temp, s = anlu2(-Dist + b)
+#     A.append(temp)
+#     params.append(s)
+#     Features_temp.append(Features)
+# A = tf.transpose(tf.stack(A), [1, 2, 0])
+# Features = tf.stack(Features_temp)
+#
+# GO.graph_clustering_variables = params
+# mask = tf.sparse.matmul(tf.sparse.transpose(GO.sp), tf.sparse.to_dense(GO.sp, validate_indices=False))
+# A = tf.expand_dims(mask, -1) * A
+# GO.out = A
+#
+# D_norm = tf.sqrt(1 / tf.reduce_sum(A, 0))
+# Lap_D = tf.expand_dims(D_norm, 1) * A * tf.expand_dims(D_norm, 0)
+# Lap_D = tf.transpose(Lap_D, [2, 0, 1])
+# GO.out = Lap_D
+# num_gcn_layers = 1
+#
+# for i in range(num_gcn_layers):
+#     Features = tf.layers.dense(tf.matmul(Lap_D, Features), 12, activation=tf.nn.relu, use_bias=True)
+#
+# Features = tf.layers.flatten(tf.transpose(Features, [1, 0, 2]))        Features = tf.layers.dropout(Features,GO.prob)
+#         Features = tf.layers.dense(Features,12,tf.nn.relu)
+#         Dist = Pairwise_Distance_TF(Features)
+#         GO.dist = Dist
+#         # A,GO.a,GO.b = gbell(Dist)
+#         # GO.graph_clustering_variables = [GO.a,GO.b]
+#         num_concepts = 1
+#         A = []
+#         params = []
+#         Features_temp = []
+#         for n in range(num_concepts):
+#             b = tf.Variable(name='b',initial_value=0.0)
+#             params.append(b)
+#             temp,s = anlu2(-Dist+b)
+#             A.append(temp)
+#             params.append(s)
+#             Features_temp.append(Features)
+#         A = tf.transpose(tf.stack(A),[1,2,0])
+#         Features = tf.stack(Features_temp)
+#
+#         GO.graph_clustering_variables = params
+#         mask = tf.sparse.matmul(tf.sparse.transpose(GO.sp),tf.sparse.to_dense(GO.sp,validate_indices=False))
+#         A = tf.expand_dims(mask,-1)*A
+#         GO.out = A
+#
+#         D_norm = tf.sqrt(1/tf.reduce_sum(A,0))
+#         Lap_D = tf.expand_dims(D_norm,1)*A*tf.expand_dims(D_norm,0)
+#         Lap_D = tf.transpose(Lap_D,[2,0,1])
+#         GO.out = Lap_D
+#         num_gcn_layers = 1
+#
+#         for i in range(num_gcn_layers):
+#             Features= tf.layers.dense(tf.matmul(Lap_D,Features),12,activation=tf.nn.relu,use_bias=True)
+#
+#         Features = tf.layers.flatten(tf.transpose(Features,[1,0,2]))
 
 

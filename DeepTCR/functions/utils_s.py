@@ -15,6 +15,8 @@ import tensorflow as tf
 from multiprocessing import Pool
 from DeepTCR.functions.data_processing import *
 from sklearn.model_selection import train_test_split
+from tqdm import tqdm
+import scipy
 
 def custom_train_test_split(X,Y,test_size,stratify):
     idx = np.array(range(len(X)))
@@ -348,7 +350,6 @@ def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,ker
 
     return Rep_Seq_Features
 
-
 def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=None):
     loss = []
     accuracy = []
@@ -458,6 +459,8 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         if train is True:
             loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted],
                                                           feed_dict=feed_dict)
+
+            #out,dist = sess.run([GO.out,GO.dist],feed_dict=feed_dict)
         else:
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)
@@ -525,6 +528,12 @@ def Get_Sequence_Pred(self,batch_size,GO,sess):
         feed_dict = {GO.X_Freq: freq[var_idx],
                      GO.sp: sp}
 
+        # if GO.on_graph_clustering:
+        #     A_sel = self.A[var_idx, :][:, var_idx].tocoo()
+        #     indices = np.mat([A_sel.row,A_sel.col]).T
+        #     A = tf.SparseTensorValue(indices,A_sel.data,A_sel.shape)
+        #     feed_dict[GO.A] = A
+
         if self.use_alpha is True:
             feed_dict[GO.X_Seq_alpha] = self.X_Seq_alpha[var_idx]
         if self.use_beta is True:
@@ -555,11 +564,18 @@ def Get_Sequence_Pred(self,batch_size,GO,sess):
 
 def Get_Latent_Features(self,batch_size,GO,sess):
     Vars = [self.X_Seq_alpha, self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
-            self.v_alpha_num,self.v_alpha_num,self.hla_data_seq_num]
+            self.v_alpha_num,self.v_alpha_num,self.hla_data_seq_num,np.asarray(list(range(len(self.X_Seq_alpha))))]
     Features = []
     Features_Base = []
     for vars in get_batches(Vars, batch_size=batch_size, random=False):
         feed_dict = {}
+
+        # if GO.on_graph_clustering:
+        #     A_sel = self.A[vars[-1], :][:, vars[-1]].tocoo()
+        #     indices = np.mat([A_sel.row,A_sel.col]).T
+        #     A = tf.SparseTensorValue(indices,A_sel.data,A_sel.shape)
+        #     feed_dict[GO.A] = A
+
         if self.use_alpha is True:
             feed_dict[GO.X_Seq_alpha] = vars[0]
         if self.use_beta is True:
@@ -748,6 +764,22 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
 def stop_check(loss,stop_criterion,stop_criterion_window):
     w = loss[-stop_criterion_window:]
     return (w[0]-w[-1])/w[0] < stop_criterion
+
+def Get_Sample_Adjacency(file_id):
+
+    i = []
+    j = []
+    data = []
+    print('Creating Adjacency Matrix')
+    for s in tqdm(np.unique(file_id)):
+        idx = np.where(file_id==s)[0]
+        for ii in idx:
+            for jj in idx:
+                data.append(1)
+                i.append(ii)
+                j.append(jj)
+
+    return scipy.sparse.csr_matrix((data,(i,j)),(len(file_id), len(file_id)))
 
 
 
