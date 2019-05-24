@@ -3198,15 +3198,15 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
                 var_train = tf.trainable_variables()
-                if on_graph_clustering is True:
-                    var_train_graph = GO.params
-                    GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
-                    [var_train.remove(x) for x in var_train_graph]
+                # if on_graph_clustering is True:
+                #     var_train_graph = GO.params
+                #     GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
+                #     [var_train.remove(x) for x in var_train_graph]
 
                 GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
                 # # #
-                if on_graph_clustering is True:
-                    GO.opt = tf.group(GO.opt,GO.opt_c)
+                # if on_graph_clustering is True:
+                #     GO.opt = tf.group(GO.opt,GO.opt_c)
 
                 # Operations for validation/test accuracy
                 GO.predicted = tf.nn.softmax(GO.logits, name='predicted')

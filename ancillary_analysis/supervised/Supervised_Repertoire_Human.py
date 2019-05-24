@@ -138,8 +138,10 @@ df_plot = pd.DataFrame()
 df_plot['Method'] = names_list
 df_plot['AUC'] = auc_list
 #sns.swarmplot(data=df_plot,x='Method',y='AUC',order=['Seq','HLA','Seq+HLA'])
-#sns.boxplot(data=df_plot,x='Method',y='AUC',order=['Seq','HLA','Seq+HLA'])
+sns.boxplot(data=df_plot,x='Method',y='AUC',order=names)
+plt.xticks(rotation=90)
 sns.violinplot(data=df_plot,x='Method',y='AUC',order=names)
+df_plot.to_csv('AUC_Table.csv',index=False)
 
 for ii,n in enumerate(names,0):
     print(mannwhitneyu(df_plot[df_plot['Method']==names[ii]]['AUC'],df_plot[df_plot['Method']==names[ii+1]]['AUC'])[1])

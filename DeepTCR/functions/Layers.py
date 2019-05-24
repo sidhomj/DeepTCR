@@ -204,10 +204,20 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         pass
 
     if on_graph_clustering:
-        Features = GCN_Features(Features,GO,num_concepts=12,num_gcn_layers=1,units_gcn=12)
+        Features_GCN = GCN_Features(Features,GO,num_concepts=3,num_gcn_layers=1,units_gcn=12)
+        # #
+        # Features_DVQ, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features_GCN, GO.prob, num_clusters)
+        # GO.params = [GO.centroids,GO.vq_bias,GO.s]+GO.params
+        # #Features = tf.concat((Features_GCN,Features_DVQ),1)
+        # Features = Features_DVQ
 
-        #Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
-        #GO.graph_clustering_variables = [GO.centroids,GO.vq_bias,GO.s]
+        # Features_DVQ, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+        #
+        # Features_GCN = GCN_Features(Features_DVQ,GO,num_concepts=3,num_gcn_layers=1,units_gcn=24)
+        # GO.params = [GO.centroids,GO.vq_bias,GO.s]+GO.params
+        # Features = Features_GCN
+        Features = Features_GCN
+
 
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
@@ -294,6 +304,10 @@ def airsig(x, init_s=0., init_a=0., low=0., high=1., name='airsig'):
    a = tf.Variable(name=name + '_a', initial_value=tf.zeros(1) + init_a, trainable=True)
    return low + ((high - low) / 2.) * (1. + ((x + a) / (tf.pow(tf.pow(2., s) + tf.pow(x, 2.), 1. / 2.) + tf.pow(tf.pow(a, 2.), 1. / 2.))))
 
+def asig(x,s_init=1.0):
+    s = tf.Variable(name='anlu_s', initial_value= s_init, trainable=True)
+    return x/tf.sqrt(1+tf.square(x)) + s*x, s
+
 def gbell(x, a_init=1.0, b_init=0.0, c_init=0, name='gbell'):
     a = tf.Variable(name=name + 'a', initial_value= a_init, trainable=True,dtype=tf.float32)
     b = tf.Variable(name=name + 'b', initial_value= b_init, trainable=True,dtype=tf.float32)
@@ -304,7 +318,6 @@ def neg_x(x,b_init=0,a_init=0,name='neg_x'):
     a = tf.Variable(name=name + 'a', initial_value= a_init, trainable=True,dtype=tf.float32)
     b = tf.Variable(name=name + 'b', initial_value= b_init, trainable=True,dtype=tf.float32)
     return -(x-b)+a,a,b
-
 
 def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
     d = tf.layers.dropout(d,prob)
@@ -342,33 +355,66 @@ def GCN_Features(Features,GO,num_concepts=1,num_gcn_layers=1,units_gcn=12,latent
 
     #Create Mask for sequences in the same sample
     mask = tf.sparse.matmul(tf.sparse.transpose(GO.sp), tf.sparse.to_dense(GO.sp, validate_indices=False))
-    Dist = mask*Dist
 
     #Get Features for each GCN
     temp = []
     GO.params = []
+    GO.A = []
+    GO.out = Dist
     for n in range(num_concepts):
-        ft,s,b = GCN(Features,Dist,num_gcn_layers=num_gcn_layers,units=units_gcn)
+        ft,s,b,A = GCN(Features,Dist,mask,num_gcn_layers=num_gcn_layers,units=units_gcn)
         temp.append(ft)
         GO.params.append(s)
         GO.params.append(b)
+        GO.A.append(A)
 
     return tf.concat(temp,axis=-1)
 
-def GCN(Features,Dist,num_gcn_layers=1,units=12):
+def GCN(Features,Dist,mask,num_gcn_layers=1,units=12):
     #Transform distance matrix by activation function
     b = tf.Variable(name='b', initial_value=0.0)
     A, s = anlu2(-Dist + b)
+    #A, s = asig(-Dist+b)
+    A = A*mask
 
-    #Compute Laplacian
-    D_norm = tf.sqrt(1 / tf.reduce_sum(A, 0))
-    Lap_D = tf.expand_dims(D_norm, 1) * A * tf.expand_dims(D_norm, 0)
+    # #Compute Sym-Norm Laplacian
+    # D_norm = tf.sqrt(1 / tf.reduce_sum(A, 0))
+    # Lap_D = tf.expand_dims(D_norm, 1) * A * tf.expand_dims(D_norm, 0)
+    #
+    #Computer Regular Lap
+    D = tf.reduce_sum(A,0)
+    Lap_D = tf.linalg.diag(D) - A
+
+    #Lap_D = A
 
     #Computer Graph Convolution Operation
     for i in range(num_gcn_layers):
         Features = tf.layers.dense(tf.matmul(Lap_D, Features), units, activation=tf.nn.relu, use_bias=True)
 
-    return Features,s,b
+    return Features,s,b,A
+
+def Laplacian(Features,GO):
+    # Dropout and reduce to lower dimensionality
+    Features = tf.layers.dropout(Features, GO.prob)
+    Features = tf.layers.dense(Features, 12, tf.nn.relu)
+
+    # Get Pairwise Distances
+    Dist = Pairwise_Distance_TF(Features)
+
+    # # Create Mask for sequences in the same sample
+    # mask = tf.sparse.matmul(tf.sparse.transpose(GO.sp), tf.sparse.to_dense(GO.sp, validate_indices=False))
+
+    # Transform distance matrix by activation function
+    b = tf.Variable(name='b', initial_value=0.0)
+    A, s = anlu2(-Dist + b)
+    A = A #* mask
+
+    #Compute Laplacian
+    D_norm = tf.sqrt(1 / tf.reduce_sum(A, 0))
+    Lap_D = tf.expand_dims(D_norm, 1) * A * tf.expand_dims(D_norm, 0)
+
+    return Lap_D
+
 
 
 # Features = tf.layers.dropout(Features, GO.prob)
