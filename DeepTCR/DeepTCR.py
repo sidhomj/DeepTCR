@@ -3172,6 +3172,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         with tf.device(self.device):
             with graph_model.as_default():
                 GO.net = 'sup'
+                GO.act_params = []
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
                                          use_only_seq,use_only_gene,use_only_hla,on_graph_clustering,num_clusters,
                                          num_fc_layers,units_fc)
@@ -3195,14 +3196,13 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
                 var_train = tf.trainable_variables()
-                if on_graph_clustering is True:
-                    var_train_graph = [GO.centroids,GO.s,GO.vq_bias]
-                    GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
-                    [var_train.remove(x) for x in var_train_graph]
+                if GO.act_params:
+                    GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=GO.act_params)
+                    [var_train.remove(x) for x in GO.act_params]
 
                 GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
 
-                if on_graph_clustering is True:
+                if GO.act_params:
                     GO.opt = tf.group(GO.opt,GO.opt_c)
 
                 # Operations for validation/test accuracy
