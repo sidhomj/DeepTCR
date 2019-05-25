@@ -300,4 +300,7 @@ def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
 
     return seq_to_centroids_act,c,vq_bias,s
 
+def GCN(Features,num_clusters):
+    check=1
+
 
