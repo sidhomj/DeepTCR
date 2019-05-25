@@ -314,11 +314,10 @@ def GCN(GO,Features,num_clusters):
     GO.j = tf.placeholder(dtype=tf.int32,shape = [None, ])
     n_d = 12
     X = tf.layers.dense(Features, n_d, tf.nn.relu)
-    X = Reshape_X(GO,X,n_d)
+    X,X_Freq = Reshape_X(GO,X,n_d)
     Get_Adjacency_Matrix(GO,X)
-    Features = GCN_Features(GO,GO.A,X)
+    Features = GCN_Features(GO,GO.A,X,X_Freq)
     return Features
-
 
 def Get_Adjacency_Matrix(GO,X):
     z = tf.zeros(shape=tf.shape(X)[1])
@@ -333,7 +332,7 @@ def Get_Adjacency_Matrix(GO,X):
     fc = tf.layers.dense(fc, 1)
     fc = tf.squeeze(fc, -1)
     A, GO.s, GO.b = anlu_GCN(fc)
-    #GO.act_params.extend([GO.s, GO.b])
+    GO.act_params.extend([GO.s, GO.b])
     GO.A = A
 
 def Reshape_X(GO,X,n_d):
@@ -345,9 +344,16 @@ def Reshape_X(GO,X,n_d):
         t = tf.sparse.to_dense(t,validate_indices=False)
         temp.append(t)
     X = tf.transpose(tf.stack(temp),[1,2,0])
-    return X
 
-def GCN_Features(GO,A,X):
+    X_Freq = tf.sparse.SparseTensor(tf.cast(tf.concat((GO.i[:, tf.newaxis], GO.j[:, tf.newaxis]), -1), tf.int64),
+                                     GO.X_Freq,
+                                     [tf.reduce_max(GO.i) + 1, tf.reduce_max(GO.j) + 1])
+    X_Freq = tf.sparse.to_dense(X_Freq,validate_indices=False)
+    GO.out = X_Freq
+
+    return X,X_Freq
+
+def GCN_Features(GO,A,X,X_Freq):
 
     #Norm
     D_norm = tf.sqrt(1 / tf.reduce_sum(A, -1))
@@ -359,8 +365,8 @@ def GCN_Features(GO,A,X):
     num_gcn_layers = 1
     hierarchial_units = [12]
     for i, u in zip(range(num_gcn_layers), hierarchial_units):
-        Z = tf.layers.dense(tf.matmul(A, X), u, activation=tf.nn.relu, use_bias=True)
-        GO.out = tf.matmul(A,X)
+        Z = tf.layers.dense(tf.matmul(A, X_Freq[:,:,tf.newaxis]*X), u, activation=tf.nn.relu, use_bias=True)
+        GO.out = tf.matmul(A, X_Freq[:,:,tf.newaxis]*X)
         GO.Z = Z
         S = tf.nn.softmax(Z, -1)
         GO.S = S
