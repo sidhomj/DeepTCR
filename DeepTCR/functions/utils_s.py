@@ -469,7 +469,6 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         # X_reshape = sess.run(GO.X_reshape,feed_dict=feed_dict)
         # X_sp = sess.run(GO.X_sp,feed_dict=feed_dict)
 
-
         loss.append(loss_i)
         accuracy.append(accuracy_i)
         pred_temp = np.zeros_like(predicted_i)

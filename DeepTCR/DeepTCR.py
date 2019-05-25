@@ -3066,7 +3066,8 @@ class DeepTCR_WF(DeepTCR_S_base):
               num_clusters=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
+              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
+              lr = 0.001,lr_c = 0.1):
 
 
         """
@@ -3204,10 +3205,10 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 var_train = tf.trainable_variables()
                 if GO.act_params:
-                    GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=GO.act_params)
+                    GO.opt_c = tf.train.AdamOptimizer(learning_rate=lr_c).minimize(GO.loss,var_list=GO.act_params)
                     [var_train.remove(x) for x in GO.act_params]
 
-                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
+                GO.opt = tf.train.AdamOptimizer(learning_rate=lr).minimize(GO.loss,var_list=var_train)
 
                 if GO.act_params:
                     GO.opt = tf.group(GO.opt,GO.opt_c)
@@ -3274,22 +3275,24 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
-            self.features = Get_Latent_Features(self,batch_size_seq,GO,sess)
+            if not GO.on_graph_clustering:
+                self.features = Get_Latent_Features(self,batch_size_seq,GO,sess)
 
-            pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
-            if len(idx.shape) == 0:
-                idx = idx.reshape(-1,1)
+            if not GO.on_graph_clustering:
+                pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
+                if len(idx.shape) == 0:
+                    idx = idx.reshape(-1,1)
 
-            self.predicted[idx] += pred
-            self.seq_idx = idx
+                self.predicted[idx] += pred
+                self.seq_idx = idx
 
             self.train_idx = np.isin(self.sample_id,self.train[0])
             self.valid_idx = np.isin(self.sample_id,self.valid[0])
             self.test_idx = np.isin(self.sample_id,self.test[0])
 
             self.kernel = kernel
-            if on_graph_clustering is True:
-                self.centroids = GO.centroids.eval()
+            # if on_graph_clustering is True:
+            #     self.centroids = GO.centroids.eval()
             #
             if self.use_alpha is True:
                 var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
@@ -3322,7 +3325,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                              kernel=5,on_graph_clustering=False,num_clusters=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                             embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
+                             embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
+                             lr=0.001,lr_c=0.1):
 
 
         """
@@ -3453,13 +3457,14 @@ class DeepTCR_WF(DeepTCR_S_base):
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
                             use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
                        size_of_net=size_of_net,stop_criterion_window=stop_criterion_window,embedding_dim_aa=embedding_dim_aa,
-                       embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla)
+                       embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla,
+                       lr=lr,lr_c=lr_c)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
             files.append(self.test[0])
 
-            counts[self.seq_idx] += 1
+            #counts[self.seq_idx] += 1
 
             y_test2 = np.vstack(y_test)
             y_pred2 = np.vstack(y_pred)
@@ -3487,7 +3492,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         self.DFs_pred = dict(zip(self.lb.classes_,DFs))
 
-        self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
+        #self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal(self,folds=None,epochs_min=25,batch_size=25,stop_criterion=0.25, stop_criterion_window=10,kernel=5,
@@ -3495,7 +3500,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                         trainable_embedding=True, accuracy_min = None,
                         num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                         use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                        embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
+                        embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
+                        lr=0.001,lr_c=0.1):
 
         """
         K_Fold Cross-Validation for Whole Sample Classifier
@@ -3652,7 +3658,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                           drop_out_rate=drop_out_rate,suppress_output=suppress_output,
                             use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
                        size_of_net=size_of_net,stop_criterion_window=stop_criterion_window,
-                       embedding_dim_aa=embedding_dim_aa,embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla)
+                       embedding_dim_aa=embedding_dim_aa,embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla,
+                       lr=lr,lr_c=lr_c)
 
 
             y_test.append(self.y_test)

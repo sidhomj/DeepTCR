@@ -290,6 +290,13 @@ def anlu_GCN(x, s_init=0.,b_init=0.0):
     x = x + b
     return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s, b
 
+def Parametric_Relu(x,alpha_pos_init=1.0,alpha_neg_init=1.0,pos_train=True,neg_train=True):
+    alpha_pos = tf.Variable(name='alpha_pos', initial_value=alpha_pos_init, trainable=pos_train)
+    alpha_neg = tf.Variable(name='alpha_neg', initial_value=alpha_neg_init, trainable=neg_train)
+    pos = tf.cast(tf.greater(x, 0), tf.float32) * x * alpha_pos
+    neg = tf.cast(tf.less(x,0),tf.float32) * x * alpha_neg
+    return pos + neg, alpha_pos,alpha_neg
+
 def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
     d = tf.layers.dropout(d,prob)
     d = tf.layers.dense(d,12,tf.nn.relu)
@@ -309,17 +316,20 @@ def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
 
     return seq_to_centroids_act,c,vq_bias,s
 
-def GCN(GO,Features,num_clusters):
+def GCN(GO,Features,num_clusters,n_d=12):
     GO.i = tf.placeholder(dtype=tf.int32,shape= [None, ])
     GO.j = tf.placeholder(dtype=tf.int32,shape = [None, ])
-    n_d = 12
     X = tf.layers.dense(Features, n_d, tf.nn.relu)
     X,X_Freq = Reshape_X(GO,X,n_d)
     Get_Adjacency_Matrix(GO,X)
-    Features = GCN_Features(GO,GO.A,X,X_Freq)
+    Features = GCN_Features(GO,GO.A,X,X_Freq,num_clusters)
     return Features
 
 def Get_Adjacency_Matrix(GO,X):
+    #Reduce dimensionality to 1
+    X = tf.layers.dense(X,6,tf.nn.relu)
+    X = tf.layers.dense(X,1,tf.nn.relu)
+
     z = tf.zeros(shape=tf.shape(X)[1])
     i = X[:, :, tf.newaxis, :] + z[tf.newaxis, tf.newaxis, :, tf.newaxis]
     j = X[:, tf.newaxis, :, :] + z[tf.newaxis, :, tf.newaxis, tf.newaxis]
@@ -327,12 +337,11 @@ def Get_Adjacency_Matrix(GO,X):
     X_E = tf.transpose(X_E, [0, 2, 1, 3]) + X_E
 
     # FC
-    fc = tf.layers.dense(X_E, 12,tf.nn.relu)
-    fc = tf.layers.dense(fc, 6, tf.nn.relu)
-    fc = tf.layers.dense(fc, 1)
-    fc = tf.squeeze(fc, -1)
-    A, GO.s, GO.b = anlu_GCN(fc)
-    GO.act_params.extend([GO.s, GO.b])
+    fc = tf.layers.dense(X_E, 1)
+    fc = tf.squeeze(fc,-1)
+    A = fc
+
+    A = tf.nn.sigmoid(A)
     GO.A = A
 
 def Reshape_X(GO,X,n_d):
@@ -349,30 +358,24 @@ def Reshape_X(GO,X,n_d):
                                      GO.X_Freq,
                                      [tf.reduce_max(GO.i) + 1, tf.reduce_max(GO.j) + 1])
     X_Freq = tf.sparse.to_dense(X_Freq,validate_indices=False)
-    GO.out = X_Freq
 
     return X,X_Freq
 
-def GCN_Features(GO,A,X,X_Freq):
+def GCN_Features(GO,A,X,X_Freq,num_clusters=12):
 
     #Norm
     D_norm = tf.sqrt(1 / tf.reduce_sum(A, -1))
     Lap_D = tf.expand_dims(D_norm, -1) * A * tf.expand_dims(D_norm, -2)
     A = Lap_D
-    GO.A = A
 
     #Hiarachical GCN
     num_gcn_layers = 1
-    hierarchial_units = [12]
+    hierarchial_units = [num_clusters]
     for i, u in zip(range(num_gcn_layers), hierarchial_units):
-        Z = tf.layers.dense(tf.matmul(A, X_Freq[:,:,tf.newaxis]*X), u, activation=tf.nn.relu, use_bias=True)
-        GO.out = tf.matmul(A, X_Freq[:,:,tf.newaxis]*X)
-        GO.Z = Z
+        Z = tf.layers.dense(tf.matmul(A, X), u, activation=tf.nn.relu, use_bias=True)
         S = tf.nn.softmax(Z, -1)
-        GO.S = S
         #GO.reg_losses += tf.reduce_mean(tf.norm(S, axis=1, ord=1))
-        X = tf.matmul(tf.linalg.transpose(S), Z)
-        GO.X_flat = tf.layers.flatten(X)
+        X = tf.matmul(tf.linalg.transpose(S), X_Freq[:,:,tf.newaxis]*Z)
         A = tf.matmul(tf.matmul(tf.linalg.transpose(S), A), S)
 
     return tf.layers.flatten(X)
