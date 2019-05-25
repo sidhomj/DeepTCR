@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 class graph_object(object):
     def __init__(self):
@@ -203,7 +204,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         pass
 
     if on_graph_clustering:
-        Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+        #Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+        Features = GCN(GO,Features, num_clusters)
 
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
@@ -212,7 +214,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     if use_only_seq:
         Features = Seq_Features
         if on_graph_clustering:
-            Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+            #Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+            Features = GCN(GO,Features,num_clusters)
 
     if use_only_gene:
         Features = gene_features
@@ -281,6 +284,12 @@ def anlu(x, s_init=0.):
     s = tf.Variable(name='anlu_s', initial_value=tf.zeros([x.shape[-1].value, ]) + s_init, trainable=True)
     return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s
 
+def anlu_GCN(x, s_init=0.,b_init=0.0):
+    b = tf.Variable(name='b', initial_value=b_init,trainable=True)
+    s = tf.Variable(name='anlu_s', initial_value= s_init, trainable=True)
+    x = x + b
+    return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s, b
+
 def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
     d = tf.layers.dropout(d,prob)
     d = tf.layers.dense(d,12,tf.nn.relu)
@@ -300,7 +309,110 @@ def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
 
     return seq_to_centroids_act,c,vq_bias,s
 
-def GCN(Features,num_clusters):
-    check=1
+def GCN(GO,Features,num_clusters):
+    GO.i = tf.placeholder(dtype=tf.int32,shape= [None, ])
+    GO.j = tf.placeholder(dtype=tf.int32,shape = [None, ])
+    n_d = 12
+    X = tf.layers.dense(Features, n_d, tf.nn.relu)
+    X = Reshape_X(GO,X,n_d)
+    Get_Adjacency_Matrix(GO,X)
+    Features = GCN_Features(GO,GO.A,X)
+    return Features
 
 
+def Get_Adjacency_Matrix(GO,X):
+    z = tf.zeros(shape=tf.shape(X)[1])
+    i = X[:, :, tf.newaxis, :] + z[tf.newaxis, tf.newaxis, :, tf.newaxis]
+    j = X[:, tf.newaxis, :, :] + z[tf.newaxis, :, tf.newaxis, tf.newaxis]
+    X_E = tf.concat((i, j), -1)
+    X_E = tf.transpose(X_E, [0, 2, 1, 3]) + X_E
+
+    # FC
+    fc = tf.layers.dense(X_E, 12,tf.nn.relu)
+    fc = tf.layers.dense(fc, 6, tf.nn.relu)
+    fc = tf.layers.dense(fc, 1)
+    fc = tf.squeeze(fc, -1)
+    A, GO.s, GO.b = anlu_GCN(fc)
+    #GO.act_params.extend([GO.s, GO.b])
+    GO.A = A
+
+def Reshape_X(GO,X,n_d):
+    temp = []
+    for f in range(n_d):
+        t = tf.sparse.SparseTensor(tf.cast(tf.concat((GO.i[:, tf.newaxis], GO.j[:, tf.newaxis]), -1), tf.int64),
+                                       X[:,f],
+                                       [tf.reduce_max(GO.i) + 1, tf.reduce_max(GO.j) + 1])
+        t = tf.sparse.to_dense(t,validate_indices=False)
+        temp.append(t)
+    X = tf.transpose(tf.stack(temp),[1,2,0])
+    return X
+
+def GCN_Features(GO,A,X):
+
+    #Norm
+    D_norm = tf.sqrt(1 / tf.reduce_sum(A, -1))
+    Lap_D = tf.expand_dims(D_norm, -1) * A * tf.expand_dims(D_norm, -2)
+    A = Lap_D
+    GO.A = A
+
+    #Hiarachical GCN
+    num_gcn_layers = 1
+    hierarchial_units = [12]
+    for i, u in zip(range(num_gcn_layers), hierarchial_units):
+        Z = tf.layers.dense(tf.matmul(A, X), u, activation=tf.nn.relu, use_bias=True)
+        GO.out = tf.matmul(A,X)
+        GO.Z = Z
+        S = tf.nn.softmax(Z, -1)
+        GO.S = S
+        #GO.reg_losses += tf.reduce_mean(tf.norm(S, axis=1, ord=1))
+        X = tf.matmul(tf.linalg.transpose(S), Z)
+        GO.X_flat = tf.layers.flatten(X)
+        A = tf.matmul(tf.matmul(tf.linalg.transpose(S), A), S)
+
+    return tf.layers.flatten(X)
+
+# def Sparse_Indices(i,j,n_d,num_features,GO):
+#     num_tile = tf.shape(i)[0]
+#     z = tf.tile(num_features,tf.expand_dims(num_tile,0))
+#     GO.out = z
+#     z = tf.reshape(tf.reshape(z,[num_tile,n_d]),[num_tile*n_d])
+#
+#     num_tile = tf.expand_dims(n_d,0)
+#     i_out = tf.tile(tf.squeeze(i),num_tile)
+#     j_out = tf.tile(tf.squeeze(j),num_tile)
+#     return i_out,j_out,z
+
+
+
+    # id_sp = tf.sparse.to_dense(id_sp,validate_indices=False)
+    # tf.gather_nd(X,id_sp)
+    # id_sp = tf.sparse.SparseTensor(tf.cast(tf.concat((GO.i[:,tf.newaxis],GO.j[:,tf.newaxis]),-1),tf.int64),
+    #                        GO.var_idx,
+    #                        [tf.reduce_max(GO.i)+1,tf.reduce_max(GO.j)+1])
+    #
+
+
+    # n_d = 12
+    # num_features = tf.constant(np.array(range(n_d)),dtype=tf.int32)
+    # X = tf.layers.dense(Features,n_d,tf.nn.relu)
+    # n_d = tf.constant(n_d,dtype=tf.int32)
+    #
+    # i,j,z =Sparse_Indices(GO.i,GO.j,n_d,num_features,GO)
+    # #GO.out = [i,j,z]
+    #
+    # X_sp = tf.sparse.SparseTensor(tf.cast(tf.concat((i[:,tf.newaxis],j[:,tf.newaxis],z[:,tf.newaxis]),-1),tf.int64),
+    #                        tf.reshape(X,[tf.shape(X)[0]*tf.shape(X)[1]]),
+    #                        [tf.reduce_max(GO.i),tf.reduce_max(GO.j),n_d])
+    # #
+    # X_sp = tf.sparse.to_dense(X_sp,validate_indices=False)
+    #GO.out = X_sp
+
+    #
+    # GO.X = X
+    # sp_shape = [GO.i,GO.j,tf.cast(tf.shape(X)[-1],tf.int64)]
+    # GO.sp_shape = sp_shape
+    #
+    # X = tf.contrib.layers.dense_to_sparse(X)
+    # GO.X_sp = X
+    # X_sp = tf.sparse.reshape(X,sp_shape,)
+    # GO.X_reshape = X_sp

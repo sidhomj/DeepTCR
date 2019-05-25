@@ -427,7 +427,9 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
 
         feed_dict = {GO.Y: vars[-1],
                      GO.X_Freq: self.freq[var_idx],
-                     GO.sp: sp}
+                     GO.sp: sp,
+                     GO.i: i,
+                     GO.j: self.seq_index_j[var_idx]}
 
         if drop_out_rate is not None:
             feed_dict[GO.prob] = drop_out_rate
@@ -461,6 +463,16 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         else:
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)
+
+        out = sess.run(GO.Features,feed_dict=feed_dict)
+        sp_shape = sess.run(GO.sp_shape,feed_dict=feed_dict)
+        X_reshape = sess.run(GO.X_reshape,feed_dict=feed_dict)
+        X_sp = sess.run(GO.X_sp,feed_dict=feed_dict)
+
+
+
+
+
 
         loss.append(loss_i)
         accuracy.append(accuracy_i)
