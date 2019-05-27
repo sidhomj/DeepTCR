@@ -31,8 +31,14 @@ def ada_exp(x,init_a=1.0,trainable=True):
     a = tf.Variable(name='a', initial_value=init_a, trainable=trainable)
     return tf.exp(-a*x),a
 
+def ada_exp_np(x,a=1.0):
+    return np.exp(-a*x)
+
 def gbell(x, a_init=1.0, b_init=0.0, c_init=0.0, name='gbell'):
     a = tf.Variable(name=name + 'a', initial_value= a_init, trainable=True,dtype=tf.float32)
     b = tf.Variable(name=name + 'b', initial_value= b_init, trainable=True,dtype=tf.float32)
     c = tf.Variable(name=name + 'c', initial_value=c_init, trainable=False,dtype=tf.float32)
     return 1 / (1 + (((x - c)/ tf.exp(a)) ** (2 * (tf.exp(b) + 1)))),a,b,c
+
+def gbell_np(x, a=1.0, b=0.0, c=0):
+    return 1 / (1 + (((x - c)/ np.exp(a)) ** (2 * (np.exp(b) + 1))))

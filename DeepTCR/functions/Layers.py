@@ -306,7 +306,7 @@ def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
 
 def GCN(GO,Features,num_clusters,n_d=12):
     X = Features
-    #X = tf.layers.dense(X, n_d, tf.nn.relu)
+    X = tf.layers.dense(X, n_d)
     X = Reshape_X(X,GO.i,GO.j)
     X_Freq = Reshape_X(GO.X_Freq[:,tf.newaxis],GO.i,GO.j)
     Get_Adjacency_Matrix(GO,X)
@@ -335,10 +335,27 @@ def knn_step(D,k=30):
 def Get_Adjacency_Matrix(GO,X):
 
     D = Pairwise_Distance_TF(X)
-    #A, GO.a = ada_exp(D)
+    #A, GO.a = ada_exp(D,init_a=0.0)
+    #GO.act_params.extend([GO.a])
     #A, GO.s,GO.a = anlu(-D)
     A, GO.a,GO.b,GO.c = gbell(D)
+    #GO.act_params.extend([GO.a,GO.b])
     #A = tf.cond(GO.seq_pred,lambda: D, lambda: knn_step(D,k=30))
+
+    # X = tf.layers.dense(X,6)
+    # X = tf.layers.dense(X,3)
+    # X = tf.layers.dense(X,1)
+    # z = tf.zeros(shape=tf.shape(X)[1])
+    # i = X[:, :, tf.newaxis, :] + z[tf.newaxis, tf.newaxis, :, tf.newaxis]
+    # j = X[:, tf.newaxis, :, :] + z[tf.newaxis, :, tf.newaxis, tf.newaxis]
+    # X_E = tf.concat((i, j), -1)
+    # X_E = tf.transpose(X_E, [0, 2, 1, 3]) + X_E
+    # #X_E = tf.concat((X_E,D),-1)
+    #
+    # # FC
+    # fc = tf.layers.dense(X_E, 1)
+    # fc = tf.squeeze(fc,-1)
+    # A,_,_,_ = gbell(fc)
 
     # val,ind = tf.nn.top_k(D,30)
     # x,y,z  = tf.shape(val)[0],tf.shape(val)[1],tf.shape(val)[2]
@@ -428,8 +445,8 @@ def GCN_Features(GO,A,X,X_Freq,num_clusters=12):
         for i in range(1):
             X = tf.layers.dense(tf.matmul(A, X), u, activation=tf.nn.relu, use_bias=True)
         Z = X
-        S = tf.nn.softmax(Z, -1)
-        #GO.reg_losses += 1e-6*tf.reduce_mean(tf.norm(S, axis=1, ord=1))
+        GO.S = tf.nn.softmax(Z, -1)
+        #GO.reg_losses += 1e6*tf.reduce_mean(tf.norm(GO.S, axis=-1, ord=1))
         # if ii == 0:
         #     X = tf.matmul(tf.linalg.transpose(S), X_Freq*Z)
         # else:

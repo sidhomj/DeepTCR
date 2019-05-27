@@ -3201,6 +3201,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 else:
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
+                loss_print = GO.loss
                 GO.loss += GO.reg_losses
                 var_train = tf.trainable_variables()
                 if GO.act_params:
@@ -3211,6 +3212,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 if GO.act_params:
                     GO.opt = tf.group(GO.opt,GO.opt_c)
+                GO.loss = loss_print
 
                 # Operations for validation/test accuracy
                 GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
@@ -3229,6 +3231,8 @@ class DeepTCR_WF(DeepTCR_S_base):
             train_accuracy_total = []
             train_loss_total = []
             stop_check_list = []
+            # plt.figure()
+            # x = np.arange(0,10)
 
             for e in range(epochs):
                 train_loss, train_accuracy, train_predicted,train_auc = \
@@ -3272,6 +3276,13 @@ class DeepTCR_WF(DeepTCR_S_base):
                                 if np.sum(stop_check_list[-3:]) >= 3:
                                     break
 
+                # if e % 10:
+                #     #plt.plot(x,ada_exp_np(x,GO.a.eval()))
+                #     plt.plot(x,gbell_np(x,GO.a.eval(),GO.b.eval()))
+                #     plt.pause(0.01)
+                #     plt.show(block=False)
+
+            plt.close()
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
             if not GO.on_graph_clustering:

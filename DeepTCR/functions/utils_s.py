@@ -419,7 +419,6 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         vars = [v[sample_idx] for v in vars]
         i = lb.transform(self.sample_id[var_idx])
 
-
         OH = OneHotEncoder(categories='auto')
         sp = OH.fit_transform(i.reshape(-1, 1)).T
         sp = sp.tocoo()
@@ -465,7 +464,8 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)
 
-        # out = sess.run(GO.A,feed_dict=feed_dict)
+        # out_A = sess.run(GO.A,feed_dict=feed_dict)
+        # out_S = sess.run(GO.S, feed_dict=feed_dict)
         # sp_shape = sess.run(GO.sp_shape,feed_dict=feed_dict)
         # X_reshape = sess.run(GO.X_reshape,feed_dict=feed_dict)
         # X_sp = sess.run(GO.X_sp,feed_dict=feed_dict)
@@ -477,7 +477,8 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
 
         # i_dict =dict(zip(i[np.sort(np.unique(i, return_index=True)[1])],np.unique(i)))
         # i2 = np.vectorize(i_dioct.get)(i)
-        # s = 2
+        # out = out_S
+        # s = 3
         # o = out[s][:np.bincount(i)[s],:][:,:np.bincount(i)[s]]
         # sns.clustermap(o, cmap='bwr')
         #
