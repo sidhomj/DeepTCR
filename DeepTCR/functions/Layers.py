@@ -208,7 +208,6 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         pass
 
     if on_graph_clustering:
-
         #Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
         Features = GCN(GO,Features, num_clusters)
 
@@ -306,7 +305,8 @@ def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
     return seq_to_centroids_act,c,vq_bias,s
 
 def GCN(GO,Features,num_clusters,n_d=12):
-    X = tf.layers.dense(Features, n_d, tf.nn.relu)
+    X = Features
+    #X = tf.layers.dense(X, n_d, tf.nn.relu)
     X = Reshape_X(X,GO.i,GO.j)
     X_Freq = Reshape_X(GO.X_Freq[:,tf.newaxis],GO.i,GO.j)
     Get_Adjacency_Matrix(GO,X)
@@ -334,10 +334,11 @@ def knn_step(D,k=30):
 
 def Get_Adjacency_Matrix(GO,X):
 
-    D, GO.a = ada_exp(Pairwise_Distance_TF(X))
-    #D, GO.a,GO.b,GO.c = gbell(Pairwise_Distance_TF(X))
+    D = Pairwise_Distance_TF(X)
+    #A, GO.a = ada_exp(D)
+    #A, GO.s,GO.a = anlu(-D)
+    A, GO.a,GO.b,GO.c = gbell(D)
     #A = tf.cond(GO.seq_pred,lambda: D, lambda: knn_step(D,k=30))
-    A = D
 
     # val,ind = tf.nn.top_k(D,30)
     # x,y,z  = tf.shape(val)[0],tf.shape(val)[1],tf.shape(val)[2]
