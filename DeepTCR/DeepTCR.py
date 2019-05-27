@@ -3178,6 +3178,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.act_params = []
+                GO.reg_losses = 0
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
                                          use_only_seq,use_only_gene,use_only_hla,on_graph_clustering,num_clusters,
                                          num_fc_layers,units_fc)
@@ -3203,6 +3204,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 else:
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
+                #GO.loss += GO.reg_losses
                 var_train = tf.trainable_variables()
                 if GO.act_params:
                     GO.opt_c = tf.train.AdamOptimizer(learning_rate=lr_c).minimize(GO.loss,var_list=GO.act_params)

@@ -137,6 +137,9 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
     GO.sp = tf.sparse.placeholder(dtype=tf.float32, shape=[None, None],name='sp')
     GO.X_Freq = tf.placeholder(tf.float32, shape=[None, ], name='Freq')
+    GO.seq_pred = tf.placeholder_with_default(False, shape=())
+    GO.i = tf.placeholder(dtype=tf.int32,shape= [None, ])
+    GO.j = tf.placeholder(dtype=tf.int32,shape = [None, ])
 
     gene_features = []
     GO.X_v_beta, GO.X_v_beta_OH, GO.embedding_layer_v_beta, \
@@ -204,8 +207,10 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         pass
 
     if on_graph_clustering:
+
         #Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
         Features = GCN(GO,Features, num_clusters)
+
 
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
@@ -280,23 +285,6 @@ def Get_HLA_Loss(fc,embedding_layer,X_OH,alpha=1.0):
 
 #Layers for Repertoire Classifier
 
-def anlu(x, s_init=0.):
-    s = tf.Variable(name='anlu_s', initial_value=tf.zeros([x.shape[-1].value, ]) + s_init, trainable=True)
-    return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s
-
-def anlu_GCN(x, s_init=0.,b_init=0.0):
-    b = tf.Variable(name='b', initial_value=b_init,trainable=True)
-    s = tf.Variable(name='anlu_s', initial_value= s_init, trainable=True)
-    x = x + b
-    return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s, b
-
-def Parametric_Relu(x,alpha_pos_init=1.0,alpha_neg_init=1.0,pos_train=True,neg_train=True):
-    alpha_pos = tf.Variable(name='alpha_pos', initial_value=alpha_pos_init, trainable=pos_train)
-    alpha_neg = tf.Variable(name='alpha_neg', initial_value=alpha_neg_init, trainable=neg_train)
-    pos = tf.cast(tf.greater(x, 0), tf.float32) * x * alpha_pos
-    neg = tf.cast(tf.less(x,0),tf.float32) * x * alpha_neg
-    return pos + neg, alpha_pos,alpha_neg
-
 def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
     d = tf.layers.dropout(d,prob)
     d = tf.layers.dense(d,12,tf.nn.relu)
@@ -317,51 +305,96 @@ def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
     return seq_to_centroids_act,c,vq_bias,s
 
 def GCN(GO,Features,num_clusters,n_d=12):
-    GO.i = tf.placeholder(dtype=tf.int32,shape= [None, ])
-    GO.j = tf.placeholder(dtype=tf.int32,shape = [None, ])
     X = tf.layers.dense(Features, n_d, tf.nn.relu)
-    X,X_Freq = Reshape_X(GO,X,n_d)
+    X = Reshape_X(X,GO.i,GO.j)
+    X_Freq = Reshape_X(GO.X_Freq[:,tf.newaxis],GO.i,GO.j)
     Get_Adjacency_Matrix(GO,X)
     Features = GCN_Features(GO,GO.A,X,X_Freq,num_clusters)
     return Features
 
+def knn_step(D,k=30):
+    val,ind = tf.nn.top_k(D,k)
+    OH = tf.one_hot(ind,tf.shape(D)[-1])
+    OH = tf.reduce_sum(OH,2)
+    return D*OH
+    # ind = tf.reshape(ind,[tf.shape(ind)[0]*tf.shape(ind)[1],-1])
+    # val = tf.reshape(val,[tf.shape(val)[0]*tf.shape(val)[1],-1])
+    # return tf.scatter_nd(tf.squeeze(ind,-1),tf.squeeze(val,-1),[tf.shape(D)[0],tf.shape(D)[1],tf.shape(D)[2]])
+
+    # indices = tf.constant([[0], [2]])
+    # updates = tf.constant([[[5, 5, 5, 5], [6, 6, 6, 6],
+    #                         [7, 7, 7, 7], [8, 8, 8, 8]],
+    #                        [[5, 5, 5, 5], [6, 6, 6, 6],
+    #                         [7, 7, 7, 7], [8, 8, 8, 8]]])
+    # shape = tf.constant([4, 4, 4])
+
 def Get_Adjacency_Matrix(GO,X):
-    #Reduce dimensionality to 1
-    X = tf.layers.dense(X,6,tf.nn.relu)
-    X = tf.layers.dense(X,1,tf.nn.relu)
 
-    z = tf.zeros(shape=tf.shape(X)[1])
-    i = X[:, :, tf.newaxis, :] + z[tf.newaxis, tf.newaxis, :, tf.newaxis]
-    j = X[:, tf.newaxis, :, :] + z[tf.newaxis, :, tf.newaxis, tf.newaxis]
-    X_E = tf.concat((i, j), -1)
-    X_E = tf.transpose(X_E, [0, 2, 1, 3]) + X_E
+    D, GO.a = ada_exp(-Pairwise_Distance_TF(X))
+    #A = tf.cond(GO.seq_pred,lambda: D, lambda: knn_step(D,k=30))
+    A = D
 
-    # FC
-    fc = tf.layers.dense(X_E, 1)
-    fc = tf.squeeze(fc,-1)
-    A = fc
+    # D = Pairwise_Distance_TF(X)
+    # val,ind = tf.nn.top_k(tf.negative(D),30)
+    # OH = tf.one_hot(ind,tf.shape(D)[-1])
+    # OH = tf.reduce_sum(OH,2)
+    #
+    # A = tf.expand_dims(tf.matmul(OH,tf.linalg.transpose(OH)),-1)
+    # A = tf.layers.dense(A,1)
+    # A = tf.squeeze(A,-1)
+    #
+    # #D = Pairwise_Distance_TF(X)[:,:,:,tf.newaxis]
+    # #Reduce dimensionality to 1
+    # #act = tf.nn.leaky_relu
+    # X = tf.layers.dense(X,6)
+    # X = tf.layers.dense(X,3)
+    # X = tf.layers.dense(X,1)
+    #
+    # z = tf.zeros(shape=tf.shape(X)[1])
+    # i = X[:, :, tf.newaxis, :] + z[tf.newaxis, tf.newaxis, :, tf.newaxis]
+    # j = X[:, tf.newaxis, :, :] + z[tf.newaxis, :, tf.newaxis, tf.newaxis]
+    # X_E = tf.concat((i, j), -1)
+    # X_E = tf.transpose(X_E, [0, 2, 1, 3]) + X_E
+    # #X_E = tf.concat((X_E,D),-1)
+    #
+    # # FC
+    # fc = tf.layers.dense(X_E, 1)
+    # fc = tf.squeeze(fc,-1)
+    # A = fc
+    # #A,pos,neg = Parametric_Step(A,alpha_neg_init=0.0,pos_train=True,neg_train=False)
+    # #GO.act_params.extend([pos,neg])
+    # #GO.act_params.extend([tf.trainable_variables()[-1]])
+    # #GO.act_params.extend([tf.trainable_variables()[-1]])
+    # #A,s,a = airsig(A,init_s=1.0)
+    # #GO.act_params.extend([s])
+    # GO.act_params.extend([tf.trainable_variables()[-1]])
+    # A,s,a = anlu(A)
+    # GO.act_params.extend([s,a])
 
-    A = tf.nn.sigmoid(A)
+    # NN = tf.expand_dims(tf.matmul(A,tf.linalg.transpose(A)),-1)
+    # NN = tf.concat((NN,tf.expand_dims(A,-1)),-1)
+    # A = tf.squeeze(tf.layers.dense(NN,1),-1)
+    # GO.act_params.extend([tf.trainable_variables()[-1]])
+    # A,s,a = anlu(A)
+    # GO.act_params.extend([s,a])
+
+    #A = tf.nn.sigmoid(A)
+
+    # NN = tf.concat((tf.expand_dims(tf.matmul(A,tf.linalg.transpose(A)),-1),tf.expand_dims(A,-1)),-1)
+    # A = tf.squeeze(tf.layers.dense(NN,1),-1)
+    #A =  tf.nn.tanh(A)
     GO.A = A
 
-def Reshape_X(GO,X,n_d):
-    temp = []
-    for f in range(n_d):
-        t = tf.sparse.SparseTensor(tf.cast(tf.concat((GO.i[:, tf.newaxis], GO.j[:, tf.newaxis]), -1), tf.int64),
-                                       X[:,f],
-                                       [tf.reduce_max(GO.i) + 1, tf.reduce_max(GO.j) + 1])
-        t = tf.sparse.to_dense(t,validate_indices=False)
-        temp.append(t)
-    X = tf.transpose(tf.stack(temp),[1,2,0])
-
-    X_Freq = tf.sparse.SparseTensor(tf.cast(tf.concat((GO.i[:, tf.newaxis], GO.j[:, tf.newaxis]), -1), tf.int64),
-                                     GO.X_Freq,
-                                     [tf.reduce_max(GO.i) + 1, tf.reduce_max(GO.j) + 1])
-    X_Freq = tf.sparse.to_dense(X_Freq,validate_indices=False)
-
-    return X,X_Freq
+def Reshape_X(X,i,j):
+    return tf.scatter_nd(tf.concat((i[:, tf.newaxis], j[:, tf.newaxis]), -1),
+                  X, [tf.reduce_max(i) + 1, tf.reduce_max(j) + 1,X.shape[-1]] )
 
 def GCN_Features(GO,A,X,X_Freq,num_clusters=12):
+    temp = []
+    #Compute Average Features
+    # Features_W = X * X_Freq
+    # Features_Avg = tf.reduce_sum(Features_W,1)
+    # temp.append(Features_Avg)
 
     #Norm
     D_norm = tf.sqrt(1 / tf.reduce_sum(A, -1))
@@ -371,14 +404,30 @@ def GCN_Features(GO,A,X,X_Freq,num_clusters=12):
     #Hiarachical GCN
     num_gcn_layers = 1
     hierarchial_units = [num_clusters]
-    for i, u in zip(range(num_gcn_layers), hierarchial_units):
-        Z = tf.layers.dense(tf.matmul(A, X), u, activation=tf.nn.relu, use_bias=True)
+    for ii,(i, u) in enumerate(zip(range(num_gcn_layers), hierarchial_units),0):
+        for i in range(3):
+            X = tf.layers.dense(tf.matmul(A, X), u, activation=tf.nn.relu, use_bias=True)
+        Z = X
         S = tf.nn.softmax(Z, -1)
-        #GO.reg_losses += tf.reduce_mean(tf.norm(S, axis=1, ord=1))
-        X = tf.matmul(tf.linalg.transpose(S), X_Freq[:,:,tf.newaxis]*Z)
+        #GO.reg_losses += 1e-3*tf.reduce_mean(tf.norm(S, axis=1, ord=1))
+        if ii == 0:
+            X = tf.matmul(tf.linalg.transpose(S), X_Freq*Z)
+        else:
+            X = tf.matmul(tf.linalg.transpose(S),Z)
         A = tf.matmul(tf.matmul(tf.linalg.transpose(S), A), S)
+        temp.append(tf.layers.flatten(X))
 
-    return tf.layers.flatten(X)
+    out = tf.concat(temp,1)
+    #out = tf.reduce_sum(X_Freq[:,:,tf.newaxis]*Z,1)
+    #out = tf.reduce_sum(S*X_Freq[:,:,tf.newaxis],1)
+
+    return out
+
+def Pairwise_Distance_TF(A):
+   r = tf.reduce_sum(A*A,-1)
+   r = tf.expand_dims(r,-1)
+   D = tf.sqrt(tf.nn.relu(r - 2 *tf.matmul(A,tf.linalg.transpose(A)) + tf.linalg.transpose(r)))
+   return D
 
 # def Sparse_Indices(i,j,n_d,num_features,GO):
 #     num_tile = tf.shape(i)[0]
@@ -425,3 +474,31 @@ def GCN_Features(GO,A,X,X_Freq,num_clusters=12):
     # GO.X_sp = X
     # X_sp = tf.sparse.reshape(X,sp_shape,)
     # GO.X_reshape = X_sp
+# def Reshape_X_dep(GO,X,n_d):
+#
+#     tf.scatter_nd(tf.concat((GO.i[:, tf.newaxis], GO.j[:, tf.newaxis]), -1),
+#                   X,[tf.reduce_max(GO.i) + 1, tf.reduce_max(GO.j) + 1],)
+#
+#     indices = tf.constant([[0], [2]])
+#     updates = tf.constant([[[5, 5, 5, 5], [6, 6, 6, 6],
+#                             [7, 7, 7, 7], [8, 8, 8, 8]],
+#                            [[5, 5, 5, 5], [6, 6, 6, 6],
+#                             [7, 7, 7, 7], [8, 8, 8, 8]]])
+#     shape = tf.constant([4, 4, 4])
+#
+#
+#     temp = []
+#     for f in range(n_d):
+#         t = tf.sparse.SparseTensor(tf.cast(tf.concat((GO.i[:, tf.newaxis], GO.j[:, tf.newaxis]), -1), tf.int64),
+#                                        X[:,f],
+#                                        [tf.reduce_max(GO.i) + 1, tf.reduce_max(GO.j) + 1])
+#         t = tf.sparse.to_dense(t,validate_indices=False)
+#         temp.append(t)
+#     X = tf.transpose(tf.stack(temp),[1,2,0])
+#
+#     X_Freq = tf.sparse.SparseTensor(tf.cast(tf.concat((GO.i[:, tf.newaxis], GO.j[:, tf.newaxis]), -1), tf.int64),
+#                                      GO.X_Freq,
+#                                      [tf.reduce_max(GO.i) + 1, tf.reduce_max(GO.j) + 1])
+#     X_Freq = tf.sparse.to_dense(X_Freq,validate_indices=False)
+#
+#     return X,X_Freq

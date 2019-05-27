@@ -418,6 +418,8 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         _,_,sample_idx = np.intersect1d(lb.classes_,vars[0],return_indices=True)
         vars = [v[sample_idx] for v in vars]
         i = lb.transform(self.sample_id[var_idx])
+        #i_dict =dict(zip(i[np.sort(np.unique(i, return_index=True)[1])],np.unique(i)))
+        #np.vectorize(i_dict.get)(i)
 
         OH = OneHotEncoder(categories='auto')
         sp = OH.fit_transform(i.reshape(-1, 1)).T
@@ -468,6 +470,9 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         # sp_shape = sess.run(GO.sp_shape,feed_dict=feed_dict)
         # X_reshape = sess.run(GO.X_reshape,feed_dict=feed_dict)
         # X_sp = sess.run(GO.X_sp,feed_dict=feed_dict)
+        # check = sess.run(GO.X_Freq,feed_dict=feed_dict)
+        # check2 = sess.run(GO.X_Freq_re,feed_dict=feed_dict)
+        # diff = sess.run(GO.Diff,feed_dict=feed_dict)
 
         loss.append(loss_i)
         accuracy.append(accuracy_i)
