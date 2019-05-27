@@ -334,11 +334,10 @@ def knn_step(D,k=30):
 
 def Get_Adjacency_Matrix(GO,X):
 
-    #D, GO.a = ada_exp(Pairwise_Distance_TF(X))
-    D, GO.a,GO.b,GO.c = gbell(Pairwise_Distance_TF(X))
+    D, GO.a = ada_exp(Pairwise_Distance_TF(X))
+    #D, GO.a,GO.b,GO.c = gbell(Pairwise_Distance_TF(X))
     #A = tf.cond(GO.seq_pred,lambda: D, lambda: knn_step(D,k=30))
     A = D
-
 
     # val,ind = tf.nn.top_k(D,30)
     # x,y,z  = tf.shape(val)[0],tf.shape(val)[1],tf.shape(val)[2]
