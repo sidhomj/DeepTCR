@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+from DeepTCR.functions.act_func import *
 
 class graph_object(object):
     def __init__(self):
@@ -310,6 +311,7 @@ def GCN(GO,Features,num_clusters,n_d=12):
     X_Freq = Reshape_X(GO.X_Freq[:,tf.newaxis],GO.i,GO.j)
     Get_Adjacency_Matrix(GO,X)
     Features = GCN_Features(GO,GO.A,X,X_Freq,num_clusters)
+    Features = Flatten_X(Features,GO.i,GO.j)
     return Features
 
 def knn_step(D,k=30):
@@ -317,6 +319,8 @@ def knn_step(D,k=30):
     OH = tf.one_hot(ind,tf.shape(D)[-1])
     OH = tf.reduce_sum(OH,2)
     return D*OH
+
+
     # ind = tf.reshape(ind,[tf.shape(ind)[0]*tf.shape(ind)[1],-1])
     # val = tf.reshape(val,[tf.shape(val)[0]*tf.shape(val)[1],-1])
     # return tf.scatter_nd(tf.squeeze(ind,-1),tf.squeeze(val,-1),[tf.shape(D)[0],tf.shape(D)[1],tf.shape(D)[2]])
@@ -330,9 +334,22 @@ def knn_step(D,k=30):
 
 def Get_Adjacency_Matrix(GO,X):
 
-    D, GO.a = ada_exp(-Pairwise_Distance_TF(X))
+    #D, GO.a = ada_exp(Pairwise_Distance_TF(X))
+    D, GO.a,GO.b,GO.c = gbell(Pairwise_Distance_TF(X))
     #A = tf.cond(GO.seq_pred,lambda: D, lambda: knn_step(D,k=30))
     A = D
+
+
+    # val,ind = tf.nn.top_k(D,30)
+    # x,y,z  = tf.shape(val)[0],tf.shape(val)[1],tf.shape(val)[2]
+    # idx = tf.range(x)
+    # idx = tf.tile(idx,[y])
+    # idx = tf.tile(idx,[z])
+    # GO.x_idx = idx
+    #
+    # idx = tf.range(y)
+
+    #A = D
 
     # D = Pairwise_Distance_TF(X)
     # val,ind = tf.nn.top_k(tf.negative(D),30)
@@ -389,6 +406,9 @@ def Reshape_X(X,i,j):
     return tf.scatter_nd(tf.concat((i[:, tf.newaxis], j[:, tf.newaxis]), -1),
                   X, [tf.reduce_max(i) + 1, tf.reduce_max(j) + 1,X.shape[-1]] )
 
+def Flatten_X(X,i,j):
+    return tf.gather_nd(X,tf.concat((i[:, tf.newaxis], j[:, tf.newaxis]), -1))
+
 def GCN_Features(GO,A,X,X_Freq,num_clusters=12):
     temp = []
     #Compute Average Features
@@ -405,23 +425,21 @@ def GCN_Features(GO,A,X,X_Freq,num_clusters=12):
     num_gcn_layers = 1
     hierarchial_units = [num_clusters]
     for ii,(i, u) in enumerate(zip(range(num_gcn_layers), hierarchial_units),0):
-        for i in range(3):
+        for i in range(1):
             X = tf.layers.dense(tf.matmul(A, X), u, activation=tf.nn.relu, use_bias=True)
         Z = X
         S = tf.nn.softmax(Z, -1)
-        #GO.reg_losses += 1e-3*tf.reduce_mean(tf.norm(S, axis=1, ord=1))
-        if ii == 0:
-            X = tf.matmul(tf.linalg.transpose(S), X_Freq*Z)
-        else:
-            X = tf.matmul(tf.linalg.transpose(S),Z)
-        A = tf.matmul(tf.matmul(tf.linalg.transpose(S), A), S)
-        temp.append(tf.layers.flatten(X))
+        #GO.reg_losses += 1e-6*tf.reduce_mean(tf.norm(S, axis=1, ord=1))
+        # if ii == 0:
+        #     X = tf.matmul(tf.linalg.transpose(S), X_Freq*Z)
+        # else:
+        #     X = tf.matmul(tf.linalg.transpose(S),Z)
+        # A = tf.matmul(tf.matmul(tf.linalg.transpose(S), A), S)
+        # temp.append(tf.layers.flatten(X))
 
-    out = tf.concat(temp,1)
-    #out = tf.reduce_sum(X_Freq[:,:,tf.newaxis]*Z,1)
-    #out = tf.reduce_sum(S*X_Freq[:,:,tf.newaxis],1)
+    #out = tf.concat(temp,1)
 
-    return out
+    return Z
 
 def Pairwise_Distance_TF(A):
    r = tf.reduce_sum(A*A,-1)

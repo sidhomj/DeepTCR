@@ -29,4 +29,10 @@ def Parametric_Step(x,alpha_pos_init=1.0,alpha_neg_init=1.0,pos_train=True,neg_t
 
 def ada_exp(x,init_a=1.0,trainable=True):
     a = tf.Variable(name='a', initial_value=init_a, trainable=trainable)
-    return tf.exp(a*x),a
+    return tf.exp(-a*x),a
+
+def gbell(x, a_init=1.0, b_init=0.0, c_init=0.0, name='gbell'):
+    a = tf.Variable(name=name + 'a', initial_value= a_init, trainable=True,dtype=tf.float32)
+    b = tf.Variable(name=name + 'b', initial_value= b_init, trainable=True,dtype=tf.float32)
+    c = tf.Variable(name=name + 'c', initial_value=c_init, trainable=False,dtype=tf.float32)
+    return 1 / (1 + (((x - c)/ tf.exp(a)) ** (2 * (tf.exp(b) + 1)))),a,b,c

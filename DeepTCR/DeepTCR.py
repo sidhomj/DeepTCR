@@ -3183,12 +3183,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                                          use_only_seq,use_only_gene,use_only_hla,on_graph_clustering,num_clusters,
                                          num_fc_layers,units_fc)
 
-                if GO.on_graph_clustering:
-                    GO.logits = tf.layers.dense(GO.Features,self.Y.shape[1])
-                else:
-                    GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
-                    GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
-                    GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
+                GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
+                GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
+                GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
@@ -3204,7 +3201,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 else:
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
-                #GO.loss += GO.reg_losses
+                GO.loss += GO.reg_losses
                 var_train = tf.trainable_variables()
                 if GO.act_params:
                     GO.opt_c = tf.train.AdamOptimizer(learning_rate=lr_c).minimize(GO.loss,var_list=GO.act_params)
