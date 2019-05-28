@@ -464,8 +464,8 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)
 
-        # out_A = sess.run(GO.A,feed_dict=feed_dict)
-        # out_S = sess.run(GO.S, feed_dict=feed_dict)
+        # xt = sess.run(GO.xt,feed_dict=feed_dict)
+        # x = sess.run(GO.x, feed_dict=feed_dict)
         # sp_shape = sess.run(GO.sp_shape,feed_dict=feed_dict)
         # X_reshape = sess.run(GO.X_reshape,feed_dict=feed_dict)
         # X_sp = sess.run(GO.X_sp,feed_dict=feed_dict)

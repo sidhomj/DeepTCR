@@ -308,10 +308,11 @@ def GCN(GO,Features,num_clusters,n_d=12):
     X = Features
     X = tf.layers.dense(X, n_d)
     X = Reshape_X(X,GO.i,GO.j)
-    X_Freq = Reshape_X(GO.X_Freq[:,tf.newaxis],GO.i,GO.j)
-    Get_Adjacency_Matrix(GO,X)
-    Features = GCN_Features(GO,GO.A,X,X_Freq,num_clusters)
+    A = Get_Adjacency_Matrix(GO,X)
+    GO.A = A
+    Features,S = GCN_Features(A,X,num_clusters)
     Features = Flatten_X(Features,GO.i,GO.j)
+    GO.S = Flatten_X(S,GO.i,GO.j)
     return Features
 
 def knn_step(D,k=30):
@@ -334,6 +335,7 @@ def knn_step(D,k=30):
 
 def Get_Adjacency_Matrix(GO,X):
 
+    #D = Gen_MDistance(X)
     D = Pairwise_Distance_TF(X)
     #A, GO.a = ada_exp(D,init_a=0.0)
     #GO.act_params.extend([GO.a])
@@ -417,7 +419,7 @@ def Get_Adjacency_Matrix(GO,X):
     # NN = tf.concat((tf.expand_dims(tf.matmul(A,tf.linalg.transpose(A)),-1),tf.expand_dims(A,-1)),-1)
     # A = tf.squeeze(tf.layers.dense(NN,1),-1)
     #A =  tf.nn.tanh(A)
-    GO.A = A
+    return A
 
 def Reshape_X(X,i,j):
     return tf.scatter_nd(tf.concat((i[:, tf.newaxis], j[:, tf.newaxis]), -1),
@@ -426,13 +428,7 @@ def Reshape_X(X,i,j):
 def Flatten_X(X,i,j):
     return tf.gather_nd(X,tf.concat((i[:, tf.newaxis], j[:, tf.newaxis]), -1))
 
-def GCN_Features(GO,A,X,X_Freq,num_clusters=12):
-    temp = []
-    #Compute Average Features
-    # Features_W = X * X_Freq
-    # Features_Avg = tf.reduce_sum(Features_W,1)
-    # temp.append(Features_Avg)
-
+def GCN_Features(A,X,num_clusters=12):
     #Norm
     D_norm = tf.sqrt(1 / tf.reduce_sum(A, -1))
     Lap_D = tf.expand_dims(D_norm, -1) * A * tf.expand_dims(D_norm, -2)
@@ -445,7 +441,7 @@ def GCN_Features(GO,A,X,X_Freq,num_clusters=12):
         for i in range(1):
             X = tf.layers.dense(tf.matmul(A, X), u, activation=tf.nn.relu, use_bias=True)
         Z = X
-        GO.S = tf.nn.softmax(Z, -1)
+        S = tf.nn.softmax(Z, -1)
         #GO.reg_losses += 1e6*tf.reduce_mean(tf.norm(GO.S, axis=-1, ord=1))
         # if ii == 0:
         #     X = tf.matmul(tf.linalg.transpose(S), X_Freq*Z)
@@ -456,11 +452,20 @@ def GCN_Features(GO,A,X,X_Freq,num_clusters=12):
 
     #out = tf.concat(temp,1)
 
-    return Z
+    return Z,S
 
 def Pairwise_Distance_TF(A):
    r = tf.reduce_sum(A*A,-1)
    r = tf.expand_dims(r,-1)
    D = tf.sqrt(tf.nn.relu(r - 2 *tf.matmul(A,tf.linalg.transpose(A)) + tf.linalg.transpose(r)))
    return D
+
+def Gen_MDistance(X):
+    x = tf.expand_dims(tf.linalg.transpose(X),-1)
+    x = x - tf.linalg.transpose(x)
+    x = tf.transpose(x,[0,2,3,1])
+    xt = tf.transpose(x,[0,2,1,3])
+    m = tf.get_variable('M', shape=[X.shape[-1], X.shape[-1]], dtype=tf.float32)
+    a = tf.tensordot(xt, m, axes=[[-1], [0]])
+    return tf.sqrt(tf.einsum('zjik,zijk->zij',a,x))
 

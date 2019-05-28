@@ -3282,7 +3282,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 #     plt.pause(0.01)
                 #     plt.show(block=False)
 
-            plt.close()
+            #plt.close()
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
             if not GO.on_graph_clustering:
