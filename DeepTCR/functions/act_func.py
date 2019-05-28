@@ -3,7 +3,7 @@ import numpy as np
 
 def anlu(x, s_init=0.,a_init=1.0):
     s = tf.Variable(name='anlu_s', initial_value= s_init, trainable=True)
-    a = tf.Variable(name='anlu_a', initial_value= a_init, trainable=True,
+    a = tf.Variable(name='anlu_a', initial_value= a_init, trainable=False,
                     constraint=lambda x: tf.clip_by_value(x, 0, np.infty))
     return a*(x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s, a
 

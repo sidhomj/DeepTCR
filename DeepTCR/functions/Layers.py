@@ -208,8 +208,9 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         pass
 
     if on_graph_clustering:
-        #Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
         Features = GCN(GO,Features, num_clusters)
+        #Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+        #GO.act_params.extend([GO.centroids,GO.vq_bias,GO.s])
 
 
     if self.use_hla:
@@ -300,7 +301,7 @@ def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
     vq_bias = tf.Variable(name='vq_bias', initial_value=tf.zeros([n_c, ]) + vq_bias_init, trainable=True)
 
     # activation (these have internal parameters also per centroid)'
-    seq_to_centroids_act,s = activation(vq_bias - seq_to_centroids_dist)
+    seq_to_centroids_act,s,a = activation(vq_bias - seq_to_centroids_dist)
 
     return seq_to_centroids_act,c,vq_bias,s
 

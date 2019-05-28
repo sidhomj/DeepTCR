@@ -472,12 +472,20 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         # check = sess.run(GO.X_Freq,feed_dict=feed_dict)
         # check2 = sess.run(GO.X_Freq_re,feed_dict=feed_dict)
         # diff = sess.run(GO.Diff,feed_dict=feed_dict)
+        # A = sess.run(GO.A, feed_dict=feed_dict)
+        # Features = sess.run(GO.Features,feed_dict=feed_dict)
+        #
+        # sns.clustermap(S)
+        # import umap
+        # X2 = umap.UMAP().fit_transform(Features)
+        # plt.scatter(X2[:,0],X2[:,1],c=S[:,3])
 
         import networkx as nx
 
         # i_dict =dict(zip(i[np.sort(np.unique(i, return_index=True)[1])],np.unique(i)))
         # i2 = np.vectorize(i_dioct.get)(i)
         # out = out_S
+        # out = A
         # s = 3
         # o = out[s][:np.bincount(i)[s],:][:,:np.bincount(i)[s]]
         # sns.clustermap(o, cmap='bwr')
