@@ -53,24 +53,23 @@ Method = []
 for i in range(10):
     DTCRS.Get_Train_Valid_Test()
 
-    DTCRS.Train(use_only_seq=True,num_fc_layers=1,units_fc=256)
+    DTCRS.Train(use_only_seq=True)
     DTCRS.AUC_Curve(plot=False)
     AUC.extend(DTCRS.AUC_DF['AUC'].tolist())
     Class.extend(DTCRS.AUC_DF['Class'].tolist())
     Method.extend(['Sup-Seq']*len(DTCRS.AUC_DF))
 
-    DTCRS.Train(use_only_gene=True,num_fc_layers=1,units_fc=256)
+    DTCRS.Train(use_only_gene=True)
     DTCRS.AUC_Curve(plot=False)
     AUC.extend(DTCRS.AUC_DF['AUC'].tolist())
     Class.extend(DTCRS.AUC_DF['Class'].tolist())
     Method.extend(['Sup-VDJ']*len(DTCRS.AUC_DF))
 
-    DTCRS.Train(num_fc_layers=1,units_fc=256)
+    DTCRS.Train()
     DTCRS.AUC_Curve(plot=False)
     AUC.extend(DTCRS.AUC_DF['AUC'].tolist())
     Class.extend(DTCRS.AUC_DF['Class'].tolist())
     Method.extend(['Sup-Seq-VDJ']*len(DTCRS.AUC_DF))
-
 
 
 df_s = pd.DataFrame()
