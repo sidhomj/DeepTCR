@@ -208,10 +208,16 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         pass
 
     if on_graph_clustering:
-        Features = GCN(GO,Features, num_clusters)
-        #Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
-        #GO.act_params.extend([GO.centroids,GO.vq_bias,GO.s])
-
+        #Features,latent_loss = Variational_Layer(Features,latent_dim=12,alpha=1e-6)
+        #GO.latent_loss += tf.reduce_mean(latent_loss)
+        Features = tf.layers.dense(Features,12)
+        #Features = MultiLevel_Dropout(Features,num_masks=10,activation=None,rate=0.8,name='l1')
+        Features = GCN(GO, Features, num_clusters)
+        #Features,latent_loss = Variational_Layer(Features,latent_dim=256,alpha=1e-9)
+        #Features = tf.layers.dropout(Features,GO.prob)
+        #Features = tf.layers.dense(Features,12,tf.nn.relu)
+        #Features, GO.centroids  = DeepVectorQuantization(Features, GO.prob, num_clusters)
+        #GO.act_params.extend([GO.centroids])
 
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
@@ -286,10 +292,14 @@ def Get_HLA_Loss(fc,embedding_layer,X_OH,alpha=1.0):
 
 #Layers for Repertoire Classifier
 
-def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
-    d = tf.layers.dropout(d,prob)
-    d = tf.layers.dense(d,12,tf.nn.relu)
+def Variational_Layer(Features,latent_dim=12,alpha=1e-3):
+    z_mean = tf.layers.dense(Features, latent_dim, activation=None, name='z_mean')
+    z_log_var = tf.layers.dense(Features, latent_dim, activation=tf.nn.softplus, name='z_log_var')
+    z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)
+    Features = tf.identity(z, name='z')
+    return Features,Latent_Loss(z_log_var, z_mean,alpha=alpha)
 
+def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
     d = tf.layers.dropout(d,prob)
     # centroids
     c = tf.Variable(name='centroids', initial_value=tf.random_uniform([n_c, d.shape[-1].value]), trainable=True)
@@ -301,17 +311,30 @@ def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
     vq_bias = tf.Variable(name='vq_bias', initial_value=tf.zeros([n_c, ]) + vq_bias_init, trainable=True)
 
     # activation (these have internal parameters also per centroid)'
-    seq_to_centroids_act,s,a = activation(vq_bias - seq_to_centroids_dist)
+    seq_to_centroids_act = activation(vq_bias - seq_to_centroids_dist)
 
-    return seq_to_centroids_act,c,vq_bias,s
+    return seq_to_centroids_act,c
 
-def GCN(GO,Features,num_clusters,n_d=12):
-    X = Features
-    X = tf.layers.dense(X, n_d)
-    X = Reshape_X(X,GO.i,GO.j)
-    A = Get_Adjacency_Matrix(GO,X)
+# def DeepVectorQuantization2(d,prob, n_c, vq_bias_init=0., activation=anlu2):
+#     # centroids
+#     c = tf.Variable(name='centroids', initial_value=tf.random_uniform([n_c, d.shape[-1].value]), trainable=True)
+#
+#     # euclidean distance all rows of d to all rows of c
+#     seq_to_centroids_dist = tf.reduce_sum(tf.pow(d[:,:,tf.newaxis, :] - c[tf.newaxis,tf.newaxis, :, :], 2), axis=-1)
+#
+#     # get trainable bias terms per centroid
+#     vq_bias = tf.Variable(name='vq_bias', initial_value=tf.zeros([n_c, ]) + vq_bias_init, trainable=True)
+#
+#     # activation (these have internal parameters also per centroid)'
+#     seq_to_centroids_act = activation(vq_bias - seq_to_centroids_dist)
+#
+#     return seq_to_centroids_act,c,vq_bias
+
+def GCN(GO,Features,num_clusters):
+    A = Get_Adjacency_Matrix(GO,Features)
     GO.A = A
-    Features,S = GCN_Features(A,X,num_clusters)
+    X = Reshape_X(Features,GO.i,GO.j)
+    Features,S = GCN_Features(GO,A,X,num_clusters)
     Features = Flatten_X(Features,GO.i,GO.j)
     GO.S = Flatten_X(S,GO.i,GO.j)
     return Features
@@ -321,7 +344,6 @@ def knn_step(D,k=30):
     OH = tf.one_hot(ind,tf.shape(D)[-1])
     OH = tf.reduce_sum(OH,2)
     return D*OH
-
 
     # ind = tf.reshape(ind,[tf.shape(ind)[0]*tf.shape(ind)[1],-1])
     # val = tf.reshape(val,[tf.shape(val)[0]*tf.shape(val)[1],-1])
@@ -336,12 +358,54 @@ def knn_step(D,k=30):
 
 def Get_Adjacency_Matrix(GO,X):
 
-    #D = Gen_MDistance(X)
+    # X = tf.layers.dense(X,6)
+    # X = tf.layers.dense(X,1)
+    # X = Reshape_X(X,GO.i,GO.j)
+    #
+    # z = tf.zeros(shape=tf.shape(X)[1])
+    # i = X[:, :, tf.newaxis, :] + z[tf.newaxis, tf.newaxis, :, tf.newaxis]
+    # j = X[:, tf.newaxis, :, :] + z[tf.newaxis, :, tf.newaxis, tf.newaxis]
+    # X_E = tf.concat((i, j), -1)
+    # X_E = tf.transpose(X_E, [0, 2, 1, 3]) + X_E
+    # fc = tf.layers.dense(X_E, 1)
+    # fc = tf.squeeze(fc,-1)
+    # A,_,_,_ = gbell(fc)
+
+    # X = tf.layers.dense(X,6,tf.nn.relu)
+    # X = tf.layers.dense(X,3,tf.nn.relu)
+    # X = tf.layers.dense(X,1,tf.nn.relu)
+    X = Reshape_X(X,GO.i,GO.j)
+    #GO.Xout = X
+    #X = X[:,:,tf.newaxis,:]
+    #D = X - tf.transpose(X,perm=[0,2,1,3])
+    #GO.D = D
     D = Pairwise_Distance_TF(X)
-    #A, GO.a = ada_exp(D,init_a=0.0)
+    A = gbell(D,a_init=1.0)
+    # GO.b = tf.trainable_variables()[-1]
+    # GO.a = tf.trainable_variables()[-2]
+    # GO.act_params.extend([GO.a,GO.b])
+    # b = tf.Variable(name='b', initial_value=0.0, trainable=True)
+    # A = anlu(b-D)
+    #A = tf.reduce_mean(A,-1)
+    #A = tf.layers.dense(A,6,anlu)
+    #A = tf.layers.dense(A,1,anlu)
+    #A = tf.squeeze(A,-1)
+
+
+    # D = Pairwise_Distance_TF(X)
+
+    #A, GO.a,GO.b,GO.c = gbell(D,2.0)
+    # b = tf.Variable(name='b', initial_value=0.0, trainable=True)
+    # A,s,a = anlu(b-D)
+    #A, GO.a = ada_exp(D, init_a=1.0, trainable=True)
+    #GO.reg_losses += tf.reduce_mean(tf.norm(A,2,axis=[1,2]))
+
+    #D = Gen_MDistance(X)
+    #D = Pairwise_Distance_TF(X)
+    #A, GO.a = ada_exp(D,init_a=1.0,trainable=False)
     #GO.act_params.extend([GO.a])
     #A, GO.s,GO.a = anlu(-D)
-    A, GO.a,GO.b,GO.c = gbell(D)
+    #A, GO.a,GO.b,GO.c = gbell(D)
     #GO.act_params.extend([GO.a,GO.b])
     #A = tf.cond(GO.seq_pred,lambda: D, lambda: knn_step(D,k=30))
 
@@ -425,22 +489,24 @@ def Get_Adjacency_Matrix(GO,X):
 def Reshape_X(X,i,j):
     return tf.scatter_nd(tf.concat((i[:, tf.newaxis], j[:, tf.newaxis]), -1),
                   X, [tf.reduce_max(i) + 1, tf.reduce_max(j) + 1,X.shape[-1]] )
-
 def Flatten_X(X,i,j):
     return tf.gather_nd(X,tf.concat((i[:, tf.newaxis], j[:, tf.newaxis]), -1))
 
-def GCN_Features(A,X,num_clusters=12):
+def GCN_Features(GO,A,X,num_clusters=12):
     #Norm
     D_norm = tf.sqrt(1 / tf.reduce_sum(A, -1))
     Lap_D = tf.expand_dims(D_norm, -1) * A * tf.expand_dims(D_norm, -2)
     A = Lap_D
+    GO.Lap_D = A
 
     #Hiarachical GCN
     num_gcn_layers = 1
     hierarchial_units = [num_clusters]
     for ii,(i, u) in enumerate(zip(range(num_gcn_layers), hierarchial_units),0):
         for i in range(1):
-            X = tf.layers.dense(tf.matmul(A, X), u, activation=tf.nn.relu, use_bias=True)
+            X = tf.matmul(A,X)
+            #X = MultiLevel_Dropout(X,num_masks=3,activation=anlu,use_bias=True,rate=0.8,units=12)
+            X = tf.layers.dense(X, u, activation=None, use_bias=False)
         Z = X
         S = tf.nn.softmax(Z, -1)
         #GO.reg_losses += 1e6*tf.reduce_mean(tf.norm(GO.S, axis=-1, ord=1))
@@ -454,6 +520,22 @@ def GCN_Features(A,X,num_clusters=12):
     #out = tf.concat(temp,1)
 
     return Z,S
+
+def MultiLevel_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
+                       rate=0.2,units=12,name='ml_weights'):
+    out = []
+    for i in range(num_masks):
+        fc = tf.layers.dropout(X,rate=rate)
+        if i==0:
+            reuse=False
+        else:
+            reuse=True
+
+        with tf.variable_scope(name,reuse=reuse):
+            out.append(tf.layers.dense(fc,units=units,activation=activation,use_bias=use_bias))
+
+    return tf.reduce_mean(tf.stack(out),0)
+
 
 def Pairwise_Distance_TF(A):
    r = tf.reduce_sum(A*A,-1)

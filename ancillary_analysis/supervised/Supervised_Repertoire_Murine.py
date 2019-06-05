@@ -1,6 +1,6 @@
 from DeepTCR.DeepTCR import DeepTCR_SS, DeepTCR_WF
 
-folds = 100
+folds = 10
 LOO = 4
 epochs_min = 100
 
@@ -15,14 +15,21 @@ epochs_min = 100
 #Train Repertoire Classifier without on-graph clustering
 DTCR_WF = DeepTCR_WF('Rudqvist_WF')
 DTCR_WF.Get_Data(directory='../../Data/Rudqvist',Load_Prev_Data=False,
-               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21)
+               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,
+                 data_cut=1.0)
 
 # DTCR_WF.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min)
 # DTCR_WF.AUC_Curve(filename='Rep_AUC.eps')
 
 #Train Repertoire Classifier with on-graph clustering
-DTCR_WF.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,on_graph_clustering=True,epochs_min=epochs_min)
+epochs_min=100
+folds=25
+DTCR_WF.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,on_graph_clustering=False,
+                             epochs_min=epochs_min,num_clusters=12,lr_c=0.1,lr=0.001,stop_criterion=0.01,
+                             batch_size=25)
 DTCR_WF.AUC_Curve(filename='Rep_AUC_clustering.eps')
+DTCR_WF.AUC_Curve()
+
 
 #Visualize Latent Space
 DTCR_WF.UMAP_Plot(by_class=True,freq_weight=True,show_legend=True,scale=5000,Load_Prev_Data=False,

@@ -3178,6 +3178,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.act_params = []
+                GO.latent_loss = 0
                 GO.reg_losses = 0
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
                                          use_only_seq,use_only_gene,use_only_hla,on_graph_clustering,num_clusters,
@@ -3185,7 +3186,8 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
                 GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
-                GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
+                GO.logits = MultiLevel_Dropout(GO.Features_Agg,num_masks=3,activation=None,rate=0.5,units=self.Y.shape[1])
+                #GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
@@ -3203,6 +3205,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 loss_print = GO.loss
                 GO.loss += GO.reg_losses
+                GO.loss += GO.latent_loss
                 var_train = tf.trainable_variables()
                 if GO.act_params:
                     GO.opt_c = tf.train.AdamOptimizer(learning_rate=lr_c).minimize(GO.loss,var_list=GO.act_params)
@@ -3232,7 +3235,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             train_loss_total = []
             stop_check_list = []
             # plt.figure()
-            # x = np.arange(0,10)
+            # x = np.arange(0,20,0.1)
 
             for e in range(epochs):
                 train_loss, train_accuracy, train_predicted,train_auc = \
@@ -3276,13 +3279,13 @@ class DeepTCR_WF(DeepTCR_S_base):
                                 if np.sum(stop_check_list[-3:]) >= 3:
                                     break
 
-                # if e % 10:
-                #     #plt.plot(x,ada_exp_np(x,GO.a.eval()))
-                #     plt.plot(x,gbell_np(x,GO.a.eval(),GO.b.eval()))
-                #     plt.pause(0.01)
-                #     plt.show(block=False)
-
-            #plt.close()
+            #     if e % 10:
+            #         #plt.plot(x,ada_exp_np(x,GO.a.eval()))
+            #         plt.plot(x,gbell_np(x,GO.a.eval(),GO.b.eval()))
+            #         plt.pause(0.01)
+            #         plt.show(block=False)
+            #
+            # plt.close()
 
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)

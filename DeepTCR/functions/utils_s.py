@@ -463,7 +463,11 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         else:
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)
-
+        #
+        # lt = sess.run(GO.Features,feed_dict=feed_dict)
+        # import umap
+        # x2 = umap.UMAP().fit_transform(lt)
+        #A = sess.run(GO.A,feed_dict=feed_dict)
         # xt = sess.run(GO.xt,feed_dict=feed_dict)
         # x = sess.run(GO.x, feed_dict=feed_dict)
         # sp_shape = sess.run(GO.sp_shape,feed_dict=feed_dict)
@@ -480,16 +484,20 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         # X2 = umap.UMAP().fit_transform(Features)
         # plt.scatter(X2[:,0],X2[:,1],c=S[:,3])
 
-        import networkx as nx
+        #import networkx as nx
 
         # i_dict =dict(zip(i[np.sort(np.unique(i, return_index=True)[1])],np.unique(i)))
         # i2 = np.vectorize(i_dioct.get)(i)
         # out = out_S
-        # out = A
-        # s = 3
-        # o = out[s][:np.bincount(i)[s],:][:,:np.bincount(i)[s]]
-        # sns.clustermap(o, cmap='bwr')
-        #
+        plot = False
+        if plot:
+            ll =  sess.run(GO.latent_loss, feed_dict=feed_dict)
+            A = sess.run(GO.A, feed_dict=feed_dict)
+            out = A
+            s = 0
+            o = out[s][:np.bincount(i)[s],:][:,:np.bincount(i)[s]]
+            sns.clustermap(o, cmap='bwr')
+
         # A = nx.from_numpy_array(o)
         # edges = A.edges()
         # weights = [A[u][v]['weight'] for u, v in edges]
@@ -498,7 +506,6 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         # plt.xlim([-1,1])
         # plt.ylim([-1,1])
         # nx.draw_spectral(A)
-
 
         loss.append(loss_i)
         accuracy.append(accuracy_i)
