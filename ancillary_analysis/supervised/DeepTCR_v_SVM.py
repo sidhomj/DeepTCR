@@ -15,7 +15,6 @@ kmer_features = kmer_search(DTCRS.beta_sequences)
 clf_svm = SVC(probability=True)
 clf_rf = RandomForestClassifier(n_estimators=100)
 
-
 y_test_list = []
 y_pred_list_dtcr = []
 y_pred_list_svm = []
