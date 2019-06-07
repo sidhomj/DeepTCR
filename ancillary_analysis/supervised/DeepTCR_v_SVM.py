@@ -20,7 +20,7 @@ y_pred_list_dtcr = []
 y_pred_list_svm = []
 y_pred_list_rf = []
 
-for i in range(10):
+for i in range(100):
     DTCRS.Get_Train_Valid_Test()
     DTCRS.Train(use_only_seq=True, num_fc_layers=0, units_fc=256)
     y_pred_list_dtcr.append(DTCRS.y_pred)
@@ -66,6 +66,11 @@ from scipy.stats import ttest_ind as ttest
 idx_1 = df['Method']=='DeepTCR'
 idx_2 = df['Method']=='SVM'
 t,p_val = ttest(df[idx_1]['AUC'],df[idx_2]['AUC'])
+
+avg_vals = []
+methods = ['DeepTCR','RF','SVM']
+for m in methods:
+    avg_vals.append(np.mean(df[df['Method'] == m]['AUC']))
 
 
 
