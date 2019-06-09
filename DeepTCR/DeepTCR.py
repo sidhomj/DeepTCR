@@ -59,6 +59,7 @@ class DeepTCR_base(object):
         self.use_v_alpha = False
         self.use_j_alpha = False
         self.use_hla = False
+        self.regression = False
 
         #Create dataframes for assigning AA to ints
         aa_idx, aa_mat = make_aa_df()
@@ -80,7 +81,8 @@ class DeepTCR_base(object):
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
                     v_alpha_column=None,j_alpha_column=None,
-                    v_beta_column=None,j_beta_column=None,d_beta_column=None,p=None,hla=None):
+                    v_beta_column=None,j_beta_column=None,d_beta_column=None,
+                 p=None,hla=None):
         """
         Get Data for DeepTCR
 
@@ -466,7 +468,8 @@ class DeepTCR_base(object):
         print('Data Loaded')
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
-                  v_alpha=None,j_alpha=None,class_labels=None,sample_labels=None,freq=None,counts=None,p=None,hla=None):
+                  v_alpha=None,j_alpha=None,class_labels=None,sample_labels=None,freq=None,counts=None,Y=None,
+                  p=None,hla=None):
         """
         Load Data programatically into DeepTCR.
 
@@ -583,6 +586,7 @@ class DeepTCR_base(object):
             self.v_beta_num = self.lb_v_beta.fit_transform(v_beta)
             self.use_v_beta = True
         else:
+            self.lb_v_beta = LabelEncoder()
             self.v_beta_num = np.zeros(shape=[len_input])
             self.v_beta = np.asarray([None] * len_input)
 
@@ -592,6 +596,7 @@ class DeepTCR_base(object):
             self.d_beta_num = self.lb_d_beta.fit_transform(d_beta)
             self.use_d_beta = True
         else:
+            self.lb_d_beta = LabelEncoder()
             self.d_beta_num = np.zeros(shape=[len_input])
             self.d_beta = np.asarray([None] * len_input)
 
@@ -601,6 +606,7 @@ class DeepTCR_base(object):
             self.j_beta_num = self.lb_j_beta.fit_transform(j_beta)
             self.use_j_beta = True
         else:
+            self.lb_j_beta = LabelEncoder()
             self.j_beta_num = np.zeros(shape=[len_input])
             self.j_beta = np.asarray([None] * len_input)
 
@@ -610,6 +616,7 @@ class DeepTCR_base(object):
             self.v_alpha_num = self.lb_v_alpha.fit_transform(v_alpha)
             self.use_v_alpha = True
         else:
+            self.lb_v_alpha = LabelEncoder()
             self.v_alpha_num = np.zeros(shape=[len_input])
             self.v_alpha = np.asarray([None] * len_input)
 
@@ -619,6 +626,7 @@ class DeepTCR_base(object):
             self.j_alpha_num = self.lb_j_alpha.fit_transform(j_alpha)
             self.use_j_alpha = True
         else:
+            self.lb_j_alpha = LabelEncoder()
             self.j_alpha_num = np.zeros(shape=[len_input])
             self.j_alpha = np.asarray([None] * len_input)
 
@@ -645,30 +653,29 @@ class DeepTCR_base(object):
         if freq is not None:
             self.freq = freq
 
-        if (counts is None) & (freq is None):
-            counts = np.ones(shape=len_input)
-            count_dict = {}
-            for s in np.unique(sample_labels):
-                idx = sample_labels == s
-                count_dict[s] = int(np.sum(counts[idx]))
-
-            freq = []
-            for c, n in zip(counts, sample_labels):
-                freq.append(c / count_dict[n])
-            freq = np.asarray(freq)
-            self.counts = counts
-            self.freq = freq
-
-
         if sample_labels is not None:
             self.sample_id = sample_labels
         else:
-            self.sample_id = ['None']*len_input
+            self.sample_id = np.asarray(['None']*len_input)
 
         if class_labels is not None:
             self.class_id = class_labels
         else:
-            self.class_id = ['None']*len_input
+            self.class_id = np.asarray(['None']*len_input)
+
+        if (counts is None) & (freq is None):
+            counts = np.ones(shape=len_input)
+            count_dict = {}
+            for s in np.unique(self.sample_id):
+                idx = self.sample_id == s
+                count_dict[s] = int(np.sum(counts[idx]))
+
+            freq = []
+            for c, n in zip(counts, self.sample_id):
+                freq.append(c / count_dict[n])
+            freq = np.asarray(freq)
+            self.counts = counts
+            self.freq = freq
 
         if hla is not None:
             self.lb_hla = MultiLabelBinarizer()
@@ -679,13 +686,22 @@ class DeepTCR_base(object):
             self.hla_data_seq_num = np.zeros([len_input,1])
             self.hla_data_seq = np.zeros(len_input)
 
-        self.lb = LabelEncoder()
-        Y = self.lb.fit_transform(self.class_id)
-        OH = OneHotEncoder(sparse=False,categories='auto')
-        Y = OH.fit_transform(Y.reshape(-1, 1))
-        self.Y = Y
+        if Y is not None:
+            self.Y = Y
+            self.lb = LabelEncoder()
+            self.regression = True
+        else:
+            self.lb = LabelEncoder()
+            Y = self.lb.fit_transform(self.class_id)
+            OH = OneHotEncoder(sparse=False, categories='auto')
+            Y = OH.fit_transform(Y.reshape(-1, 1))
+            self.Y = Y
+
         self.seq_index = np.asarray(list(range(len(self.Y))))
-        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        if self.regression is False:
+            self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        else:
+            self.predicted = np.zeros([len(self.Y),1])
         self.sample_list = np.unique(self.sample_id)
         print('Data Loaded')
 
@@ -2490,7 +2506,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         self.var_dict = dict(zip(var_names,list(range(len(var_names)))))
 
-        self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=False,LOO=LOO)
+        self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=self.regression,LOO=LOO)
 
         if (self.valid[0].size==0) or (self.test[0].size==0):
             raise Exception('Choose different train/valid/test parameters!')
@@ -2596,28 +2612,37 @@ class DeepTCR_SS(DeepTCR_S_base):
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,use_only_hla,
                                          num_fc_layers,units_fc)
-                GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
 
-                if weight_by_class is True:
-                    class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
-                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True), axis=1)
-                    GO.loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
-                elif class_weights is not None:
-                    weights = np.zeros([1,len(self.lb.classes_)]).astype(np.float32)
-                    for key in class_weights:
-                        weights[:,self.lb.transform([key])[0]]=class_weights[key]
-                    class_weights = tf.constant(weights)
-                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
-                    GO.loss = tf.reduce_mean(weights * tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                if self.regression is False:
+                    GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
+
+                    if weight_by_class is True:
+                        class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
+                        weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True), axis=1)
+                        GO.loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                    elif class_weights is not None:
+                        weights = np.zeros([1,len(self.lb.classes_)]).astype(np.float32)
+                        for key in class_weights:
+                            weights[:,self.lb.transform([key])[0]]=class_weights[key]
+                        class_weights = tf.constant(weights)
+                        weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
+                        GO.loss = tf.reduce_mean(weights * tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                    else:
+                        GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
                 else:
-                    GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                    GO.logits = tf.layers.dense(GO.Features,1)
+                    GO.loss = tf.reduce_mean(tf.square(GO.Y[:,tf.newaxis]-GO.logits))
 
                 GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
 
-                with tf.name_scope('Accuracy_Measurements'):
-                    GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
-                    correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
-                    GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+                if self.regression is False:
+                    with tf.name_scope('Accuracy_Measurements'):
+                        GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
+                        correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
+                        GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+                else:
+                    GO.predicted = GO.logits
+                    GO.accuracy = GO.loss
 
                 GO.saver = tf.train.Saver()
 

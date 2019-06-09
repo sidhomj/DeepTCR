@@ -132,7 +132,11 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
                                        name='Input_Beta')
         GO.X_Seq_beta_OH = tf.one_hot(GO.X_Seq_beta, depth=21)
 
-    GO.Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
+    if self.regression is False:
+        GO.Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
+    else:
+        GO.Y = tf.placeholder(tf.float32, shape=[None, ])
+
     GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
     GO.sp = tf.sparse.placeholder(dtype=tf.float32, shape=[None, None],name='sp')
     GO.X_Freq = tf.placeholder(tf.float32, shape=[None, ], name='Freq')
