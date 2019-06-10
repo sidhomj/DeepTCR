@@ -513,6 +513,11 @@ class DeepTCR_base(object):
         freq: ndarray of float values
             A 1d array with the frequencies for each sequence, in the case they come from samples.
 
+        Y: ndarray of float values
+            In the case one wants to regress TCR sequences against a numerical label, one can provide
+            these numerical values for this input. As of latest release, regression is only available
+            for sequence classifier.
+
         hla: ndarray of tuples
             To input the hla context for each sequence fed into DeepTCR, this will need to formatted
             as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
