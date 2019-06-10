@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
 import shutil
 import warnings
+from scipy.stats import spearmanr
 
 class DeepTCR_base(object):
 
@@ -3056,6 +3057,28 @@ class DeepTCR_SS(DeepTCR_S_base):
         self.predicted[test_idx] = self.y_pred
 
         print('K-fold Cross Validation Completed')
+
+    def SRCC(self):
+        """
+        Spearman's Rank Correlation Coefficient Plot
+
+        In the case one is doing a regression-based model for the sequence classiifer,
+        one can plot the predicted vs actual labeled value with this method. The method
+        returns a plot for the regression and a value of the correlation coefficient.
+
+        Inputs
+        ---------------------------------------
+
+        Returns
+        ---------------------------------------
+        corr: float
+            Spearman's Rank Correlation Coefficient
+        """
+        corr, _ = spearmanr(self.y_pred, self.y_test)
+        plt.figure()
+        plt.scatter(self.y_pred, self.y_test)
+        return corr
+
 
 class DeepTCR_WF(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
