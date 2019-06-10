@@ -3082,6 +3082,9 @@ class DeepTCR_SS(DeepTCR_S_base):
         corr, _ = spearmanr(self.y_pred, self.y_test)
         plt.figure()
         plt.scatter(self.y_pred, self.y_test)
+        plt.xlabel('Predicted')
+        plt.ylabel('Actual')
+        plt.title('SRCC Plot')
         return corr
 
 
