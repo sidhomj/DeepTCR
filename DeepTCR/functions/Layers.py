@@ -1,4 +1,5 @@
 import tensorflow as tf
+from DeepTCR.functions.clustering import *
 
 class graph_object(object):
     def __init__(self):
@@ -207,7 +208,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         pass
 
     if on_graph_clustering:
-        Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+        Features,GO.centroids = gvq(Features, n_vectors=12, n_mixtures=4)
+        #Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)

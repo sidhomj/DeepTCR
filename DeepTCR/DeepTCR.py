@@ -3221,7 +3221,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 var_train = tf.trainable_variables()
                 if on_graph_clustering is True:
-                    var_train_graph = [GO.centroids,GO.s,GO.vq_bias]
+                    var_train_graph = [GO.centroids]
                     GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
                     [var_train.remove(x) for x in var_train_graph]
 
