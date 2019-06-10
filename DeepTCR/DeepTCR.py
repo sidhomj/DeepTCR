@@ -3060,6 +3060,8 @@ class DeepTCR_SS(DeepTCR_S_base):
         test_idx = np.hstack(test_idx)
         self.predicted = np.zeros_like(self.predicted)
         self.predicted[test_idx] = self.y_pred
+        if self.regression is True:
+            self.y_pred = np.squeeze(self.y_pred)
 
         print('K-fold Cross Validation Completed')
 
