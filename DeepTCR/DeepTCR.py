@@ -2846,21 +2846,26 @@ class DeepTCR_SS(DeepTCR_S_base):
             predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
             counts[self.test[self.var_dict['seq_index']]] += 1
 
-            y_test2 = np.vstack(y_test)
-            y_pred2 = np.vstack(y_pred)
+            if self.regression is False:
+                y_test2 = np.vstack(y_test)
+                y_pred2 = np.vstack(y_pred)
+                if suppress_output is False:
+                    print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
 
-            if suppress_output is False:
-                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
-
-                if self.y_test.shape[1] == 2:
-                    if i > 0:
-                        y_test2 = np.vstack(y_test)
-                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
-                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+                    if self.y_test.shape[1] == 2:
+                        if i > 0:
+                            y_test2 = np.vstack(y_test)
+                            if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                                print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
 
 
-        self.y_test = np.vstack(y_test)
-        self.y_pred = np.vstack(y_pred)
+        if self.regression is False:
+            self.y_test = np.vstack(y_test)
+            self.y_pred = np.vstack(y_pred)
+        else:
+            self.y_test = np.hstack(y_test)
+            self.y_pred = np.squeeze(np.vstack(y_pred))
+
         self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
@@ -3021,24 +3026,31 @@ class DeepTCR_SS(DeepTCR_S_base):
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
 
-            y_test2 = np.vstack(y_test)
-            y_pred2 = np.vstack(y_pred)
 
-            if suppress_output is False:
-                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))))
+            if self.regression is False:
+                y_test2 = np.vstack(y_test)
+                y_pred2 = np.vstack(y_pred)
 
-                if self.y_test.shape[1] == 2:
-                    if ii > 0:
-                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
-                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+                if suppress_output is False:
+                    print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))))
+
+                    if self.y_test.shape[1] == 2:
+                        if ii > 0:
+                            if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                                print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
 
 
             if iterations is not None:
                 if ii > iterations:
                     break
 
-        self.y_test = np.vstack(y_test)
-        self.y_pred = np.vstack(y_pred)
+        if self.regression is False:
+            self.y_test = np.vstack(y_test)
+            self.y_pred = np.vstack(y_pred)
+        else:
+            self.y_test = np.hstack(y_test)
+            self.y_pred = np.vstack(y_pred)
+
         test_idx = np.hstack(test_idx)
         self.predicted = np.zeros_like(self.predicted)
         self.predicted[test_idx] = self.y_pred
