@@ -2535,9 +2535,25 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         self.var_dict = dict(zip(var_names,list(range(len(var_names)))))
 
-        self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=self.regression,LOO=LOO)
+        if split_by_sample is False:
+            self.train,self.valid,self.test = Get_Train_Valid_Test(Vars=Vars,Y=self.Y,test_size=test_size,regression=self.regression,LOO=LOO)
 
-        if (self.valid[0].size==0) or (self.test[0].size==0):
+        else:
+            sample = np.unique(self.sample_id)
+            Y = np.asarray([self.Y[np.where(self.sample_id == x)[0][0]] for x in sample])
+            train, valid, test = Get_Train_Valid_Test([sample], Y, test_size=test_size,LOO=LOO)
+
+            self.train_idx = np.where(np.isin(self.sample_id, train[0]))[0]
+            self.valid_idx = np.where(np.isin(self.sample_id, valid[0]))[0]
+            self.test_idx = np.where(np.isin(self.sample_id, test[0]))[0]
+
+            Vars.append(self.Y)
+
+            self.train = [x[self.train_idx] for x in Vars]
+            self.valid = [x[self.valid_idx] for x in Vars]
+            self.test = [x[self.test_idx] for x in Vars]
+
+        if (self.valid[0].size == 0) or (self.test[0].size == 0):
             raise Exception('Choose different train/valid/test parameters!')
 
     def Train(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
@@ -2889,20 +2905,15 @@ class DeepTCR_SS(DeepTCR_S_base):
                                 print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
 
 
-        if self.regression is False:
-            self.y_test = np.vstack(y_test)
-            self.y_pred = np.vstack(y_pred)
-        else:
-            self.y_test = np.hstack(y_test)
-            self.y_pred = np.squeeze(np.vstack(y_pred))
-
+        self.y_test = np.vstack(y_test)
+        self.y_pred = np.vstack(y_pred)
         self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
                            trainable_embedding=True,weight_by_class=False,class_weights=None,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                            iterations=None,use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                        embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
+                        embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,split_by_sample=False):
         '''
         K_Fold Cross-Validation for Single-Sequence Classifier
 
@@ -2997,22 +3008,44 @@ class DeepTCR_SS(DeepTCR_S_base):
         ---------------------------------------
 
         '''
-        if folds is None:
-            folds = len(self.Y)
 
         #Create Folds
-        idx = list(range(len(self.Y)))
-        idx_left = idx
-        file_per_sample = len(self.Y) // folds
-        test_idx = []
-        for ii in range(folds):
-            if ii != folds-1:
-                idx_sel = np.random.choice(idx_left, size=file_per_sample, replace=False)
-            else:
-                idx_sel = idx_left
+        if split_by_sample is False:
+            if folds is None:
+                folds = len(self.Y)
 
-            test_idx.append(idx_sel)
-            idx_left = np.setdiff1d(idx_left, idx_sel)
+            idx = list(range(len(self.Y)))
+            idx_left = idx
+            file_per_sample = len(self.Y) // folds
+            test_idx = []
+            for ii in range(folds):
+                if ii != folds-1:
+                    idx_sel = np.random.choice(idx_left, size=file_per_sample, replace=False)
+                else:
+                    idx_sel = idx_left
+
+                test_idx.append(idx_sel)
+                idx_left = np.setdiff1d(idx_left, idx_sel)
+        else:
+            if folds is None:
+                folds = len(np.unique(self.sample_id))
+
+            idx = np.unique(self.sample_id)
+            idx_left = idx
+            file_per_sample = len(np.unique(self.sample_id)) // folds
+            test_idx = []
+            for ii in range(folds):
+                if ii != folds-1:
+                    idx_sel = np.random.choice(idx_left, size=file_per_sample, replace=False)
+                    idx_sel_seq = np.where(self.sample_id==idx_sel)[0]
+                else:
+                    idx_sel = idx_left
+                    idx_sel_seq = np.where(self.sample_id==idx_sel)[0]
+
+                test_idx.append(idx_sel_seq)
+                idx_left = np.setdiff1d(idx_left, idx_sel)
+
+            idx = list(range(len(self.Y)))
 
 
         y_test = []
@@ -3074,18 +3107,11 @@ class DeepTCR_SS(DeepTCR_S_base):
                 if ii > iterations:
                     break
 
-        if self.regression is False:
-            self.y_test = np.vstack(y_test)
-            self.y_pred = np.vstack(y_pred)
-        else:
-            self.y_test = np.hstack(y_test)
-            self.y_pred = np.vstack(y_pred)
-
+        self.y_test = np.vstack(y_test)
+        self.y_pred = np.vstack(y_pred)
         test_idx = np.hstack(test_idx)
         self.predicted = np.zeros_like(self.predicted)
         self.predicted[test_idx] = self.y_pred
-        if self.regression is True:
-            self.y_pred = np.squeeze(self.y_pred)
 
         print('K-fold Cross Validation Completed')
 
