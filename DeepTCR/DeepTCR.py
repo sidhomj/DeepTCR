@@ -2397,6 +2397,8 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         run a K-fold cross-validation or Monte-Carlo cross-validation before running this method. In this way,
         the predicted probability will have been assigned to a sequence only when it was in the independent test set.
 
+        In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regressio
+        model are returned in the Rep_Seq Dict.
 
         Inputs
         ---------------------------------------
