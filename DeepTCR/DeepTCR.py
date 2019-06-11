@@ -2452,24 +2452,40 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         df_temp['v_alpha'] = self.v_alpha
         df_temp['j_alpha'] = self.j_alpha
         df_temp['Class'] = self.class_id
+        if self.regression is True:
+            df_temp['Regressed_Val'] = self.Y
         df_temp['Sample'] = self.sample_id
         df_temp['Freq'] = self.freq
         df_temp['Counts'] = self.counts
-        df_temp['HLA'] = list(map(list, self.hla_data_seq.tolist()))
+        try:
+            df_temp['HLA'] = list(map(list, self.hla_data_seq.tolist()))
+        except:
+            pass
 
-        for ii, sample in enumerate(self.lb.classes_, 0):
-            df_temp[sample] = self.predicted[:, ii]
+        if self.regression is False:
+            for ii, sample in enumerate(self.lb.classes_, 0):
+                df_temp[sample] = self.predicted[:, ii]
 
-        for ii, sample in enumerate(self.lb.classes_, 0):
-            df_temp.sort_values(by=sample, ascending=False, inplace=True)
-            df_sample = df_temp[df_temp['Class'] == sample][0:top_seq]
+            for ii, sample in enumerate(self.lb.classes_, 0):
+                df_temp.sort_values(by=sample, ascending=False, inplace=True)
+                df_sample = df_temp[df_temp['Class'] == sample][0:top_seq]
 
-            if not df_sample.empty:
-                Rep_Seq.append(df_sample)
-                df_sample.to_csv(os.path.join(dir, sample + '.csv'), index=False)
-                keep.append(ii)
+                if not df_sample.empty:
+                    Rep_Seq.append(df_sample)
+                    df_sample.to_csv(os.path.join(dir, sample + '.csv'), index=False)
+                    keep.append(ii)
 
-        self.Rep_Seq = dict(zip(self.lb.classes_[keep], Rep_Seq))
+            self.Rep_Seq = dict(zip(self.lb.classes_[keep], Rep_Seq))
+        else:
+            df_temp['Predicted'] = self.predicted
+            df_temp.sort_values(by='Predicted',ascending=False,inplace=True)
+            df_sample_top = df_temp[0:top_seq]
+            df_sample_bottom = df_temp[-top_seq:]
+            labels = ['High','Low']
+            Rep_Seq.append(df_sample_top)
+            Rep_Seq.append(df_sample_bottom)
+
+            self.Rep_Seq = dict(zip(labels,Rep_Seq))
 
         if self.use_alpha:
             self.Req_Seq_Features_alpha = Motif_Features(self,self.alpha_features,self.alpha_indices,self.alpha_sequences,self.directory_results,
@@ -3088,7 +3104,6 @@ class DeepTCR_SS(DeepTCR_S_base):
         plt.ylabel('Actual')
         plt.title('SRCC Plot')
         return corr
-
 
 class DeepTCR_WF(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
