@@ -2476,6 +2476,16 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                     keep.append(ii)
 
             self.Rep_Seq = dict(zip(self.lb.classes_[keep], Rep_Seq))
+
+            if self.use_alpha:
+                self.Req_Seq_Features_alpha = Motif_Features(self, self.alpha_features, self.alpha_indices,
+                                                             self.alpha_sequences, self.directory_results,
+                                                             'alpha', self.kernel, unique, motif_seq)
+
+            if self.use_beta:
+                self.Req_Seq_Features_beta = Motif_Features(self, self.beta_features, self.beta_indices,
+                                                            self.beta_sequences, self.directory_results,
+                                                            'beta', self.kernel, unique, motif_seq)
         else:
             df_temp['Predicted'] = self.predicted
             df_temp.sort_values(by='Predicted',ascending=False,inplace=True)
@@ -2487,13 +2497,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
             self.Rep_Seq = dict(zip(labels,Rep_Seq))
 
-        if self.use_alpha:
-            self.Req_Seq_Features_alpha = Motif_Features(self,self.alpha_features,self.alpha_indices,self.alpha_sequences,self.directory_results,
-                           'alpha',self.kernel,unique,motif_seq)
 
-        if self.use_beta:
-            self.Req_Seq_Features_beta = Motif_Features(self,self.beta_features,self.beta_indices,self.beta_sequences,self.directory_results,
-                           'beta',self.kernel,unique,motif_seq)
 
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
