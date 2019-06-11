@@ -2521,6 +2521,11 @@ class DeepTCR_SS(DeepTCR_S_base):
             when set to 2, 2 samples will be left out for the validation set and 2 samples will be left
             out for the test set.
 
+        split_by_sample: int
+            In the case one wants to train the single sequence classifer but not to mix the train/test
+            sets with sequences from different samples, one can set this parameter to True to do the train/test
+            splits by sample.
+
         Returns
         ---------------------------------------
 
@@ -2863,6 +2868,11 @@ class DeepTCR_SS(DeepTCR_S_base):
         embedding_dim_hla: int
             Learned latent dimensionality of HLA
 
+        split_by_sample: int
+            In the case one wants to train the single sequence classifer but not to mix the train/test
+            sets with sequences from different samples, one can set this parameter to True to do the train/test
+            splits by sample.
+
 
         Returns
         ---------------------------------------
@@ -3003,6 +3013,10 @@ class DeepTCR_SS(DeepTCR_S_base):
         embedding_dim_hla: int
             Learned latent dimensionality of HLA
 
+        split_by_sample: int
+            In the case one wants to train the single sequence classifer but not to mix the train/test
+            sets with sequences from different samples, one can set this parameter to True to do the train/test
+            splits by sample.
 
         Returns
         ---------------------------------------
