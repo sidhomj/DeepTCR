@@ -135,7 +135,7 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     if self.regression is False:
         GO.Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
     else:
-        GO.Y = tf.placeholder(tf.float32, shape=[None, ])
+        GO.Y = tf.placeholder(tf.float32, shape=[None,1])
 
     GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
     GO.sp = tf.sparse.placeholder(dtype=tf.float32, shape=[None, None],name='sp')

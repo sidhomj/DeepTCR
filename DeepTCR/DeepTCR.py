@@ -693,6 +693,8 @@ class DeepTCR_base(object):
             self.hla_data_seq = np.zeros(len_input)
 
         if Y is not None:
+            if Y.ndim == 1:
+                Y = np.expand_dims(Y,-1)
             self.Y = Y
             self.lb = LabelEncoder()
             self.regression = True
@@ -2500,9 +2502,8 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             self.Rep_Seq = dict(zip(labels,Rep_Seq))
 
 
-
 class DeepTCR_SS(DeepTCR_S_base):
-    def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
+    def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,split_by_sample=False):
         """
         Train/Valid/Test Splits.
 
@@ -2659,7 +2660,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                         GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
                 else:
                     GO.logits = tf.layers.dense(GO.Features,1)
-                    GO.loss = tf.reduce_mean(tf.square(GO.Y[:,tf.newaxis]-GO.logits))
+                    GO.loss = tf.reduce_mean(tf.square(GO.Y-GO.logits))
 
                 GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
 
@@ -2755,7 +2756,8 @@ class DeepTCR_SS(DeepTCR_S_base):
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
                                 trainable_embedding=True,weight_by_class=False,class_weights=None,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                                 use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                             embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
+                             embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
+                             split_by_sample=False):
 
         '''
         Monte Carlo Cross-Validation for Single-Sequence Classifier
@@ -2859,7 +2861,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         for i in range(0, folds):
             if suppress_output is False:
                 print(i)
-            self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO)
+            self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,split_by_sample=split_by_sample)
             self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
                           kernel=kernel,weight_by_class=weight_by_class,class_weights=class_weights,
                           trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
