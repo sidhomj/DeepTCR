@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
 import shutil
 import warnings
-from scipy.stats import spearmanr
+from scipy.stats import spearmanr,gaussian_kde
 
 class DeepTCR_base(object):
 
@@ -3129,7 +3129,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         print('K-fold Cross Validation Completed')
 
-    def SRCC(self):
+    def SRCC(self,s=10,kde=False):
         """
         Spearman's Rank Correlation Coefficient Plot
 
@@ -3139,15 +3139,31 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         Inputs
         ---------------------------------------
+        s: int
+            size of points for scatterplot
+        
+        kde: bool
+            To do a kernel density estimation per point and plot this as a color-scheme,
+            set to True. Warning: this option will take longer to run.
 
         Returns
         ---------------------------------------
         corr: float
             Spearman's Rank Correlation Coefficient
         """
-        corr, _ = spearmanr(self.y_pred, self.y_test)
+        x,y = np.squeeze(self.y_pred,-1), np.squeeze(self.y_test,-1)
+        corr, _ = spearmanr(x,y)
+
         plt.figure()
-        plt.scatter(self.y_pred, self.y_test)
+        if kde:
+            xy = np.vstack([x, y])
+            z = gaussian_kde(xy)(xy)
+            r = np.argsort(z)
+            x, y, z = x[r], y[r], z[r]
+            plt.scatter(x, y, s=s, c=z, cmap=plt.cm.jet)
+        else:
+            plt.scatter(x,y,s=s)
+
         plt.xlabel('Predicted')
         plt.ylabel('Actual')
         plt.title('SRCC Plot')
