@@ -3206,7 +3206,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             raise Exception('Choose different train/valid/test parameters!')
 
 
-    def Train(self,batch_size = 25, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,on_graph_clustering=False,
+    def Train(self,batch_size = 25, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,gcn=False,
               num_clusters=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
@@ -3316,12 +3316,13 @@ class DeepTCR_WF(DeepTCR_S_base):
         GO.embedding_dim_genes = embedding_dim_genes
         GO.embedding_dim_aa = embedding_dim_aa
         GO.embedding_dim_hla = embedding_dim_hla
-        GO.on_graph_clustering = on_graph_clustering
+        #GO.on_graph_clustering = on_graph_clustering
+        GO.gcn = gcn
         with tf.device(self.device):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
-                                         use_only_seq,use_only_gene,use_only_hla,on_graph_clustering,num_clusters,
+                                         use_only_seq,use_only_gene,use_only_hla,gcn,num_clusters,
                                          num_fc_layers,units_fc)
 
                 GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
@@ -3343,15 +3344,15 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
                 var_train = tf.trainable_variables()
-                if on_graph_clustering is True:
-                    var_train_graph = [GO.centroids,GO.s,GO.vq_bias]
-                    GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
-                    [var_train.remove(x) for x in var_train_graph]
+                # if on_graph_clustering is True:
+                #     var_train_graph = [GO.centroids,GO.s,GO.vq_bias]
+                #     GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
+                #     [var_train.remove(x) for x in var_train_graph]
 
                 GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
 
-                if on_graph_clustering is True:
-                    GO.opt = tf.group(GO.opt,GO.opt_c)
+                # if on_graph_clustering is True:
+                #     GO.opt = tf.group(GO.opt,GO.opt_c)
 
                 # Operations for validation/test accuracy
                 GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
