@@ -1,4 +1,5 @@
 import tensorflow as tf
+from DeepTCR.functions.gcn_func import *
 
 class graph_object(object):
     def __init__(self):
@@ -118,7 +119,7 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
             return tf.concat((conv_out,conv_2_out,conv_3_out),axis=1),conv_out,indices
 
 def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
-               use_only_gene,use_only_hla,on_graph_clustering=False,num_clusters=12,
+               use_only_gene,use_only_hla,gcn=False,num_clusters=12,
                num_fc_layers=0, units_fc=12):
     if self.use_alpha is True:
         GO.X_Seq_alpha = tf.placeholder(tf.int64,
@@ -206,8 +207,13 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     except:
         pass
 
-    if on_graph_clustering:
-        Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+    # on_graph_clustering = False
+    # if on_graph_clustering:
+    #     Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+
+    if gcn:
+        Features = GCN(GO,Features,num_clusters)
+
 
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
@@ -279,29 +285,29 @@ def Get_HLA_Loss(fc,embedding_layer,X_OH,alpha=1.0):
     accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted,tf.cast(X_OH,tf.bool)),tf.float32))
     return loss, accuracy
 
-#Layers for Repertoire Classifier
-
-def anlu(x, s_init=0.):
-    s = tf.Variable(name='anlu_s', initial_value=tf.zeros([x.shape[-1].value, ]) + s_init, trainable=True)
-    return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s
-
-def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
-    d = tf.layers.dropout(d,prob)
-    d = tf.layers.dense(d,12,tf.nn.relu)
-
-    d = tf.layers.dropout(d,prob)
-    # centroids
-    c = tf.Variable(name='centroids', initial_value=tf.random_uniform([n_c, d.shape[-1].value]), trainable=True)
-
-    # euclidean distance all rows of d to all rows of c
-    seq_to_centroids_dist = tf.reduce_sum(tf.pow(d[:, tf.newaxis, :] - c[tf.newaxis, :, :], 2), axis=2)
-
-    # get trainable bias terms per centroid
-    vq_bias = tf.Variable(name='vq_bias', initial_value=tf.zeros([n_c, ]) + vq_bias_init, trainable=True)
-
-    # activation (these have internal parameters also per centroid)'
-    seq_to_centroids_act,s = activation(vq_bias - seq_to_centroids_dist)
-
-    return seq_to_centroids_act,c,vq_bias,s
-
+# #Layers for Repertoire Classifier
+#
+# def anlu(x, s_init=0.):
+#     s = tf.Variable(name='anlu_s', initial_value=tf.zeros([x.shape[-1].value, ]) + s_init, trainable=True)
+#     return (x + tf.sqrt(tf.pow(2., s) + tf.pow(x, 2.))) / 2.,s
+#
+# def DeepVectorQuantization(d,prob, n_c, vq_bias_init=0., activation=anlu):
+#     d = tf.layers.dropout(d,prob)
+#     d = tf.layers.dense(d,12,tf.nn.relu)
+#
+#     d = tf.layers.dropout(d,prob)
+#     # centroids
+#     c = tf.Variable(name='centroids', initial_value=tf.random_uniform([n_c, d.shape[-1].value]), trainable=True)
+#
+#     # euclidean distance all rows of d to all rows of c
+#     seq_to_centroids_dist = tf.reduce_sum(tf.pow(d[:, tf.newaxis, :] - c[tf.newaxis, :, :], 2), axis=2)
+#
+#     # get trainable bias terms per centroid
+#     vq_bias = tf.Variable(name='vq_bias', initial_value=tf.zeros([n_c, ]) + vq_bias_init, trainable=True)
+#
+#     # activation (these have internal parameters also per centroid)'
+#     seq_to_centroids_act,s = activation(vq_bias - seq_to_centroids_dist)
+#
+#     return seq_to_centroids_act,c,vq_bias,s
+#
 

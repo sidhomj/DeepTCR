@@ -3461,7 +3461,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             print('Done Training')
 
     def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
-                             kernel=5,on_graph_clustering=False,num_clusters=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,
+                             kernel=5,gcn=False,num_clusters=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
                              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
@@ -3588,7 +3588,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 print(i)
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO)
             self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
-                          kernel=kernel,on_graph_clustering=on_graph_clustering,num_clusters=num_clusters,
+                          kernel=kernel,gcn=gcn,num_clusters=num_clusters,
                        weight_by_class=weight_by_class,class_weights=class_weights,
                           trainable_embedding=trainable_embedding,accuracy_min=accuracy_min,
                           num_fc_layers=num_fc_layers,
@@ -3633,7 +3633,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal(self,folds=None,epochs_min=25,batch_size=25,stop_criterion=0.25, stop_criterion_window=10,kernel=5,
-                        on_graph_clustering=False,num_clusters=12, weight_by_class=False,class_weights=None, iterations=None,
+                        gcn=False,num_clusters=12, weight_by_class=False,class_weights=None, iterations=None,
                         trainable_embedding=True, accuracy_min = None,
                         num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                         use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
@@ -3787,7 +3787,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             self.Train(epochs_min=epochs_min, batch_size=batch_size,
                           stop_criterion=stop_criterion, kernel=kernel,
-                          on_graph_clustering=on_graph_clustering,num_clusters=num_clusters,
+                          gcn=gcn,num_clusters=num_clusters,
                             weight_by_class=weight_by_class,class_weights=class_weights,
                           trainable_embedding=trainable_embedding,accuracy_min = accuracy_min,
                           num_fc_layers=num_fc_layers,units_fc=units_fc,
