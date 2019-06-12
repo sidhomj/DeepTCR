@@ -255,6 +255,7 @@ class DeepTCR_base(object):
             freq = []
             counts=[]
             file_list = []
+            seq_index = []
             print('Loading Data...')
             for type in self.classes:
                 files_read = glob.glob(os.path.join(directory, type, ext))
@@ -302,6 +303,7 @@ class DeepTCR_base(object):
                     file_list.append(file.split('/')[-1])
                     freq += df['Frequency'].tolist()
                     counts += df['counts'].tolist()
+                    seq_index += df.index.tolist()
 
             alpha_sequences = np.asarray(alpha_sequences)
             beta_sequences = np.asarray(beta_sequences)
@@ -314,6 +316,7 @@ class DeepTCR_base(object):
             file_id = np.asarray(file_id)
             freq = np.asarray(freq)
             counts = np.asarray(counts)
+            seq_index = np.asarray(seq_index)
 
             Y = self.lb.transform(label_id)
             OH = OneHotEncoder(sparse=False,categories='auto')
@@ -424,7 +427,7 @@ class DeepTCR_base(object):
                 hla_data_seq_num = np.asarray(['None']*len(file_id))
 
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
-                pickle.dump([X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,
+                pickle.dump([X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,seq_index,
                              self.lb,file_list,self.use_alpha,self.use_beta,
                              self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,
                              v_beta, d_beta,j_beta,v_alpha,j_alpha,
@@ -434,7 +437,7 @@ class DeepTCR_base(object):
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
-                X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,\
+                X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,seq_index,\
                 self.lb,file_list,self.use_alpha,self.use_beta,\
                     self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,\
                     v_beta, d_beta,j_beta,v_alpha,j_alpha,\
@@ -466,6 +469,7 @@ class DeepTCR_base(object):
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         self.hla_data_seq = hla_data_seq
         self.hla_data_seq_num = hla_data_seq_num
+        self.seq_index_j = seq_index
         print('Data Loaded')
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
