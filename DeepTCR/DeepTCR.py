@@ -2501,7 +2501,6 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
             self.Rep_Seq = dict(zip(labels,Rep_Seq))
 
-
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,split_by_sample=False):
         """
