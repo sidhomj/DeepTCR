@@ -426,7 +426,9 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
 
         feed_dict = {GO.Y: vars[-1],
                      GO.X_Freq: self.freq[var_idx],
-                     GO.sp: sp}
+                     GO.sp: sp,
+                     GO.i: i,
+                     GO.j: self.seq_index_j[var_idx]}
 
         if drop_out_rate is not None:
             feed_dict[GO.prob] = drop_out_rate
@@ -587,6 +589,112 @@ def Get_Latent_Features(self,batch_size,GO,sess):
 
     Features = np.vstack(Features)
     self.features_base = np.vstack(Features_Base)
+    return Features
+
+def Get_Sequence_Pred_GCN(self,batch_size,GO,sess):
+    predicted_list = []
+    i = np.asarray(range(len(self.Y)))
+    j = np.zeros_like(i)
+    freq = np.ones_like(self.freq)
+    idx = []
+    for vars in get_batches(self.test, batch_size=batch_size, random=False):
+        var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
+        OH = OneHotEncoder(categories='auto')
+        sp = OH.fit_transform(i[var_idx].reshape(-1, 1)).T
+        sp = sp.tocoo()
+        indices = np.mat([sp.row, sp.col]).T
+        sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+
+        feed_dict = {GO.X_Freq: freq[var_idx],
+                     GO.sp: sp,
+                     GO.i: i[var_idx],
+                     GO.j:j[var_idx]}
+
+        if self.use_alpha is True:
+            feed_dict[GO.X_Seq_alpha] = self.X_Seq_alpha[var_idx]
+        if self.use_beta is True:
+            feed_dict[GO.X_Seq_beta] = self.X_Seq_beta[var_idx]
+
+        if self.use_v_beta is True:
+            feed_dict[GO.X_v_beta] = self.v_beta_num[var_idx]
+
+        if self.use_d_beta is True:
+            feed_dict[GO.X_d_beta] = self.d_beta_num[var_idx]
+
+        if self.use_j_beta is True:
+            feed_dict[GO.X_j_beta] = self.j_beta_num[var_idx]
+
+        if self.use_v_alpha is True:
+            feed_dict[GO.X_v_alpha] = self.v_alpha_num[var_idx]
+
+        if self.use_j_alpha is True:
+            feed_dict[GO.X_j_alpha] = self.j_alpha_num[var_idx]
+
+        if self.use_hla:
+            feed_dict[GO.X_hla] = self.hla_data_seq_num[var_idx]
+
+        predicted_list.append(sess.run(GO.predicted,feed_dict=feed_dict))
+        idx.append(var_idx)
+
+    return np.vstack(predicted_list), np.squeeze(np.hstack(idx))
+
+def Get_Latent_Features_GCN(self,batch_size,GO,sess):
+    set = self.all
+    Features = []
+    Var_IDX = []
+    for vars in get_batches(set, batch_size=batch_size, random=False):
+        var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
+        lb = LabelEncoder()
+        lb.fit(vars[0])
+        _,_,sample_idx = np.intersect1d(lb.classes_,vars[0],return_indices=True)
+        vars = [v[sample_idx] for v in vars]
+        i = lb.transform(self.sample_id[var_idx])
+
+        OH = OneHotEncoder(categories='auto')
+        sp = OH.fit_transform(i.reshape(-1, 1)).T
+        sp = sp.tocoo()
+        indices = np.mat([sp.row, sp.col]).T
+        sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+
+        feed_dict = {GO.Y: vars[-1],
+                     GO.X_Freq: self.freq[var_idx],
+                     GO.sp: sp,
+                     GO.i: i,
+                     GO.j: self.seq_index_j[var_idx]}
+
+        if self.use_alpha is True:
+            feed_dict[GO.X_Seq_alpha] = self.X_Seq_alpha[var_idx]
+        if self.use_beta is True:
+            feed_dict[GO.X_Seq_beta] = self.X_Seq_beta[var_idx]
+
+        if self.use_v_beta is True:
+            feed_dict[GO.X_v_beta] = self.v_beta_num[var_idx]
+
+        if self.use_d_beta is True:
+            feed_dict[GO.X_d_beta] = self.d_beta_num[var_idx]
+
+        if self.use_j_beta is True:
+            feed_dict[GO.X_j_beta] = self.j_beta_num[var_idx]
+
+        if self.use_v_alpha is True:
+            feed_dict[GO.X_v_alpha] = self.v_alpha_num[var_idx]
+
+        if self.use_j_alpha is True:
+            feed_dict[GO.X_j_alpha] = self.j_alpha_num[var_idx]
+
+        if self.use_hla:
+            feed_dict[GO.X_hla] = self.hla_data_seq_num[var_idx]
+
+        features_i = sess.run(GO.Features,feed_dict=feed_dict)
+        Features.append(features_i)
+        Var_IDX.append(var_idx)
+
+    Features = np.vstack(Features)
+    Var_IDX = np.hstack(Var_IDX)
+    Features_temp = np.zeros_like(Features)
+    Features_temp[Var_IDX] = Features
+    Features = Features_temp
+
     return Features
 
 def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,

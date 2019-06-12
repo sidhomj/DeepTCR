@@ -3205,6 +3205,8 @@ class DeepTCR_WF(DeepTCR_S_base):
         Vars = [np.asarray(self.sample_list)]
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
         self.LOO = LOO
+        Vars.append(Y)
+        self.all = Vars
 
         if (self.valid[0].size==0) or (self.test[0].size==0):
             raise Exception('Choose different train/valid/test parameters!')
@@ -3420,9 +3422,16 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
             Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
-            self.features = Get_Latent_Features(self,batch_size_seq,GO,sess)
+            if not gcn:
+                self.features = Get_Latent_Features(self,batch_size_seq,GO,sess)
+            else:
+                self.features = Get_Latent_Features_GCN(self,batch_size,GO,sess)
 
-            pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
+            if not gcn:
+                pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
+            else:
+                pred,idx = Get_Sequence_Pred_GCN(self,batch_size,GO,sess)
+
             if len(idx.shape) == 0:
                 idx = idx.reshape(-1,1)
 
@@ -3434,8 +3443,8 @@ class DeepTCR_WF(DeepTCR_S_base):
             self.test_idx = np.isin(self.sample_id,self.test[0])
 
             self.kernel = kernel
-            if on_graph_clustering is True:
-                self.centroids = GO.centroids.eval()
+            # if on_graph_clustering is True:
+            #     self.centroids = GO.centroids.eval()
             #
             if self.use_alpha is True:
                 var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]

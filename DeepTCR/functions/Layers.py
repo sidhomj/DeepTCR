@@ -141,6 +141,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
     GO.sp = tf.sparse.placeholder(dtype=tf.float32, shape=[None, None],name='sp')
     GO.X_Freq = tf.placeholder(tf.float32, shape=[None, ], name='Freq')
+    GO.i = tf.placeholder(dtype=tf.int32,shape= [None, ])
+    GO.j = tf.placeholder(dtype=tf.int32,shape = [None, ])
 
     gene_features = []
     GO.X_v_beta, GO.X_v_beta_OH, GO.embedding_layer_v_beta, \
@@ -212,8 +214,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     #     Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
     if gcn:
+        Features = MultiLevel_Dropout(Features,num_masks=20,activation=None,rate=0.5,units=12,name='gcn_drop')
         Features = GCN(GO,Features,num_clusters)
-
 
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
@@ -221,13 +223,13 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
 
     if use_only_seq:
         Features = Seq_Features
-        if on_graph_clustering:
-            Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+        # if on_graph_clustering:
+        #     Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
     if use_only_gene:
         Features = gene_features
-        if on_graph_clustering:
-            Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
+        # if on_graph_clustering:
+        #     Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
     if use_only_hla:
         Features = HLA_Features
