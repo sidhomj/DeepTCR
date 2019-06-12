@@ -4,7 +4,7 @@ import numpy as np
 def isru(x, l=-1., h=1., a=None):
     if a is None:
         a = h - l
-    return l + (((h - l) / 2) * (1 + (x / tf.sqrt((a ** 2) + (x ** 2)))))
+    return l + (((h - l) / 2) * (1 + (x / (((a ** 2) + (x ** 2)) ** (1 / 2)))))
 
 
 def anlu(x, init_s=0., init_b=None, name='anlu', axis=-1):
@@ -18,8 +18,9 @@ def anlu(x, init_s=0., init_b=None, name='anlu', axis=-1):
         if init_b is not None:
             b = tf.Variable(name=name + '_b', initial_value=np.random.normal(0, 0.01, np.array([_.value for _ in x.shape])[axis]) + init_b, dtype=tf.float32, trainable=True)
 
-    s_ = 2 ** isru(s, l=-4., h=4.)
-    return ((x+b) + ((s_ + ((x + b) ** 2)) ** (1 / 2))) / 2
+    _s = 2 ** isru(s, l=-4., h=4.)
+    _b = (b ** 3) + b
+    return ((x + _b) + ((_s + ((x + _b) ** 2)) ** (1 / 2))) / 2
 
 
 def kde_bell(x, init_a=0., init_b=0., name='kde_bell', axis=-1):
@@ -50,15 +51,24 @@ def one_bell(x, a_init=0., b_init=0., name='one_bell', axis=-1):
     return (1 + (((x ** 2) / (a_ ** 2)) ** b_)) ** -1
 
 
-def gvq(x, n_vectors, n_mixtures, vectors_init=None):
+def gvq(x, n_vectors, n_mixtures, vector_activation, vectors_init=None, data_activation=None):
     # generate vectors
     if vectors_init is None:
         vectors_init = np.random.uniform(-1, 1, [n_vectors, x.shape[-1]])
     vectors = tf.Variable(name='centroids', initial_value=vectors_init, dtype=tf.float32, trainable=True)
+    # pass through activation function - should be same as data
+    if vector_activation is not None:
+        vectors = vector_activation(vectors)
+
+    # data vectors have generally come off an activation function, but option is here if needed
+    if data_activation is not None:
+        data = data_activation(x)
+    else:
+        data = x
 
     # activation matrix events X centroids, in bounded space - isru (-1, 1)
-    actmat = isru(x)[:, tf.newaxis, :] - isru(vectors)[tf.newaxis, :, :]
-    actmat = kde_bell(tf.sqrt(tf.reduce_sum(actmat ** 2, axis=-1)), init_a=3., init_b=0., axis=-1)
+    actmat = data[:, tf.newaxis, :] - vectors[tf.newaxis, :, :]
+    actmat = kde_bell(tf.sqrt(tf.reduce_mean(actmat ** 2, axis=-1)), init_a=3., init_b=0., axis=-1)
     # actmat = tf.reduce_mean(kde_bell(actmat, init_a=3., init_b=0., axis=[2, 3]), axis=-1)
 
     #  mixture model approach
@@ -66,4 +76,4 @@ def gvq(x, n_vectors, n_mixtures, vectors_init=None):
     mixture_weights = tf.nn.softmax(mixture_weights, axis=0)
     mixture_outputs = tf.tensordot(actmat, mixture_weights, [-1, 0])
 
-    return mixture_outputs,vectors
+    return mixture_outputs
