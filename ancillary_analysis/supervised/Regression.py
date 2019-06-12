@@ -3,12 +3,10 @@ regressed against the quantitative evaluation of antigen-specificity via
 dCODE Dextramer reagents"""
 
 import pandas as pd
-import pickle
 from DeepTCR.DeepTCR import DeepTCR_SS
 import numpy as np
 from multiprocessing import Pool
 import os
-import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 
@@ -19,7 +17,6 @@ p = Pool(40)
 #Get alpha/beta sequences
 alpha = np.asarray(df['alpha'].tolist())
 beta = np.asarray(df['beta'].tolist())
-#sample = np.asarray(df['Sample'].tolist())
 
 y_pred = []
 y_test = []
