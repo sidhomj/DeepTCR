@@ -82,7 +82,7 @@ On-graph clustering method introduced for repertoire classifier to improve class
 #### 1.2.13
 Ability for HLA information to be incorporated in the analysis of TCR-Seq. 
 
-#### 1.2.22
+#### 1.2.24
 Added ability to do regression for sequence-based model.
 
 
