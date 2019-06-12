@@ -348,7 +348,6 @@ def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,ker
 
     return Rep_Seq_Features
 
-
 def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=None):
     loss = []
     accuracy = []
