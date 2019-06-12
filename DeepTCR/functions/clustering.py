@@ -76,4 +76,4 @@ def gvq(x, n_vectors, n_mixtures, vector_activation, vectors_init=None, data_act
     mixture_weights = tf.nn.softmax(mixture_weights, axis=0)
     mixture_outputs = tf.tensordot(actmat, mixture_weights, [-1, 0])
 
-    return mixture_outputs
+    return mixture_outputs,vectors

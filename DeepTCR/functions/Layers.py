@@ -208,7 +208,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         pass
 
     if on_graph_clustering:
-        Features,GO.centroids = gvq(Features, n_vectors=12, n_mixtures=4)
+        #Features,GO.centroids = gvq(Features, n_vectors=12, n_mixtures=4)
+        Features,GO.centroids = gvq(Features,n_vectors=12,n_mixtures=12,vector_activation=isru)
         #Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
     if self.use_hla:
