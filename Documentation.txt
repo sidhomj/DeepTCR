@@ -27,6 +27,7 @@ DESCRIPTION
     # from sklearn.metrics import roc_curve, roc_auc_score
     # import shutil
     # import warnings
+    # from scipy.stats import spearmanr,gaussian_kde
 
 CLASSES
     builtins.object
@@ -49,7 +50,7 @@ CLASSES
      |  
      |  Methods defined here:
      |  
-     |  Get_Train_Valid_Test(self, test_size=0.25, LOO=None)
+     |  Get_Train_Valid_Test(self, test_size=0.25, LOO=None, split_by_sample=False)
      |      Train/Valid/Test Splits.
      |      
      |      Divide data for train, valid, test set. Training is used to
@@ -66,10 +67,15 @@ CLASSES
      |          when set to 2, 2 samples will be left out for the validation set and 2 samples will be left
      |          out for the test set.
      |      
+     |      split_by_sample: int
+     |          In the case one wants to train the single sequence classifer but not to mix the train/test
+     |          sets with sequences from different samples, one can set this parameter to True to do the train/test
+     |          splits by sample.
+     |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, iterations=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, iterations=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, split_by_sample=False)
      |      K_Fold Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -158,11 +164,15 @@ CLASSES
      |      embedding_dim_hla: int
      |          Learned latent dimensionality of HLA
      |      
+     |      split_by_sample: int
+     |          In the case one wants to train the single sequence classifer but not to mix the train/test
+     |          sets with sequences from different samples, one can set this parameter to True to do the train/test
+     |          splits by sample.
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, epochs_min=10, batch_size=1000, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, split_by_sample=False)
      |      Monte Carlo Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -250,9 +260,35 @@ CLASSES
      |      embedding_dim_hla: int
      |          Learned latent dimensionality of HLA
      |      
+     |      split_by_sample: int
+     |          In the case one wants to train the single sequence classifer but not to mix the train/test
+     |          sets with sequences from different samples, one can set this parameter to True to do the train/test
+     |          splits by sample.
+     |      
      |      
      |      Returns
      |      ---------------------------------------
+     |  
+     |  SRCC(self, s=10, kde=False)
+     |      Spearman's Rank Correlation Coefficient Plot
+     |      
+     |      In the case one is doing a regression-based model for the sequence classiifer,
+     |      one can plot the predicted vs actual labeled value with this method. The method
+     |      returns a plot for the regression and a value of the correlation coefficient.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      s: int
+     |          size of points for scatterplot
+     |      
+     |      kde: bool
+     |          To do a kernel density estimation per point and plot this as a color-scheme,
+     |          set to True. Warning: this option will take longer to run.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |      corr: float
+     |          Spearman's Rank Correlation Coefficient
      |  
      |  Train(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      Train Single-Sequence Classifier
@@ -376,6 +412,8 @@ CLASSES
      |      run a K-fold cross-validation or Monte-Carlo cross-validation before running this method. In this way,
      |      the predicted probability will have been assigned to a sequence only when it was in the independent test set.
      |      
+     |      In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regressio
+     |      model are returned in the Rep_Seq Dict.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -525,7 +563,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None, hla=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -566,6 +604,11 @@ CLASSES
      |      
      |      freq: ndarray of float values
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
+     |      
+     |      Y: ndarray of float values
+     |          In the case one wants to regress TCR sequences against a numerical label, one can provide
+     |          these numerical values for this input. As of latest release, regression is only available
+     |          for sequence classifier.
      |      
      |      hla: ndarray of tuples
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
@@ -1044,6 +1087,8 @@ CLASSES
      |      run a K-fold cross-validation or Monte-Carlo cross-validation before running this method. In this way,
      |      the predicted probability will have been assigned to a sequence only when it was in the independent test set.
      |      
+     |      In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regressio
+     |      model are returned in the Rep_Seq Dict.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -1193,7 +1238,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None, hla=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -1234,6 +1279,11 @@ CLASSES
      |      
      |      freq: ndarray of float values
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
+     |      
+     |      Y: ndarray of float values
+     |          In the case one wants to regress TCR sequences against a numerical label, one can provide
+     |          these numerical values for this input. As of latest release, regression is only available
+     |          for sequence classifier.
      |      
      |      hla: ndarray of tuples
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
@@ -1961,7 +2011,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None, hla=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -2002,6 +2052,11 @@ CLASSES
      |      
      |      freq: ndarray of float values
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
+     |      
+     |      Y: ndarray of float values
+     |          In the case one wants to regress TCR sequences against a numerical label, one can provide
+     |          these numerical values for this input. As of latest release, regression is only available
+     |          for sequence classifier.
      |      
      |      hla: ndarray of tuples
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
@@ -2880,6 +2935,8 @@ CLASSES
      |      run a K-fold cross-validation or Monte-Carlo cross-validation before running this method. In this way,
      |      the predicted probability will have been assigned to a sequence only when it was in the independent test set.
      |      
+     |      In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regressio
+     |      model are returned in the Rep_Seq Dict.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -3029,7 +3086,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None, hla=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -3070,6 +3127,11 @@ CLASSES
      |      
      |      freq: ndarray of float values
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
+     |      
+     |      Y: ndarray of float values
+     |          In the case one wants to regress TCR sequences against a numerical label, one can provide
+     |          these numerical values for this input. As of latest release, regression is only available
+     |          for sequence classifier.
      |      
      |      hla: ndarray of tuples
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
@@ -3615,7 +3677,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, p=None, hla=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -3656,6 +3718,11 @@ CLASSES
      |      
      |      freq: ndarray of float values
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
+     |      
+     |      Y: ndarray of float values
+     |          In the case one wants to regress TCR sequences against a numerical label, one can provide
+     |          these numerical values for this input. As of latest release, regression is only available
+     |          for sequence classifier.
      |      
      |      hla: ndarray of tuples
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
