@@ -8,6 +8,9 @@ from DeepTCR.DeepTCR import DeepTCR_SS
 import numpy as np
 from multiprocessing import Pool
 import os
+import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy.stats import gaussian_kde
 
 df = pd.read_csv('../../Data/10x_Data/Data_Regression.csv')
 DTCRS = DeepTCR_SS('reg',device='/gpu:2')
@@ -23,13 +26,11 @@ y_test = []
 antigen = []
 #Iterate through all antigens
 for i in range(2,df.columns.shape[0]):
-    i = 34
     print(df.iloc[:,i].name)
     sel = df.iloc[:,i]
     Y = np.log2(np.asarray(sel.tolist()) + 1)
     DTCRS.Load_Data(alpha_sequences=alpha, beta_sequences=beta, Y=Y,p=p)
     DTCRS.K_Fold_CrossVal(split_by_sample=False,folds=5)
-    DTCRS.SRCC(kde=True)
     y_pred.append(DTCRS.y_pred)
     y_test.append(DTCRS.y_test)
     antigen.append([sel.name]*len(DTCRS.y_pred))
@@ -38,56 +39,26 @@ antigen = np.hstack(antigen)
 y_pred = np.vstack(y_pred)
 y_test = np.vstack(y_test)
 
+#Save Data
 df_out = pd.DataFrame()
 df_out['Antigen'] = antigen
 df_out['Y_Pred'] = y_pred
 df_out['Y_Test'] = y_test
 df_out.to_csv('Regression_Results.csv',index=False)
-df_out.sort_values(by='Y_Pred',ascending=False,inplace=True)
 
+#Load Data
 df_out = pd.read_csv('Regression_Results.csv')
-
-import seaborn as sns
-import matplotlib.pyplot as plt
-from scipy.stats import gaussian_kde
 ant = np.unique(df_out['Antigen'])
-ant_sel = ant[36:48]
 
-fig,ax = plt.subplots(3,4)
-ax = np.ndarray.flatten(ax)
-for an,a in zip(ant_sel,ax):
-    df_temp = df_out[df_out['Antigen'] == an]
-    #random sample
-    idx = np.random.choice(range(len(df_temp)),10000,replace=False)
-    df_temp = df_temp.iloc[idx]
-
-    #regular scatter
-    x = np.array(df_temp['Y_Pred'])
-    y = np.array(df_temp['Y_Test'])
-    xy = np.vstack([x, y])
-    z = gaussian_kde(xy)(xy)
-    r = np.argsort(z)
-    x ,y, z = x[r], y[r], z[r]
-    #z = np.log2(z)
-    a.scatter(x,y,s=10,c=z,cmap=plt.cm.jet)
-
-    a.set_title(an,fontsize=8)
-    a.set_xlim([0,10])
-    a.set_ylim([0,10])
-
+#Create Plots
 for a in ant:
     df_temp = df_out[df_out['Antigen'] == a]
-    # #random sample
-    # idx = np.random.choice(range(len(df_temp)),1000,replace=False)
-    # df_temp = df_temp.iloc[idx]
-
     x = np.array(df_temp['Y_Pred'])
     y = np.array(df_temp['Y_Test'])
     xy = np.vstack([x, y])
     z = gaussian_kde(xy)(xy)
     r = np.argsort(z)
     x ,y, z = x[r], y[r], z[r]
-    #z = np.log2(z)
     plt.figure()
     plt.scatter(x,y,s=15,c=z,cmap=plt.cm.jet)
     plt.title(a,fontsize=12)
@@ -97,18 +68,3 @@ for a in ant:
     plt.ylabel('Log2(counts)',fontsize=12)
     plt.savefig(os.path.join('density_plots',a+'.eps'))
     plt.close()
-
-
-
-# #density
-# nbins = 10
-# x = df_temp['Y_Pred']
-# y = df_temp['Y_Test']
-# k = kde.gaussian_kde([x,y])
-# xi, yi = np.mgrid[0:10:nbins * 1j, 0:10:nbins * 1j]
-# zi = k(np.vstack([xi.flatten(), yi.flatten()]))
-# zi = np.log10(zi+1)
-# a.pcolormesh(xi, yi, zi.reshape(xi.shape))
-
-
-
