@@ -1,6 +1,6 @@
 from DeepTCR.DeepTCR import DeepTCR_SS, DeepTCR_WF
 
-folds = 20
+folds = 100
 LOO = 4
 epochs_min = 100
 

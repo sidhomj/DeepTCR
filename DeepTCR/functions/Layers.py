@@ -214,7 +214,7 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     #     Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
     if gcn:
-        Features = MultiLevel_Dropout(Features,num_masks=20,activation=None,rate=0.5,units=12,name='gcn_drop')
+        Features = MultiLevel_Dropout(Features,num_masks=10,activation=None,rate=0.5,units=12,name='gcn_drop')
         Features = GCN(GO,Features,num_clusters)
 
     if self.use_hla:
@@ -223,11 +223,17 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
 
     if use_only_seq:
         Features = Seq_Features
+        if gcn:
+            Features = MultiLevel_Dropout(Features, num_masks=10, activation=None, rate=0.5, units=12, name='gcn_drop')
+            Features = GCN(GO, Features, num_clusters)
         # if on_graph_clustering:
         #     Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
     if use_only_gene:
         Features = gene_features
+        if gcn:
+            Features = MultiLevel_Dropout(Features, num_masks=10, activation=None, rate=0.5, units=12, name='gcn_drop')
+            Features = GCN(GO, Features, num_clusters)
         # if on_graph_clustering:
         #     Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 

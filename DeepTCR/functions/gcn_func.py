@@ -14,8 +14,6 @@ def Get_Adjacency_Matrix(GO,X):
     X = Reshape_X(X,GO.i,GO.j)
     D = Pairwise_Distance_TF(X)
     A,_,_,_ = gbell(D,a_init=0.0)
-    #id = tf.eye(tf.shape(D)[-1])[tf.newaxis,:,:]
-    #A = A*id
     GO.A = A
     return A
 
