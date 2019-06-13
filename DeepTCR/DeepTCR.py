@@ -418,6 +418,31 @@ class DeepTCR_base(object):
                 hla_data_seq_num = hla_data_seq_num.astype(int)
                 hla_data_seq = np.asarray(self.lb_hla.inverse_transform(hla_data_seq_num))
 
+                #remove sequences with no hla information
+                idx_keep = np.sum(hla_data_seq_num,-1)>0
+                X_Seq_alpha = X_Seq_alpha[idx_keep]
+                X_Seq_beta = X_Seq_beta[idx_keep]
+                Y = Y[idx_keep]
+                alpha_sequences = alpha_sequences[idx_keep]
+                beta_sequences = beta_sequences[idx_keep]
+                label_id = label_id[idx_keep]
+                file_id = file_id[idx_keep]
+                freq = freq[idx_keep]
+                counts = counts[idx_keep]
+                seq_index = seq_index[idx_keep]
+                v_beta = v_beta[idx_keep]
+                d_beta = d_beta[idx_keep]
+                j_beta = j_beta[idx_keep]
+                v_alpha = v_alpha[idx_keep]
+                j_alpha = j_alpha[idx_keep]
+                v_beta_num = v_beta_num[idx_keep]
+                d_beta_num = d_beta_num[idx_keep]
+                j_beta_num = j_beta_num[idx_keep]
+                v_alpha_num = v_alpha_num[idx_keep]
+                j_alpha_num = j_alpha_num[idx_keep]
+                hla_data_seq = hla_data_seq[idx_keep]
+                hla_data_seq_num = hla_data_seq_num[idx_keep]
+
             else:
                 self.lb_hla = MultiLabelBinarizer()
                 file_list = np.asarray(file_list)
@@ -3355,7 +3380,13 @@ class DeepTCR_WF(DeepTCR_S_base):
                 #     GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
                 #     [var_train.remove(x) for x in var_train_graph]
 
-                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
+                #GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
+
+                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001)
+                GO.grads_and_vars = GO.opt.compute_gradients(GO.loss, var_train)
+                GO.gradients = tf.gradients(GO.loss,var_train)
+
+                GO.opt = GO.opt.apply_gradients(GO.grads_and_vars)
 
                 # if on_graph_clustering is True:
                 #     GO.opt = tf.group(GO.opt,GO.opt_c)

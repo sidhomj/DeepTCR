@@ -9,8 +9,11 @@ from scipy.stats import mannwhitneyu
 DTCR = DeepTCR_WF('Human_TIL',device='/gpu:0')
 dir = 'Topalian/beta/pre_crpr_sdpd'
 DTCR.Get_Data(directory='../../Data/Topalian',Load_Prev_Data=False,
-               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,data_cut=0.25,
+               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,data_cut=0.3,
               hla='../../Data/Topalian/HLA_Ref.csv')
+# DTCR.Get_Data(directory='Data/Topalian',Load_Prev_Data=False,
+#                aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,data_cut=0.25,
+#               hla='Data/Topalian/HLA_Ref.csv')
 
 folds = 500
 LOO = 6
@@ -27,90 +30,91 @@ names_list = []
 
 names = ['Seq','VDJ','HLA','Seq+VDJ','Seq+HLA','VDJ+HLA','Seq+VDJ+HLA']
 
-#Just train w/ Sequence Information
-DTCR.use_hla = False
-DTCR.use_v_beta = False
-DTCR.use_d_beta = False
-DTCR.use_j_beta = False
-DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
-                          weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
-y_pred_list.append(DTCR.y_pred)
-y_test_list.append(DTCR.y_test)
-
-for ii in range(folds):
-    auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
-    names_list.append('Seq')
-
-#Just train w/ VDJ Information
-DTCR.use_hla = False
-DTCR.use_beta = False
-DTCR.use_v_beta = True
-DTCR.use_d_beta = True
-DTCR.use_j_beta = True
-DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
-                          weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
-y_pred_list.append(DTCR.y_pred)
-y_test_list.append(DTCR.y_test)
-
-for ii in range(folds):
-    auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
-    names_list.append('VDJ')
-
-#Just train w/HLA
-DTCR.use_hla = True
-DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,use_only_hla=True,
-                          weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
-y_pred_list.append(DTCR.y_pred)
-y_test_list.append(DTCR.y_test)
-
-for ii in range(folds):
-    auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
-    names_list.append('HLA')
-
-#Just train Seq + VDJ
-DTCR.use_hla = False
-DTCR.use_beta = True
-DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
-                          weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
-y_pred_list.append(DTCR.y_pred)
-y_test_list.append(DTCR.y_test)
-
-for ii in range(folds):
-    auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
-    names_list.append('Seq+VDJ')
-
-#Just train Seq + HLA
-DTCR.use_hla = True
-DTCR.use_v_beta = False
-DTCR.use_d_beta = False
-DTCR.use_j_beta = False
-DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
-                          weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
-y_pred_list.append(DTCR.y_pred)
-y_test_list.append(DTCR.y_test)
-
-for ii in range(folds):
-    auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
-    names_list.append('Seq+HLA')
-
-#Just train VDJ + HLA
-DTCR.use_beta = False
-DTCR.use_v_beta = True
-DTCR.use_d_beta = True
-DTCR.use_j_beta = True
-DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
-                          weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
-y_pred_list.append(DTCR.y_pred)
-y_test_list.append(DTCR.y_test)
-
-for ii in range(folds):
-    auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
-    names_list.append('VDJ+HLA')
+# #Just train w/ Sequence Information
+# DTCR.use_hla = False
+# DTCR.use_v_beta = False
+# DTCR.use_d_beta = False
+# DTCR.use_j_beta = False
+# DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
+#                           weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
+# y_pred_list.append(DTCR.y_pred)
+# y_test_list.append(DTCR.y_test)
+#
+# for ii in range(folds):
+#     auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
+#     names_list.append('Seq')
+#
+# #Just train w/ VDJ Information
+# DTCR.use_hla = False
+# DTCR.use_beta = False
+# DTCR.use_v_beta = True
+# DTCR.use_d_beta = True
+# DTCR.use_j_beta = True
+# DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
+#                           weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
+# y_pred_list.append(DTCR.y_pred)
+# y_test_list.append(DTCR.y_test)
+#
+# for ii in range(folds):
+#     auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
+#     names_list.append('VDJ')
+#
+# #Just train w/HLA
+# DTCR.use_hla = True
+# DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,use_only_hla=True,
+#                           weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
+# y_pred_list.append(DTCR.y_pred)
+# y_test_list.append(DTCR.y_test)
+#
+# for ii in range(folds):
+#     auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
+#     names_list.append('HLA')
+#
+# #Just train Seq + VDJ
+# DTCR.use_hla = False
+# DTCR.use_beta = True
+# DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
+#                           weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
+# y_pred_list.append(DTCR.y_pred)
+# y_test_list.append(DTCR.y_test)
+#
+# for ii in range(folds):
+#     auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
+#     names_list.append('Seq+VDJ')
+#
+# #Just train Seq + HLA
+# DTCR.use_hla = True
+# DTCR.use_v_beta = False
+# DTCR.use_d_beta = False
+# DTCR.use_j_beta = False
+# DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
+#                           weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
+# y_pred_list.append(DTCR.y_pred)
+# y_test_list.append(DTCR.y_test)
+#
+# for ii in range(folds):
+#     auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
+#     names_list.append('Seq+HLA')
+#
+# #Just train VDJ + HLA
+# DTCR.use_beta = False
+# DTCR.use_v_beta = True
+# DTCR.use_d_beta = True
+# DTCR.use_j_beta = True
+# DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
+#                           weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
+# y_pred_list.append(DTCR.y_pred)
+# y_test_list.append(DTCR.y_test)
+#
+# for ii in range(folds):
+#     auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))
+#     names_list.append('VDJ+HLA')
 
 #Train with both Seq + VDJ+ HLA
 DTCR.use_beta = True
 DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
-                          weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion)
+                          weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion,
+                          gcn=True,batch_size=10)
 y_pred_list.append(DTCR.y_pred)
 y_test_list.append(DTCR.y_test)
 

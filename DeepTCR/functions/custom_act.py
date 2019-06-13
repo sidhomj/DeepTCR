@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 def gbell(x, a_init=1.0, b_init=0.0, c_init=0.0, name='gbell'):
     a = tf.Variable(name=name + 'a', initial_value= a_init, trainable=True,dtype=tf.float32)
