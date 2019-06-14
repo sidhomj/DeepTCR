@@ -406,7 +406,7 @@ def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
         auc = 0.0
     return loss,accuracy,predicted_out,auc
 
-def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=None):
+def Run_Graph_WF_dep(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=None):
     loss = []
     accuracy = []
     predicted_list = []
@@ -478,6 +478,98 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
     except:
         auc = 0.0
     return loss,accuracy,predicted_out,auc
+
+def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=None):
+    loss = []
+    accuracy = []
+    predicted_list = []
+    batch_size_update = 25
+    it = 0
+    grads = []
+    w = []
+    for vars in get_batches(set, batch_size=batch_size, random=random):
+        var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
+        lb = LabelEncoder()
+        lb.fit(vars[0])
+        _,_,sample_idx = np.intersect1d(lb.classes_,vars[0],return_indices=True)
+        vars = [v[sample_idx] for v in vars]
+        i = lb.transform(self.sample_id[var_idx])
+
+        OH = OneHotEncoder(categories='auto')
+        sp = OH.fit_transform(i.reshape(-1, 1)).T
+        sp = sp.tocoo()
+        indices = np.mat([sp.row, sp.col]).T
+        sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+
+        feed_dict = {GO.Y: vars[-1],
+                     GO.X_Freq: self.freq[var_idx],
+                     GO.sp: sp,
+                     GO.i: i,
+                     GO.j: self.seq_index_j[var_idx]}
+
+        if drop_out_rate is not None:
+            feed_dict[GO.prob] = drop_out_rate
+
+        if self.use_alpha is True:
+            feed_dict[GO.X_Seq_alpha] = self.X_Seq_alpha[var_idx]
+        if self.use_beta is True:
+            feed_dict[GO.X_Seq_beta] = self.X_Seq_beta[var_idx]
+
+        if self.use_v_beta is True:
+            feed_dict[GO.X_v_beta] = self.v_beta_num[var_idx]
+
+        if self.use_d_beta is True:
+            feed_dict[GO.X_d_beta] = self.d_beta_num[var_idx]
+
+        if self.use_j_beta is True:
+            feed_dict[GO.X_j_beta] = self.j_beta_num[var_idx]
+
+        if self.use_v_alpha is True:
+            feed_dict[GO.X_v_alpha] = self.v_alpha_num[var_idx]
+
+        if self.use_j_alpha is True:
+            feed_dict[GO.X_j_alpha] = self.j_alpha_num[var_idx]
+
+        if self.use_hla:
+            feed_dict[GO.X_hla] = self.hla_data_seq_num[var_idx]
+
+
+        if train:
+            if it < batch_size_update:
+                loss_i, accuracy_i, predicted_i,grad_i = sess.run([GO.loss, GO.accuracy, GO.predicted,GO.gradients],
+                                                           feed_dict=feed_dict)
+                grads.append(grad_i)
+                it += len(vars[0])
+                w.append(len(vars[0]))
+            else:
+                for i,ph in enumerate(GO.grads_accum,0):
+                    feed_dict[ph] = np.stack([g[i]*x for g,x in zip(grads,w)],axis=0).sum(axis=0)/np.sum(w)
+
+                loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted],
+                                                              feed_dict=feed_dict)
+                grads = []
+                it = 0
+                w = []
+        else:
+            loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
+                                                       feed_dict=feed_dict)
+
+        loss.append(loss_i)
+        accuracy.append(accuracy_i)
+        pred_temp = np.zeros_like(predicted_i)
+        pred_temp[sample_idx] = predicted_i
+        predicted_i = pred_temp
+        predicted_list.append(predicted_i)
+
+    loss = np.mean(loss)
+    accuracy = np.mean(accuracy)
+    predicted_out = np.vstack(predicted_list)
+    try:
+        auc = roc_auc_score(set[-1], predicted_out)
+    except:
+        auc = 0.0
+    return loss,accuracy,predicted_out,auc
+
 
 def Get_Seq_Features_Indices(self,batch_size,GO,sess):
     alpha_features_list = []

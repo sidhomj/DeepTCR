@@ -1825,8 +1825,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             GO.embedding_dim_genes = embedding_dim_genes
             GO.embedding_dim_aa = embedding_dim_aa
             GO.embedding_dim_hla = embedding_dim_hla
-            with tf.device(self.device):
-                graph_model_AE = tf.Graph()
+            graph_model_AE = tf.Graph()
+            with graph_model_AE.device(self.device):
                 with graph_model_AE.as_default():
                     GO.net = 'ae'
                     GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla)
@@ -1969,7 +1969,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             epochs = 50000
             iteration = 0
             tf.reset_default_graph()
-            config = tf.ConfigProto()
+            config = tf.ConfigProto(allow_soft_placement=True)
             config.gpu_options.allow_growth = True
 
             with tf.Session(graph=graph_model_AE,config=config) as sess:
@@ -2685,7 +2685,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         GO.embedding_dim_aa = embedding_dim_aa
         GO.embedding_dim_hla = embedding_dim_hla
 
-        with tf.device(self.device):
+        with graph_model.device(self.device):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,use_only_hla,
@@ -2727,7 +2727,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         #Initialize Training
         tf.reset_default_graph()
-        config = tf.ConfigProto()
+        config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
         with tf.Session(graph=graph_model,config=config) as sess:
             sess.run(tf.global_variables_initializer())
@@ -3349,7 +3349,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         GO.embedding_dim_hla = embedding_dim_hla
         #GO.on_graph_clustering = on_graph_clustering
         GO.gcn = gcn
-        with tf.device(self.device):
+        with graph_model.device(self.device):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
@@ -3385,7 +3385,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.opt = tf.train.AdamOptimizer(learning_rate=0.001)
                 GO.grads_and_vars = GO.opt.compute_gradients(GO.loss, var_train)
                 GO.gradients = tf.gradients(GO.loss,var_train)
-
+                GO.grads_accum = [tf.Variable(tf.zeros_like(v)) for v in GO.gradients]
+                GO.grads_and_vars = list(zip(GO.grads_accum,var_train))
                 GO.opt = GO.opt.apply_gradients(GO.grads_and_vars)
 
                 # if on_graph_clustering is True:
@@ -3399,7 +3400,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.saver = tf.train.Saver()
 
         tf.reset_default_graph()
-        config = tf.ConfigProto()
+        config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
         with tf.Session(graph=graph_model,config=config) as sess:
             sess.run(tf.global_variables_initializer())
@@ -4044,7 +4045,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             freq = np.asarray(freq)
 
         tf.reset_default_graph()
-        config = tf.ConfigProto()
+        config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
         with tf.Session(config=config) as sess:
             saver = tf.train.import_meta_graph(os.path.join(self.Name, 'model', 'model.ckpt.meta'))
