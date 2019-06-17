@@ -3255,6 +3255,15 @@ class DeepTCR_WF(DeepTCR_S_base):
         batch_size: int
             Size of batch to be used for each training iteration of the net.
 
+        batch_size_update: int
+            In the case that the size of the samples are very large, one may not want to update
+            the weights of the network as often as batches are put onto the gpu. Therefore, if
+            one wants to update the weights less often than how often the batches of data are put onto the
+            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
+            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
+            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
+            gpu's for training and there are memory constraints from very large samples.
+
         epochs_min: int
             Minimum number of epochs for training neural network.
 
@@ -3535,6 +3544,15 @@ class DeepTCR_WF(DeepTCR_S_base):
         batch_size: int
             Size of batch to be used for each training iteration of the net.
 
+        batch_size_update: int
+            In the case that the size of the samples are very large, one may not want to update
+            the weights of the network as often as batches are put onto the gpu. Therefore, if
+            one wants to update the weights less often than how often the batches of data are put onto the
+            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
+            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
+            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
+            gpu's for training and there are memory constraints from very large samples.
+
         epochs_min: int
             Minimum number of epochs for training neural network.
 
@@ -3700,6 +3718,15 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         batch_size: int
             Size of batch to be used for each training iteration of the net.
+
+        batch_size_update: int
+            In the case that the size of the samples are very large, one may not want to update
+            the weights of the network as often as batches are put onto the gpu. Therefore, if
+            one wants to update the weights less often than how often the batches of data are put onto the
+            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
+            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
+            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
+            gpu's for training and there are memory constraints from very large samples.
 
         epochs_min: int
             Minimum number of epochs for training neural network.
