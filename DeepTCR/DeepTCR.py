@@ -25,7 +25,7 @@ from scipy.stats import spearmanr,gaussian_kde
 
 class DeepTCR_base(object):
 
-    def __init__(self,Name,max_length=40,device='/gpu:0'):
+    def __init__(self,Name,max_length=40,device='/device:GPU:1'):
         """
         Initialize Training Object.
 

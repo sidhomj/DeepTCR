@@ -484,6 +484,8 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
     accuracy = []
     predicted_list = []
     batch_size_update = 25
+    if batch_size_update > len(set[0]):
+        batch_size_update = len(set[0])
     it = 0
     grads = []
     w = []
@@ -535,13 +537,13 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
 
 
         if train:
-            if it < batch_size_update:
-                loss_i, accuracy_i, predicted_i,grad_i = sess.run([GO.loss, GO.accuracy, GO.predicted,GO.gradients],
-                                                           feed_dict=feed_dict)
-                grads.append(grad_i)
-                it += len(vars[0])
-                w.append(len(vars[0]))
-            else:
+            loss_i, accuracy_i, predicted_i, grad_i = sess.run([GO.loss, GO.accuracy, GO.predicted, GO.gradients],
+                                                               feed_dict=feed_dict)
+            grads.append(grad_i)
+            w.append(len(vars[0]))
+            it += len(vars[0])
+
+            if it >= batch_size_update:
                 for i,ph in enumerate(GO.grads_accum,0):
                     feed_dict[ph] = np.stack([g[i]*x for g,x in zip(grads,w)],axis=0).sum(axis=0)/np.sum(w)
 
@@ -550,6 +552,7 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
                 grads = []
                 it = 0
                 w = []
+
         else:
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)

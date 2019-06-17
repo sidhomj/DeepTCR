@@ -213,13 +213,14 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     # if on_graph_clustering:
     #     Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
-    if gcn:
-        Features = MultiLevel_Dropout(Features,num_masks=10,activation=None,rate=0.5,units=12,name='gcn_drop')
-        Features = GCN(GO,Features,num_clusters)
 
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
         Features = tf.concat((Features,HLA_Features),axis=1)
+
+    if gcn:
+        Features = MultiLevel_Dropout(Features,num_masks=10,activation=None,rate=0.5,units=12,name='gcn_drop')
+        Features = GCN(GO,Features,num_clusters)
 
     if use_only_seq:
         Features = Seq_Features
