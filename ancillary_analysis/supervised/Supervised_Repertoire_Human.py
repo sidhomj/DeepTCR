@@ -7,7 +7,7 @@ from scipy.stats import mannwhitneyu
 
 #Train Sequence Classifier
 #DTCR = DeepTCR_WF('Human_TIL',device='/gpu:1')
-DTCR = DeepTCR_WF('Human_TIL',device='/device:GPU:1')
+DTCR = DeepTCR_WF('Human_TIL',device='/device:GPU:2')
 
 dir = 'Topalian/beta/pre_crpr_sdpd'
 DTCR.Get_Data(directory='../../Data/Topalian',Load_Prev_Data=False,
@@ -116,7 +116,7 @@ names = ['Seq','VDJ','HLA','Seq+VDJ','Seq+HLA','VDJ+HLA','Seq+VDJ+HLA']
 DTCR.use_beta = True
 DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
                           weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion,
-                          gcn=True,batch_size=10)
+                          gcn=True,batch_size_gpu=10)
 y_pred_list.append(DTCR.y_pred)
 y_test_list.append(DTCR.y_test)
 

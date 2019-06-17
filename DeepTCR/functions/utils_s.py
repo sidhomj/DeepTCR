@@ -479,13 +479,13 @@ def Run_Graph_WF_dep(set,sess,self,GO,batch_size,random=True,train=True,drop_out
         auc = 0.0
     return loss,accuracy,predicted_out,auc
 
-def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=None):
+def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train=True,drop_out_rate=None):
     loss = []
     accuracy = []
     predicted_list = []
-    batch_size_update = 25
-    if batch_size_update > len(set[0]):
-        batch_size_update = len(set[0])
+    if batch_size_update is not None:
+        if batch_size_update > len(set[0]):
+            batch_size_update = len(set[0])
     it = 0
     grads = []
     w = []
@@ -536,7 +536,7 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
             feed_dict[GO.X_hla] = self.hla_data_seq_num[var_idx]
 
 
-        if train:
+        if train & (batch_size_update is not None):
             loss_i, accuracy_i, predicted_i, grad_i = sess.run([GO.loss, GO.accuracy, GO.predicted, GO.gradients],
                                                                feed_dict=feed_dict)
             grads.append(grad_i)
@@ -552,7 +552,9 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
                 grads = []
                 it = 0
                 w = []
-
+        elif train:
+            loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted],
+                                                          feed_dict=feed_dict)
         else:
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)

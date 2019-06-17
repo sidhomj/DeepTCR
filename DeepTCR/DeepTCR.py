@@ -3237,7 +3237,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             raise Exception('Choose different train/valid/test parameters!')
 
 
-    def Train(self,batch_size = 25, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,gcn=False,
+    def Train(self,batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,gcn=False,
               num_clusters=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
@@ -3380,14 +3380,15 @@ class DeepTCR_WF(DeepTCR_S_base):
                 #     GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
                 #     [var_train.remove(x) for x in var_train_graph]
 
-                #GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
-
-                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001)
-                GO.grads_and_vars = GO.opt.compute_gradients(GO.loss, var_train)
-                GO.gradients = tf.gradients(GO.loss,var_train)
-                GO.grads_accum = [tf.Variable(tf.zeros_like(v)) for v in GO.gradients]
-                GO.grads_and_vars = list(zip(GO.grads_accum,var_train))
-                GO.opt = GO.opt.apply_gradients(GO.grads_and_vars)
+                if batch_size_update is None:
+                    GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
+                else:
+                    GO.opt = tf.train.AdamOptimizer(learning_rate=0.001)
+                    GO.grads_and_vars = GO.opt.compute_gradients(GO.loss, var_train)
+                    GO.gradients = tf.gradients(GO.loss,var_train)
+                    GO.grads_accum = [tf.Variable(tf.zeros_like(v)) for v in GO.gradients]
+                    GO.grads_and_vars = list(zip(GO.grads_accum,var_train))
+                    GO.opt = GO.opt.apply_gradients(GO.grads_and_vars)
 
                 # if on_graph_clustering is True:
                 #     GO.opt = tf.group(GO.opt,GO.opt_c)
@@ -3412,19 +3413,19 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             for e in range(epochs):
                 train_loss, train_accuracy, train_predicted,train_auc = \
-                    Run_Graph_WF(self.train,sess,self,GO,batch_size,random=True,train=True,
+                    Run_Graph_WF(self.train,sess,self,GO,batch_size,batch_size_update,random=True,train=True,
                                  drop_out_rate=drop_out_rate)
                 train_accuracy_total.append(train_accuracy)
                 train_loss_total.append(train_loss)
 
                 valid_loss, valid_accuracy, valid_predicted, valid_auc = \
-                    Run_Graph_WF(self.valid, sess, self, GO, batch_size, random=False, train=False)
+                    Run_Graph_WF(self.valid, sess, self, GO, batch_size,batch_size_update, random=False, train=False)
 
 
                 val_loss_total.append(valid_loss)
 
                 test_loss, test_accuracy, test_predicted, test_auc = \
-                    Run_Graph_WF(self.test, sess, self, GO, batch_size, random=False, train=False)
+                    Run_Graph_WF(self.test, sess, self, GO, batch_size,batch_size_update, random=False, train=False)
 
                 self.y_pred = test_predicted
                 self.y_test = self.test[-1]
@@ -3505,7 +3506,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             print('Done Training')
 
-    def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
+    def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25,batch_size_update=None, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
                              kernel=5,gcn=False,num_clusters=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
@@ -3632,7 +3633,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             if suppress_output is False:
                 print(i)
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO)
-            self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
+            self.Train(epochs_min=epochs_min, batch_size=batch_size,batch_size_update=batch_size_update,stop_criterion=stop_criterion,
                           kernel=kernel,gcn=gcn,num_clusters=num_clusters,
                        weight_by_class=weight_by_class,class_weights=class_weights,
                           trainable_embedding=trainable_embedding,accuracy_min=accuracy_min,
@@ -3677,7 +3678,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
-    def K_Fold_CrossVal(self,folds=None,epochs_min=25,batch_size=25,stop_criterion=0.25, stop_criterion_window=10,kernel=5,
+    def K_Fold_CrossVal(self,folds=None,epochs_min=25,batch_size=25,batch_size_update=None,stop_criterion=0.25, stop_criterion_window=10,kernel=5,
                         gcn=False,num_clusters=12, weight_by_class=False,class_weights=None, iterations=None,
                         trainable_embedding=True, accuracy_min = None,
                         num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
@@ -3830,7 +3831,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                                                                test_idx = test_idx[ii],Y=Y)
             self.LOO = None
 
-            self.Train(epochs_min=epochs_min, batch_size=batch_size,
+            self.Train(epochs_min=epochs_min, batch_size=batch_size,batch_size_update=batch_size_update,
                           stop_criterion=stop_criterion, kernel=kernel,
                           gcn=gcn,num_clusters=num_clusters,
                             weight_by_class=weight_by_class,class_weights=class_weights,
