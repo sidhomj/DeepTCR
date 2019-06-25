@@ -59,12 +59,15 @@ df = pd.DataFrame()
 df['Method'] = method
 df['AUC'] = auc
 df['Antigen']=antigen
+df.to_csv('DeepTCR_v_SVM_v_RF.csv',index=False)
 sns.violinplot(data=df,x='Antigen',y='AUC',hue='Method')
 sns.violinplot(data=df,x='Method',y='AUC',order=['DeepTCR','RF','SVM'])
+sns.boxenplot(data=df,x='Method',y='AUC',order=['DeepTCR','RF','SVM'])
+
 
 from scipy.stats import ttest_ind as ttest
-idx_1 = df['Method']=='DeepTCR'
-idx_2 = df['Method']=='SVM'
+idx_1 = df['Method']=='SVM'
+idx_2 = df['Method']=='RF'
 t,p_val = ttest(df[idx_1]['AUC'],df[idx_2]['AUC'])
 
 avg_vals = []

@@ -116,7 +116,7 @@ names = ['Seq','VDJ','HLA','Seq+VDJ','Seq+HLA','VDJ+HLA','Seq+VDJ+HLA']
 DTCR.use_beta = True
 DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
                           weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion,
-                          gcn=True,batch_size_gpu=10)
+                          gcn=False,batch_size=10,batch_size_update=25)
 y_pred_list.append(DTCR.y_pred)
 y_test_list.append(DTCR.y_test)
 
