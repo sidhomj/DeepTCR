@@ -3,6 +3,7 @@ sys.path.append('../')
 from DeepTCR.functions.Layers import *
 from DeepTCR.functions.utils_u import *
 from DeepTCR.functions.utils_s import *
+from DeepTCR.functions.vq_graphs import *
 import seaborn as sns
 import colorsys
 from scipy.cluster.hierarchy import linkage,fcluster
@@ -3364,6 +3365,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
                                          use_only_seq,use_only_gene,use_only_hla,gcn,num_clusters,
                                          num_fc_layers,units_fc)
+
+                #GO.Features_Agg, GO.w_mil = mil_pool(GO.Features,GO.X_Freq,GO.sp,weighted_average=False)
 
                 GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
                 GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
