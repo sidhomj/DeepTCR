@@ -11,15 +11,15 @@ DTCR = DeepTCR_WF('Human_TIL',device='/device:GPU:2')
 
 dir = 'Topalian/beta/pre_crpr_sdpd'
 DTCR.Get_Data(directory='../../Data/Topalian',Load_Prev_Data=False,
-               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,data_cut=0.3,
+               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,data_cut=1.0,
               hla='../../Data/Topalian/HLA_Ref.csv')
 # DTCR.Get_Data(directory='Data/Topalian',Load_Prev_Data=False,
 #                aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,data_cut=0.25,
 #               hla='Data/Topalian/HLA_Ref.csv')
 
-folds = 500
+folds = 100
 LOO = 6
-epochs_min = 100
+epochs_min = 25
 weight_by_class = True
 size_of_net = 'small'
 stop_criterion = 0.25
@@ -114,11 +114,15 @@ names = ['Seq','VDJ','HLA','Seq+VDJ','Seq+HLA','VDJ+HLA','Seq+VDJ+HLA']
 
 #Train with both Seq + VDJ+ HLA
 DTCR.use_beta = True
+size_of_net = 'small'
 DTCR.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,
                           weight_by_class=weight_by_class,size_of_net=size_of_net,stop_criterion=stop_criterion,
-                          gcn=False,batch_size=10,batch_size_update=25)
+                          drop_out_rate=0.5,embedding_dim_genes=12,embedding_dim_hla=12,embedding_dim_aa=12)
 y_pred_list.append(DTCR.y_pred)
 y_test_list.append(DTCR.y_test)
+
+import matplotlib.pyplot as plt
+plt.scatter(DTCR.weights[:,1],DTCR.freq,s=5)
 
 for ii in range(folds):
     auc_list.append(roc_auc_score(DTCR.y_test[ii*LOO:ii*LOO+LOO],DTCR.y_pred[ii*LOO:ii*LOO+LOO]))

@@ -121,6 +121,7 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
 def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
                use_only_gene,use_only_hla,gcn=False,num_clusters=12,
                num_fc_layers=0, units_fc=12):
+
     if self.use_alpha is True:
         GO.X_Seq_alpha = tf.placeholder(tf.int64,
                                         shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],

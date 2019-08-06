@@ -4,6 +4,7 @@ from DeepTCR.functions.Layers import *
 from DeepTCR.functions.utils_u import *
 from DeepTCR.functions.utils_s import *
 from DeepTCR.functions.vq_graphs import *
+from DeepTCR.functions.MIL import *
 import seaborn as sns
 import colorsys
 from scipy.cluster.hierarchy import linkage,fcluster
@@ -3367,10 +3368,13 @@ class DeepTCR_WF(DeepTCR_S_base):
                                          num_fc_layers,units_fc)
 
                 #GO.Features_Agg, GO.w_mil = mil_pool(GO.Features,GO.X_Freq,GO.sp,weighted_average=False)
-
-                GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
-                GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
-                GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
+                attention = True
+                if attention:
+                    GO.logits,GO.w = MIL_Layer(GO.Features,self.Y.shape[1],GO.sp,freq=GO.X_Freq,prob=drop_out_rate,num_layers=1)
+                else:
+                    GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
+                    GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
+                    GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
@@ -3471,6 +3475,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                 self.features = Get_Latent_Features(self,batch_size_seq,GO,sess)
             else:
                 self.features = Get_Latent_Features_GCN(self,batch_size,GO,sess)
+
+            if attention:
+                self.weights = Get_Weights(self,batch_size_seq,GO,sess)
 
             if not gcn:
                 pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
