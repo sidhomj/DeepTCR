@@ -3357,7 +3357,6 @@ class DeepTCR_WF(DeepTCR_S_base):
         GO.embedding_dim_genes = embedding_dim_genes
         GO.embedding_dim_aa = embedding_dim_aa
         GO.embedding_dim_hla = embedding_dim_hla
-        GO.gcn = gcn
         with graph_model.device(self.device):
             with graph_model.as_default():
                 GO.net = 'sup'
@@ -3390,11 +3389,6 @@ class DeepTCR_WF(DeepTCR_S_base):
                 var_train = tf.trainable_variables()
                 GO.reg_losses = tf.losses.get_regularization_loss()
                 loss = GO.loss #+ GO.reg_losses
-                #GO.loss = loss
-                # if on_graph_clustering is True:
-                #     var_train_graph = [GO.centroids,GO.s,GO.vq_bias]
-                #     GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
-                #     [var_train.remove(x) for x in var_train_graph]
 
                 if batch_size_update is None:
                     GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss,var_list=var_train)
@@ -3405,9 +3399,6 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.grads_accum = [tf.Variable(tf.zeros_like(v)) for v in GO.gradients]
                     GO.grads_and_vars = list(zip(GO.grads_accum,var_train))
                     GO.opt = GO.opt.apply_gradients(GO.grads_and_vars)
-
-                # if on_graph_clustering is True:
-                #     GO.opt = tf.group(GO.opt,GO.opt_c)
 
                 # Operations for validation/test accuracy
                 GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
@@ -3427,34 +3418,23 @@ class DeepTCR_WF(DeepTCR_S_base):
             train_loss_total = []
             stop_check_list = []
             e = 0
-            write=True
 
             while True:
                 train_loss, train_accuracy, train_predicted,train_auc = \
                     Run_Graph_WF(self.train,sess,self,GO,batch_size,batch_size_update,random=True,train=True,
                                  drop_out_rate=drop_out_rate)
 
-                if np.isnan(train_loss):
-                    write=False
-                    break
                 train_accuracy_total.append(train_accuracy)
                 train_loss_total.append(train_loss)
 
                 valid_loss, valid_accuracy, valid_predicted, valid_auc = \
                     Run_Graph_WF(self.valid, sess, self, GO, batch_size,batch_size_update, random=False, train=False)
 
-
-                if np.isnan(valid_loss):
-                    write=False
-                    break
                 val_loss_total.append(valid_loss)
 
                 test_loss, test_accuracy, test_predicted, test_auc = \
                     Run_Graph_WF(self.test, sess, self, GO, batch_size,batch_size_update, random=False, train=False)
 
-                if np.isnan(test_loss):
-                    write=False
-                    break
                 self.y_pred = test_predicted
                 self.y_test = self.test[-1]
 
