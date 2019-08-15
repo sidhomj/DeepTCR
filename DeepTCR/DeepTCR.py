@@ -3351,7 +3351,6 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         """
 
-        epochs = 10000
         graph_model = tf.Graph()
         GO = graph_object()
         GO.size_of_net = size_of_net
@@ -3370,7 +3369,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 #GO.Features_Agg, GO.w_mil = mil_pool(GO.Features,GO.X_Freq,GO.sp,weighted_average=False)
                 attention = True
                 if attention:
-                    GO.logits,GO.w = MIL_Layer(GO.Features,self.Y.shape[1],GO.sp,freq=GO.X_Freq,prob=drop_out_rate,num_layers=1)
+                    GO.logits,GO.w = MIL_Layer(GO.Features,self.Y.shape[1],num_clusters,GO.sp,freq=GO.X_Freq,prob=drop_out_rate,num_layers=1)
                 else:
                     GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
                     GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
@@ -3391,17 +3390,20 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
 
                 var_train = tf.trainable_variables()
+                GO.reg_losses = tf.losses.get_regularization_loss()
+                loss = GO.loss #+ GO.reg_losses
+                #GO.loss = loss
                 # if on_graph_clustering is True:
                 #     var_train_graph = [GO.centroids,GO.s,GO.vq_bias]
                 #     GO.opt_c = tf.train.AdamOptimizer(learning_rate=0.1).minimize(GO.loss,var_list=var_train_graph)
                 #     [var_train.remove(x) for x in var_train_graph]
 
                 if batch_size_update is None:
-                    GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss,var_list=var_train)
+                    GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss,var_list=var_train)
                 else:
                     GO.opt = tf.train.AdamOptimizer(learning_rate=0.001)
-                    GO.grads_and_vars = GO.opt.compute_gradients(GO.loss, var_train)
-                    GO.gradients = tf.gradients(GO.loss,var_train)
+                    GO.grads_and_vars = GO.opt.compute_gradients(loss, var_train)
+                    GO.gradients = tf.gradients(loss,var_train)
                     GO.grads_accum = [tf.Variable(tf.zeros_like(v)) for v in GO.gradients]
                     GO.grads_and_vars = list(zip(GO.grads_accum,var_train))
                     GO.opt = GO.opt.apply_gradients(GO.grads_and_vars)
@@ -3426,11 +3428,17 @@ class DeepTCR_WF(DeepTCR_S_base):
             train_accuracy_total = []
             train_loss_total = []
             stop_check_list = []
+            e = 0
+            write=True
 
-            for e in range(epochs):
+            while True:
                 train_loss, train_accuracy, train_predicted,train_auc = \
                     Run_Graph_WF(self.train,sess,self,GO,batch_size,batch_size_update,random=True,train=True,
                                  drop_out_rate=drop_out_rate)
+
+                if np.isnan(train_loss):
+                    write=False
+                    break
                 train_accuracy_total.append(train_accuracy)
                 train_loss_total.append(train_loss)
 
@@ -3438,17 +3446,23 @@ class DeepTCR_WF(DeepTCR_S_base):
                     Run_Graph_WF(self.valid, sess, self, GO, batch_size,batch_size_update, random=False, train=False)
 
 
+                if np.isnan(valid_loss):
+                    write=False
+                    break
                 val_loss_total.append(valid_loss)
 
                 test_loss, test_accuracy, test_predicted, test_auc = \
                     Run_Graph_WF(self.test, sess, self, GO, batch_size,batch_size_update, random=False, train=False)
 
+                if np.isnan(test_loss):
+                    write=False
+                    break
                 self.y_pred = test_predicted
                 self.y_test = self.test[-1]
 
                 if suppress_output is False:
                     print("Training_Statistics: \n",
-                          "Epoch: {}/{}".format(e + 1, epochs),
+                          "Epoch: {}".format(e),
                           "Training loss: {:.5f}".format(train_loss),
                           "Validation loss: {:.5f}".format(valid_loss),
                           "Testing loss: {:.5f}".format(test_loss),
@@ -3469,61 +3483,65 @@ class DeepTCR_WF(DeepTCR_S_base):
                                 if np.sum(stop_check_list[-3:]) >= 3:
                                     break
 
-            batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
-            Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
-            if not gcn:
-                self.features = Get_Latent_Features(self,batch_size_seq,GO,sess)
-            else:
-                self.features = Get_Latent_Features_GCN(self,batch_size,GO,sess)
 
-            if attention:
-                self.weights = Get_Weights(self,batch_size_seq,GO,sess)
+                e +=  1
 
-            if not gcn:
-                pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
-            else:
-                pred,idx = Get_Sequence_Pred_GCN(self,batch_size,GO,sess)
+            if write:
+                batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
+                Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
+                if not gcn:
+                    self.features = Get_Latent_Features(self,batch_size_seq,GO,sess)
+                else:
+                    self.features = Get_Latent_Features_GCN(self,batch_size,GO,sess)
 
-            if len(idx.shape) == 0:
-                idx = idx.reshape(-1,1)
+                if attention:
+                    self.weights = Get_Weights(self,batch_size_seq,GO,sess)
 
-            self.predicted[idx] += pred
-            self.seq_idx = idx
+                if not gcn:
+                    pred,idx = Get_Sequence_Pred(self,batch_size,GO,sess)
+                else:
+                    pred,idx = Get_Sequence_Pred_GCN(self,batch_size,GO,sess)
 
-            self.train_idx = np.isin(self.sample_id,self.train[0])
-            self.valid_idx = np.isin(self.sample_id,self.valid[0])
-            self.test_idx = np.isin(self.sample_id,self.test[0])
+                if len(idx.shape) == 0:
+                    idx = idx.reshape(-1,1)
 
-            self.kernel = kernel
-            # if on_graph_clustering is True:
-            #     self.centroids = GO.centroids.eval()
-            #
-            if self.use_alpha is True:
-                var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
-                with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
-                    pickle.dump(var_save, f)
+                self.predicted[idx] += pred
+                self.seq_idx = idx
 
-            if self.use_beta is True:
-                var_save = [self.beta_features,self.beta_indices,self.beta_sequences]
-                with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
-                    pickle.dump(var_save, f)
+                self.train_idx = np.isin(self.sample_id,self.train[0])
+                self.valid_idx = np.isin(self.sample_id,self.valid[0])
+                self.test_idx = np.isin(self.sample_id,self.test[0])
 
-            with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
-                pickle.dump(self.kernel, f)
+                self.kernel = kernel
+                # if on_graph_clustering is True:
+                #     self.centroids = GO.centroids.eval()
+                #
+                if self.use_alpha is True:
+                    var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
+                    with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
+                        pickle.dump(var_save, f)
 
-            GO.saver.save(sess, os.path.join(self.Name, 'model', 'model.ckpt'))
+                if self.use_beta is True:
+                    var_save = [self.beta_features,self.beta_indices,self.beta_sequences]
+                    with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
+                        pickle.dump(var_save, f)
 
-            if self.use_hla:
-                self.HLA_embed = GO.embedding_layer_hla.eval()
+                with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
+                    pickle.dump(self.kernel, f)
 
-            with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
-                pickle.dump(['WF',GO.predicted.name,self.use_alpha, self.use_beta,
-                             self.use_v_beta, self.use_d_beta, self.use_j_beta,
-                             self.use_v_alpha, self.use_j_alpha,self.use_hla,
-                             self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
-                             self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb], f)
+                GO.saver.save(sess, os.path.join(self.Name, 'model', 'model.ckpt'))
 
-            print('Done Training')
+                if self.use_hla:
+                    self.HLA_embed = GO.embedding_layer_hla.eval()
+
+                with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
+                    pickle.dump(['WF',GO.predicted.name,self.use_alpha, self.use_beta,
+                                 self.use_v_beta, self.use_d_beta, self.use_j_beta,
+                                 self.use_v_alpha, self.use_j_alpha,self.use_hla,
+                                 self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
+                                 self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb], f)
+
+                print('Done Training')
 
     def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25,batch_size_update=None, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
                              kernel=5,gcn=False,num_clusters=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,
