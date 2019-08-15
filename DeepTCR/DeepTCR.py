@@ -3361,7 +3361,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             with graph_model.as_default():
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
-                                         use_only_seq,use_only_gene,use_only_hla,gcn,num_clusters,
+                                         use_only_seq,use_only_gene,use_only_hla,
                                          num_fc_layers,units_fc)
 
                 attention = True

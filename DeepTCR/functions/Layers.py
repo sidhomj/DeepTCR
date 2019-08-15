@@ -119,8 +119,7 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
             return tf.concat((conv_out,conv_2_out,conv_3_out),axis=1),conv_out,indices
 
 def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
-               use_only_gene,use_only_hla,gcn=False,num_clusters=12,
-               num_fc_layers=0, units_fc=12):
+               use_only_gene,use_only_hla,num_fc_layers=0, units_fc=12):
 
     if self.use_alpha is True:
         GO.X_Seq_alpha = tf.placeholder(tf.int64,
@@ -210,34 +209,15 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     except:
         pass
 
-    # on_graph_clustering = False
-    # if on_graph_clustering:
-    #     Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
-
-
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
         Features = tf.concat((Features,HLA_Features),axis=1)
 
-    if gcn:
-        Features = MultiLevel_Dropout(Features,num_masks=10,activation=None,rate=0.5,units=12,name='gcn_drop')
-        Features = GCN(GO,Features,num_clusters)
-
     if use_only_seq:
         Features = Seq_Features
-        if gcn:
-            Features = MultiLevel_Dropout(Features, num_masks=10, activation=None, rate=0.5, units=12, name='gcn_drop')
-            Features = GCN(GO, Features, num_clusters)
-        # if on_graph_clustering:
-        #     Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
     if use_only_gene:
         Features = gene_features
-        if gcn:
-            Features = MultiLevel_Dropout(Features, num_masks=10, activation=None, rate=0.5, units=12, name='gcn_drop')
-            Features = GCN(GO, Features, num_clusters)
-        # if on_graph_clustering:
-        #     Features, GO.centroids, GO.vq_bias, GO.s = DeepVectorQuantization(Features, GO.prob, num_clusters)
 
     if use_only_hla:
         Features = HLA_Features
