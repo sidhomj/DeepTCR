@@ -35,7 +35,7 @@ def MultiLevel_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
 
 def MIL_Layer(features,num_classes,num_concepts,sp,freq=None,prob=0.0,num_layers=1,units_fc=12):
 
-    alpha=0.5
+    alpha=0.00
     w_list = []
     quant = []
     for i in range(num_concepts):
@@ -64,10 +64,11 @@ def MIL_Layer(features,num_classes,num_concepts,sp,freq=None,prob=0.0,num_layers
     num_log_units = 12
     logits = quant
     logits = tf.layers.dropout(logits,prob)
+    alpha=0.0
     for i in range(num_log_layers):
         if (i == 0) and (num_log_layers != 1):
             logits = tf.layers.dense(logits, num_log_units,
-                                     kernel_regularizer=tf.contrib.layers.l1_regularizer(alpha),
+                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(alpha),
                                      activation=tf.nn.relu)
         elif (i == 0) and (num_log_layers == 1):
             logits = tf.layers.dense(logits, num_classes,
@@ -79,8 +80,3 @@ def MIL_Layer(features,num_classes,num_concepts,sp,freq=None,prob=0.0,num_layers
 
     w = tf.squeeze(tf.transpose(tf.stack(w_list), perm=[1, 0, 2]), -1)
     return logits,w
-
-
-
-
-
