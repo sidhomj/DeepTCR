@@ -85,6 +85,10 @@ Ability for HLA information to be incorporated in the analysis of TCR-Seq.
 #### 1.2.24
 Added ability to do regression for sequence-based model.
 
+### 1.3
+Third release including improved repertoire classification architecture. Details in method will follow 
+in manuscript.
+
 
 
 
