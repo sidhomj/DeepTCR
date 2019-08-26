@@ -3,7 +3,6 @@ sys.path.append('../')
 from DeepTCR.functions.Layers import *
 from DeepTCR.functions.utils_u import *
 from DeepTCR.functions.utils_s import *
-from DeepTCR.functions.vq_graphs import *
 from DeepTCR.functions.MIL import *
 import seaborn as sns
 import colorsys

@@ -1,5 +1,4 @@
 import tensorflow as tf
-from DeepTCR.functions.gcn_func import *
 
 class graph_object(object):
     def __init__(self):
