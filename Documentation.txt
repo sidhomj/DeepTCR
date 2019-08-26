@@ -9,6 +9,7 @@ DESCRIPTION
     # from DeepTCR.functions.Layers import *
     # from DeepTCR.functions.utils_u import *
     # from DeepTCR.functions.utils_s import *
+    # from DeepTCR.functions.MIL import *
     # import seaborn as sns
     # import colorsys
     # from scipy.cluster.hierarchy import linkage,fcluster
@@ -696,7 +697,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  __init__(self, Name, max_length=40, device='/gpu:0')
+     |  __init__(self, Name, max_length=40, device='/device:GPU:0')
      |      Initialize Training Object.
      |      
      |      Initializes object and sets initial parameters.
@@ -1371,7 +1372,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  __init__(self, Name, max_length=40, device='/gpu:0')
+     |  __init__(self, Name, max_length=40, device='/device:GPU:0')
      |      Initialize Training Object.
      |      
      |      Initializes object and sets initial parameters.
@@ -2144,7 +2145,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  __init__(self, Name, max_length=40, device='/gpu:0')
+     |  __init__(self, Name, max_length=40, device='/device:GPU:0')
      |      Initialize Training Object.
      |      
      |      Initializes object and sets initial parameters.
@@ -2520,7 +2521,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=25, batch_size=25, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, iterations=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=25, batch_size=25, batch_size_update=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, num_concepts=12, weight_by_class=False, class_weights=None, iterations=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2536,6 +2537,15 @@ CLASSES
      |      batch_size: int
      |          Size of batch to be used for each training iteration of the net.
      |      
+     |      batch_size_update: int
+     |          In the case that the size of the samples are very large, one may not want to update
+     |          the weights of the network as often as batches are put onto the gpu. Therefore, if
+     |          one wants to update the weights less often than how often the batches of data are put onto the
+     |          gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
+     |          and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
+     |          only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
+     |          gpu's for training and there are memory constraints from very large samples.
+     |      
      |      epochs_min: int
      |          Minimum number of epochs for training neural network.
      |      
@@ -2549,12 +2559,9 @@ CLASSES
      |      kernel: int
      |          Size of convolutional kernel for first layer of convolutions.
      |      
-     |      on_graph_clustering: bool
-     |          To implement on-graph clustering algorithm, set this parameter to True.
-     |          In certain settings, this algorithm shows improved classification performance.
-     |      
-     |      num_clusters: int
-     |          Number of clusters to train with 'on-graph clustering' algorithm.
+     |      num_concepts: int
+     |          Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the
+     |          repertoires being analyed, one can adjust this hyperparameter.
      |      
      |      weight_by_class: bool
      |          Option to weight loss by the inverse of the class frequency. Useful for
@@ -2623,7 +2630,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, LOO=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, batch_size_update=None, LOO=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, num_concepts=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2645,6 +2652,15 @@ CLASSES
      |      batch_size: int
      |          Size of batch to be used for each training iteration of the net.
      |      
+     |      batch_size_update: int
+     |          In the case that the size of the samples are very large, one may not want to update
+     |          the weights of the network as often as batches are put onto the gpu. Therefore, if
+     |          one wants to update the weights less often than how often the batches of data are put onto the
+     |          gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
+     |          and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
+     |          only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
+     |          gpu's for training and there are memory constraints from very large samples.
+     |      
      |      epochs_min: int
      |          Minimum number of epochs for training neural network.
      |      
@@ -2658,12 +2674,9 @@ CLASSES
      |      kernel: int
      |          Size of convolutional kernel for first layer of convolutions.
      |      
-     |      on_graph_clustering: bool
-     |          To implement on-graph clustering algorithm, set this parameter to True.
-     |          In certain settings, this algorithm shows improved classification performance.
-     |      
-     |      num_clusters: int
-     |          Number of clusters to train with 'on-graph clustering' algorithm.
+     |      num_concepts: int
+     |          Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the
+     |          repertoires being analyed, one can adjust this hyperparameter.
      |      
      |      weight_by_class: bool
      |          Option to weight loss by the inverse of the class frequency. Useful for
@@ -2800,7 +2813,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Train(self, batch_size=25, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, kernel=5, on_graph_clustering=False, num_clusters=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
+     |  Train(self, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, kernel=5, num_concepts=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      Train Whole-Sample Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -2810,6 +2823,15 @@ CLASSES
      |      ---------------------------------------
      |      batch_size: int
      |          Size of batch to be used for each training iteration of the net.
+     |      
+     |      batch_size_update: int
+     |          In the case that the size of the samples are very large, one may not want to update
+     |          the weights of the network as often as batches are put onto the gpu. Therefore, if
+     |          one wants to update the weights less often than how often the batches of data are put onto the
+     |          gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
+     |          and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
+     |          only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
+     |          gpu's for training and there are memory constraints from very large samples.
      |      
      |      epochs_min: int
      |          Minimum number of epochs for training neural network.
@@ -2824,12 +2846,9 @@ CLASSES
      |      kernel: int
      |          Size of convolutional kernel for first layer of convolutions.
      |      
-     |      on_graph_clustering: bool
-     |          To implement on-graph clustering algorithm, set this parameter to True.
-     |          In certain settings, this algorithm shows improved classification performance.
-     |      
-     |      num_clusters: int
-     |          Number of clusters to train with 'on-graph clustering' algorithm.
+     |      num_concepts: int
+     |          Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the
+     |          repertoires being analyed, one can adjust this hyperparameter.
      |      
      |      weight_by_class: bool
      |          Option to weight loss by the inverse of the class frequency. Useful for
@@ -3219,7 +3238,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  __init__(self, Name, max_length=40, device='/gpu:0')
+     |  __init__(self, Name, max_length=40, device='/device:GPU:0')
      |      Initialize Training Object.
      |      
      |      Initializes object and sets initial parameters.
@@ -3810,7 +3829,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  __init__(self, Name, max_length=40, device='/gpu:0')
+     |  __init__(self, Name, max_length=40, device='/device:GPU:0')
      |      Initialize Training Object.
      |      
      |      Initializes object and sets initial parameters.
