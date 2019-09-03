@@ -3392,6 +3392,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.opt = tf.train.AdamOptimizer(learning_rate=0.001)
                     GO.grads_and_vars = GO.opt.compute_gradients(loss, var_train)
                     GO.gradients = tf.gradients(loss,var_train)
+                    GO.gradients,keep_ii = zip(*[(v,ii) for ii,v in enumerate(GO.gradients) if v is not None])
+                    var_train = list(np.asarray(var_train)[list(keep_ii)])
                     GO.grads_accum = [tf.Variable(tf.zeros_like(v)) for v in GO.gradients]
                     GO.grads_and_vars = list(zip(GO.grads_accum,var_train))
                     GO.opt = GO.opt.apply_gradients(GO.grads_and_vars)
