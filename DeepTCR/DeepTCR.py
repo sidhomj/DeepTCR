@@ -3331,7 +3331,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 self.attention = attention
                 self.kernel = kernel
 
-    def _train(self):
+    def _train(self,write=True):
         GO = self.GO
         attention = self.attention
         graph_model = self.graph_model
@@ -3413,14 +3413,15 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 e +=  1
 
-            batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
-            Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
-            self.features = Get_Latent_Features(self, batch_size_seq, GO, sess)
+            if write:
+                batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
+                Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
+                self.features = Get_Latent_Features(self, batch_size_seq, GO, sess)
+
+                if attention:
+                    self.weights = Get_Weights(self,batch_size_seq,GO,sess)
+
             pred, idx = Get_Sequence_Pred(self, batch_size, GO, sess)
-
-            if attention:
-                self.weights = Get_Weights(self,batch_size_seq,GO,sess)
-
             if len(idx.shape) == 0:
                 idx = idx.reshape(-1,1)
 
@@ -3431,31 +3432,31 @@ class DeepTCR_WF(DeepTCR_S_base):
             self.valid_idx = np.isin(self.sample_id,self.valid[0])
             self.test_idx = np.isin(self.sample_id,self.test[0])
 
+            if write:
+                if self.use_alpha is True:
+                    var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
+                    with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
+                        pickle.dump(var_save, f)
 
-            if self.use_alpha is True:
-                var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
-                with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
-                    pickle.dump(var_save, f)
+                if self.use_beta is True:
+                    var_save = [self.beta_features,self.beta_indices,self.beta_sequences]
+                    with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
+                        pickle.dump(var_save, f)
 
-            if self.use_beta is True:
-                var_save = [self.beta_features,self.beta_indices,self.beta_sequences]
-                with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
-                    pickle.dump(var_save, f)
+                with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
+                    pickle.dump(self.kernel, f)
 
-            with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
-                pickle.dump(self.kernel, f)
+                GO.saver.save(sess, os.path.join(self.Name, 'model', 'model.ckpt'))
 
-            GO.saver.save(sess, os.path.join(self.Name, 'model', 'model.ckpt'))
+                if self.use_hla:
+                    self.HLA_embed = GO.embedding_layer_hla.eval()
 
-            if self.use_hla:
-                self.HLA_embed = GO.embedding_layer_hla.eval()
-
-            with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
-                pickle.dump(['WF',GO.predicted.name,self.use_alpha, self.use_beta,
-                             self.use_v_beta, self.use_d_beta, self.use_j_beta,
-                             self.use_v_alpha, self.use_j_alpha,self.use_hla,
-                             self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
-                             self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb], f)
+                with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
+                    pickle.dump(['WF',GO.predicted.name,self.use_alpha, self.use_beta,
+                                 self.use_v_beta, self.use_d_beta, self.use_j_beta,
+                                 self.use_v_alpha, self.use_j_alpha,self.use_hla,
+                                 self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
+                                 self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb], f)
 
             print('Done Training')
 
@@ -4252,7 +4253,11 @@ class DeepTCR_WF(DeepTCR_S_base):
             if suppress_output is False:
                 print(i)
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,combine_train_valid=combine_train_valid)
-            self._train()
+            if i == folds-1:
+                write = True
+            else:
+                write = False
+            self._train(write=write)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -4484,7 +4489,11 @@ class DeepTCR_WF(DeepTCR_S_base):
                     self.valid[i] = self.test[i]
 
             self.LOO = None
-            self._train()
+            if ii == folds-1:
+                write = True
+            else:
+                write = False
+            self._train(write=write)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
