@@ -4291,10 +4291,11 @@ class DeepTCR_WF(DeepTCR_S_base):
 
     def K_Fold_CrossVal(self,folds=None,epochs_min=25,batch_size=25,batch_size_update=None,stop_criterion=0.25, stop_criterion_window=10,kernel=5,
                         num_concepts=12, weight_by_class=False,class_weights=None, iterations=None,
-                        trainable_embedding=True, accuracy_min = None,
+                        trainable_embedding=True, accuracy_min = None,train_loss_min=None,combine_train_valid=False,
                         num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                         use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                        embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
+                        embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
+                        hinge_loss_t=0.0,convergence='validation'):
 
         """
         K_Fold Cross-Validation for Whole Sample Classifier
@@ -4358,6 +4359,27 @@ class DeepTCR_WF(DeepTCR_S_base):
         accuracy_min: float
             Optional parameter to allow alternative training strategy until minimum
             training accuracy is achieved, at which point, training ceases.
+
+        train_loss_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training loss is achieved, at which point, training ceases.
+
+        hinge_loss_t: float
+            The per sample loss minimum at which the loss of that sample is not used
+            to penalize the model anymore. In other words, once a per sample loss has hit
+            this value, it gets set to 0.0.
+
+        convergence: str
+            This parameter determines which loss to assess the convergence criteria on.
+            Options are 'validation' or 'training'. This is useful in the case one wants
+            to change the convergence criteria on the training data when the training and validation
+            partitions have been combined and used to training the model.
+
+        combine_train_valid: bool
+            To combine the training and validation partitions into one which will be used for training
+            and updating the model parameters, set this to True. This will also set the validation partition
+            to the test partition. Therefore, if setting this parameter to True, change one of the training parameters
+            to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set.
 
         num_fc_layers: int
             Number of fully connected layers following convolutional layer.
@@ -4432,6 +4454,16 @@ class DeepTCR_WF(DeepTCR_S_base):
             test_idx.append(idx_sel)
             idx_left = np.setdiff1d(idx_left, idx_sel)
 
+        self._build(batch_size=batch_size, batch_size_update=batch_size_update, epochs_min=epochs_min,
+                    stop_criterion=stop_criterion, stop_criterion_window=stop_criterion_window, kernel=kernel,
+                    num_concepts=num_concepts, weight_by_class=weight_by_class, class_weights=class_weights,
+                    trainable_embedding=trainable_embedding, accuracy_min=accuracy_min, train_loss_min=train_loss_min,
+                    num_fc_layers=num_fc_layers, units_fc=units_fc, drop_out_rate=drop_out_rate,
+                    suppress_output=suppress_output,
+                    use_only_seq=use_only_seq, use_only_gene=use_only_gene, use_only_hla=use_only_hla,
+                    size_of_net=size_of_net,
+                    embedding_dim_aa=embedding_dim_aa, embedding_dim_genes=embedding_dim_genes,
+                    embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence)
 
         y_test = []
         y_pred = []
@@ -4446,19 +4478,13 @@ class DeepTCR_WF(DeepTCR_S_base):
                                                                train_idx=train_idx,
                                                                valid_idx = valid_idx,
                                                                test_idx = test_idx[ii],Y=Y)
+            if combine_train_valid:
+                for i in range(len(self.train)):
+                    self.train[i] = np.concatenate((self.train[i], self.valid[i]), axis=0)
+                    self.valid[i] = self.test[i]
+
             self.LOO = None
-
-            self.Train(epochs_min=epochs_min, batch_size=batch_size,batch_size_update=batch_size_update,
-                          stop_criterion=stop_criterion, kernel=kernel,
-                          num_concepts=num_concepts,
-                            weight_by_class=weight_by_class,class_weights=class_weights,
-                          trainable_embedding=trainable_embedding,accuracy_min = accuracy_min,
-                          num_fc_layers=num_fc_layers,units_fc=units_fc,
-                          drop_out_rate=drop_out_rate,suppress_output=suppress_output,
-                            use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
-                       size_of_net=size_of_net,stop_criterion_window=stop_criterion_window,
-                       embedding_dim_aa=embedding_dim_aa,embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla)
-
+            self._train()
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
