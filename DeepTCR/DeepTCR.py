@@ -3199,7 +3199,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         return corr
 
 class DeepTCR_WF(DeepTCR_S_base):
-    def Get_Train_Valid_Test(self,test_size=0.25,LOO=None):
+    def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,combine_train_valid=False):
         """
         Train/Valid/Test Splits.
 
@@ -3219,6 +3219,12 @@ class DeepTCR_WF(DeepTCR_S_base):
             when set to 2, 2 samples will be left out for the validation set and 2 samples will be left
             out for the test set.
 
+        combine_train_valid: bool
+            To combine the training and validation partitions into one which will be used for training
+            and updating the model parameters, set this to True. This will also set the validation partition
+            to the test partition. Therefore, if setting this parameter to True, change one of the training parameters
+            to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set.
+
         Returns
         ---------------------------------------
 
@@ -3237,12 +3243,227 @@ class DeepTCR_WF(DeepTCR_S_base):
         if (self.valid[0].size==0) or (self.test[0].size==0):
             raise Exception('Choose different train/valid/test parameters!')
 
+        if combine_train_valid:
+            for i in range(len(self.train)):
+                self.train[i] = np.concatenate((self.train[i],self.valid[i]),axis=0)
+                self.valid[i] = self.test[i]
 
-    def Train(self,batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,
-              num_concepts=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,
+    def _build(self,batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,
+              num_concepts=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,train_loss_min=None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
+              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,hinge_loss_t=0.0,convergence='validation'):
+
+        graph_model = tf.Graph()
+        GO = graph_object()
+        train_params = graph_object()
+        train_params.batch_size = batch_size
+        train_params.batch_size_update = batch_size_update
+        train_params.epochs_min = epochs_min
+        train_params.stop_criterion = stop_criterion
+        train_params.stop_criterion_window  = stop_criterion_window
+        train_params.accuracy_min = accuracy_min
+        train_params.train_loss_min = train_loss_min
+        train_params.convergence = convergence
+        train_params.suppress_output = suppress_output
+        train_params.drop_out_rate = drop_out_rate
+        GO.size_of_net = size_of_net
+        GO.embedding_dim_genes = embedding_dim_genes
+        GO.embedding_dim_aa = embedding_dim_aa
+        GO.embedding_dim_hla = embedding_dim_hla
+        with graph_model.device(self.device):
+            with graph_model.as_default():
+                GO.net = 'sup'
+                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
+                                         use_only_seq,use_only_gene,use_only_hla,
+                                         num_fc_layers,units_fc)
+
+                attention = True
+                if attention:
+                    GO.logits,GO.w = MIL_Layer(GO.Features,self.Y.shape[1],num_concepts,GO.sp,freq=GO.X_Freq,prob=GO.prob,num_layers=1)
+                else:
+                    GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
+                    GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
+                    GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
+
+                per_sample_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits)
+                per_sample_loss = per_sample_loss - hinge_loss_t
+                per_sample_loss = tf.cast((per_sample_loss > 0),tf.float32) * per_sample_loss
+                if weight_by_class is True:
+                    class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
+                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
+                    GO.loss = tf.reduce_mean(weights * per_sample_loss)
+                elif class_weights is not None:
+                    weights = np.zeros([1,len(self.lb.classes_)]).astype(np.float32)
+                    for key in class_weights:
+                        weights[:,self.lb.transform([key])[0]]=class_weights[key]
+                    class_weights = tf.constant(weights)
+                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
+                    GO.loss = tf.reduce_mean(weights * per_sample_loss)
+                else:
+                    GO.loss = tf.reduce_mean(per_sample_loss)
+
+                var_train = tf.trainable_variables()
+                GO.reg_losses = tf.losses.get_regularization_loss()
+                loss = GO.loss #+ GO.reg_losses
+
+                if batch_size_update is None:
+                    GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss,var_list=var_train)
+                else:
+                    GO.opt = tf.train.AdamOptimizer(learning_rate=0.001)
+                    GO.grads_and_vars = GO.opt.compute_gradients(loss, var_train)
+                    GO.gradients = tf.gradients(loss,var_train)
+                    GO.gradients,keep_ii = zip(*[(v,ii) for ii,v in enumerate(GO.gradients) if v is not None])
+                    var_train = list(np.asarray(var_train)[list(keep_ii)])
+                    GO.grads_accum = [tf.Variable(tf.zeros_like(v)) for v in GO.gradients]
+                    GO.grads_and_vars = list(zip(GO.grads_accum,var_train))
+                    GO.opt = GO.opt.apply_gradients(GO.grads_and_vars)
+
+                # Operations for validation/test accuracy
+                GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
+                correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
+                GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+
+                GO.saver = tf.train.Saver()
+                self.GO = GO
+                self.train_params = train_params
+                self.graph_model = graph_model
+                self.attention = attention
+                self.kernel = kernel
+
+    def _train(self):
+        GO = self.GO
+        attention = self.attention
+        graph_model = self.graph_model
+        train_params = self.train_params
+
+        batch_size = train_params.batch_size
+        batch_size_update = train_params.batch_size_update
+        epochs_min = train_params.epochs_min
+        stop_criterion = train_params.stop_criterion
+        stop_criterion_window = train_params.stop_criterion_window
+        accuracy_min = train_params.accuracy_min
+        train_loss_min = train_params.train_loss_min
+        convergence = train_params.convergence
+        suppress_output = train_params.suppress_output
+        drop_out_rate = train_params.drop_out_rate
+
+        tf.reset_default_graph()
+        config = tf.ConfigProto(allow_soft_placement=True)
+        config.gpu_options.allow_growth = True
+        with tf.Session(graph=graph_model,config=config) as sess:
+            sess.run(tf.global_variables_initializer())
+
+            val_loss_total = []
+            train_accuracy_total = []
+            train_loss_total = []
+            stop_check_list = []
+            e = 0
+
+            while True:
+                train_loss, train_accuracy, train_predicted,train_auc = \
+                    Run_Graph_WF(self.train,sess,self,GO,batch_size,batch_size_update,random=True,train=True,
+                                 drop_out_rate=drop_out_rate)
+
+                train_accuracy_total.append(train_accuracy)
+                train_loss_total.append(train_loss)
+
+                valid_loss, valid_accuracy, valid_predicted, valid_auc = \
+                    Run_Graph_WF(self.valid, sess, self, GO, batch_size,batch_size_update, random=False, train=False)
+
+                val_loss_total.append(valid_loss)
+
+                test_loss, test_accuracy, test_predicted, test_auc = \
+                    Run_Graph_WF(self.test, sess, self, GO, batch_size,batch_size_update, random=False, train=False)
+
+                self.y_pred = test_predicted
+                self.y_test = self.test[-1]
+
+                if suppress_output is False:
+                    print("Training_Statistics: \n",
+                          "Epoch: {}".format(e),
+                          "Training loss: {:.5f}".format(train_loss),
+                          "Validation loss: {:.5f}".format(valid_loss),
+                          "Testing loss: {:.5f}".format(test_loss),
+                          "Training Accuracy: {:.5}".format(train_accuracy),
+                          "Validation Accuracy: {:.5}".format(valid_accuracy),
+                          "Testing Accuracy: {:.5}".format(test_accuracy),
+                          'Testing AUC: {:.5}'.format(test_auc))
+
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore')
+                    if e > epochs_min:
+                        if accuracy_min is not None:
+                            if np.mean(train_accuracy_total[-3:]) >= accuracy_min:
+                                break
+                        elif train_loss_min is not None:
+                            if np.mean(train_loss_total[-3:]) < train_loss_min:
+                                break
+                        elif convergence == 'validation':
+                            if val_loss_total:
+                                stop_check_list.append(stop_check(val_loss_total, stop_criterion, stop_criterion_window))
+                                if np.sum(stop_check_list[-3:]) >= 3:
+                                    break
+
+                        elif convergence == 'training':
+                            if train_loss_total:
+                                stop_check_list.append(stop_check(train_loss_total, stop_criterion, stop_criterion_window))
+                                if np.sum(stop_check_list[-3:]) >= 3:
+                                    break
+
+                e +=  1
+
+            batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
+            Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
+            self.features = Get_Latent_Features(self, batch_size_seq, GO, sess)
+            pred, idx = Get_Sequence_Pred(self, batch_size, GO, sess)
+
+            if attention:
+                self.weights = Get_Weights(self,batch_size_seq,GO,sess)
+
+            if len(idx.shape) == 0:
+                idx = idx.reshape(-1,1)
+
+            self.predicted[idx] += pred
+            self.seq_idx = idx
+
+            self.train_idx = np.isin(self.sample_id,self.train[0])
+            self.valid_idx = np.isin(self.sample_id,self.valid[0])
+            self.test_idx = np.isin(self.sample_id,self.test[0])
+
+
+            if self.use_alpha is True:
+                var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
+                with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
+                    pickle.dump(var_save, f)
+
+            if self.use_beta is True:
+                var_save = [self.beta_features,self.beta_indices,self.beta_sequences]
+                with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
+                    pickle.dump(var_save, f)
+
+            with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
+                pickle.dump(self.kernel, f)
+
+            GO.saver.save(sess, os.path.join(self.Name, 'model', 'model.ckpt'))
+
+            if self.use_hla:
+                self.HLA_embed = GO.embedding_layer_hla.eval()
+
+            with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
+                pickle.dump(['WF',GO.predicted.name,self.use_alpha, self.use_beta,
+                             self.use_v_beta, self.use_d_beta, self.use_j_beta,
+                             self.use_v_alpha, self.use_j_alpha,self.use_hla,
+                             self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
+                             self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb], f)
+
+            print('Done Training')
+
+    def Train_dep(self,batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,
+              num_concepts=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,train_loss_min=None,
+                 num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
+              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
+              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,hinge_loss_t=0.0,convergence='validation'):
 
 
         """
@@ -3298,6 +3519,21 @@ class DeepTCR_WF(DeepTCR_S_base):
         accuracy_min: float
             Optional parameter to allow alternative training strategy until minimum
             training accuracy is achieved, at which point, training ceases.
+
+        train_loss_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training loss is achieved, at which point, training ceases.
+
+        hinge_loss_t: float
+            The per sample loss minimum at which the loss of that sample is not used
+            to penalize the model anymore. In other words, once a per sample loss has hit
+            this value, it gets set to 0.0.
+
+        convergence: str
+            This parameter determines which loss to assess the convergence criteria on.
+            Options are 'validation' or 'training'. This is useful in the case one wants
+            to change the convergence criteria on the training data when the training and validation
+            partitions have been combined and used to training the model.
 
         num_fc_layers: int
             Number of fully connected layers following convolutional layer.
@@ -3368,19 +3604,22 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
                     GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
+                per_sample_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits)
+                per_sample_loss = per_sample_loss - hinge_loss_t
+                per_sample_loss = tf.cast((per_sample_loss > 0),tf.float32) * per_sample_loss
                 if weight_by_class is True:
                     class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
                     weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
-                    GO.loss = tf.reduce_mean(weights * tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                    GO.loss = tf.reduce_mean(weights * per_sample_loss)
                 elif class_weights is not None:
                     weights = np.zeros([1,len(self.lb.classes_)]).astype(np.float32)
                     for key in class_weights:
                         weights[:,self.lb.transform([key])[0]]=class_weights[key]
                     class_weights = tf.constant(weights)
                     weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
-                    GO.loss = tf.reduce_mean(weights * tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                    GO.loss = tf.reduce_mean(weights * per_sample_loss)
                 else:
-                    GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                    GO.loss = tf.reduce_mean(per_sample_loss)
 
                 var_train = tf.trainable_variables()
                 GO.reg_losses = tf.losses.get_regularization_loss()
@@ -3453,12 +3692,20 @@ class DeepTCR_WF(DeepTCR_S_base):
                         if accuracy_min is not None:
                             if np.mean(train_accuracy_total[-3:]) >= accuracy_min:
                                 break
-                        else:
+                        elif train_loss_min is not None:
+                            if np.mean(train_loss_total[-3:]) < train_loss_min:
+                                break
+                        elif convergence == 'validation':
                             if val_loss_total:
                                 stop_check_list.append(stop_check(val_loss_total, stop_criterion, stop_criterion_window))
                                 if np.sum(stop_check_list[-3:]) >= 3:
                                     break
 
+                        elif convergence == 'training':
+                            if train_loss_total:
+                                stop_check_list.append(stop_check(train_loss_total, stop_criterion, stop_criterion_window))
+                                if np.sum(stop_check_list[-3:]) >= 3:
+                                    break
 
                 e +=  1
 
@@ -3509,11 +3756,142 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             print('Done Training')
 
-    def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25,batch_size_update=None, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
-                             kernel=5,num_concepts=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,
+    def Train(self,batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,
+              num_concepts=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,train_loss_min=None,
+                 num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
+              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
+              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,hinge_loss_t=0.0,convergence='validation'):
+
+
+        """
+        Train Whole-Sample Classifier
+
+        This method trains the network and saves features values at the
+        end of training for motif analysis.
+
+        Inputs
+        ---------------------------------------
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        batch_size_update: int
+            In the case that the size of the samples are very large, one may not want to update
+            the weights of the network as often as batches are put onto the gpu. Therefore, if
+            one wants to update the weights less often than how often the batches of data are put onto the
+            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
+            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
+            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
+            gpu's for training and there are memory constraints from very large samples.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
+        kernel: int
+            Size of convolutional kernel for first layer of convolutions.
+
+        num_concepts: int
+            Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the
+            repertoires being analyed, one can adjust this hyperparameter.
+
+        weight_by_class: bool
+            Option to weight loss by the inverse of the class frequency. Useful for
+            unbalanced classes.
+
+        class_weights: dict
+            In order to specify custom weights for each class during training, one
+            can provide a dictionary with these weights.
+                i.e. {'A':1.0,'B':2.0'}
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        accuracy_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training accuracy is achieved, at which point, training ceases.
+
+        train_loss_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training loss is achieved, at which point, training ceases.
+
+        hinge_loss_t: float
+            The per sample loss minimum at which the loss of that sample is not used
+            to penalize the model anymore. In other words, once a per sample loss has hit
+            this value, it gets set to 0.0.
+
+        convergence: str
+            This parameter determines which loss to assess the convergence criteria on.
+            Options are 'validation' or 'training'. This is useful in the case one wants
+            to change the convergence criteria on the training data when the training and validation
+            partitions have been combined and used to training the model.
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
+
+        use_only_hla: bool
+            To only use hla feaures, set to True.
+
+        size_of_net: list or str
+            The convolutional layers of this network have 3 layers for which the use can
+            modify the number of neurons per layer. The user can either specify the size of the network
+            with the following options:
+                - small == [12,32,64] neurons for the 3 respective layers
+                - medium == [32,64,128] neurons for the 3 respective layers
+                - large == [64,128,256] neurons for the 3 respective layers
+                - custom, where the user supplies a list with the number of nuerons for the respective layers
+                    i.e. [3,3,3] would have 3 neurons for all 3 layers.
+
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
+
+        Returns
+        ---------------------------------------
+
+        """
+        self._build(batch_size = batch_size,batch_size_update = batch_size_update, epochs_min = epochs_min,stop_criterion=stop_criterion,stop_criterion_window=stop_criterion_window,kernel=kernel,
+              num_concepts=num_concepts,weight_by_class=weight_by_class,class_weights=class_weights,trainable_embedding = trainable_embedding,accuracy_min = accuracy_min,train_loss_min=train_loss_min,
+                 num_fc_layers=num_fc_layers, units_fc=units_fc, drop_out_rate=drop_out_rate,suppress_output=suppress_output,
+              use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,size_of_net=size_of_net,
+              embedding_dim_aa =embedding_dim_aa ,embedding_dim_genes = embedding_dim_genes,embedding_dim_hla=embedding_dim_hla,hinge_loss_t=hinge_loss_t,convergence=convergence)
+        self._train()
+
+    def Monte_Carlo_CrossVal_dep(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25,batch_size_update=None, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
+                             kernel=5,num_concepts=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,combine_train_valid=False,train_loss_min=None,
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                             embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
+                             embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
+                             hinge_loss_t=0.0,convergence='validation'):
 
 
         """
@@ -3581,6 +3959,27 @@ class DeepTCR_WF(DeepTCR_S_base):
             Optional parameter to allow alternative training strategy until minimum
             training accuracy is achieved, at which point, training ceases.
 
+        train_loss_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training loss is achieved, at which point, training ceases.
+
+        hinge_loss_t: float
+            The per sample loss minimum at which the loss of that sample is not used
+            to penalize the model anymore. In other words, once a per sample loss has hit
+            this value, it gets set to 0.0.
+
+        convergence: str
+            This parameter determines which loss to assess the convergence criteria on.
+            Options are 'validation' or 'training'. This is useful in the case one wants
+            to change the convergence criteria on the training data when the training and validation
+            partitions have been combined and used to training the model.
+
+        combine_train_valid: bool
+            To combine the training and validation partitions into one which will be used for training
+            and updating the model parameters, set this to True. This will also set the validation partition
+            to the test partition. Therefore, if setting this parameter to True, change one of the training parameters
+            to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set.
+
         num_fc_layers: int
             Number of fully connected layers following convolutional layer.
 
@@ -3641,16 +4040,219 @@ class DeepTCR_WF(DeepTCR_S_base):
         for i in range(0, folds):
             if suppress_output is False:
                 print(i)
-            self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO)
+            self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,combine_train_valid=combine_train_valid)
             self.Train(epochs_min=epochs_min, batch_size=batch_size,batch_size_update=batch_size_update,stop_criterion=stop_criterion,
                           kernel=kernel,num_concepts=num_concepts,
                        weight_by_class=weight_by_class,class_weights=class_weights,
-                          trainable_embedding=trainable_embedding,accuracy_min=accuracy_min,
+                          trainable_embedding=trainable_embedding,accuracy_min=accuracy_min,train_loss_min=train_loss_min,
                           num_fc_layers=num_fc_layers,
                           units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
                             use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
                        size_of_net=size_of_net,stop_criterion_window=stop_criterion_window,embedding_dim_aa=embedding_dim_aa,
-                       embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla)
+                       embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla,hinge_loss_t=hinge_loss_t,convergence=convergence)
+
+            y_test.append(self.y_test)
+            y_pred.append(self.y_pred)
+            files.append(self.test[0])
+
+            counts[self.seq_idx] += 1
+
+            y_test2 = np.vstack(y_test)
+            y_pred2 = np.vstack(y_pred)
+
+            if suppress_output is False:
+                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
+
+                if self.y_test.shape[1] == 2:
+                    if i > 0:
+                        y_test2 = np.vstack(y_test)
+                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+
+
+        self.y_test = np.vstack(y_test)
+        self.y_pred = np.vstack(y_pred)
+        files = np.hstack(files)
+        DFs =[]
+        for ii,c in enumerate(self.lb.classes_,0):
+            df_out = pd.DataFrame()
+            df_out['Samples'] = files
+            df_out['y_test'] = self.y_test[:,ii]
+            df_out['y_pred'] = self.y_pred[:,ii]
+            DFs.append(df_out)
+
+        self.DFs_pred = dict(zip(self.lb.classes_,DFs))
+
+        self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
+        print('Monte Carlo Simulation Completed')
+
+    def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25,batch_size_update=None, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
+                             kernel=5,num_concepts=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,combine_train_valid=False,train_loss_min=None,
+                             num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
+                             use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
+                             embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
+                             hinge_loss_t=0.0,convergence='validation'):
+
+
+        """
+        Monte Carlo Cross-Validation for Whole Sample Classifier
+
+        If the number of samples is small but training the whole sample classifier, one
+        can use Monte Carlo Cross Validation to train a number of iterations before assessing
+        predictive performance.After this method is run, the AUC_Curve method can be run to
+        assess the overall performance.
+
+        Inputs
+        ---------------------------------------
+        folds: int
+            Number of iterations for Cross-Validation
+
+        test_size: float
+            Fraction of sample to be used for valid and test set.
+
+        LOO: int
+            Number of samples to leave-out in Leave-One-Out Cross-Validation
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        batch_size_update: int
+            In the case that the size of the samples are very large, one may not want to update
+            the weights of the network as often as batches are put onto the gpu. Therefore, if
+            one wants to update the weights less often than how often the batches of data are put onto the
+            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
+            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
+            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
+            gpu's for training and there are memory constraints from very large samples.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
+        kernel: int
+            Size of convolutional kernel for first layer of convolutions.
+
+        num_concepts: int
+            Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the
+            repertoires being analyed, one can adjust this hyperparameter.
+
+        weight_by_class: bool
+            Option to weight loss by the inverse of the class frequency. Useful for
+            unbalanced classes.
+
+        class_weights: dict
+            In order to specify custom weights for each class during training, one
+            can provide a dictionary with these weights.
+                i.e. {'A':1.0,'B':2.0'}
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        accuracy_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training accuracy is achieved, at which point, training ceases.
+
+        train_loss_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training loss is achieved, at which point, training ceases.
+
+        hinge_loss_t: float
+            The per sample loss minimum at which the loss of that sample is not used
+            to penalize the model anymore. In other words, once a per sample loss has hit
+            this value, it gets set to 0.0.
+
+        convergence: str
+            This parameter determines which loss to assess the convergence criteria on.
+            Options are 'validation' or 'training'. This is useful in the case one wants
+            to change the convergence criteria on the training data when the training and validation
+            partitions have been combined and used to training the model.
+
+        combine_train_valid: bool
+            To combine the training and validation partitions into one which will be used for training
+            and updating the model parameters, set this to True. This will also set the validation partition
+            to the test partition. Therefore, if setting this parameter to True, change one of the training parameters
+            to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set.
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
+
+        use_only_hla: bool
+            To only use hla feaures, set to True.
+
+        size_of_net: list or str
+            The convolutional layers of this network have 3 layers for which the use can
+            modify the number of neurons per layer. The user can either specify the size of the network
+            with the following options:
+                - small == [12,32,64] neurons for the 3 respective layers
+                - medium == [32,64,128] neurons for the 3 respective layers
+                - large == [64,128,256] neurons for the 3 respective layers
+                - custom, where the user supplies a list with the number of nuerons for the respective layers
+                    i.e. [3,3,3] would have 3 neurons for all 3 layers.
+
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
+
+        Returns
+
+        self.DFs_pred: dict of dataframes
+            This method returns the samples in the test sets of the Monte-Carlo and their
+            predicted probabilities for each class.
+        ---------------------------------------
+
+        """
+
+        y_pred = []
+        y_test = []
+        files = []
+        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        counts = np.zeros_like(self.predicted)
+        self._build(batch_size=batch_size, batch_size_update=batch_size_update, epochs_min=epochs_min,
+                    stop_criterion=stop_criterion, stop_criterion_window=stop_criterion_window, kernel=kernel,
+                    num_concepts=num_concepts, weight_by_class=weight_by_class, class_weights=class_weights,
+                    trainable_embedding=trainable_embedding, accuracy_min=accuracy_min, train_loss_min=train_loss_min,
+                    num_fc_layers=num_fc_layers, units_fc=units_fc, drop_out_rate=drop_out_rate,
+                    suppress_output=suppress_output,
+                    use_only_seq=use_only_seq, use_only_gene=use_only_gene, use_only_hla=use_only_hla,
+                    size_of_net=size_of_net,
+                    embedding_dim_aa=embedding_dim_aa, embedding_dim_genes=embedding_dim_genes,
+                    embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence)
+
+        for i in range(0, folds):
+            if suppress_output is False:
+                print(i)
+            self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,combine_train_valid=combine_train_valid)
+            self._train()
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
