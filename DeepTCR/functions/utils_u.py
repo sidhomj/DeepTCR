@@ -6,10 +6,12 @@ from scipy.cluster.hierarchy import linkage,fcluster
 from matplotlib import pyplot as plt
 from scipy.cluster.hierarchy import dendrogram, optimal_leaf_ordering, leaves_list
 from scipy.stats import entropy
+from scipy import ndimage as ndi
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.model_selection import StratifiedKFold, LeaveOneOut, KFold
-from sklearn.metrics import f1_score, recall_score, precision_score, roc_auc_score,accuracy_score
+from sklearn.metrics import f1_score, recall_score, precision_score, roc_auc_score, accuracy_score
+from matplotlib.patches import Ellipse
 import os
 
 
@@ -108,7 +110,7 @@ def polar_dendrogram(dg, fig, ax_radius=0.2, log_scale=False):
 
 
 def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,gridsize=50,n_pad=5,
-             dg_radius=0.2,axes_radius=0.4,figsize=8,log_scale=False,linkage_method='complete',plot_type='hexbin',
+             dg_radius=0.2,axes_radius=0.4,figsize=8,log_scale=False,linkage_method='complete',plot_type='2dhist',
              filename=None,sample_labels=False, gaussian_sigma=0.5, vmax=0.01):
 
     n_s = len(np.unique(samples))
@@ -118,13 +120,13 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,grids
     x_step = (d_max[0] - d_min[0]) / gridsize
     x_edges = np.linspace(d_min[0] - (n_pad * x_step), d_max[0] + (n_pad * x_step), gridsize + (2 * n_pad) + 1)
     y_step = (d_max[1] - d_min[1]) / gridsize
-    y_edges = np.linspace(d_min[0] - (n_pad * y_step), d_max[0] + (n_pad * y_step), gridsize + (2 * n_pad) + 1)
+    y_edges = np.linspace(d_min[1] - (n_pad * y_step), d_max[1] + (n_pad * y_step), gridsize + (2 * n_pad) + 1)
     Y, X = np.meshgrid(x_edges[:-1] + (np.diff(x_edges) / 2), y_edges[:-1] + (np.diff(y_edges) / 2))
 
-    c_center = (d_max + d_min) / 2
-    c_radius = np.max(np.sqrt(np.sum(np.power(X_2 - c_center[np.newaxis, :], 2), axis=1)))
-    c_pos = pol2cart(np.linspace(0, 2 * np.pi, 200), c_radius) + c_center[np.newaxis, :]
-    # c_radius = np.maximum(x_edges[-1] - c_center[0], y_edges[-1] - c_center[1])
+    e_c = np.array([np.mean(X[:, 0]), np.mean(Y[0, :])])
+    e_r = np.array([Y[-n_pad + 2, 0] - e_c[0], X[0, -n_pad + 2] - e_c[1]])
+    xlim = [X[0, 0] - (y_step * 2), X[-1, 0] + (y_step * 2)]
+    ylim = [Y[0, 0] - (x_step * 2), Y[0, -1] + (x_step * 2)]
 
     Z = optimal_leaf_ordering(linkage(pairwise_distances, method=linkage_method), pairwise_distances)
     dg_order = leaves_list(Z)
@@ -155,11 +157,8 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,grids
         else:
             ax[i].plot(smp_d, '.', markersize=1, alpha=0.5)
 
-        ax[i].plot(c_pos[:, 0], c_pos[:, 1], '.', linewidth=3, color=color_dict[labels[dg_order[i]]])
-        # ax[i].add_artist(plt.Circle(c_center, c_radius, color=color_dict[labels[dg_order[i]]], fill=False))
-        ax[i].set(xticks=[], yticks=[], frame_on=False)
-        # xlim=lims, ylim=lims
-        #ax[i].set_title(samples[i])
+        ax[i].add_artist(Ellipse(e_c, width=2 * e_r[0], height=2 * e_r[1], color=color_dict[labels[dg_order[i]]], fill=False, lw=n_pad / 2))
+        ax[i].set(xticks=[], yticks=[], xlim=xlim, ylim=ylim, frame_on=False)
 
     dg = dendrogram(Z, no_plot=True)
     polar_dendrogram(dg, fig, ax_radius=dg_radius, log_scale=log_scale)
