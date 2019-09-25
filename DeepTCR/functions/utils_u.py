@@ -106,21 +106,25 @@ def polar_dendrogram(dg, fig, ax_radius=0.2, log_scale=False):
         # ax.set(xticks=np.linspace(0, 2 * np.pi, icoord.shape[0] + 2), xticklabels=dg['ivl'], yticks=[])
         ax.set(xticks=[], yticks=[])
 
-def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,gridsize=50,
+
+def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,gridsize=50,n_pad=5,
              dg_radius=0.2,axes_radius=0.4,figsize=8,log_scale=False,linkage_method='complete',plot_type='hexbin',
-             filename=None,sample_labels=False):
+             filename=None,sample_labels=False, gaussian_sigma=0.5, vmax=0.01):
 
     n_s = len(np.unique(samples))
-    clim = np.array([0, .1])
     d_max = np.max(X_2, axis=0)
     d_min = np.min(X_2, axis=0)
-    c_center = (d_max + d_min) / 2
-    c_radius = np.max(np.sqrt(np.sum(np.power(X_2 - c_center[np.newaxis, :], 2), axis=1))) * 1.1
-    c_pos = pol2cart(np.linspace(0, 2 * np.pi, 200), c_radius) + c_center[np.newaxis, :]
 
-    x_edges = np.linspace(d_min[0], d_max[0], gridsize)
-    y_edges = np.linspace(d_min[1], d_max[1], gridsize)
+    x_step = (d_max[0] - d_min[0]) / gridsize
+    x_edges = np.linspace(d_min[0] - (n_pad * x_step), d_max[0] + (n_pad * x_step), gridsize + (2 * n_pad) + 1)
+    y_step = (d_max[1] - d_min[1]) / gridsize
+    y_edges = np.linspace(d_min[0] - (n_pad * y_step), d_max[0] + (n_pad * y_step), gridsize + (2 * n_pad) + 1)
     Y, X = np.meshgrid(x_edges[:-1] + (np.diff(x_edges) / 2), y_edges[:-1] + (np.diff(y_edges) / 2))
+
+    c_center = (d_max + d_min) / 2
+    c_radius = np.max(np.sqrt(np.sum(np.power(X_2 - c_center[np.newaxis, :], 2), axis=1)))
+    c_pos = pol2cart(np.linspace(0, 2 * np.pi, 200), c_radius) + c_center[np.newaxis, :]
+    # c_radius = np.maximum(x_edges[-1] - c_center[0], y_edges[-1] - c_center[1])
 
     Z = optimal_leaf_ordering(linkage(pairwise_distances, method=linkage_method), pairwise_distances)
     dg_order = leaves_list(Z)
@@ -130,20 +134,31 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,grids
     axes_size = axes_radius * np.sin(0.5 * (2 * np.pi / n_s))
     ax = [None] * n_s
 
+    cmap_viridis = plt.get_cmap('viridis')
+    cmap_viridis.set_under(color='white', alpha=0)
+    c_mask = np.meshgrid(np.arange(2 * n_pad + gridsize), np.arange(2 * n_pad + gridsize))
+    c_mask = np.sqrt(((c_mask[0] - ((2 * n_pad + gridsize) / 2)) ** 2) + ((c_mask[1] - ((2 * n_pad + gridsize) / 2)) ** 2)) >= (0.95 * ((2 * n_pad + gridsize) / 2))
+
     for i in range(n_s):
         ax[i] = fig.add_axes([axes_pos[i, 0] - axes_size, axes_pos[i, 1] - axes_size, 2 * axes_size, 2 * axes_size])
-        ax[i].plot(c_pos[:, 0], c_pos[:, 1], '-', linewidth=5., color=color_dict[labels[dg_order[i]]])
+
         if sample_labels:
             ax[i].text(.5, 0.2, samples[dg_order[i]], horizontalalignment='center', transform=ax[i].transAxes)
         smp_d = X_2[file_id == samples[dg_order[i]], :]
         if plot_type is 'hexbin':
             ax[i].hexbin(smp_d[:, 0], smp_d[:, 1], gridsize=gridsize, mincnt=1)
         elif plot_type is '2dhist':
-            h, _ = np.histogramdd(smp_d, [x_edges, y_edges])
-            ax[i].pcolormesh(X, Y, h / np.sum(h), shading='gouraud', vmin=clim[0], vmax=clim[1], cmap='GnBu')
+            h, _ = np.histogramdd(smp_d, bins=[x_edges, y_edges])
+            h /= np.sum(h)
+            h = ndi.gaussian_filter(h, sigma=gaussian_sigma)
+            ax[i].pcolormesh(X, Y, np.ma.masked_array(h, c_mask), cmap=cmap_viridis, shading='gouraud', vmin=0, vmax=vmax)
         else:
             ax[i].plot(smp_d, '.', markersize=1, alpha=0.5)
-        ax[i].set(xticks=[], yticks=[],frame_on=False)
+
+        ax[i].plot(c_pos[:, 0], c_pos[:, 1], '.', linewidth=3, color=color_dict[labels[dg_order[i]]])
+        # ax[i].add_artist(plt.Circle(c_center, c_radius, color=color_dict[labels[dg_order[i]]], fill=False))
+        ax[i].set(xticks=[], yticks=[], frame_on=False)
+        # xlim=lims, ylim=lims
         #ax[i].set_title(samples[i])
 
     dg = dendrogram(Z, no_plot=True)
