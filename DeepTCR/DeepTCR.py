@@ -3252,7 +3252,8 @@ class DeepTCR_WF(DeepTCR_S_base):
               num_concepts=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,train_loss_min=None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,hinge_loss_t=0.0,convergence='validation'):
+              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,hinge_loss_t=0.0,convergence='validation',
+               graph_seed = None):
 
         graph_model = tf.Graph()
         GO = graph_object()
@@ -3273,6 +3274,9 @@ class DeepTCR_WF(DeepTCR_S_base):
         GO.embedding_dim_hla = embedding_dim_hla
         with graph_model.device(self.device):
             with graph_model.as_default():
+                if graph_seed is not None:
+                    tf.set_random_seed(graph_seed)
+
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
                                          use_only_seq,use_only_gene,use_only_hla,
@@ -3331,7 +3335,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 self.attention = attention
                 self.kernel = kernel
 
-    def _train(self,write=True):
+    def _train(self,write=True,batch_seed=None):
         GO = self.GO
         attention = self.attention
         graph_model = self.graph_model
@@ -3361,6 +3365,8 @@ class DeepTCR_WF(DeepTCR_S_base):
             e = 0
 
             while True:
+                if batch_seed is not None:
+                    np.random.seed(batch_seed)
                 train_loss, train_accuracy, train_predicted,train_auc = \
                     Run_Graph_WF(self.train,sess,self,GO,batch_size,batch_size_update,random=True,train=True,
                                  drop_out_rate=drop_out_rate)
@@ -4092,7 +4098,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
                              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
-                             hinge_loss_t=0.0,convergence='validation'):
+                             hinge_loss_t=0.0,convergence='validation',seeds=None,graph_seed=None,batch_seed=None):
 
 
         """
@@ -4247,17 +4253,20 @@ class DeepTCR_WF(DeepTCR_S_base):
                     use_only_seq=use_only_seq, use_only_gene=use_only_gene, use_only_hla=use_only_hla,
                     size_of_net=size_of_net,
                     embedding_dim_aa=embedding_dim_aa, embedding_dim_genes=embedding_dim_genes,
-                    embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence)
+                    embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence,graph_seed=graph_seed)
 
         for i in range(0, folds):
             if suppress_output is False:
                 print(i)
+            if seeds is not None:
+                np.random.seed(seeds[i])
+
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,combine_train_valid=combine_train_valid)
             if i == folds-1:
                 write = True
             else:
                 write = False
-            self._train(write=write)
+            self._train(write=write,batch_seed=batch_seed)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
