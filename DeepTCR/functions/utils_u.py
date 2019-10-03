@@ -109,9 +109,12 @@ def polar_dendrogram(dg, fig, ax_radius=0.2, log_scale=False):
         ax.set(xticks=[], yticks=[])
 
 
-def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,gridsize=50,n_pad=5,
+def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,gridsize=50,n_pad=5, lw=None,
              dg_radius=0.2,axes_radius=0.4,figsize=8,log_scale=False,linkage_method='complete',plot_type='2dhist',
              filename=None,sample_labels=False, gaussian_sigma=0.5, vmax=0.01):
+
+    if lw is None:
+        lw = n_pad / 2
 
     n_s = len(np.unique(samples))
     d_max = np.max(X_2, axis=0)
@@ -124,7 +127,7 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,grids
     Y, X = np.meshgrid(x_edges[:-1] + (np.diff(x_edges) / 2), y_edges[:-1] + (np.diff(y_edges) / 2))
 
     e_c = np.array([np.mean(X[:, 0]), np.mean(Y[0, :])])
-    e_r = np.abs(np.array([Y[-n_pad + 2, 0] - e_c[0], X[0, -n_pad + 2] - e_c[1]]))
+    e_r = np.abs(np.array([Y[-n_pad + 2, 0] - e_c[1], X[0, -n_pad + 2] - e_c[0]]))
     xlim = [X[0, 0] - (y_step * 2), X[-1, 0] + (y_step * 2)]
     ylim = [Y[0, 0] - (x_step * 2), Y[0, -1] + (x_step * 2)]
 
@@ -157,15 +160,13 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,grids
         else:
             ax[i].plot(smp_d, '.', markersize=1, alpha=0.5)
 
-
-        ax[i].add_artist(Ellipse(e_c, width=2 * np.min(e_r), height=2 * np.min(e_r), color=color_dict[labels[dg_order[i]]], fill=False, lw=n_pad / 2))
+        ax[i].add_artist(Ellipse(e_c, width=2 * e_r[1], height=2 * e_r[0], color=color_dict[labels[dg_order[i]]], fill=False, lw=lw))
         ax[i].set(xticks=[], yticks=[], xlim=xlim, ylim=ylim, frame_on=False)
 
     dg = dendrogram(Z, no_plot=True)
     polar_dendrogram(dg, fig, ax_radius=dg_radius, log_scale=log_scale)
     if filename is not None:
         plt.savefig(os.path.join(self.directory_results, filename))
-
 
 def KNN(distances,labels,k=1,folds=5,metrics=['Recall','Precision','F1_Score','AUC'],n_jobs=1):
     lb = LabelEncoder()
