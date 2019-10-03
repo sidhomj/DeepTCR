@@ -1409,7 +1409,8 @@ class vis_class(object):
 
     def Repertoire_Dendrogram(self,set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
                              dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward',
-                             gridsize=10, Load_Prev_Data=False,filename=None,sample_labels=False):
+                             gridsize=24, Load_Prev_Data=False,filename=None,sample_labels=False,
+                              gaussian_sigma=0.5, vmax=0.01):
         """
         Repertoire Dendrogram
 
@@ -1468,6 +1469,12 @@ class vis_class(object):
 
         sample_labels: bool
             To show the sample labels on the dendrogram, set to True.
+
+        gaussian_sigma: float
+            The amount of blur to introduce in the plots.
+
+        vmax: float
+            Highest color density value.
 
         Returns
 
@@ -1560,7 +1567,14 @@ class vis_class(object):
 
         rad_plot(X_2, squareform(pairwise_distances), samples, labels, sample_id, color_dict,self,
                  gridsize=gridsize, dg_radius=dendrogram_radius, linkage_method=linkage_method,
-                 figsize=8, axes_radius=repertoire_radius,filename=filename,sample_labels=sample_labels)
+                 figsize=8, axes_radius=repertoire_radius,filename=filename,sample_labels=sample_labels,
+                 gaussian_sigma=gaussian_sigma,vmax=vmax)
+
+        # with open('rad_data.pkl','wb') as f:
+        #     pickle.dump([X_2, squareform(pairwise_distances), samples, labels, sample_id, color_dict,self,
+        #          gridsize, dendrogram_radius, linkage_method,
+        #          8, repertoire_radius,filename,sample_labels,
+        #          gaussian_sigma,vmax],f,protocol=4)
 
     def UMAP_Plot(self, set='all',by_class=False, by_cluster=False,
                   by_sample=False, freq_weight=False, show_legend=True,

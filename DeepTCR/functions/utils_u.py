@@ -124,7 +124,7 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,grids
     Y, X = np.meshgrid(x_edges[:-1] + (np.diff(x_edges) / 2), y_edges[:-1] + (np.diff(y_edges) / 2))
 
     e_c = np.array([np.mean(X[:, 0]), np.mean(Y[0, :])])
-    e_r = np.array([Y[-n_pad + 2, 0] - e_c[0], X[0, -n_pad + 2] - e_c[1]])
+    e_r = np.abs(np.array([Y[-n_pad + 2, 0] - e_c[0], X[0, -n_pad + 2] - e_c[1]]))
     xlim = [X[0, 0] - (y_step * 2), X[-1, 0] + (y_step * 2)]
     ylim = [Y[0, 0] - (x_step * 2), Y[0, -1] + (x_step * 2)]
 
@@ -157,7 +157,8 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,grids
         else:
             ax[i].plot(smp_d, '.', markersize=1, alpha=0.5)
 
-        ax[i].add_artist(Ellipse(e_c, width=2 * e_r[0], height=2 * e_r[1], color=color_dict[labels[dg_order[i]]], fill=False, lw=n_pad / 2))
+
+        ax[i].add_artist(Ellipse(e_c, width=2 * np.min(e_r), height=2 * np.min(e_r), color=color_dict[labels[dg_order[i]]], fill=False, lw=n_pad / 2))
         ax[i].set(xticks=[], yticks=[], xlim=xlim, ylim=ylim, frame_on=False)
 
     dg = dendrogram(Z, no_plot=True)
