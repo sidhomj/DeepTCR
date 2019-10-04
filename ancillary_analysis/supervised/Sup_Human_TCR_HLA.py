@@ -1,3 +1,5 @@
+"""This script is used to train the TCR+HLA model on the BMS-038 Clinical Trial Data."""
+
 from DeepTCR.DeepTCR import DeepTCR_WF
 import numpy as np
 

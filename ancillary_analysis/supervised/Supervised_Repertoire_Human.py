@@ -1,3 +1,6 @@
+"""This script is used to generate the plot from the previously trained HLA, TCR, TCR+HLA
+models showing the comparative performance of these models."""
+
 import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns

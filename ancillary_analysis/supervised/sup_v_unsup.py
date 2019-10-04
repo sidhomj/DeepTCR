@@ -1,3 +1,6 @@
+"""This script it sued to direclty compare the performance for sequence classification
+from the unsupervised VAE + KNN vs a supervised deep learning sequence classifier."""
+
 from DeepTCR.DeepTCR import DeepTCR_SS, DeepTCR_U
 import pandas as pd
 import seaborn as sns

@@ -1,3 +1,6 @@
+"""This script is used to train both the sequence and repertoire classifier on the
+Rudqvist_2017 dataset and compare their performances."""
+
 from DeepTCR.DeepTCR import DeepTCR_SS, DeepTCR_WF
 from sklearn.metrics import roc_curve, roc_auc_score
 import numpy as np
