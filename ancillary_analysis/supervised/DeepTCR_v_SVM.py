@@ -1,3 +1,7 @@
+"""
+Supplementary Figure 15
+"""
+
 """This script is used to benchmark DeepTCR's Sequence Classifier
 against an SVM and RF where the inputs for those latter machine learning
 algorithms are the outputs of a K-mer search"""

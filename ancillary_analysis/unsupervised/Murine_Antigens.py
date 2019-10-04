@@ -1,4 +1,7 @@
-"""Figure 1B,C,D"""
+"""
+Figure 1B,C,D
+Supplementary Figures 3-6
+"""
 
 """This script is used to characterize the performance of various featurization
 methods on TCRSeq data from 9 Murine Antigens."""

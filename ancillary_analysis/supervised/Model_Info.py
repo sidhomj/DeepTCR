@@ -1,3 +1,7 @@
+"""
+Supplementary Figure 18
+"""
+
 """This scipt is used to quantify the information learned between
 the TCR, HLA, and TCR+HLA models applied to the BMS-038 Clinical Trial Data."""
 
