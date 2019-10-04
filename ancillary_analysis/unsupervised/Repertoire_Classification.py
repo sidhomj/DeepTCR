@@ -1,3 +1,5 @@
+"""Figure 2A"""
+
 """This script is used to assess the performance of various featurization methods
 at the sample/repertoire level on TCRSeq data from tumor infiltrating lymphocytes (TIL)
 taken from mice treated with different therapies."""

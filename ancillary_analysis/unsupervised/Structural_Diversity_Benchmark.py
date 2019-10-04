@@ -1,3 +1,5 @@
+"""Figure 2C"""
+
 """This script is used to assess the performance of various featurization
 methods to describe the structural diversity of in-silico samples where various
 number of antigen-specific sequences are mixed and then the diversity is measured by

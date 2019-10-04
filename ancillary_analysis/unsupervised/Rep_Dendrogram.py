@@ -1,3 +1,5 @@
+"""Figure 2B"""
+
 """This script is used to create the Repertoire Dendrogram of the Rudqvist_2017 dataset."""
 
 from DeepTCR.DeepTCR import DeepTCR_U
