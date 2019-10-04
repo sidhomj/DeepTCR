@@ -57,10 +57,10 @@ ax2.spines['top'].set_visible(False)
 ax1.set_xlabel('False Positive Rate')
 ax1.set_ylabel('True Positive Rate')
 
-# empirical p-value, probability of null hypothesis
-np.mean((model_info['TCR+HLA']['bootstrap']['auc'] - model_info['HLA']['bootstrap']['auc']) <= 0)
-np.mean((model_info['TCR+HLA']['bootstrap']['auc'] - model_info['TCR']['bootstrap']['auc']) <= 0)
-np.mean((model_info['TCR']['bootstrap']['auc'] - model_info['HLA']['bootstrap']['auc']) <= 0)
+# Bootstrap CI of test statistic - AUC, null hyopthesis is that diff = 0
+np.quantile(model_info['TCR+HLA']['bootstrap']['auc'] - model_info['HLA']['bootstrap']['auc'], [0.025, 0.975])
+np.quantile(model_info['TCR+HLA']['bootstrap']['auc'] - model_info['TCR']['bootstrap']['auc'], [0.025, 0.975])
+np.quantile(model_info['HLA']['bootstrap']['auc'] - model_info['TCR']['bootstrap']['auc'], [0.025, 0.975])
 
 # mc_preds per sample distribution plot sorted by sample mean in combo model
 _, ax = plt.subplots(ncols=3)
