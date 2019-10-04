@@ -57,10 +57,14 @@ ax2.spines['top'].set_visible(False)
 ax1.set_xlabel('False Positive Rate')
 ax1.set_ylabel('True Positive Rate')
 
-# Bootstrap CI of test statistic - AUC, null hyopthesis is that diff = 0
+# 95 Bootstrap CI of test statistic - AUC, null hyopthesis is that diff = 0
 np.quantile(model_info['TCR+HLA']['bootstrap']['auc'] - model_info['HLA']['bootstrap']['auc'], [0.025, 0.975])
 np.quantile(model_info['TCR+HLA']['bootstrap']['auc'] - model_info['TCR']['bootstrap']['auc'], [0.025, 0.975])
 np.quantile(model_info['HLA']['bootstrap']['auc'] - model_info['TCR']['bootstrap']['auc'], [0.025, 0.975])
+
+# checking lower bounds of 99.9, 99, and 95 CIs to see where they cross 0
+np.quantile(model_info['TCR+HLA']['bootstrap']['auc'] - model_info['HLA']['bootstrap']['auc'], [0.0005, 0.005, 0.025])
+np.quantile(model_info['TCR+HLA']['bootstrap']['auc'] - model_info['TCR']['bootstrap']['auc'], [0.0005, 0.005, 0.025])
 
 # mc_preds per sample distribution plot sorted by sample mean in combo model
 _, ax = plt.subplots(ncols=3)
