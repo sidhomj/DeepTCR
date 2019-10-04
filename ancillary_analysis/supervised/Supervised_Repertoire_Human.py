@@ -66,7 +66,7 @@ i = 0
 idx = model_info[model_name]['mean']['y_pred'].sort_values().index
 for model_name in model_info:
     sns.violinplot(x=model_info[model_name]['mc_preds']['y_pred'].values, y=model_info[model_name]['mc_preds']['Samples'].values, linewidth=.5, order=idx, ax=ax[i], cut=0)
-    ax[i].set(yticklabels=[], xlim=[0, 1])
+    ax[i].set(yticklabels=[], xlim=[0, 1], title=model_name)
     i += 1
 label_dict = {0: 'sdpd', 1: 'crpr'}
 ax[0].set(yticklabels=[label_dict[_] for _ in model_info[model_name]['mean'].loc[idx, ]['y_test'].values])
