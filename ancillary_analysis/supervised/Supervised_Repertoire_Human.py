@@ -1,4 +1,6 @@
-"""Figure 4C"""
+"""Figure 4C
+Supplementary Figure 17
+"""
 
 """This script is used to generate the plot from the previously trained HLA, TCR, TCR+HLA
 models showing the comparative performance of these models."""
