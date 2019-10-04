@@ -1,3 +1,5 @@
+"""Figure 1B,C,D"""
+
 """This script is used to characterize the performance of various featurization
 methods on TCRSeq data from 9 Murine Antigens."""
 

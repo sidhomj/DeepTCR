@@ -1,3 +1,5 @@
+"""Figure 1 E,F"""
+
 """This script is used to characterize the performance of various featurization
 methods on TCRSeq data from 7 Human Antigens."""
 
