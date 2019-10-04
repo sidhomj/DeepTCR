@@ -1,3 +1,8 @@
+"""Figure 3C"""
+
+"""This script is used to benchmark the performance of the Supervised Sequence Classifier
+with either the alpha chain, beta chain, or both provided to the model."""
+
 from DeepTCR.DeepTCR import DeepTCR_SS
 from multiprocessing import Pool
 import matplotlib.pyplot as plt
@@ -58,7 +63,4 @@ for a in antigens:
     plt.yticks(fontsize=14)
     plt.savefig(os.path.join(dir_results,a+ '_AUC.eps'))
     plt.close()
-
-check=1
-
 

@@ -1,3 +1,5 @@
+"""Figure 3A"""
+
 """This script it sued to direclty compare the performance for sequence classification
 from the unsupervised VAE + KNN vs a supervised deep learning sequence classifier."""
 
