@@ -1476,6 +1476,9 @@ class vis_class(object):
         vmax: float
             Highest color density value. Color scales from 0 to vmax (i.e. larger vmax == dimmer plot)
 
+        lw: float
+            The width of the circle edge around each sample.
+
         Returns
 
         self.pairwise_distances: Pandas dataframe
