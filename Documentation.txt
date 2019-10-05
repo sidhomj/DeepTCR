@@ -913,7 +913,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None, sample_labels=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -971,6 +971,15 @@ CLASSES
      |      
      |      sample_labels: bool
      |          To show the sample labels on the dendrogram, set to True.
+     |      
+     |      gaussian_sigma: float
+     |          The amount of blur to introduce in the plots.
+     |      
+     |      vmax: float
+     |          Highest color density value. Color scales from 0 to vmax (i.e. larger vmax == dimmer plot)
+     |      
+     |      lw: float
+     |          The width of the circle edge around each sample.
      |      
      |      Returns
      |      
@@ -1588,7 +1597,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None, sample_labels=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -1646,6 +1655,15 @@ CLASSES
      |      
      |      sample_labels: bool
      |          To show the sample labels on the dendrogram, set to True.
+     |      
+     |      gaussian_sigma: float
+     |          The amount of blur to introduce in the plots.
+     |      
+     |      vmax: float
+     |          Highest color density value. Color scales from 0 to vmax (i.e. larger vmax == dimmer plot)
+     |      
+     |      lw: float
+     |          The width of the circle edge around each sample.
      |      
      |      Returns
      |      
@@ -2361,7 +2379,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None, sample_labels=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -2419,6 +2437,15 @@ CLASSES
      |      
      |      sample_labels: bool
      |          To show the sample labels on the dendrogram, set to True.
+     |      
+     |      gaussian_sigma: float
+     |          The amount of blur to introduce in the plots.
+     |      
+     |      vmax: float
+     |          Highest color density value. Color scales from 0 to vmax (i.e. larger vmax == dimmer plot)
+     |      
+     |      lw: float
+     |          The width of the circle edge around each sample.
      |      
      |      Returns
      |      
@@ -2499,7 +2526,7 @@ CLASSES
      |  
      |  Methods defined here:
      |  
-     |  Get_Train_Valid_Test(self, test_size=0.25, LOO=None)
+     |  Get_Train_Valid_Test(self, test_size=0.25, LOO=None, combine_train_valid=False)
      |      Train/Valid/Test Splits.
      |      
      |      Divide data for train, valid, test set. Training is used to
@@ -2518,10 +2545,16 @@ CLASSES
      |          when set to 2, 2 samples will be left out for the validation set and 2 samples will be left
      |          out for the test set.
      |      
+     |      combine_train_valid: bool
+     |          To combine the training and validation partitions into one which will be used for training
+     |          and updating the model parameters, set this to True. This will also set the validation partition
+     |          to the test partition. Therefore, if setting this parameter to True, change one of the training parameters
+     |          to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set.
+     |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, epochs_min=25, batch_size=25, batch_size_update=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, num_concepts=12, weight_by_class=False, class_weights=None, iterations=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
+     |  K_Fold_CrossVal(self, folds=None, epochs_min=25, batch_size=25, batch_size_update=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, num_concepts=12, weight_by_class=False, class_weights=None, iterations=None, trainable_embedding=True, accuracy_min=None, train_loss_min=None, combine_train_valid=False, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, hinge_loss_t=0.0, convergence='validation')
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2584,6 +2617,27 @@ CLASSES
      |          Optional parameter to allow alternative training strategy until minimum
      |          training accuracy is achieved, at which point, training ceases.
      |      
+     |      train_loss_min: float
+     |          Optional parameter to allow alternative training strategy until minimum
+     |          training loss is achieved, at which point, training ceases.
+     |      
+     |      hinge_loss_t: float
+     |          The per sample loss minimum at which the loss of that sample is not used
+     |          to penalize the model anymore. In other words, once a per sample loss has hit
+     |          this value, it gets set to 0.0.
+     |      
+     |      convergence: str
+     |          This parameter determines which loss to assess the convergence criteria on.
+     |          Options are 'validation' or 'training'. This is useful in the case one wants
+     |          to change the convergence criteria on the training data when the training and validation
+     |          partitions have been combined and used to training the model.
+     |      
+     |      combine_train_valid: bool
+     |          To combine the training and validation partitions into one which will be used for training
+     |          and updating the model parameters, set this to True. This will also set the validation partition
+     |          to the test partition. Therefore, if setting this parameter to True, change one of the training parameters
+     |          to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set.
+     |      
      |      num_fc_layers: int
      |          Number of fully connected layers following convolutional layer.
      |      
@@ -2630,7 +2684,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, batch_size_update=None, LOO=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, num_concepts=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, batch_size_update=None, LOO=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, num_concepts=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, combine_train_valid=False, train_loss_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, hinge_loss_t=0.0, convergence='validation', seeds=None, graph_seed=None, batch_seed=None)
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -2694,6 +2748,27 @@ CLASSES
      |      accuracy_min: float
      |          Optional parameter to allow alternative training strategy until minimum
      |          training accuracy is achieved, at which point, training ceases.
+     |      
+     |      train_loss_min: float
+     |          Optional parameter to allow alternative training strategy until minimum
+     |          training loss is achieved, at which point, training ceases.
+     |      
+     |      hinge_loss_t: float
+     |          The per sample loss minimum at which the loss of that sample is not used
+     |          to penalize the model anymore. In other words, once a per sample loss has hit
+     |          this value, it gets set to 0.0.
+     |      
+     |      convergence: str
+     |          This parameter determines which loss to assess the convergence criteria on.
+     |          Options are 'validation' or 'training'. This is useful in the case one wants
+     |          to change the convergence criteria on the training data when the training and validation
+     |          partitions have been combined and used to training the model.
+     |      
+     |      combine_train_valid: bool
+     |          To combine the training and validation partitions into one which will be used for training
+     |          and updating the model parameters, set this to True. This will also set the validation partition
+     |          to the test partition. Therefore, if setting this parameter to True, change one of the training parameters
+     |          to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set.
      |      
      |      num_fc_layers: int
      |          Number of fully connected layers following convolutional layer.
@@ -2813,7 +2888,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Train(self, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, kernel=5, num_concepts=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
+     |  Train(self, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, kernel=5, num_concepts=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, train_loss_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, hinge_loss_t=0.0, convergence='validation')
      |      Train Whole-Sample Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -2866,6 +2941,21 @@ CLASSES
      |      accuracy_min: float
      |          Optional parameter to allow alternative training strategy until minimum
      |          training accuracy is achieved, at which point, training ceases.
+     |      
+     |      train_loss_min: float
+     |          Optional parameter to allow alternative training strategy until minimum
+     |          training loss is achieved, at which point, training ceases.
+     |      
+     |      hinge_loss_t: float
+     |          The per sample loss minimum at which the loss of that sample is not used
+     |          to penalize the model anymore. In other words, once a per sample loss has hit
+     |          this value, it gets set to 0.0.
+     |      
+     |      convergence: str
+     |          This parameter determines which loss to assess the convergence criteria on.
+     |          Options are 'validation' or 'training'. This is useful in the case one wants
+     |          to change the convergence criteria on the training data when the training and validation
+     |          partitions have been combined and used to training the model.
      |      
      |      num_fc_layers: int
      |          Number of fully connected layers following convolutional layer.
@@ -3454,7 +3544,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None, sample_labels=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -3512,6 +3602,15 @@ CLASSES
      |      
      |      sample_labels: bool
      |          To show the sample labels on the dendrogram, set to True.
+     |      
+     |      gaussian_sigma: float
+     |          The amount of blur to introduce in the plots.
+     |      
+     |      vmax: float
+     |          Highest color density value. Color scales from 0 to vmax (i.e. larger vmax == dimmer plot)
+     |      
+     |      lw: float
+     |          The width of the circle edge around each sample.
      |      
      |      Returns
      |      
@@ -4054,7 +4153,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=10, Load_Prev_Data=False, filename=None, sample_labels=False)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -4112,6 +4211,15 @@ CLASSES
      |      
      |      sample_labels: bool
      |          To show the sample labels on the dendrogram, set to True.
+     |      
+     |      gaussian_sigma: float
+     |          The amount of blur to introduce in the plots.
+     |      
+     |      vmax: float
+     |          Highest color density value. Color scales from 0 to vmax (i.e. larger vmax == dimmer plot)
+     |      
+     |      lw: float
+     |          The width of the circle edge around each sample.
      |      
      |      Returns
      |      
