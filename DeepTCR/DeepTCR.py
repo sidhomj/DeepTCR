@@ -1679,6 +1679,7 @@ class vis_class(object):
         df_plot['y'] = X_2[:, 1]
         df_plot['Class'] = class_id
         df_plot['Sample'] = sample_id
+
         if prob_plot is not None:
             df_plot['Predicted'] = predicted[:,self.lb.transform([prob_plot])[0]]
 
@@ -3305,7 +3306,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                 per_sample_loss = per_sample_loss - hinge_loss_t
                 per_sample_loss = tf.cast((per_sample_loss > 0),tf.float32) * per_sample_loss
                 if weight_by_class is True:
-                    class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
+                    #class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
+                    class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
                     weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
                     GO.loss = tf.reduce_mean(weights * per_sample_loss)
                 elif class_weights is not None:
