@@ -717,6 +717,7 @@ class DeepTCR_base(object):
             self.lb_hla = MultiLabelBinarizer()
             self.hla_data_seq_num = self.lb_hla.fit_transform(hla)
             self.hla_data_seq = hla
+            self.use_hla = True
         else:
             self.lb_hla = MultiLabelBinarizer()
             self.hla_data_seq_num = np.zeros([len_input,1])
