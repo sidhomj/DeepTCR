@@ -495,7 +495,7 @@ class DeepTCR_base(object):
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         self.hla_data_seq = hla_data_seq
         self.hla_data_seq_num = hla_data_seq_num
-        self.seq_index_j = seq_index
+        #self.seq_index_j = seq_index
         print('Data Loaded')
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
