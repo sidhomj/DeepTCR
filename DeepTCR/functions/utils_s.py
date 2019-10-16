@@ -507,11 +507,15 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
         indices = np.mat([sp.row, sp.col]).T
         sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
 
+        # feed_dict = {GO.Y: vars[-1],
+        #              GO.X_Freq: self.freq[var_idx],
+        #              GO.sp: sp,
+        #              GO.i: i,
+        #              GO.j: self.seq_index_j[var_idx]}
+
         feed_dict = {GO.Y: vars[-1],
                      GO.X_Freq: self.freq[var_idx],
-                     GO.sp: sp,
-                     GO.i: i,
-                     GO.j: self.seq_index_j[var_idx]}
+                     GO.sp: sp}
 
         if drop_out_rate is not None:
             feed_dict[GO.prob] = drop_out_rate
