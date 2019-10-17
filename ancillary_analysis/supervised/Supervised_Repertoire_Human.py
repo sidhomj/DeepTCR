@@ -22,13 +22,9 @@ model_info = {'TCR': dict(file='sample_tcr.csv', alpha=1.),
 
 #
 # mc pred approach
-#
 
 # number of boot straps
 n_boot = 5000
-# number of samples per boot
-s_boot = 300
-
 for model_name in model_info:
     model_info[model_name]['mc_preds'] = pd.read_csv(model_info[model_name]['file'])
     model_info[model_name]['mean'] = model_info[model_name]['mc_preds'].groupby('Samples')[['y_test', 'y_pred']].agg(np.mean)
@@ -41,7 +37,9 @@ for model_name in model_info:
 ax1.legend()
 
 for i in range(n_boot):
-    idx = np.random.choice(model_info['TCR']['mc_preds'].shape[0], s_boot)
+    #idx = np.random.choice(model_info['TCR']['mc_preds'].shape[0], s_boot)
+    idx = np.random.choice(model_info['TCR']['mc_preds'].shape[0], model_info['TCR']['mc_preds'].shape[0],replace=True)
+
     for model_name in model_info:
         fpr, tpr, _ = roc_curve(model_info[model_name]['mc_preds']['y_test'].loc[idx].values, model_info[model_name]['mc_preds']['y_pred'].loc[idx].values)
         model_info[model_name]['bootstrap']['auc'].append(auc(fpr, tpr))
