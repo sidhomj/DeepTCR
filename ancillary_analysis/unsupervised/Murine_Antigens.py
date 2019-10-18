@@ -1,6 +1,6 @@
 """
-Figure 1B,C,D
-Supplementary Figures 3-6
+Figure 1B,C
+Supplementary Figures 4-7
 """
 
 """This script is used to characterize the performance of various featurization

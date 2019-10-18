@@ -1,5 +1,5 @@
-"""Figure 2A
-Supplementary Figures 11-14
+"""Figure 1G
+Supplementary Figures 12-15
 """
 
 """This script is used to assess the performance of various featurization methods

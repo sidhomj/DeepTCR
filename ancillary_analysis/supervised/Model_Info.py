@@ -1,5 +1,5 @@
 """
-Supplementary Figure 18
+Supplementary Figure 20
 """
 
 """This scipt is used to quantify the information learned between

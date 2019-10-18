@@ -1,4 +1,4 @@
-"""Figure 2B"""
+"""Figure 1F"""
 
 """This script is used to create the Repertoire Dendrogram of the Rudqvist_2017 dataset."""
 

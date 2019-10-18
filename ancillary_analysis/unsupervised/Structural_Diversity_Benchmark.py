@@ -1,4 +1,4 @@
-"""Figure 2C"""
+"""Figure 1H"""
 
 """This script is used to assess the performance of various featurization
 methods to describe the structural diversity of in-silico samples where various

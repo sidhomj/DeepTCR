@@ -1,5 +1,5 @@
 """Figure 4C
-Supplementary Figure 17
+Supplementary Figure 19
 """
 
 """This script is used to generate the plot from the previously trained HLA, TCR, TCR+HLA

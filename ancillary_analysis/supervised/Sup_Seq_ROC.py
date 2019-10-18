@@ -1,3 +1,9 @@
+"""Figure 2B"""
+
+"""This script is used to create the ROC curves for assessing the ability
+of supervised sequence classifier to correctly predict the antigen-specificity of 
+the 9 murine antigens in the manuscript.."""
+
 from DeepTCR.DeepTCR import DeepTCR_SS
 
 #Run Supervised Sequence Classifier

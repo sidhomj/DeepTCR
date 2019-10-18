@@ -1,4 +1,4 @@
-"""Figure 3D"""
+"""Figure 2E"""
 
 """This script runs regression for the 10x Dataset where alpha/beta TCR's are
 regressed against the quantitative evaluation of antigen-specificity via

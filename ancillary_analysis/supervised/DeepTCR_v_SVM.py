@@ -1,5 +1,5 @@
 """
-Supplementary Figure 15
+Supplementary Figure 17
 """
 
 """This script is used to benchmark DeepTCR's Sequence Classifier

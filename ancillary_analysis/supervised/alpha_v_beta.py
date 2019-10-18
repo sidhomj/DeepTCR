@@ -1,4 +1,4 @@
-"""Figure 3C"""
+"""Figure 2D"""
 
 """This script is used to benchmark the performance of the Supervised Sequence Classifier
 with either the alpha chain, beta chain, or both provided to the model."""
