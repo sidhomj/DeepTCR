@@ -1,4 +1,4 @@
-"""Figure 4B"""
+"""Figure 3B"""
 
 """This script is used to train both the sequence and repertoire classifier on the
 Rudqvist_2017 dataset and compare their performances."""

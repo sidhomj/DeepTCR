@@ -1,4 +1,4 @@
-"""Figure 4C
+"""Figure 3C
 Supplementary Figure 19
 """
 
