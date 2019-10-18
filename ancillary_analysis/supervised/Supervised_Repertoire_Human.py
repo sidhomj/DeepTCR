@@ -37,7 +37,6 @@ for model_name in model_info:
 ax1.legend()
 
 for i in range(n_boot):
-    #idx = np.random.choice(model_info['TCR']['mc_preds'].shape[0], s_boot)
     idx = np.random.choice(model_info['TCR']['mc_preds'].shape[0], model_info['TCR']['mc_preds'].shape[0],replace=True)
 
     for model_name in model_info:
