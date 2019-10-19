@@ -1,3 +1,13 @@
+"""
+Supplementary Fig. 2
+"""
+
+"""
+This script compares a hamming distance (scipy.spatial.distance.pdist) to GLIPH's clustering algorithm
+with different hamming distance thresholds to compare clustering accuracy as previously demonstrated
+in the GLIPH manuscript.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
