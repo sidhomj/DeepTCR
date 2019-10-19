@@ -1,3 +1,9 @@
+"""Fig 2C"""
+
+"""This script was used to train the supervised TCR sequence classifier
+and generate the top representative sequences for each class and derive the 
+motifs that were learned by the network."""
+
 from DeepTCR.DeepTCR import DeepTCR_SS, DeepTCR_U
 import numpy as np
 import seaborn as sns
