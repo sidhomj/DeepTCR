@@ -1,5 +1,11 @@
+"""
+Supplementary Fig. 2
+"""
+
 """This script is used to benchmark GLIPH's performance across a variety of clustering thresholds by
-varying the hamming distance parameter. This script required a local installation of GLIPH"""
+varying the hamming distance parameter. This script required a local installation of GLIPH. The output 
+of this script is saved as GLIPH.csv and can be found in the github repository."""
+
 import pandas as pd
 import os
 import glob
