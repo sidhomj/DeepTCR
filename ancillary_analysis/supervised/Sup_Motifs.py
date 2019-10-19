@@ -1,4 +1,6 @@
-"""Fig 2C"""
+"""
+Fig 2C
+"""
 
 """This script was used to train the supervised TCR sequence classifier
 and generate the top representative sequences for each class and derive the 
