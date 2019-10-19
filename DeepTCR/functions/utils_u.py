@@ -108,28 +108,46 @@ def polar_dendrogram(dg, fig, ax_radius=0.2, log_scale=False):
         # ax.set(xticks=np.linspace(0, 2 * np.pi, icoord.shape[0] + 2), xticklabels=dg['ivl'], yticks=[])
         ax.set(xticks=[], yticks=[])
 
-
-def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,gridsize=50,n_pad=5, lw=None,
-             dg_radius=0.2,axes_radius=0.4,figsize=8,log_scale=False,linkage_method='complete',plot_type='2dhist',
-             filename=None,sample_labels=False, gaussian_sigma=0.5, vmax=0.01):
-
+def rad_plot(X_2, sample_id, samples, labels, color_dict, self=None, pairwise_distances=None, gridsize=50, n_pad=5, lw=None, dg_radius=0.2, axes_radius=0.4, figsize=8, log_scale=False, linkage_method='complete', filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01):
+    # set line width
     if lw is None:
         lw = n_pad / 2
 
+    # number of samplea
     n_s = len(np.unique(samples))
+
+    # min max of input 2D data
     d_max = np.max(X_2, axis=0)
     d_min = np.min(X_2, axis=0)
 
+    # set step and edges of bins for 2d hist
     x_step = (d_max[0] - d_min[0]) / gridsize
     x_edges = np.linspace(d_min[0] - (n_pad * x_step), d_max[0] + (n_pad * x_step), gridsize + (2 * n_pad) + 1)
     y_step = (d_max[1] - d_min[1]) / gridsize
     y_edges = np.linspace(d_min[1] - (n_pad * y_step), d_max[1] + (n_pad * y_step), gridsize + (2 * n_pad) + 1)
     Y, X = np.meshgrid(x_edges[:-1] + (np.diff(x_edges) / 2), y_edges[:-1] + (np.diff(y_edges) / 2))
 
+    # construct 2d smoothed histograms for each sample
+    H = list()
+    for i in range(n_s):
+        # get sample instance data
+        smp_d = X_2[sample_id == samples[i]]
+        # get counts
+        h, _ = np.histogramdd(smp_d, bins=[x_edges, y_edges])
+        if log_scale:
+            h = np.log(h + 1)
+        # normalize and smooth
+        H.append(ndi.gaussian_filter(h / np.sum(h), sigma=gaussian_sigma))
+    H = np.stack(H, axis=2)
+
+    # center and radius of circle
     e_c = np.array([np.mean(X[:, 0]), np.mean(Y[0, :])])
     e_r = np.abs(np.array([Y[-n_pad + 2, 0] - e_c[1], X[0, -n_pad + 2] - e_c[0]]))
     xlim = [X[0, 0] - (y_step * 2), X[-1, 0] + (y_step * 2)]
     ylim = [Y[0, 0] - (x_step * 2), Y[0, -1] + (x_step * 2)]
+
+    if pairwise_distances is None:
+        pairwise_distances = pdist(H.reshape([-1, H.shape[2]]).T, metric='jensenshannon')
 
     Z = optimal_leaf_ordering(linkage(pairwise_distances, method=linkage_method), pairwise_distances)
     dg_order = leaves_list(Z)
@@ -149,17 +167,8 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,grids
 
         if sample_labels:
             ax[i].text(.5, 0.2, samples[dg_order[i]], horizontalalignment='center', transform=ax[i].transAxes)
-        smp_d = X_2[file_id == samples[dg_order[i]], :]
-        if plot_type is 'hexbin':
-            ax[i].hexbin(smp_d[:, 0], smp_d[:, 1], gridsize=gridsize, mincnt=1)
-        elif plot_type is '2dhist':
-            h, _ = np.histogramdd(smp_d, bins=[x_edges, y_edges])
-            h /= np.sum(h)
-            h = ndi.gaussian_filter(h, sigma=gaussian_sigma)
-            ax[i].pcolormesh(X, Y, np.ma.masked_array(h, c_mask), cmap=cmap_viridis, shading='gouraud', vmin=0, vmax=vmax)
-        else:
-            ax[i].plot(smp_d, '.', markersize=1, alpha=0.5)
 
+        ax[i].pcolormesh(X, Y, np.ma.masked_array(H[:, :, dg_order[i]], c_mask), cmap=cmap_viridis, shading='gouraud', vmin=0, vmax=vmax)
         ax[i].add_artist(Ellipse(e_c, width=2 * e_r[1], height=2 * e_r[0], color=color_dict[labels[dg_order[i]]], fill=False, lw=lw))
         ax[i].set(xticks=[], yticks=[], xlim=xlim, ylim=ylim, frame_on=False)
 
@@ -167,6 +176,8 @@ def rad_plot(X_2,pairwise_distances,samples,labels,file_id,color_dict,self,grids
     polar_dendrogram(dg, fig, ax_radius=dg_radius, log_scale=log_scale)
     if filename is not None:
         plt.savefig(os.path.join(self.directory_results, filename))
+
+    return H
 
 def KNN(distances,labels,k=1,folds=5,metrics=['Recall','Precision','F1_Score','AUC'],n_jobs=1):
     lb = LabelEncoder()
