@@ -16,13 +16,10 @@ if not os.path.exists(dir_results):
 
 DTCR = DeepTCR_SS('alpha_v_beta_SS')
 
-antigens = ['GANAB-S5F',
- 'ATP6AP1-KLG_G3W',
- 'CMV-MLN',
+antigens = ['ATP6AP1-KLG_G3W',
  'GNL3L-R4C',
  'MART1-A2L',
  'YFV-LLW']
-
 
 opt = ['alpha','beta','alpha_beta']
 
