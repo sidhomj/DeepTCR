@@ -1569,10 +1569,9 @@ class vis_class(object):
         X_2 = np.vstack(temp_x)
         sample_id = np.hstack(temp_s)
 
-        rad_plot(X_2, squareform(pairwise_distances), samples, labels, sample_id, color_dict,self,
-                 gridsize=gridsize, dg_radius=dendrogram_radius,n_pad=n_pad,lw=lw,linkage_method=linkage_method,
-                 figsize=8, axes_radius=repertoire_radius,filename=filename,sample_labels=sample_labels,
-                 gaussian_sigma=gaussian_sigma,vmax=vmax)
+        H = rad_plot(X_2, sample_id, samples, labels, sample_labels=sample_labels, pairwise_distances=squareform(pairwise_distances),
+                     linkage_method=linkage_method, color_dict=color_dict, gridsize=gridsize, dg_radius=dendrogram_radius, axes_radius=repertoire_radius,
+                     gaussian_sigma=gaussian_sigma, vmax=vmax, n_pad=n_pad, lw=lw, log_scale=True, figsize=8, filename=filename)
 
     def UMAP_Plot(self, set='all',by_class=False, by_cluster=False,
                   by_sample=False, freq_weight=False, show_legend=True,
