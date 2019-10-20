@@ -17,8 +17,8 @@ DTCRU.Train_VAE(accuracy_min=0.9,Load_Prev_Data=True)
 #Create Repertoire Dendrogram
 color_dict = {'Control':'limegreen','9H10':'red','RT':'darkorange','Combo':'magenta'}
 DTCRU.Repertoire_Dendrogram(n_jobs=40,distance_metric='KL',
-                           dendrogram_radius=0.28,repertoire_radius=0.35,Load_Prev_Data=True,gridsize=50,
-                            color_dict=color_dict,lw=4,gaussian_sigma=0.75,vmax=0.005)
+                           dendrogram_radius=0.28,repertoire_radius=0.35,Load_Prev_Data=True,gridsize=60,
+                            color_dict=color_dict,lw=4,gaussian_sigma=1.5,vmax=0.001)
 
 import matplotlib.pyplot as plt
 plt.figure()
