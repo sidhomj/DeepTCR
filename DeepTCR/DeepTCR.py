@@ -2159,7 +2159,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
     def KNN_Sequence_Classifier(self,folds=5, k_values=list(range(1, 500, 25)), rep=5, plot_metrics=False, by_class=False,
                                 plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC'],
-                                n_jobs=1):
+                                n_jobs=1,Load_Prev_Data=False):
         """
         K-Nearest Neighbor Sequence Classifier
 
@@ -2196,6 +2196,11 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         n_jobs: int
             Number of workers to set for KNeighborsClassifier.
 
+        Load_Prev_Data: bool
+            To make new figures from old previously run analysis, set this value to True
+            after running the method for the first time. This will load previous performance
+            metrics from previous run.
+
         Returns
 
         self.KNN_Sequence_DF: Pandas dataframe
@@ -2206,33 +2211,40 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
         """
 
-        distances = squareform(pdist(self.features, metric='euclidean'))
+        if Load_Prev_Data is False:
+            distances = squareform(pdist(self.features, metric='euclidean'))
 
-        temp = []
-        for v in k_values:
-            temp.extend(rep * [v])
-        k_values = temp
-        class_list = []
-        k_list = []
-        metric_list = []
-        val_list = []
+            temp = []
+            for v in k_values:
+                temp.extend(rep * [v])
+            k_values = temp
+            class_list = []
+            k_list = []
+            metric_list = []
+            val_list = []
 
-        for k in k_values:
-            try:
-                classes, metric, value, k_l = KNN(distances, self.class_id, k=k, metrics=metrics,
-                                                  folds=folds,n_jobs=n_jobs)
-                metric_list.extend(metric)
-                val_list.extend(value)
-                class_list.extend(classes)
-                k_list.extend(k_l)
-            except:
-                continue
+            for k in k_values:
+                try:
+                    classes, metric, value, k_l = KNN(distances, self.class_id, k=k, metrics=metrics,
+                                                      folds=folds,n_jobs=n_jobs)
+                    metric_list.extend(metric)
+                    val_list.extend(value)
+                    class_list.extend(classes)
+                    k_list.extend(k_l)
+                except:
+                    continue
 
-        df_out = pd.DataFrame()
-        df_out['Classes'] = class_list
-        df_out['Metric'] = metric_list
-        df_out['Value'] = val_list
-        df_out['k'] = k_list
+            df_out = pd.DataFrame()
+            df_out['Classes'] = class_list
+            df_out['Metric'] = metric_list
+            df_out['Value'] = val_list
+            df_out['k'] = k_list
+
+            with open(os.path.join(self.Name,'knn_seq.pkl'),'wb') as f:
+                pickle.dump(df_out,f,protocol=4)
+        else:
+            with open(os.path.join(self.Name,'knn_seq.pkl'),'rb') as f:
+                df_out = pickle.load(f)
 
         self.KNN_Sequence_DF = df_out
 
