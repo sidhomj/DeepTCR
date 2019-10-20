@@ -1575,7 +1575,7 @@ class vis_class(object):
 
         H = rad_plot(X_2, sample_id, samples, labels, sample_labels=sample_labels, pairwise_distances=squareform(pairwise_distances),
                      linkage_method=linkage_method, color_dict=color_dict, gridsize=gridsize, dg_radius=dendrogram_radius, axes_radius=repertoire_radius,
-                     gaussian_sigma=gaussian_sigma, vmax=vmax, n_pad=n_pad, lw=lw, log_scale=True, figsize=8, filename=filename)
+                     gaussian_sigma=gaussian_sigma, vmax=vmax, n_pad=n_pad, lw=lw, log_scale=log_scale, figsize=8, filename=filename)
 
     def UMAP_Plot(self, set='all',by_class=False, by_cluster=False,
                   by_sample=False, freq_weight=False, show_legend=True,
