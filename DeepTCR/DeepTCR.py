@@ -1411,7 +1411,7 @@ class vis_class(object):
     def Repertoire_Dendrogram(self,set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
                              dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward',
                              gridsize=24, Load_Prev_Data=False,filename=None,sample_labels=False,
-                              gaussian_sigma=0.5, vmax=0.01,n_pad=5,lw=None):
+                              gaussian_sigma=0.5, vmax=0.01,n_pad=5,lw=None,log_scale=False):
         """
         Repertoire Dendrogram
 
@@ -1479,6 +1479,10 @@ class vis_class(object):
 
         lw: float
             The width of the circle edge around each sample.
+
+        log_scale: bool
+            To plot the log of the counts for the UMAP density plot, set this value to True. This can be
+            particularly helpful for visualization if the populations are very clonal.
 
         Returns
 
