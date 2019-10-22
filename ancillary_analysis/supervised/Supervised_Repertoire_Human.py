@@ -16,9 +16,9 @@ from scipy.stats import wilcoxon, rankdata, ranksums
 f, ax1 = plt.subplots()
 
 # data files to process and their label
-model_info = {'TCR': dict(file='sample_tcr.csv', alpha=1.),
-              'HLA': dict(file='sample_hla.csv', alpha=1.),
-              'TCR+HLA': dict(file='sample_tcr_hla.csv', alpha=1.0)}
+model_info = {'TCR': dict(file='sample_tcr_2.csv', alpha=1.),
+              'HLA': dict(file='sample_hla_2.csv', alpha=1.),
+              'TCR+HLA': dict(file='sample_tcr_hla_2.csv', alpha=1.0)}
 
 #
 # mc pred approach
