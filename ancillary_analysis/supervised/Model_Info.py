@@ -3,7 +3,7 @@ Supplementary Figure 20
 """
 
 """This scipt is used to quantify the information learned between
-the TCR, HLA, and TCR+HLA models applied to the BMS-038 Clinical Trial Data."""
+the TCR, HLA, and TCR+HLA models applied to the CheckMate-038 Clinical Trial Data."""
 
 import pandas as pd
 import numpy as np
