@@ -25,7 +25,7 @@ df['TCR+HLA'] = df_tcr_hla['y_pred']
 df['Label'] = df_tcr_hla['y_test']
 models = ['TCR','HLA','TCR+HLA']
 
-#Run Bootstrapping to assess differneces between
+#Run Bootstrapping to assess differneces between models
 n_boots=5000
 auc_list = []
 model_list = []
