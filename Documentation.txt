@@ -913,7 +913,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None, log_scale=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -980,6 +980,10 @@ CLASSES
      |      
      |      lw: float
      |          The width of the circle edge around each sample.
+     |      
+     |      log_scale: bool
+     |          To plot the log of the counts for the UMAP density plot, set this value to True. This can be
+     |          particularly helpful for visualization if the populations are very clonal.
      |      
      |      Returns
      |      
@@ -1597,7 +1601,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None, log_scale=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -1664,6 +1668,10 @@ CLASSES
      |      
      |      lw: float
      |          The width of the circle edge around each sample.
+     |      
+     |      log_scale: bool
+     |          To plot the log of the counts for the UMAP density plot, set this value to True. This can be
+     |          particularly helpful for visualization if the populations are very clonal.
      |      
      |      Returns
      |      
@@ -1794,7 +1802,7 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
-     |  KNN_Sequence_Classifier(self, folds=5, k_values=[1, 26, 51, 76, 101, 126, 151, 176, 201, 226, 251, 276, 301, 326, 351, 376, 401, 426, 451, 476], rep=5, plot_metrics=False, by_class=False, plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC'], n_jobs=1)
+     |  KNN_Sequence_Classifier(self, folds=5, k_values=[1, 26, 51, 76, 101, 126, 151, 176, 201, 226, 251, 276, 301, 326, 351, 376, 401, 426, 451, 476], rep=5, plot_metrics=False, by_class=False, plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC'], n_jobs=1, Load_Prev_Data=False)
      |      K-Nearest Neighbor Sequence Classifier
      |      
      |      This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a sequence
@@ -1829,6 +1837,11 @@ CLASSES
      |      
      |      n_jobs: int
      |          Number of workers to set for KNeighborsClassifier.
+     |      
+     |      Load_Prev_Data: bool
+     |          To make new figures from old previously run analysis, set this value to True
+     |          after running the method for the first time. This will load previous performance
+     |          metrics from previous run.
      |      
      |      Returns
      |      
@@ -2379,7 +2392,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None, log_scale=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -2446,6 +2459,10 @@ CLASSES
      |      
      |      lw: float
      |          The width of the circle edge around each sample.
+     |      
+     |      log_scale: bool
+     |          To plot the log of the counts for the UMAP density plot, set this value to True. This can be
+     |          particularly helpful for visualization if the populations are very clonal.
      |      
      |      Returns
      |      
@@ -3544,7 +3561,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None, log_scale=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -3611,6 +3628,10 @@ CLASSES
      |      
      |      lw: float
      |          The width of the circle edge around each sample.
+     |      
+     |      log_scale: bool
+     |          To plot the log of the counts for the UMAP density plot, set this value to True. This can be
+     |          particularly helpful for visualization if the populations are very clonal.
      |      
      |      Returns
      |      
@@ -4153,7 +4174,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None)
+     |  Repertoire_Dendrogram(self, set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None, dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward', gridsize=24, Load_Prev_Data=False, filename=None, sample_labels=False, gaussian_sigma=0.5, vmax=0.01, n_pad=5, lw=None, log_scale=False)
      |      Repertoire Dendrogram
      |      
      |      This method creates a visualization that shows and compares the distribution
@@ -4220,6 +4241,10 @@ CLASSES
      |      
      |      lw: float
      |          The width of the circle edge around each sample.
+     |      
+     |      log_scale: bool
+     |          To plot the log of the counts for the UMAP density plot, set this value to True. This can be
+     |          particularly helpful for visualization if the populations are very clonal.
      |      
      |      Returns
      |      
