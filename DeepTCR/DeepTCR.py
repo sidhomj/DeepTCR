@@ -6,11 +6,11 @@ from DeepTCR.functions.utils_s import *
 from DeepTCR.functions.MIL import *
 import seaborn as sns
 import colorsys
-from scipy.cluster.hierarchy import linkage,fcluster
+from scipy.cluster.hierarchy import linkage,fcluster,dendrogram, leaves_list
 from scipy.stats import wasserstein_distance, entropy
 from scipy.spatial.distance import pdist, squareform
 import umap
-from sklearn.cluster import DBSCAN
+from sklearn.cluster import DBSCAN,KMeans
 import sklearn
 import phenograph
 from scipy.spatial import distance
@@ -900,7 +900,7 @@ class feature_analytics_class(object):
         self.Structural_Diversity_DF = df_out
 
     def Cluster(self,set='all', clustering_method='phenograph', t=None, criterion='distance',
-                linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1):
+                linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1,order_by_linkage=False):
 
         """
         Clustering Sequences by Latent Features
@@ -946,6 +946,11 @@ class feature_analytics_class(object):
 
         n_jobs:int
             Number of processes to use for parallel operations.
+
+        order_by_linkage: bool
+            To list sequences in the cluster dataframes by how they are related via ward's linakge,
+            set this value to True. Otherwise, each cluster dataframe will list the sequences by the order they
+            were loaded into DeepTCR.
 
         Returns
 
@@ -1044,6 +1049,9 @@ class feature_analytics_class(object):
             elif clustering_method == 'phenograph':
                 IDX, _, _ = phenograph.cluster(features_sel, k=30, n_jobs=n_jobs)
 
+            elif clustering_method == 'kmeans':
+                IDX = KMeans(n_clusters=t).fit_predict(features_sel)
+
             knn_class = sklearn.neighbors.KNeighborsClassifier(n_neighbors=30, n_jobs=n_jobs).fit(features_sel, IDX)
             IDX = knn_class.predict(features)
         else:
@@ -1064,6 +1072,9 @@ class feature_analytics_class(object):
 
             elif clustering_method == 'phenograph':
                 IDX, _, _ = phenograph.cluster(features, k=30, n_jobs=n_jobs)
+
+            elif clustering_method == 'kmeans':
+                IDX = KMeans(n_clusters=t).fit_predict(features)
 
         DFs = []
         DF_Sum = pd.DataFrame()
@@ -1095,6 +1106,7 @@ class feature_analytics_class(object):
                     var_list_beta.append(0)
 
                 df = pd.DataFrame()
+                df['index'] = np.where(sel)[0]
                 df['Alpha_Sequences'] = seq_alpha
                 df['Beta_Sequences'] = seq_beta
                 df['Labels'] = label
@@ -1105,7 +1117,14 @@ class feature_analytics_class(object):
                 df['V_beta'] = v_beta[sel]
                 df['D_beta'] = d_beta[sel]
                 df['J_beta'] = j_beta[sel]
-                df['HLA'] = list(map(list,hla_data_seq[sel].tolist()))
+
+                if np.unique(hla_data_seq[sel])[0]==0:
+                    df['HLA'] = None
+                else:
+                    df['HLA'] = list(map(list,hla_data_seq[sel].tolist()))
+
+                if order_by_linkage:
+                    df = df.iloc[leaves_list(linkage(features[sel],'ward'))]
 
                 df_sum = df.groupby(by='Sample', sort=False).agg({'Frequency': 'sum'})
 
@@ -3227,7 +3246,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         return corr
 
 class DeepTCR_WF(DeepTCR_S_base):
-    def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,combine_train_valid=False):
+    def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,combine_train_valid=False,random_perm=False):
         """
         Train/Valid/Test Splits.
 
@@ -3261,6 +3280,8 @@ class DeepTCR_WF(DeepTCR_S_base):
         for s in self.sample_list:
             Y.append(self.Y[np.where(self.sample_id==s)[0][0]])
         Y = np.vstack(Y)
+        # if random_perm:
+        #     np.random.shuffle(Y)
 
         Vars = [np.asarray(self.sample_list)]
         self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
@@ -3630,7 +3651,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                              num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
                              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
-                             hinge_loss_t=0.0,convergence='validation',seeds=None,graph_seed=None,batch_seed=None):
+                             hinge_loss_t=0.0,convergence='validation',seeds=None,graph_seed=None,batch_seed=None,
+                             random_perm=False):
 
 
         """
@@ -3793,7 +3815,8 @@ class DeepTCR_WF(DeepTCR_S_base):
             if seeds is not None:
                 np.random.seed(seeds[i])
 
-            self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,combine_train_valid=combine_train_valid)
+            self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,combine_train_valid=combine_train_valid,
+                                      random_perm=random_perm)
             if i == folds-1:
                 write = True
             else:

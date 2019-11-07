@@ -140,8 +140,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
     GO.sp = tf.sparse.placeholder(dtype=tf.float32, shape=[None, None],name='sp')
     GO.X_Freq = tf.placeholder(tf.float32, shape=[None, ], name='Freq')
-    #GO.i = tf.placeholder(dtype=tf.int32,shape= [None, ])
-    #GO.j = tf.placeholder(dtype=tf.int32,shape = [None, ])
+    GO.i = tf.placeholder(dtype=tf.int32,shape= [None, ])
+    GO.j = tf.placeholder(dtype=tf.int32,shape = [None, ])
 
     gene_features = []
     GO.X_v_beta, GO.X_v_beta_OH, GO.embedding_layer_v_beta, \
