@@ -2012,11 +2012,15 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 sess.run(tf.global_variables_initializer())
                 recon_loss_list = []
                 stop_check_list = []
+                accuracy_list = []
                 for e in range(epochs):
-                    accuracy_list = []
                     Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
                             self.v_alpha_num,self.j_alpha_num,self.hla_data_seq_num]
 
+                    recon_loss = []
+                    train_loss = []
+                    latent_loss = []
+                    accuracy_check = []
                     for vars in get_batches(Vars, batch_size=batch_size,random=True):
                         feed_dict = {}
                         if self.use_alpha is True:
@@ -2042,10 +2046,19 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         if self.use_hla:
                             feed_dict[GO.X_hla] = vars[7]
 
-                        train_loss, recon_loss, latent_loss, accuracy_check, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
-                        accuracy_list.append(accuracy_check)
+                        train_loss_i, recon_loss_i, latent_loss_i, accuracy_i, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
+                        accuracy_check.append(accuracy_i)
+                        recon_loss.append(recon_loss_i)
+                        latent_loss.append(latent_loss_i)
+                        train_loss.append(train_loss_i)
                         iteration += 1
-                        recon_loss_list.append(recon_loss)
+
+                    recon_loss = np.mean(recon_loss)
+                    latent_loss = np.mean(latent_loss)
+                    train_loss = np.mean(train_loss)
+                    accuracy_check = np.mean(accuracy_check)
+                    recon_loss_list.append(recon_loss)
+                    accuracy_list.append(accuracy_check)
 
                     if suppress_output is False:
                         print("Epoch = {}/{}".format(e, epochs),
