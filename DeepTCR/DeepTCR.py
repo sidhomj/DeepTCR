@@ -62,6 +62,7 @@ class DeepTCR_base(object):
         self.use_j_alpha = False
         self.use_hla = False
         self.regression = False
+        self.use_w = False
 
         #Create dataframes for assigning AA to ints
         aa_idx, aa_mat = make_aa_df()
@@ -500,7 +501,7 @@ class DeepTCR_base(object):
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
                   v_alpha=None,j_alpha=None,class_labels=None,sample_labels=None,freq=None,counts=None,Y=None,
-                  p=None,hla=None):
+                  p=None,hla=None,w=None):
         """
         Load Data programatically into DeepTCR.
 
@@ -557,6 +558,8 @@ class DeepTCR_base(object):
         p: multiprocessing pool object
             a pre-formed pool object can be passed to method for multiprocessing tasks.
 
+        w: ndarray
+            optional set of weights for training of autoencoder
 
         Returns
 
@@ -735,6 +738,12 @@ class DeepTCR_base(object):
             OH = OneHotEncoder(sparse=False, categories='auto')
             Y = OH.fit_transform(Y.reshape(-1, 1))
             self.Y = Y
+
+        if w is not None:
+            self.use_w = True
+            self.w = w
+        else:
+            self.w = np.ones(len_input)
 
         self.seq_index = np.asarray(list(range(len(self.Y))))
         if self.regression is False:
@@ -1865,6 +1874,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             with graph_model_AE.device(self.device):
                 with graph_model_AE.as_default():
                     GO.net = 'ae'
+                    if self.use_w:
+                        GO.w = tf.placeholder(tf.float32, shape=[None])
                     GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla)
                     fc = tf.layers.dense(GO.Features, 256)
                     fc = tf.layers.dense(fc, 128)
@@ -1979,12 +1990,18 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         temp.append(l)
                     recon_losses = temp
                     recon_losses = tf.concat(recon_losses,1)
+                    if self.use_w:
+                        recon_losses = GO.w[:,tf.newaxis]*recon_losses
 
-                    recon_cost = tf.reduce_sum(recon_losses)
+                    recon_cost = tf.reduce_sum(recon_losses,1)
+                    recon_cost = tf.reduce_mean(recon_cost)
 
                     latent_cost = 0
                     for u in latent_costs:
                         latent_cost += u
+
+                    if self.use_w:
+                        latent_cost = GO.w*latent_cost
 
                     total_cost = [recon_losses,latent_cost[:,tf.newaxis]]
                     total_cost = tf.concat(total_cost,1)
@@ -1996,7 +2013,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     for a in accuracies:
                         accuracy += a
                     accuracy = accuracy/num_acc
-                    latent_cost = tf.reduce_sum(latent_cost)
+                    latent_cost = tf.reduce_mean(latent_cost)
 
                     opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
 
@@ -2015,7 +2032,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 accuracy_list = []
                 for e in range(epochs):
                     Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
-                            self.v_alpha_num,self.j_alpha_num,self.hla_data_seq_num]
+                            self.v_alpha_num,self.j_alpha_num,self.hla_data_seq_num,self.w]
 
                     recon_loss = []
                     train_loss = []
@@ -2045,6 +2062,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                         if self.use_hla:
                             feed_dict[GO.X_hla] = vars[7]
+
+                        if self.use_w:
+                            feed_dict[GO.w] = vars[8]
 
                         train_loss_i, recon_loss_i, latent_loss_i, accuracy_i, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
                         accuracy_check.append(accuracy_i)
@@ -2086,7 +2106,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 beta_features_list = []
                 beta_indices_list = []
                 Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,
-                        self.v_alpha_num, self.j_alpha_num,self.hla_data_seq_num]
+                        self.v_alpha_num, self.j_alpha_num,self.hla_data_seq_num,self.w]
 
                 for vars in get_batches(Vars, batch_size=batch_size, random=False):
                     feed_dict = {}
@@ -2112,6 +2132,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                     if self.use_hla:
                         feed_dict[GO.X_hla] = vars[7]
+
+                    if self.use_w:
+                        feed_dict[GO.w] = vars[8]
 
                     get = z_mean
                     features_ind, accuracy_check = sess.run([get, accuracy], feed_dict=feed_dict)
@@ -2173,7 +2196,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 with open(os.path.join(self.Name,'model','model_type.pkl'),'wb') as f:
                     pickle.dump(['VAE',z_mean.name,self.use_alpha,self.use_beta,
                                 self.use_v_beta,self.use_d_beta,self.use_j_beta,
-                                self.use_v_alpha,self.use_j_alpha,self.use_hla,
+                                self.use_v_alpha,self.use_j_alpha,self.use_hla,self.use_w,
                                  self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,
                                  self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb],f)
 
