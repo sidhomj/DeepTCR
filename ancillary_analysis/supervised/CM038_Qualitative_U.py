@@ -36,21 +36,21 @@ df_plot['sample'] = DTCR.sample_id
 df_plot['pred'] = predicted[:,0]
 df_plot['gt'] = DTCR.class_id
 
-# plt.figure()
-# ax = sns.distplot(df_plot['pred'],1000,color='k',kde=False)
-# N,bins= np.histogram(df_plot['pred'],1000)
-# for p,b in zip(ax.patches,bins):
-#     if b < cut_bottom:
-#         p.set_facecolor('r')
-#     elif b > cut_top:
-#         p.set_facecolor('b')
-# y_min,y_max = plt.ylim()
-# plt.xlim([0,1])
-# plt.xticks(np.arange(0.0,1.1,0.1))
-# plt.yticks([])
-# plt.xlabel('')
-# plt.ylabel('')
-# plt.show()
+plt.figure()
+ax = sns.distplot(df_plot['pred'],1000,color='k',kde=False)
+N,bins= np.histogram(df_plot['pred'],1000)
+for p,b in zip(ax.patches,bins):
+    if b < cut_bottom:
+        p.set_facecolor('r')
+    elif b > cut_top:
+        p.set_facecolor('b')
+y_min,y_max = plt.ylim()
+plt.xlim([0,1])
+plt.xticks(np.arange(0.0,1.1,0.1))
+plt.yticks([])
+plt.xlabel('')
+plt.ylabel('')
+plt.show()
 
 beta_sequences = DTCR.beta_sequences
 v_beta = DTCR.v_beta
@@ -60,7 +60,7 @@ hla = DTCR.hla_data_seq
 sample_id = DTCR.sample_id
 
 file = 'cm038_x2_u.pkl'
-featurize = True
+featurize = False
 if featurize:
     DTCR_U = DeepTCR_U('test_hum', device='/device:GPU:6')
     DTCR_U.Load_Data(beta_sequences=beta_sequences, v_beta=v_beta, d_beta=d_beta, j_beta=j_beta, hla=hla)
@@ -120,7 +120,7 @@ ax = np.ndarray.flatten(ax)
 for s,l,r,a in zip(ref['sample'],ref['gt'],ref['pred'],ax):
     df_temp =df_plot[df_plot['sample']==s]
     df_temp = df_temp[df_temp['label']!='out']
-    a.scatter(df_temp['x'], df_temp['y'], c=df_temp['c'], s=1)
+    a.scatter(df_temp['x'], df_temp['y'], c=df_temp['c'], s=0.1)
     a.set_xticks([])
     a.set_yticks([])
     a.set_xlim([x_min,x_max])
