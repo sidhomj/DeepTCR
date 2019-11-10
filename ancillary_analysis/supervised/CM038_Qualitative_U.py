@@ -1,5 +1,5 @@
 """
-Figure 3f-h
+Figure 3f-h, Supplementary Figure 23
 """
 
 """This script is used to provide a descriptive analysis of the distribution of TCR sequences
