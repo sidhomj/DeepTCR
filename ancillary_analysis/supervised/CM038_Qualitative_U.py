@@ -14,6 +14,7 @@ from DeepTCR.DeepTCR import DeepTCR_WF,DeepTCR_U
 import matplotlib.pyplot as plt
 import os
 import seaborn as sns
+from scipy.stats import gaussian_kde
 
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = "6"
@@ -35,6 +36,7 @@ df_plot['beta'] = DTCR.beta_sequences
 df_plot['sample'] = DTCR.sample_id
 df_plot['pred'] = predicted[:,0]
 df_plot['gt'] = DTCR.class_id
+df_plot['freq'] = DTCR.freq
 
 plt.figure()
 ax = sns.distplot(df_plot['pred'],1000,color='k',kde=False)
@@ -121,6 +123,44 @@ for s,l,r,a in zip(ref['sample'],ref['gt'],ref['pred'],ax):
     df_temp =df_plot[df_plot['sample']==s]
     df_temp = df_temp[df_temp['label']!='out']
     a.scatter(df_temp['x'], df_temp['y'], c=df_temp['c'], s=0.1)
+    a.set_xticks([])
+    a.set_yticks([])
+    a.set_xlim([x_min,x_max])
+    a.set_ylim([y_min,y_max])
+    a.set_title(np.round(r,3))
+    if l == 'crpr':
+        c = 'b'
+    else:
+        c = 'r'
+    for axis in ['top', 'bottom', 'left', 'right']:
+        a.spines[axis].set_linewidth(3)
+
+    for axis in ['top', 'bottom', 'left', 'right']:
+        a.spines[axis].set_color(c)
+
+lef = n_cols*n_rows-43
+for ii in range(43,43+lef):
+    ax[ii].remove()
+plt.subplots_adjust(top = 0.9, bottom=0.1, hspace=0.5)
+
+#Plot unfiltered sample repertoires
+def gaussian_density(x,y,w=None):
+    xy = np.vstack([x, y,w])
+    z = gaussian_kde(xy)(xy)
+    r = np.argsort(z)
+    x ,y, z = x[r], y[r], z[r]
+    return x,y,z
+
+n_rows = 4
+n_cols = 11
+fig,ax = plt.subplots(n_rows,n_cols,figsize=(13,5))
+ax = np.ndarray.flatten(ax)
+for s,l,r,a in zip(ref['sample'],ref['gt'],ref['pred'],ax):
+    df_temp =df_plot[df_plot['sample']==s]
+    x = np.array(df_temp['x'])
+    y = np.array(df_temp['y'])
+    x,y,z = gaussian_density(x,y,df_temp['freq'])
+    a.scatter(x, y, s=0.1,c=z)
     a.set_xticks([])
     a.set_yticks([])
     a.set_xlim([x_min,x_max])
