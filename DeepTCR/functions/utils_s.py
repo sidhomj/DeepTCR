@@ -584,7 +584,6 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
         auc = 0.0
     return loss,accuracy,predicted_out,auc
 
-
 def Get_Seq_Features_Indices(self,batch_size,GO,sess):
     alpha_features_list = []
     beta_features_list = []
@@ -730,7 +729,6 @@ def Get_Weights(self,batch_size,GO,sess):
 
     Weights = np.vstack(Weights)
     return Weights
-
 
 def Get_Sequence_Pred_GCN(self,batch_size,GO,sess):
     predicted_list = []
