@@ -2020,7 +2020,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                     saver = tf.train.Saver()
 
-            epochs = 50000
             iteration = 0
             tf.reset_default_graph()
             config = tf.ConfigProto(allow_soft_placement=True)
@@ -2763,7 +2762,6 @@ class DeepTCR_SS(DeepTCR_S_base):
         ---------------------------------------
 
         """
-        epochs = 10000
         graph_model = tf.Graph()
         GO = graph_object()
         GO.on_graph_clustering=False
@@ -2825,7 +2823,8 @@ class DeepTCR_SS(DeepTCR_S_base):
 
             val_loss_total = []
             stop_check_list = []
-            for e in range(epochs):
+            e = 0
+            while True:
                 train_loss, train_accuracy, train_predicted,train_auc = \
                     Run_Graph_SS(self.train,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=drop_out_rate)
 
@@ -2842,7 +2841,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
                 if suppress_output is False:
                     print("Training_Statistics: \n",
-                          "Epoch: {}/{}".format(e + 1, epochs),
+                          "Epoch: {}".format(e + 1),
                           "Training loss: {:.5f}".format(train_loss),
                           "Validation loss: {:.5f}".format(valid_loss),
                           "Testing loss: {:.5f}".format(test_loss),
@@ -2855,6 +2854,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                     stop_check_list.append(stop_check(val_loss_total, stop_criterion, stop_criterion_window))
                     if np.sum(stop_check_list[-3:]) >= 3:
                         break
+
+                e += 1
 
 
             Get_Seq_Features_Indices(self,batch_size,GO,sess)
