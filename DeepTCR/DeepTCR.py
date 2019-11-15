@@ -1119,14 +1119,14 @@ class feature_analytics_class(object):
                 df['index'] = np.where(sel)[0]
                 df['Alpha_Sequences'] = seq_alpha
                 df['Beta_Sequences'] = seq_beta
-                df['Labels'] = label
-                df['Sample'] = file
-                df['Frequency'] = freq_sel
                 df['V_alpha'] = v_alpha[sel]
                 df['J_alpha'] = j_alpha[sel]
                 df['V_beta'] = v_beta[sel]
                 df['D_beta'] = d_beta[sel]
                 df['J_beta'] = j_beta[sel]
+                df['Frequency'] = freq_sel
+                df['Labels'] = label
+                df['Sample'] = file
 
                 if np.unique(hla_data_seq[sel])[0]==0:
                     df['HLA'] = None
