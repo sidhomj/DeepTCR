@@ -2775,6 +2775,10 @@ class DeepTCR_SS(DeepTCR_S_base):
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,use_only_hla,
                                          num_fc_layers,units_fc)
+                if self.regression is False:
+                    GO.Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
+                else:
+                    GO.Y = tf.placeholder(tf.float32, shape=[None, 1])
 
                 if self.regression is False:
                     GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
@@ -3367,6 +3371,10 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
                                          use_only_seq,use_only_gene,use_only_hla,
                                          num_fc_layers,units_fc)
+                if self.regression is False:
+                    GO.Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
+                else:
+                    GO.Y = tf.placeholder(tf.float32, shape=[None, 1])
 
                 attention = True
                 if attention:
