@@ -1784,7 +1784,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
                   trainable_embedding=True,use_only_gene=False,use_only_seq=False,use_only_hla=False,
-                  epochs_min=10,stop_criterion=0.0001,stop_criterion_window=30,
+                  epochs_min=10,stop_criterion=0.01,stop_criterion_window=30,
                   kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
         """
         Train Variational Autoencoder (VAE)
@@ -2031,7 +2031,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 recon_loss_list = []
                 stop_check_list = []
                 accuracy_list = []
-                for e in range(epochs):
+                e = 0
+                while True:
                     Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
                             self.v_alpha_num,self.j_alpha_num,self.hla_data_seq_num,self.w]
 
@@ -2082,7 +2083,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     accuracy_list.append(accuracy_check)
 
                     if suppress_output is False:
-                        print("Epoch = {}/{}".format(e, epochs),
+                        print("Epoch = {}".format(e),
                               "Total Loss: {:.5f}:".format(train_loss),
                               "Recon Loss: {:.5f}:".format(recon_loss),
                               "Latent Loss: {:5f}:".format(latent_loss),
@@ -2099,6 +2100,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                                 stop_check_list.append(stop_check(recon_loss_list,stop_criterion,stop_criterion_window))
                                 if np.sum(stop_check_list[-3:]) >= 3:
                                     break
+                    e += 1
 
                 features_list = []
                 accuracy_list = []
