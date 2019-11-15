@@ -2564,11 +2564,11 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         df_temp = pd.DataFrame()
         df_temp['alpha'] = self.alpha_sequences
         df_temp['beta'] = self.beta_sequences
+        df_temp['v_alpha'] = self.v_alpha
+        df_temp['j_alpha'] = self.j_alpha
         df_temp['v_beta'] = self.v_beta
         df_temp['d_beta'] = self.d_beta
         df_temp['j_beta'] = self.j_beta
-        df_temp['v_alpha'] = self.v_alpha
-        df_temp['j_alpha'] = self.j_alpha
         df_temp['Class'] = self.class_id
         if self.regression is True:
             df_temp['Regressed_Val'] = self.Y
