@@ -12,11 +12,11 @@ DESCRIPTION
     # from DeepTCR.functions.MIL import *
     # import seaborn as sns
     # import colorsys
-    # from scipy.cluster.hierarchy import linkage,fcluster
+    # from scipy.cluster.hierarchy import linkage,fcluster,dendrogram, leaves_list
     # from scipy.stats import wasserstein_distance, entropy
     # from scipy.spatial.distance import pdist, squareform
     # import umap
-    # from sklearn.cluster import DBSCAN
+    # from sklearn.cluster import DBSCAN,KMeans
     # import sklearn
     # import phenograph
     # from scipy.spatial import distance
@@ -564,7 +564,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -620,6 +620,8 @@ CLASSES
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
+     |      w: ndarray
+     |          optional set of weights for training of autoencoder
      |      
      |      Returns
      |      
@@ -729,7 +731,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from feature_analytics_class:
      |  
-     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
+     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1, order_by_linkage=False)
      |      Clustering Sequences by Latent Features
      |      
      |      This method clusters all sequences by learned latent features from
@@ -773,6 +775,11 @@ CLASSES
      |      
      |      n_jobs:int
      |          Number of processes to use for parallel operations.
+     |      
+     |      order_by_linkage: bool
+     |          To list sequences in the cluster dataframes by how they are related via ward's linakge,
+     |          set this value to True. Otherwise, each cluster dataframe will list the sequences by the order they
+     |          were loaded into DeepTCR.
      |      
      |      Returns
      |      
@@ -1252,7 +1259,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -1308,6 +1315,8 @@ CLASSES
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
+     |      w: ndarray
+     |          optional set of weights for training of autoencoder
      |      
      |      Returns
      |      
@@ -1417,7 +1426,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from feature_analytics_class:
      |  
-     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
+     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1, order_by_linkage=False)
      |      Clustering Sequences by Latent Features
      |      
      |      This method clusters all sequences by learned latent features from
@@ -1461,6 +1470,11 @@ CLASSES
      |      
      |      n_jobs:int
      |          Number of processes to use for parallel operations.
+     |      
+     |      order_by_linkage: bool
+     |          To list sequences in the cluster dataframes by how they are related via ward's linakge,
+     |          set this value to True. Otherwise, each cluster dataframe will list the sequences by the order they
+     |          were loaded into DeepTCR.
      |      
      |      Returns
      |      
@@ -1851,7 +1865,7 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
-     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, use_only_hla=False, epochs_min=10, stop_criterion=0.0001, stop_criterion_window=30, kernel=3, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
+     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, use_only_hla=False, epochs_min=10, stop_criterion=0.01, stop_criterion_window=30, kernel=3, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
      |      Train Variational Autoencoder (VAE)
      |      
      |      This method trains the network and saves features values for sequences
@@ -2043,7 +2057,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -2099,6 +2113,8 @@ CLASSES
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
+     |      w: ndarray
+     |          optional set of weights for training of autoencoder
      |      
      |      Returns
      |      
@@ -2208,7 +2224,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from feature_analytics_class:
      |  
-     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
+     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1, order_by_linkage=False)
      |      Clustering Sequences by Latent Features
      |      
      |      This method clusters all sequences by learned latent features from
@@ -2252,6 +2268,11 @@ CLASSES
      |      
      |      n_jobs:int
      |          Number of processes to use for parallel operations.
+     |      
+     |      order_by_linkage: bool
+     |          To list sequences in the cluster dataframes by how they are related via ward's linakge,
+     |          set this value to True. Otherwise, each cluster dataframe will list the sequences by the order they
+     |          were loaded into DeepTCR.
      |      
      |      Returns
      |      
@@ -2543,7 +2564,7 @@ CLASSES
      |  
      |  Methods defined here:
      |  
-     |  Get_Train_Valid_Test(self, test_size=0.25, LOO=None, combine_train_valid=False)
+     |  Get_Train_Valid_Test(self, test_size=0.25, LOO=None, combine_train_valid=False, random_perm=False)
      |      Train/Valid/Test Splits.
      |      
      |      Divide data for train, valid, test set. Training is used to
@@ -2701,7 +2722,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, batch_size_update=None, LOO=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, num_concepts=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, combine_train_valid=False, train_loss_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, hinge_loss_t=0.0, convergence='validation', seeds=None, graph_seed=None, batch_seed=None)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25, batch_size_update=None, LOO=None, stop_criterion=0.25, stop_criterion_window=10, kernel=5, num_concepts=12, weight_by_class=False, class_weights=None, trainable_embedding=True, accuracy_min=None, combine_train_valid=False, train_loss_min=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, hinge_loss_t=0.0, convergence='validation', seeds=None, graph_seed=None, batch_seed=None, random_perm=False)
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -3212,7 +3233,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -3268,6 +3289,8 @@ CLASSES
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
+     |      w: ndarray
+     |          optional set of weights for training of autoencoder
      |      
      |      Returns
      |      
@@ -3377,7 +3400,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from feature_analytics_class:
      |  
-     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
+     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1, order_by_linkage=False)
      |      Clustering Sequences by Latent Features
      |      
      |      This method clusters all sequences by learned latent features from
@@ -3421,6 +3444,11 @@ CLASSES
      |      
      |      n_jobs:int
      |          Number of processes to use for parallel operations.
+     |      
+     |      order_by_linkage: bool
+     |          To list sequences in the cluster dataframes by how they are related via ward's linakge,
+     |          set this value to True. Otherwise, each cluster dataframe will list the sequences by the order they
+     |          were loaded into DeepTCR.
      |      
      |      Returns
      |      
@@ -3816,7 +3844,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -3872,6 +3900,8 @@ CLASSES
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
+     |      w: ndarray
+     |          optional set of weights for training of autoencoder
      |      
      |      Returns
      |      
@@ -3981,7 +4011,7 @@ CLASSES
     class feature_analytics_class(builtins.object)
      |  Methods defined here:
      |  
-     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1)
+     |  Cluster(self, set='all', clustering_method='phenograph', t=None, criterion='distance', linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1, order_by_linkage=False)
      |      Clustering Sequences by Latent Features
      |      
      |      This method clusters all sequences by learned latent features from
@@ -4025,6 +4055,11 @@ CLASSES
      |      
      |      n_jobs:int
      |          Number of processes to use for parallel operations.
+     |      
+     |      order_by_linkage: bool
+     |          To list sequences in the cluster dataframes by how they are related via ward's linakge,
+     |          set this value to True. Otherwise, each cluster dataframe will list the sequences by the order they
+     |          were loaded into DeepTCR.
      |      
      |      Returns
      |      
