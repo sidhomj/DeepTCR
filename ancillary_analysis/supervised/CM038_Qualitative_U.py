@@ -159,18 +159,19 @@ map_labels = [map_dict[_] for _ in s['Response_cat'].values]
 # cmap._lut = cmap._lut[np.concatenate([np.flip(np.arange(256)), [257, 256, 258]])]
 # cmap._lut[[0, 256]] = np.ones(4)
 
-_, ax = plt.subplots(nrows=4, ncols=11)
+fig_sample_density, ax = plt.subplots(nrows=4, ncols=11)
 ax_supp_density = ax.flatten()
 H = histogram_2d_cohort([d.loc[d['sample'] == i, ['y', 'x']].values for i in s['sample'].values], [d.loc[d['sample'] == i, 'counts'].values for i in s['sample'].values], grid_size)
 for i in range(H['h'].shape[2]):
     hist2d_denisty_plot(H['h'][:, :, i], H['X'], H['Y'], ax_supp_density[i], log_transform=True, gaussian_sigma=gaussian_sigma, cmap=map_labels[i], vmax=density_vmax)
-    ax_supp_density[i].add_artist(Circle(H['c']['center'], H['c']['radius'], color=color_labels[i], lw=2, fill=False))
+    ax_supp_density[i].add_artist(Circle(H['c']['center'], H['c']['radius'], color=color_labels[i], lw=3, fill=False))
     ax_supp_density[i].set_title('%.3f' % s['preds'].iloc[i], fontsize=18)
 [ax_supp_density[i].set(xticks=[], yticks=[], frame_on=False) for i in range(H['h'].shape[-1], len(ax_supp_density))]
 plt.gcf().set_size_inches(13, 5.5)
 plt.tight_layout()
+fig_sample_density.savefig('qual/sample_density.tif',format='tif',dpi=1200)
 
-_, ax_crpr = plt.subplots()
+fig_crpr, ax_crpr = plt.subplots()
 ax_crpr.cla()
 D = H['h'][:, :, s['Response_cat'] == 'crpr']
 D = np.log(D + 1)
@@ -179,11 +180,13 @@ D /= D.sum(axis=0).sum(axis=0)[np.newaxis, np.newaxis, :]
 D = np.mean(D, axis=2)
 ax_crpr.pcolormesh(H['X'], H['Y'], D, cmap=cmap_blue, shading='gouraud', vmin=0, vmax=density_vmax)
 ax_crpr.set(xticks=[], yticks=[], frame_on=False)
-ax_crpr.add_artist(Circle(H['c']['center'], H['c']['radius'], color='blue', lw=2, fill=False))
+ax_crpr.add_artist(Circle(H['c']['center'], H['c']['radius'], color='blue', lw=5, fill=False))
 plt.gcf().set_size_inches(5, 5)
 plt.tight_layout()
+fig_crpr.savefig('qual/crpr.tif',format='tif',dpi=1200)
 
-_, ax_crpr = plt.subplots()
+
+fig_sdpd, ax_crpr = plt.subplots()
 ax_crpr.cla()
 D = H['h'][:, :, s['Response_cat'] == 'sdpd']
 D = np.log(D + 1)
@@ -192,12 +195,13 @@ D /= D.sum(axis=0).sum(axis=0)[np.newaxis, np.newaxis, :]
 D = np.mean(D, axis=2)
 ax_crpr.pcolormesh(H['X'], H['Y'], D, cmap=cmap_red, shading='gouraud', vmin=0, vmax=density_vmax)
 ax_crpr.set(xticks=[], yticks=[], frame_on=False)
-ax_crpr.add_artist(Circle(H['c']['center'], H['c']['radius'], color='red', lw=2, fill=False))
+ax_crpr.add_artist(Circle(H['c']['center'], H['c']['radius'], color='red', lw=5, fill=False))
 plt.gcf().set_size_inches(5, 5)
 plt.tight_layout()
+fig_sdpd.savefig('qual/sdpd.tif',format='tif',dpi=1200)
 
 
-_, ax = plt.subplots(nrows=4, ncols=11)
+fig_sample_diff, ax = plt.subplots(nrows=4, ncols=11)
 ax_diff_sample = ax.flatten()
 
 qs = np.quantile(d['pred'].values, [0.1, 0.9])
@@ -215,14 +219,16 @@ D = (D[:, :, :, 1] - D[:, :, :, 0]) / D.sum(axis=0).sum(axis=0).sum(axis=1)[np.n
 
 for i in range(D.shape[2]):
     hist2d_denisty_plot(D[:, :, i], Ha['X'], Ha['Y'], ax_diff_sample[i], cmap='bwr', vmax=diff_vmax, vsym=True, normalize=False)
-    ax_diff_sample[i].add_artist(Circle(H['c']['center'], H['c']['radius'], color=color_labels[i], lw=2, fill=False))
+    ax_diff_sample[i].add_artist(Circle(H['c']['center'], H['c']['radius'], color=color_labels[i], lw=3, fill=False))
     ax_diff_sample[i].set_title('%.3f' % s['preds'].iloc[i], fontsize=18)
 [ax_diff_sample[i].set(xticks=[], yticks=[], frame_on=False) for i in range(D.shape[2], len(ax_diff_sample))]
 plt.gcf().set_size_inches(13, 5.5)
 plt.tight_layout()
+fig_sample_diff.savefig('qual/sample_diff.tif',format='tif',dpi=1200)
 
-_, ax_diff_overall = plt.subplots()
+fig_diff_overall, ax_diff_overall = plt.subplots()
 hist2d_denisty_plot(np.mean(D, axis=2), Ha['X'], Ha['Y'], ax_diff_overall, cmap='bwr', vmax=diff_vmax, vsym=True, normalize=False)
-ax_diff_overall.add_artist(Circle(H['c']['center'], H['c']['radius'], color='grey', lw=2, fill=False))
+ax_diff_overall.add_artist(Circle(H['c']['center'], H['c']['radius'], color='grey', lw=5, fill=False))
 plt.gcf().set_size_inches(5, 5)
 plt.tight_layout()
+fig_diff_overall.savefig('qual/cohort_diff.tif',format='tif',dpi=1200)
