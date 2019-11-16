@@ -9,11 +9,12 @@ dir = os.path.dirname(os.path.abspath(__file__))
 req_file = os.path.join(dir,'requirements.txt')
 with open(req_file) as f:
     required = f.read().splitlines()
+required.remove('PhenoGraph==1.5.2')
 
 setup(
     name="DeepTCR",
     description="Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data",
-    version="1.3.11",
+    version="1.3.12",
     author="John-William Sidhom",
     author_email="jsidhom1@jhmi.edu",
     packages=find_packages(),
