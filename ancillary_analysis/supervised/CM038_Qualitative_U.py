@@ -15,6 +15,16 @@ import matplotlib.pyplot as plt
 import os
 import seaborn as sns
 from scipy.stats import gaussian_kde
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import fisher_exact, ranksums, spearmanr
+from sklearn.model_selection import StratifiedShuffleSplit
+from umap import UMAP
+from scipy import ndimage as ndi
+from matplotlib.patches import Circle
+import pickle
 
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = "6"
@@ -38,21 +48,21 @@ df_plot['pred'] = predicted[:,0]
 df_plot['gt'] = DTCR.class_id
 df_plot['freq'] = DTCR.freq
 
-plt.figure()
-ax = sns.distplot(df_plot['pred'],1000,color='k',kde=False)
-N,bins= np.histogram(df_plot['pred'],1000)
-for p,b in zip(ax.patches,bins):
-    if b < cut_bottom:
-        p.set_facecolor('r')
-    elif b > cut_top:
-        p.set_facecolor('b')
-y_min,y_max = plt.ylim()
-plt.xlim([0,1])
-plt.xticks(np.arange(0.0,1.1,0.1))
-plt.yticks([])
-plt.xlabel('')
-plt.ylabel('')
-plt.show()
+# plt.figure()
+# ax = sns.distplot(df_plot['pred'],1000,color='k',kde=False)
+# N,bins= np.histogram(df_plot['pred'],1000)
+# for p,b in zip(ax.patches,bins):
+#     if b < cut_bottom:
+#         p.set_facecolor('r')
+#     elif b > cut_top:
+#         p.set_facecolor('b')
+# y_min,y_max = plt.ylim()
+# plt.xlim([0,1])
+# plt.xticks(np.arange(0.0,1.1,0.1))
+# plt.yticks([])
+# plt.xlabel('')
+# plt.ylabel('')
+# plt.show()
 
 beta_sequences = DTCR.beta_sequences
 v_beta = DTCR.v_beta
@@ -78,113 +88,141 @@ else:
 df_plot['x'] = X_2[:,0]
 df_plot['y'] = X_2[:,1]
 
-idx_crpr = predicted[:,0] >= cut_top
-idx_sdpd = predicted[:,0] <= cut_bottom
-df_plot['label'] = None
-df_plot['label'].iloc[idx_crpr] = 'crpr'
-df_plot['label'].iloc[idx_sdpd] = 'sdpd'
-df_plot['label'] = df_plot['label'].fillna(value='out')
-label_dict = {'crpr':'b','sdpd':'r','out':'darkgrey'}
-df_plot['c'] = df_plot['label'].map(label_dict)
 
-#Plot crpr sequences
-df_plot_crpr = df_plot[df_plot['label']!='sdpd']
-plt.figure()
-df_plot_crpr.sort_values(by='pred',ascending=True,inplace=True)
-plt.scatter(df_plot_crpr['x'],df_plot_crpr['y'],c=df_plot_crpr['c'],s=1)
-plt.xticks([])
-plt.yticks([])
-x_min,x_max = plt.xlim()
-y_min,y_max = plt.ylim()
+def histogram_2d_cohort(d, w, grid_size):
+    # center of data
+    d_center = np.mean(np.concatenate(d, axis=0), axis=0)
+    # largest radius
+    d_radius = np.max(np.sum((d_center[np.newaxis, :] - np.concatenate(d, axis=0)) ** 2, axis=1) ** (1 / 2))
+    # padding factors
+    d_pad = 1.2
+    c_pad = 0.9
 
-#Plot sdpd sequences
-df_plot_sdpd = df_plot[df_plot['label']!='crpr']
-plt.figure()
-df_plot_sdpd.sort_values(by='pred',ascending=False,inplace=True)
-plt.scatter(df_plot_sdpd['x'],df_plot_sdpd['y'],c=df_plot_sdpd['c'],s=1)
-plt.xticks([])
-plt.yticks([])
-plt.xlim([x_min,x_max])
-plt.ylim([y_min,y_max])
+    # set step and edges of bins for 2d hist
+    x_edges = np.linspace(d_center[0] - (d_radius * d_pad), d_center[0] + (d_radius + d_pad), grid_size + 1)
+    y_edges = np.linspace(d_center[1] - (d_radius * d_pad), d_center[1] + (d_radius + d_pad), grid_size + 1)
+    X, Y = np.meshgrid(x_edges[:-1] + (np.diff(x_edges) / 2), y_edges[:-1] + (np.diff(y_edges) / 2))
 
-ref = df_plot.groupby(['sample']).agg({'gt':'first'}).reset_index()
-ref.sort_values(by='gt',ascending=False,inplace=True)
-ref_pred = pd.read_csv('sample_tcr_hla.csv')
-ref_pred = ref_pred.groupby(['Samples']).agg({'y_pred':'mean'}).reset_index()
-ref_dict = dict(zip(ref_pred['Samples'],ref_pred['y_pred']))
-ref['pred'] = ref['sample'].map(ref_dict)
-ref.sort_values(by='pred',inplace=True)
+    # construct 2d smoothed histograms for each element in lists d and w
+    h = np.stack([np.histogramdd(_d, bins=[x_edges, y_edges], weights=_w)[0] for _d, _w in zip(d, w)], axis=2)
 
-n_rows = 4
-n_cols = 11
-fig,ax = plt.subplots(n_rows,n_cols,figsize=(13,5))
-ax = np.ndarray.flatten(ax)
-for s,l,r,a in zip(ref['sample'],ref['gt'],ref['pred'],ax):
-    df_temp =df_plot[df_plot['sample']==s]
-    df_temp = df_temp[df_temp['label']!='out']
-    a.scatter(df_temp['x'], df_temp['y'], c=df_temp['c'], s=0.1)
-    a.set_xticks([])
-    a.set_yticks([])
-    a.set_xlim([x_min,x_max])
-    a.set_ylim([y_min,y_max])
-    a.set_title(np.round(r,3))
-    if l == 'crpr':
-        c = 'b'
-    else:
-        c = 'r'
-    for axis in ['top', 'bottom', 'left', 'right']:
-        a.spines[axis].set_linewidth(3)
+    return dict(h=h, X=X, Y=Y, c=dict(center=d_center, radius=d_radius * d_pad * c_pad))
 
-    for axis in ['top', 'bottom', 'left', 'right']:
-        a.spines[axis].set_color(c)
 
-lef = n_cols*n_rows-43
-for ii in range(43,43+lef):
-    ax[ii].remove()
-plt.subplots_adjust(top = 0.9, bottom=0.1, hspace=0.5)
+def hist2d_denisty_plot(h, X, Y, ax, log_transform=False, gaussian_sigma=-1, normalize=True, cmap=None, vmax=None, vsym=False):
+    D = h
+    if log_transform:
+        D = np.log(h + 1)
+    if gaussian_sigma > 0:
+        D = ndi.gaussian_filter(D, gaussian_sigma)
+    if normalize:
+        D /= np.sum(D)
 
-#Plot unfiltered sample repertoires
-def gaussian_density(x,y,w=None):
-    xy = np.vstack([x, y,w])
-    z = gaussian_kde(xy)(xy)
-    r = np.argsort(z)
-    x ,y, z = x[r], y[r], z[r]
-    return x,y,z
+    if cmap is None:
+        cmap = plt.get_cmap('viridis')
 
-n_rows = 4
-n_cols = 11
-fig,ax = plt.subplots(n_rows,n_cols,figsize=(13,5))
-ax = np.ndarray.flatten(ax)
-for s,l,r,a in zip(ref['sample'],ref['gt'],ref['pred'],ax):
-    df_temp =df_plot[df_plot['sample']==s]
-    x = np.array(df_temp['x'])
-    y = np.array(df_temp['y'])
-    x,y,z = gaussian_density(x,y,df_temp['freq'])
-    a.scatter(x, y, s=0.1,c=z)
-    a.set_xticks([])
-    a.set_yticks([])
-    a.set_xlim([x_min,x_max])
-    a.set_ylim([y_min,y_max])
-    a.set_title(np.round(r,3))
-    if l == 'crpr':
-        c = 'b'
-    else:
-        c = 'r'
-    for axis in ['top', 'bottom', 'left', 'right']:
-        a.spines[axis].set_linewidth(3)
+    ax.cla()
+    ax.pcolormesh(X, Y, D, shading='gouraud', cmap=cmap, vmin=-vmax if (vsym == True) & (vmax is not None) else None, vmax=vmax)
+    ax.set(xticks=[], yticks=[], frame_on=False)
 
-    for axis in ['top', 'bottom', 'left', 'right']:
-        a.spines[axis].set_color(c)
 
-lef = n_cols*n_rows-43
-for ii in range(43,43+lef):
-    ax[ii].remove()
-plt.subplots_adjust(top = 0.9, bottom=0.1, hspace=0.5)
+grid_size = 250
+gaussian_sigma = 1.25
+density_vmax = 0.0003
+diff_vmax = 0.0003
 
-# df_out = pd.DataFrame(DTCR_U.features)
-# df_out['pred'] = predicted[:,0]
-# df_out['label'] = DTCR.class_id
-# df_out['sample'] = DTCR.sample_id
-# df_out['freq'] = DTCR.freq
-# df_out['counts'] = DTCR.counts
-# df_out.to_csv('cm038_ft_u.csv',index=False)
+d = df_plot
+d['file'] = d['sample']
+d['sample'] = d['sample'].str.replace('_TCRB.tsv', '')
+d['counts'] = d.groupby('sample')['freq'].transform(lambda x: x / x.min())
+
+s = pd.read_csv('CM038_BM.csv')
+s.rename(columns={'DeepTCR': 'preds'}, inplace=True)
+s = s.sort_values('preds')
+c_dict = dict(crpr='blue', sdpd='red')
+color_labels = [c_dict[_] for _ in s['Response_cat'].values]
+
+cmap_blue = plt.get_cmap('Blues')
+cmap_blue(0)
+cmap_blue._lut[0] = np.ones(4)
+cmap_blue._lut[256] = np.ones(4)
+cmap_red = plt.get_cmap('Reds')
+cmap_red(0)
+cmap_red._lut[0] = np.ones(4)
+cmap_red._lut[256] = np.ones(4)
+map_dict = dict(crpr=cmap_blue, sdpd=cmap_red)
+map_labels = [map_dict[_] for _ in s['Response_cat'].values]
+
+# cmap = plt.get_cmap('viridis')
+# cmap = plt.get_cmap('YlGnBu')
+# cmap(0)
+# cmap._lut = cmap._lut[np.concatenate([np.flip(np.arange(256)), [257, 256, 258]])]
+# cmap._lut[[0, 256]] = np.ones(4)
+
+_, ax = plt.subplots(nrows=4, ncols=11)
+ax_supp_density = ax.flatten()
+H = histogram_2d_cohort([d.loc[d['sample'] == i, ['y', 'x']].values for i in s['sample'].values], [d.loc[d['sample'] == i, 'counts'].values for i in s['sample'].values], grid_size)
+for i in range(H['h'].shape[2]):
+    hist2d_denisty_plot(H['h'][:, :, i], H['X'], H['Y'], ax_supp_density[i], log_transform=True, gaussian_sigma=gaussian_sigma, cmap=map_labels[i], vmax=density_vmax)
+    ax_supp_density[i].add_artist(Circle(H['c']['center'], H['c']['radius'], color=color_labels[i], lw=2, fill=False))
+    ax_supp_density[i].set_title('%.3f' % s['preds'].iloc[i], fontsize=18)
+[ax_supp_density[i].set(xticks=[], yticks=[], frame_on=False) for i in range(H['h'].shape[-1], len(ax_supp_density))]
+plt.gcf().set_size_inches(13, 5.5)
+plt.tight_layout()
+
+_, ax_crpr = plt.subplots()
+ax_crpr.cla()
+D = H['h'][:, :, s['Response_cat'] == 'crpr']
+D = np.log(D + 1)
+D = np.stack([ndi.gaussian_filter(D[:, :, i], sigma=gaussian_sigma) for i in range(D.shape[2])], axis=2)
+D /= D.sum(axis=0).sum(axis=0)[np.newaxis, np.newaxis, :]
+D = np.mean(D, axis=2)
+ax_crpr.pcolormesh(H['X'], H['Y'], D, cmap=cmap_blue, shading='gouraud', vmin=0, vmax=density_vmax)
+ax_crpr.set(xticks=[], yticks=[], frame_on=False)
+ax_crpr.add_artist(Circle(H['c']['center'], H['c']['radius'], color='blue', lw=2, fill=False))
+plt.gcf().set_size_inches(5, 5)
+plt.tight_layout()
+
+_, ax_crpr = plt.subplots()
+ax_crpr.cla()
+D = H['h'][:, :, s['Response_cat'] == 'sdpd']
+D = np.log(D + 1)
+D = np.stack([ndi.gaussian_filter(D[:, :, i], sigma=gaussian_sigma) for i in range(D.shape[2])], axis=2)
+D /= D.sum(axis=0).sum(axis=0)[np.newaxis, np.newaxis, :]
+D = np.mean(D, axis=2)
+ax_crpr.pcolormesh(H['X'], H['Y'], D, cmap=cmap_red, shading='gouraud', vmin=0, vmax=density_vmax)
+ax_crpr.set(xticks=[], yticks=[], frame_on=False)
+ax_crpr.add_artist(Circle(H['c']['center'], H['c']['radius'], color='red', lw=2, fill=False))
+plt.gcf().set_size_inches(5, 5)
+plt.tight_layout()
+
+
+_, ax = plt.subplots(nrows=4, ncols=11)
+ax_diff_sample = ax.flatten()
+
+qs = np.quantile(d['pred'].values, [0.1, 0.9])
+Ha = histogram_2d_cohort([d.loc[d['sample'] == i, ['y', 'x']].values for i in s['sample'].values],
+                         [d.loc[d['sample'] == i, 'counts'].values * (d.loc[d['sample'] == i, 'pred'].values > qs[1]) for i in s['sample'].values],
+                         grid_size=grid_size)
+Hb = histogram_2d_cohort([d.loc[d['sample'] == i, ['y', 'x']].values for i in s['sample'].values],
+                         [d.loc[d['sample'] == i, 'counts'].values * (d.loc[d['sample'] == i, 'pred'].values < qs[0]) for i in s['sample'].values],
+                         grid_size=grid_size)
+
+D = np.stack([Ha['h'], Hb['h']], axis=3)
+D = np.log(D + 1)
+D = np.stack([np.stack([ndi.gaussian_filter(D[:, :, i, j], sigma=gaussian_sigma) for i in range(D.shape[2])], axis=2) for j in range(D.shape[3])], axis=3)
+D = (D[:, :, :, 1] - D[:, :, :, 0]) / D.sum(axis=0).sum(axis=0).sum(axis=1)[np.newaxis, np.newaxis, :]
+
+for i in range(D.shape[2]):
+    hist2d_denisty_plot(D[:, :, i], Ha['X'], Ha['Y'], ax_diff_sample[i], cmap='bwr', vmax=diff_vmax, vsym=True, normalize=False)
+    ax_diff_sample[i].add_artist(Circle(H['c']['center'], H['c']['radius'], color=color_labels[i], lw=2, fill=False))
+    ax_diff_sample[i].set_title('%.3f' % s['preds'].iloc[i], fontsize=18)
+[ax_diff_sample[i].set(xticks=[], yticks=[], frame_on=False) for i in range(D.shape[2], len(ax_diff_sample))]
+plt.gcf().set_size_inches(13, 5.5)
+plt.tight_layout()
+
+_, ax_diff_overall = plt.subplots()
+hist2d_denisty_plot(np.mean(D, axis=2), Ha['X'], Ha['Y'], ax_diff_overall, cmap='bwr', vmax=diff_vmax, vsym=True, normalize=False)
+ax_diff_overall.add_artist(Circle(H['c']['center'], H['c']['radius'], color='grey', lw=2, fill=False))
+plt.gcf().set_size_inches(5, 5)
+plt.tight_layout()
