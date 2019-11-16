@@ -5,7 +5,8 @@ import os
 if sys.version_info.major != 3:
     raise RuntimeError("DeepTCR requires Python 3")
 
-req_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),'requirements.txt')
+dir = os.path.dirname(os.path.abspath(__file__))
+req_file = os.path.join(dir,'requirements.txt')
 with open(req_file) as f:
     required = f.read().splitlines()
 
@@ -19,7 +20,7 @@ setup(
     install_requires = required,
     url="https://github.com/sidhomj/DeepTCR",
     license="LICENSE",
-    long_description=open("README.md").read(),
+    long_description=open(os.path.join(dir,"README.md")).read(),
     long_description_content_type='text/markdown'
 )
 
