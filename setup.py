@@ -1,10 +1,12 @@
 from setuptools import setup, find_packages
 import sys
+import os
 
 if sys.version_info.major != 3:
     raise RuntimeError("DeepTCR requires Python 3")
 
-with open('requirements.txt') as f:
+req_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),'requirements.txt')
+with open(req_file) as f:
     required = f.read().splitlines()
 
 setup(
