@@ -589,6 +589,13 @@ class DeepTCR_base(object):
 
         """
 
+        inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,
+                  class_labels,sample_labels,counts,freq,Y,hla,w]
+
+        for i in inputs:
+            if i is not None:
+                assert isinstance(i,np.ndarray),'Inputs into DeepTCR must come in as numpy arrays!'
+
         inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha]
         for i in inputs:
             if i is not None:
