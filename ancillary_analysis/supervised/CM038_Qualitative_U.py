@@ -1,5 +1,5 @@
 """
-Figure 3f-h, Supplementary Figure 23
+Figure 3f-i, Supplementary Figure 23
 """
 
 """This script is used to provide a descriptive analysis of the distribution of TCR sequences
@@ -48,21 +48,21 @@ df_plot['pred'] = predicted[:,0]
 df_plot['gt'] = DTCR.class_id
 df_plot['freq'] = DTCR.freq
 
-# plt.figure()
-# ax = sns.distplot(df_plot['pred'],1000,color='k',kde=False)
-# N,bins= np.histogram(df_plot['pred'],1000)
-# for p,b in zip(ax.patches,bins):
-#     if b < cut_bottom:
-#         p.set_facecolor('r')
-#     elif b > cut_top:
-#         p.set_facecolor('b')
-# y_min,y_max = plt.ylim()
-# plt.xlim([0,1])
-# plt.xticks(np.arange(0.0,1.1,0.1))
-# plt.yticks([])
-# plt.xlabel('')
-# plt.ylabel('')
-# plt.show()
+plt.figure()
+ax = sns.distplot(df_plot['pred'],1000,color='k',kde=False)
+N,bins= np.histogram(df_plot['pred'],1000)
+for p,b in zip(ax.patches,bins):
+    if b < cut_bottom:
+        p.set_facecolor('r')
+    elif b > cut_top:
+        p.set_facecolor('b')
+y_min,y_max = plt.ylim()
+plt.xlim([0,1])
+plt.xticks(np.arange(0.0,1.1,0.1))
+plt.yticks([])
+plt.xlabel('')
+plt.ylabel('')
+plt.show()
 
 beta_sequences = DTCR.beta_sequences
 v_beta = DTCR.v_beta
