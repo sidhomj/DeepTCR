@@ -33,7 +33,7 @@ y = []
 total_seq = len(DTCRU.X_Seq_beta)
 for t in r:
     print(t)
-    Z = linkage(distances_hamming, method='ward')
+    Z = linkage(distances_hamming, method='complete')
     IDX = fcluster(Z, t, criterion='distance')
     correct = 0
     clustered = 0
