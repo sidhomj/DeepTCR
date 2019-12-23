@@ -3390,7 +3390,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                 if attention:
                     GO.logits,GO.w = MIL_Layer(GO.Features,self.Y.shape[1],num_concepts,GO.sp,freq=GO.X_Freq,prob=GO.prob,num_layers=1)
                 else:
-                    GO.Features_W = GO.Features*GO.X_Freq[:,tf.newaxis]
+                    Features = tf.layers.dense(GO.Features,num_concepts,tf.nn.relu)
+                    GO.Features_W = Features*GO.X_Freq[:,tf.newaxis]
                     GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
                     GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
