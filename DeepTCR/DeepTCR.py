@@ -1791,8 +1791,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
                   trainable_embedding=True,use_only_gene=False,use_only_seq=False,use_only_hla=False,
-                  epochs_min=10,stop_criterion=0.01,stop_criterion_window=30,
-                  kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
+                  epochs_min=10,stop_criterion=0.001,stop_criterion_window=30,
+                  kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
+                  graph_seed=None,split_seed=None):
         """
         Train Variational Autoencoder (VAE)
 
@@ -1881,6 +1882,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             graph_model_AE = tf.Graph()
             with graph_model_AE.device(self.device):
                 with graph_model_AE.as_default():
+                    if graph_seed is not None:
+                        tf.set_random_seed(graph_seed)
+
                     GO.net = 'ae'
                     if self.use_w:
                         GO.w = tf.placeholder(tf.float32, shape=[None])
@@ -2027,25 +2031,27 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                     saver = tf.train.Saver()
 
-            iteration = 0
             tf.reset_default_graph()
             config = tf.ConfigProto(allow_soft_placement=True)
             config.gpu_options.allow_growth = True
 
             with tf.Session(graph=graph_model_AE,config=config) as sess:
                 sess.run(tf.global_variables_initializer())
-                recon_loss_list = []
                 stop_check_list = []
                 accuracy_list = []
+                recon_loss = []
+                train_loss = []
+                latent_loss = []
+                training = True
                 e = 0
-                while True:
+                while training:
+                    iteration = 0
                     Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
                             self.v_alpha_num,self.j_alpha_num,self.hla_data_seq_num,self.w]
 
-                    recon_loss = []
-                    train_loss = []
-                    latent_loss = []
-                    accuracy_check = []
+                    if split_seed is not None:
+                        np.random.seed(split_seed)
+
                     for vars in get_batches(Vars, batch_size=batch_size,random=True):
                         feed_dict = {}
                         if self.use_alpha is True:
@@ -2075,37 +2081,31 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                             feed_dict[GO.w] = vars[8]
 
                         train_loss_i, recon_loss_i, latent_loss_i, accuracy_i, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
-                        accuracy_check.append(accuracy_i)
+                        accuracy_list.append(accuracy_i)
                         recon_loss.append(recon_loss_i)
                         latent_loss.append(latent_loss_i)
                         train_loss.append(train_loss_i)
-                        iteration += 1
 
-                    recon_loss = np.mean(recon_loss)
-                    latent_loss = np.mean(latent_loss)
-                    train_loss = np.mean(train_loss)
-                    accuracy_check = np.mean(accuracy_check)
-                    recon_loss_list.append(recon_loss)
-                    accuracy_list.append(accuracy_check)
+                        if suppress_output is False:
+                            print("Epoch = {}, Iteration = {}".format(e,iteration),
+                                  "Total Loss: {:.5f}:".format(train_loss_i),
+                                  "Recon Loss: {:.5f}:".format(recon_loss_i),
+                                  "Latent Loss: {:5f}:".format(latent_loss_i),
+                                  "Recon Accuracy: {:.5f}".format(accuracy_i))
 
-                    if suppress_output is False:
-                        print("Epoch = {}".format(e),
-                              "Total Loss: {:.5f}:".format(train_loss),
-                              "Recon Loss: {:.5f}:".format(recon_loss),
-                              "Latent Loss: {:5f}:".format(latent_loss),
-                              "AE Accuracy: {:.5f}".format(accuracy_check))
-
-
-                    if e > epochs_min:
-                        if accuracy_min is not None:
-                            if np.mean(accuracy_list[-10:]) > accuracy_min:
-                                break
-                        else:
-                            with warnings.catch_warnings():
-                                warnings.simplefilter("ignore")
-                                stop_check_list.append(stop_check(recon_loss_list,stop_criterion,stop_criterion_window))
-                                if np.sum(stop_check_list[-3:]) >= 3:
+                        if e >= epochs_min:
+                            if accuracy_min is not None:
+                                if np.mean(accuracy_list[-10:]) > accuracy_min:
+                                    training = False
                                     break
+                            else:
+                                with warnings.catch_warnings():
+                                    warnings.simplefilter("ignore")
+                                    stop_check_list.append(stop_check(train_loss,stop_criterion,stop_criterion_window))
+                                    if np.sum(stop_check_list[-3:]) >= 3:
+                                        training = False
+                                        break
+                        iteration += 1
                     e += 1
 
                 features_list = []
@@ -2686,7 +2686,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                  trainable_embedding=True,weight_by_class=False,class_weights=None,
                  num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
                  use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                 embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12):
+                 embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,graph_seed=None):
         """
         Train Single-Sequence Classifier
 
@@ -2779,6 +2779,9 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         with graph_model.device(self.device):
             with graph_model.as_default():
+                if graph_seed is not None:
+                    tf.set_random_seed(graph_seed)
+
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,use_only_hla,
                                          num_fc_layers,units_fc)
@@ -3386,14 +3389,19 @@ class DeepTCR_WF(DeepTCR_S_base):
                 else:
                     GO.Y = tf.placeholder(tf.float32, shape=[None, 1])
 
-                attention = True
-                if attention:
-                    GO.logits,GO.w = MIL_Layer(GO.Features,self.Y.shape[1],num_concepts,GO.sp,freq=GO.X_Freq,prob=GO.prob,num_layers=1)
-                else:
-                    Features = tf.layers.dense(GO.Features,num_concepts,tf.nn.relu)
-                    GO.Features_W = Features*GO.X_Freq[:,tf.newaxis]
-                    GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
-                    GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
+                attention = False
+                Features = tf.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
+                GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
+                GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
+                GO.logits = tf.layers.dense(GO.Features_Agg, self.Y.shape[1])
+                # if attention:
+                #     GO.logits,GO.w = MIL_Layer(GO.Features,self.Y.shape[1],num_concepts,GO.sp,freq=GO.X_Freq,prob=GO.prob,num_layers=1)
+                # else:
+                #     #Features = tf.layers.dense(GO.Features,num_concepts,tf.nn.relu)
+                #     Features = tf.layers.dense(GO.Features,num_concepts,lambda x: isru(x, l=0, h=1, a=0, b=0))
+                #     GO.Features_W = Features*GO.X_Freq[:,tf.newaxis]
+                #     GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
+                #     GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
 
                 per_sample_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits)
                 per_sample_loss = per_sample_loss - hinge_loss_t
