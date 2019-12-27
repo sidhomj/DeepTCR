@@ -1373,6 +1373,9 @@ class vis_class(object):
             smaller to get better labeling of the rows.
 
         Returns
+        self.sample_featres: pandas dataframe
+            This function returns the average feature vector for each sample analyzed. This can be used to make further
+            downstream comparisons such as inter-repertoire distances.
         ---------------------------------------
 
         """
@@ -1443,6 +1446,7 @@ class vis_class(object):
         plt.subplots_adjust(right=0.8)
         plt.show()
         plt.savefig(os.path.join(self.directory_results, filename))
+        self.sample_features = dfs
 
     def Repertoire_Dendrogram(self,set='all', distance_metric='KL', sample=None, n_jobs=1, color_dict=None,
                              dendrogram_radius=0.32, repertoire_radius=0.4, linkage_method='ward',
