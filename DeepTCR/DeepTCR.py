@@ -1837,6 +1837,104 @@ class vis_class(object):
                 plt.yticks([])
                 plt.xlabel('')
                 plt.ylabel('')
+    
+    def UMAP_Plot_Samples(self,set='all',filename='UMAP_Samples.tif', Weight_by_Freq=True,scale=5,alpha=1.0):
+        """
+        UMAP vizualisation of TCR Samples
+
+        This method displays the samples in a 2-dimensional UMAP
+
+        Inputs
+        ---------------------------------------
+
+        set: str
+            To choose which set of sequences to analye, enter either
+            'all','train', 'valid',or 'test'. Since the sequences in the train set
+            may be overfit, it preferable to generally examine the test set on its own.
+
+        Weight_by_Freq: bool
+            Option to weight each sequence used in aggregate measure
+            of feature across sample by its frequency.
+
+        scale: float
+            To change size of points, change scale parameter.
+
+        alpha: float
+            Value between 0-1 that controls transparency of points.
+
+        filename: str
+            To save umap plot to results folder, enter a name for the file and the umap
+            will be saved to the results directory.
+            i.e. umap.png
+
+        Returns
+
+        ---------------------------------------
+
+        """
+
+        if set == 'all':
+            features = self.features
+            class_id = self.class_id
+            sample_id = self.sample_id
+            freq = self.freq
+        elif set == 'train':
+            features = self.features[self.train_idx]
+            class_id = self.class_id[self.train_idx]
+            sample_id = self.sample_id[self.train_idx]
+            freq = self.freq[self.train_idx]
+        elif set == 'valid':
+            features = self.features[self.valid_idx]
+            class_id = self.class_id[self.valid_idx]
+            sample_id = self.sample_id[self.valid_idx]
+            freq = self.freq[self.valid_idx]
+        elif set == 'test':
+            features = self.features[self.test_idx]
+            class_id = self.class_id[self.test_idx]
+            sample_id = self.sample_id[self.test_idx]
+            freq = self.freq[self.test_idx]
+
+
+        keep = []
+        for i, column in enumerate(features.T, 0):
+            if len(np.unique(column)) > 1:
+                keep.append(i)
+        keep = np.asarray(keep)
+        features = features[:, keep]
+
+        sample_list = np.unique(sample_id)
+
+        vector = []
+        file_label = []
+        for id in sample_list:
+            sel = sample_id == id
+            sel_idx = features[sel]
+            sel_freq = np.expand_dims(freq[sel], 1)
+            if Weight_by_Freq is True:
+                dist = np.expand_dims(np.sum(sel_idx * sel_freq, 0), 0)
+            else:
+                dist = np.expand_dims(np.mean(sel_idx, 0), 0)
+            file_label.append(np.unique(class_id[sel])[0])
+            vector.append(dist)
+
+        vector = np.vstack(vector)
+
+        X_2 = umap.UMAP().fit_transform(vector)
+        df_plot = pd.DataFrame()
+        df_plot['x'] = X_2[:,0]
+        df_plot['y'] = X_2[:,1]
+        df_plot['class'] = file_label
+        df_plot['s'] = scale
+
+        plt.figure()
+        legend = 'full'
+        sns.scatterplot(data=df_plot, x='x', y='y', s=df_plot['s'], hue='class', legend=legend, alpha=alpha,
+                        linewidth=0.0)
+        plt.xticks([])
+        plt.yticks([])
+        plt.xlabel('')
+        plt.ylabel('')
+        plt.savefig(os.path.join(self.directory_results, filename))
 
 
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
