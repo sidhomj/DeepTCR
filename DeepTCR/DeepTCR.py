@@ -1619,7 +1619,7 @@ class vis_class(object):
 
     def UMAP_Plot(self, set='all',by_class=False, by_cluster=False,
                   by_sample=False, freq_weight=False, show_legend=True,
-                  scale=100,Load_Prev_Data=False, alpha=1.0,sample=None,filename=None,
+                  scale=100,Load_Prev_Data=False, alpha=1.0,sample=None,sample_per_class=None,filename=None,
                   prob_plot=None):
 
         """
@@ -1667,6 +1667,9 @@ class vis_class(object):
         sample: int
             Number of events to sub-sample for visualization.
 
+        sample_per_class: int
+             Number of events to randomly sample per class for UMAP.
+
         filename: str
             To save umap plot to results folder, enter a name for the file and the umap
             will be saved to the results directory.
@@ -1685,27 +1688,59 @@ class vis_class(object):
         ---------------------------------------
 
         """
-        if sample is None:
-            idx = None
-            features = self.features
-            class_id = self.class_id
-            sample_id = self.sample_id
-            freq = self.freq
-            predicted = self.predicted
-            if hasattr(self, 'Cluster_Assignments'):
-                IDX = self.Cluster_Assignments
-            else:
-                IDX = None
+        idx = None
+        features = self.features
+        class_id = self.class_id
+        sample_id = self.sample_id
+        freq = self.freq
+        predicted = self.predicted
+        if hasattr(self, 'Cluster_Assignments'):
+            IDX = self.Cluster_Assignments
         else:
-            idx = np.random.choice(range(len(self.features)),sample,replace=False)
-            features = self.features[idx]
-            class_id = self.class_id[idx]
-            sample_id = self.sample_id[idx]
-            freq = self.freq[idx]
+            IDX = None
+
+        if sample_per_class is not None and sample is not None:
+            print("sample_per_class and sample cannot be assigned simultaneously")
+            return
+
+        if sample is not None:
+            idx = np.random.choice(range(len(features)), sample, replace=False)
+            features = features[idx]
+            class_id = class_id[idx]
+            sample_id = sample_id[idx]
+            freq = freq[idx]
+            predicted = predicted[idx]
             if hasattr(self, 'Cluster_Assignments'):
-                IDX = self.Cluster_Assignments[idx]
+                IDX = IDX[idx]
             else:
                 IDX = None
+
+        if sample_per_class is not None:
+            features_temp = []
+            class_temp = []
+            sample_temp = []
+            freq_temp = []
+            predicted_temp = []
+            cluster_temp = []
+
+            for i in self.lb.classes_:
+                sel = np.where(class_id == i)[0]
+                sel = np.random.choice(sel, sample_per_class, replace=False)
+                features_temp.append(features[sel])
+                class_temp.append(class_id[sel])
+                sample_temp.append(sample_id[sel])
+                freq_temp.append(freq[sel])
+                predicted_temp.append(predicted[sel])
+                if hasattr(self, 'Cluster_Assignments'):
+                    cluster_temp.append(IDX[sel])
+
+            features = np.vstack(features_temp)
+            class_id = np.hstack(class_temp)
+            sample_id = np.hstack(sample_temp)
+            freq = np.hstack(freq_temp)
+            predicted = np.hstack(predicted_temp)
+            if hasattr(self, 'Cluster_Assignments'):
+                IDX = np.hstack(cluster_temp)
 
         if Load_Prev_Data is False:
             umap_obj = umap.UMAP()
@@ -1769,6 +1804,7 @@ class vis_class(object):
         elif set == 'test':
             df_plot_sel = df_plot[df_plot['Set']=='test']
 
+        df_plot_sel = df_plot_sel.sample(frac=1)
         plt.figure()
         sns.scatterplot(data=df_plot_sel, x='x', y='y', s=df_plot_sel['s'], hue=hue, legend=legend, alpha=alpha, linewidth=0.0)
         plt.xticks([])
