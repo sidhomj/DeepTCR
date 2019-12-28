@@ -1620,7 +1620,7 @@ class vis_class(object):
     def UMAP_Plot(self, set='all',by_class=False, by_cluster=False,
                   by_sample=False, freq_weight=False, show_legend=True,
                   scale=100,Load_Prev_Data=False, alpha=1.0,sample=None,sample_per_class=None,filename=None,
-                  prob_plot=None):
+                  prob_plot=None,plot_by_class=False):
 
         """
         UMAP vizualisation of TCR Sequences
@@ -1826,6 +1826,18 @@ class vis_class(object):
 
             if filename is not None:
                 plt.savefig(os.path.join(self.directory_results, 'prob_'+filename))
+
+        if plot_by_class is True:
+            for i in self.lb.classes_:
+                sel = df_plot_sel['Class']==i
+                plt.figure()
+                sns.scatterplot(data=df_plot_sel[sel], x='x', y='y', s=df_plot_sel['s'][sel], hue=hue, legend=legend, alpha=alpha,
+                                linewidth=0.0)
+                plt.xticks([])
+                plt.yticks([])
+                plt.xlabel('')
+                plt.ylabel('')
+
 
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
