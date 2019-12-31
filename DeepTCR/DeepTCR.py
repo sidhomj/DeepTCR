@@ -1936,7 +1936,6 @@ class vis_class(object):
         plt.ylabel('')
         plt.savefig(os.path.join(self.directory_results, filename))
 
-
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
