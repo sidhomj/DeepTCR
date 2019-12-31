@@ -18,6 +18,7 @@ numpy==1.18.0
 opt-einsum==3.1.0
 pandas==0.25.3
 PhenoGraph==1.5.2
+Pillow==6.2.1
 protobuf==3.11.2
 psutil==5.6.7
 pyparsing==2.4.6
