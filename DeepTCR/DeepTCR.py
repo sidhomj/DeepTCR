@@ -1236,6 +1236,74 @@ class feature_analytics_class(object):
 
         print('Motif Identification Completed')
 
+    def Sample_Features(self, set='all',Weight_by_Freq=True):
+        """
+        Sample-Level Feature Values
+
+        This method returns a dataframe with the aggregate sample level features.
+
+        Inputs
+        ---------------------------------------
+
+        set: str
+            To choose which set of sequences to analye, enter either
+            'all','train', 'valid',or 'test'. Since the sequences in the train set
+            may be overfit, it preferable to generally examine the test set on its own.
+
+        Weight_by_Freq: bool
+            Option to weight each sequence used in aggregate measure
+            of feature across sample by its frequency.
+
+        Returns
+        self.sample_featres: pandas dataframe
+            This function returns the average feature vector for each sample analyzed. This can be used to make further
+            downstream comparisons such as inter-repertoire distances.
+        ---------------------------------------
+
+        """
+
+        if set == 'all':
+            features = self.features
+            class_id = self.class_id
+            sample_id = self.sample_id
+            freq = self.freq
+        elif set == 'train':
+            features = self.features[self.train_idx]
+            class_id = self.class_id[self.train_idx]
+            sample_id = self.sample_id[self.train_idx]
+            freq = self.freq[self.train_idx]
+        elif set == 'valid':
+            features = self.features[self.valid_idx]
+            class_id = self.class_id[self.valid_idx]
+            sample_id = self.sample_id[self.valid_idx]
+            freq = self.freq[self.valid_idx]
+        elif set == 'test':
+            features = self.features[self.test_idx]
+            class_id = self.class_id[self.test_idx]
+            sample_id = self.sample_id[self.test_idx]
+            freq = self.freq[self.test_idx]
+
+        sample_list = np.unique(sample_id)
+
+        vector = []
+        file_label = []
+        for id in sample_list:
+            sel = sample_id == id
+            sel_idx = features[sel]
+            sel_freq = np.expand_dims(freq[sel], 1)
+            if Weight_by_Freq is True:
+                dist = np.expand_dims(np.sum(sel_idx * sel_freq, 0), 0)
+            else:
+                dist = np.expand_dims(np.mean(sel_idx, 0), 0)
+            file_label.append(np.unique(class_id[sel])[0])
+            vector.append(dist)
+
+        vector = np.vstack(vector)
+        dfs = pd.DataFrame(vector)
+        dfs.set_index(sample_list, inplace=True)
+        self.sample_features = dfs
+
+
 class vis_class(object):
 
     def HeatMap_Sequences(self,set='all', filename='Heatmap_Sequences.tif', sample_num=None,
