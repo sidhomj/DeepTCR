@@ -138,6 +138,7 @@ def Plot_Performance(df,dir_results,metrics=None,num_rows=3,num_cols=3,figsize=(
         metrics = np.unique(df['Metric'].tolist())
 
     types = np.unique(df['Classes'].tolist())
+    names = ['Global-Seq-Align', 'K-mer', 'Hamming', 'VAE-Seq', 'VAE-VDJ', 'VAE-Seq-VDJ']
     for m in metrics:
         fig,ax = plt.subplots(ncols=num_cols,nrows=num_rows,figsize=figsize)
         ax = np.ndarray.flatten(ax)
@@ -145,30 +146,18 @@ def Plot_Performance(df,dir_results,metrics=None,num_rows=3,num_cols=3,figsize=(
         for ii,(a,t) in enumerate(zip(ax,types),0):
             ea.pop(0)
             df_temp = df[(df['Classes'] == t) & (df['Metric'] == m)]
-            sns.pointplot(data=df_temp, x='k', y='Value', hue='Algorithm', capsize=0.2,ax=a)
+            sns.pointplot(data=df_temp, x='k', y='Value', hue='Algorithm', capsize=0.2,ax=a,hue_order=names)
             a.get_legend().remove()
             a.set_title(t,fontsize=12)
             a.set_xlabel('')
             a.set_ylabel('')
+            a.spines['top'].set_visible(False)
+            a.spines['right'].set_visible(False)
             a.set_xticklabels(a.get_xticklabels(),rotation=90,fontsize=8)
         [fig.delaxes(ax[ii]) for ii in ea]
         plt.tight_layout()
-        plt.savefig(os.path.join(dir_results,subdir,m+'.eps'))
+        plt.savefig(os.path.join(dir_results,subdir,m+'.tif'),dpi=1200)
         plt.close()
-
-        # for t in types:
-        #     df_temp = df[(df['Classes']==t) & (df['Metric']==m)]
-        #     sns.catplot(data=df_temp,x='k',y='Value',kind='point',hue='Algorithm',capsize=0.2)
-        #     plt.title(t,fontsize=24)
-        #     plt.ylabel(m)
-        #     plt.subplots_adjust(top=0.9)
-        #     plt.xticks(rotation=90,fontsize=12)
-        #     plt.yticks(fontsize=12)
-        #     plt.xlabel('k',fontsize=18)
-        #     plt.ylabel(m,fontsize=18)
-        #     plt.subplots_adjust(bottom=0.15)
-        #     plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'.eps'))
-        #     plt.close()
 
 def Plot_Performance_Samples(df,dir_results,metrics=None,distance_methods=None):
     subdir = 'Performance'

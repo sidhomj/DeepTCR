@@ -17,11 +17,13 @@ from NN_Assessment_utils import *
 import pickle
 import os
 from scipy.stats import ttest_rel
+import matplotlib
 
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = "7"
+matplotlib.rc('font', family='Arial')
 
-load_prev_data = False
+load_prev_data = True
 # Instantiate training object
 DTCRU = DeepTCR_U('Murine_U',device='/device:GPU:1')
 split_seed = 0
@@ -75,28 +77,10 @@ dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
-# #Assess Clustering Quality of Various Methods
-# file_write = os.path.join(dir_results,'data_fig1b.csv')
-# if load_prev_data is False:
-#     df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
-#     df_cq.to_csv(file_write)
-# else:
-#     df_cq = pd.read_csv(file_write)
-#
-# fig,ax = plt.subplots()
-# sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=200,
-#                 hue='Algorithm',alpha=0.5,linewidth=.25,ax=ax)
-# plt.xlabel('Variance Ratio Criterion',fontsize=18)
-# plt.ylabel('Adjusted Mutual Information',fontsize=18)
-# plt.xticks(fontsize=12)
-# plt.yticks(fontsize=12)
-# plt.title('Clustering Quality',fontsize=22)
-# plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
-
 #Assess performance metrtics via K-Nearest Neighbors
-file_write = os.path.join(dir_results,'data_fig1c.csv')
+file_write = os.path.join(dir_results,'data_fig1b.csv')
 if load_prev_data is False:
-    df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results)
+    df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results,metrics=['AUC'])
     df_metrics.to_csv(file_write)
 else:
     df_metrics = pd.read_csv(file_write)
@@ -109,25 +93,44 @@ if not os.path.exists(os.path.join(dir_results,subdir)):
 
 names = ['Global-Seq-Align','K-mer','Hamming','VAE-Seq','VAE-VDJ','VAE-Seq-VDJ']
 for m in np.unique(df_metrics['Metric']):
-    plt.figure()
+    fig,ax = plt.subplots()
     sns.violinplot(data=df_metrics[df_metrics['Metric']==m],
                    x='Algorithm',y='Value',cut=0,
-                   order=names)
+                   order=names,ax=ax)
     plt.ylabel(m)
     plt.xticks(rotation=45)
     plt.xlabel('')
     plt.subplots_adjust(bottom=0.25)
-    plt.ylabel(m,fontsize=14)
+    plt.ylabel(m,fontsize=24)
     plt.xticks(fontsize=12)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     plt.savefig(os.path.join(dir_results,subdir,m+'.eps'))
 
+#PVal Comparisons
+comp = [['Hamming','Global-Seq-Align'],
+ ['Hamming','K-mer'],
+ ['VAE-Seq-VDJ','Hamming'],
+ ['VAE-Seq-VDJ','VAE-Seq'],
+  ['VAE-Seq-VDJ','VAE-VDJ']]
+
 method = 'AUC'
-for ii in range(len(names)):
+method_1 = []
+method_2 = []
+p_val_list = []
+for c in comp:
     df_test = df_metrics[df_metrics['Metric']==method]
-    idx_1 = df_test['Algorithm'] == names[ii]
-    idx_2 = df_test['Algorithm'] == names[ii+1]
-    t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
-    print(p_val)
+    idx_1 = df_test['Algorithm'] == c[0]
+    idx_2 = df_test['Algorithm'] == c[1]
+    t, p_val = ttest_rel(df_test[idx_1]['Value'], df_test[idx_2]['Value'])
+    method_1.append(c[0])
+    method_2.append(c[1])
+    p_val_list.append(p_val)
+
+df_pval = pd.DataFrame()
+df_pval['Method 1'] = method_1
+df_pval['Method 2'] = method_2
+df_pval['P_Val'] = p_val_list
 
 #Assess Length Dependency of various methods
 SRCC = []
