@@ -2007,7 +2007,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
     def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
                   trainable_embedding=True,use_only_gene=False,use_only_seq=False,use_only_hla=False,
-                  epochs_min=0,stop_criterion=0.001,stop_criterion_window=30,
+                  epochs_min=0,stop_criterion=0.01,stop_criterion_window=30,
                   kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
                   graph_seed=None,split_seed=None):
         """
