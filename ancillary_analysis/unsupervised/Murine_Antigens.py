@@ -16,75 +16,103 @@ import seaborn as sns
 from NN_Assessment_utils import *
 import pickle
 import os
+from scipy.stats import ttest_rel
 
-#Instantiate training object
-DTCRU = DeepTCR_U('Murine_U')
-#Load Data
-DTCRU.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
-               aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
+os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
+os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 
-#Get distances from various methods
-#VAE_- Genes
-DTCRU.Train_VAE(Load_Prev_Data=False,use_only_gene=True)
-distances_vae_gene = pdist(DTCRU.features, metric='euclidean')
+load_prev_data = False
+# Instantiate training object
+DTCRU = DeepTCR_U('Murine_U',device='/device:GPU:1')
+split_seed = 0
+graph_seed = 0
+# Load Data
+DTCRU.Get_Data(directory='../../Data/Murine_Antigens', Load_Prev_Data=False, aggregate_by_aa=True,
+               aa_column_beta=0, count_column=1, v_beta_column=2, j_beta_column=3)
 
-# #VAE_- Sequencs Alone+
-DTCRU.Train_VAE(Load_Prev_Data=False,use_only_seq=True)
-distances_vae_seq = pdist(DTCRU.features, metric='euclidean')
+if load_prev_data is False:
+    #Get distances from various methods
+    #VAE_- Genes
+    DTCRU.Train_VAE(Load_Prev_Data=False,use_only_gene=True,split_seed=split_seed,graph_seed=graph_seed)
+    distances_vae_gene = pdist(DTCRU.features, metric='euclidean')
 
-#VAE_- Gene+Sequencs
-DTCRU.Train_VAE(Load_Prev_Data=False)
-distances_vae_seq_gene = pdist(DTCRU.features, metric='euclidean')
+    # #VAE_- Sequencs Alone+
+    DTCRU.Train_VAE(Load_Prev_Data=False,use_only_seq=True,split_seed=split_seed,graph_seed=graph_seed)
+    distances_vae_seq = pdist(DTCRU.features, metric='euclidean')
 
-#Hamming
-distances_hamming = pdist(np.squeeze(DTCRU.X_Seq_beta, 1), metric='hamming')
+    #VAE_- Gene+Sequencs
+    DTCRU.Train_VAE(Load_Prev_Data=False,split_seed=split_seed,graph_seed=graph_seed)
+    distances_vae_seq_gene = pdist(DTCRU.features, metric='euclidean')
 
-#Kmer
-kmer_features = kmer_search(DTCRU.beta_sequences)
-distances_kmer = pdist(kmer_features, metric='euclidean')
+    #Hamming
+    distances_hamming = pdist(np.squeeze(DTCRU.X_Seq_beta, 1), metric='hamming')
 
-#Global Seq-Align
-# distances_seqalign = pairwise_alignment(DTCRU.beta_sequences)
-# with open('Murine_seqalign.pkl','wb') as f:
-#     pickle.dump(distances_seqalign,f)
+    #Kmer
+    kmer_features = kmer_search(DTCRU.beta_sequences)
+    distances_kmer = pdist(kmer_features, metric='euclidean')
 
-with open('Murine_seqalign.pkl','rb') as f:
-    distances_seqalign = pickle.load(f)
+    #Global Seq-Align
+    # distances_seqalign = pairwise_alignment(DTCRU.beta_sequences)
+    # with open('Murine_seqalign.pkl','wb') as f:
+    #     pickle.dump(distances_seqalign,f)
 
-distances_seqalign = distances_seqalign + distances_seqalign.T
-distances_seqalign = squareform(distances_seqalign)
+    with open('Murine_seqalign.pkl','rb') as f:
+        distances_seqalign = pickle.load(f)
 
-distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene,distances_hamming,distances_kmer,distances_seqalign]
-names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Hamming','K-mer','Global-Seq-Align']
+    distances_seqalign = distances_seqalign + distances_seqalign.T
+    distances_seqalign = squareform(distances_seqalign)
+
+    distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene,distances_hamming,distances_kmer,distances_seqalign]
+    names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Hamming','K-mer','Global-Seq-Align']
+    with open('distances_murine.pkl','wb') as f:
+        pickle.dump([distances_list,names],f,protocol=4)
+
+else:
+    with open('distances_murine.pkl','rb') as f:
+        distances_list,names = pickle.load(f)
 
 dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
-#Assess Clustering Quality of Various Methods
-df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
-df_cq.to_csv('data_fig1b.csv')
-fig,ax = plt.subplots()
-sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=200,
-                hue='Algorithm',alpha=0.5,linewidth=.25,ax=ax)
-plt.xlabel('Variance Ratio Criterion',fontsize=18)
-plt.ylabel('Adjusted Mutual Information',fontsize=18)
-plt.xticks(fontsize=12)
-plt.yticks(fontsize=12)
-plt.title('Clustering Quality',fontsize=22)
-plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
+# #Assess Clustering Quality of Various Methods
+# file_write = os.path.join(dir_results,'data_fig1b.csv')
+# if load_prev_data is False:
+#     df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
+#     df_cq.to_csv(file_write)
+# else:
+#     df_cq = pd.read_csv(file_write)
+#
+# fig,ax = plt.subplots()
+# sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=200,
+#                 hue='Algorithm',alpha=0.5,linewidth=.25,ax=ax)
+# plt.xlabel('Variance Ratio Criterion',fontsize=18)
+# plt.ylabel('Adjusted Mutual Information',fontsize=18)
+# plt.xticks(fontsize=12)
+# plt.yticks(fontsize=12)
+# plt.title('Clustering Quality',fontsize=22)
+# plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 
 #Assess performance metrtics via K-Nearest Neighbors
-df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results)
-df_metrics.to_csv('data_fig1c.csv')
+file_write = os.path.join(dir_results,'data_fig1c.csv')
+if load_prev_data is False:
+    df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results)
+    df_metrics.to_csv(file_write)
+else:
+    df_metrics = pd.read_csv(file_write)
+
 Plot_Performance(df_metrics,dir_results)
 
 subdir = 'Performance_Summary'
 if not os.path.exists(os.path.join(dir_results,subdir)):
     os.makedirs(os.path.join(dir_results,subdir))
 
+names = ['Global-Seq-Align','K-mer','Hamming','VAE-Seq','VAE-VDJ','VAE-Seq-VDJ']
 for m in np.unique(df_metrics['Metric']):
-    sns.catplot(data=df_metrics[df_metrics['Metric']==m],x='Algorithm',y='Value',kind='violin')
+    plt.figure()
+    sns.violinplot(data=df_metrics[df_metrics['Metric']==m],
+                   x='Algorithm',y='Value',cut=0,
+                   order=names)
     plt.ylabel(m)
     plt.xticks(rotation=45)
     plt.xlabel('')
@@ -95,7 +123,6 @@ for m in np.unique(df_metrics['Metric']):
 
 method = 'AUC'
 for ii in range(len(names)):
-    from scipy.stats import ttest_rel
     df_test = df_metrics[df_metrics['Metric']==method]
     idx_1 = df_test['Algorithm'] == names[ii]
     idx_2 = df_test['Algorithm'] == names[ii+1]
@@ -104,7 +131,9 @@ for ii in range(len(names)):
 
 #Assess Length Dependency of various methods
 SRCC = []
-for n,distances in zip(names,distances_list):
+fig, ax = plt.subplots(ncols=2, nrows=3, figsize=(8,10))
+ax =  np.ndarray.flatten(ax)
+for n,distances,a in zip(names,distances_list,ax):
     len_distance = pdist(np.sum(DTCRU.X_Seq_beta>0,-1))
     len_seq = np.sum(DTCRU.X_Seq_beta>0,-1)
     corr,_ = spearmanr(len_distance,distances)
@@ -112,10 +141,12 @@ for n,distances in zip(names,distances_list):
     df = pd.DataFrame()
     df['D_len'] = len_distance.astype(int)
     df['D_features'] = distances
-    plt.figure()
-    sns.boxplot(x='D_len',y='D_features',data=df)
-    plt.title(n)
-    plt.savefig(os.path.join(dir_results,n+'_box_LD.eps'))
+    sns.boxplot(x='D_len',y='D_features',data=df,ax=a)
+    a.set_title(n)
+    a.set_xlabel('')
+    a.set_ylabel('')
+plt.tight_layout()
+plt.savefig(os.path.join(dir_results,'LD.eps'))
 
 df_out = pd.DataFrame()
 df_out['Methods'] = names

@@ -23,12 +23,11 @@ import phenograph_local
 from scipy.spatial import distance
 import itertools
 
-
-def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC']):
+def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC'],random_state=None):
     lb = LabelEncoder()
     labels = lb.fit_transform(labels)
 
-    skf = StratifiedKFold(n_splits=5, random_state=None, shuffle=True)
+    skf = StratifiedKFold(n_splits=5, random_state=random_state, shuffle=True)
     neigh = KNeighborsClassifier(n_neighbors=k, metric='precomputed', weights='distance')
 
     pred_list = []
@@ -109,9 +108,10 @@ def Assess_Performance_KNN(distances,names,labels,dir_results,k_values=list(rang
         temp.append(d)
     distances = temp
 
-    for k in k_values:
+    split_seeds = np.array(range(len(k_values)))
+    for k,seed in zip(k_values,split_seeds):
         for n,d in zip(names,distances):
-            classes, metric,value,k_l = KNN(d, labels, k=k,metrics=metrics)
+            classes, metric,value,k_l = KNN(d, labels, k=k,metrics=metrics,random_state=seed)
             metric_list.extend(metric)
             val_list.extend(value)
             class_list.extend(classes)
@@ -127,11 +127,9 @@ def Assess_Performance_KNN(distances,names,labels,dir_results,k_values=list(rang
     df_out['k'] = k_list
     if not os.path.exists(dir_results):
         os.makedirs(dir_results)
-    df_out.to_csv(os.path.join(dir_results,'df.csv'),index=False)
-
     return df_out
 
-def Plot_Performance(df,dir_results,metrics=None):
+def Plot_Performance(df,dir_results,metrics=None,num_rows=3,num_cols=3,figsize=(10,10)):
     subdir = 'Performance'
     if not os.path.exists(os.path.join(dir_results,subdir)):
         os.makedirs(os.path.join(dir_results,subdir))
@@ -141,19 +139,36 @@ def Plot_Performance(df,dir_results,metrics=None):
 
     types = np.unique(df['Classes'].tolist())
     for m in metrics:
-        for t in types:
-            df_temp = df[(df['Classes']==t) & (df['Metric']==m)]
-            sns.catplot(data=df_temp,x='k',y='Value',kind='point',hue='Algorithm',capsize=0.2)
-            plt.title(t,fontsize=24)
-            plt.ylabel(m)
-            plt.subplots_adjust(top=0.9)
-            plt.xticks(rotation=90,fontsize=12)
-            plt.yticks(fontsize=12)
-            plt.xlabel('k',fontsize=18)
-            plt.ylabel(m,fontsize=18)
-            plt.subplots_adjust(bottom=0.15)
-            plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'.eps'))
-            plt.close()
+        fig,ax = plt.subplots(ncols=num_cols,nrows=num_rows,figsize=figsize)
+        ax = np.ndarray.flatten(ax)
+        ea = list(range(len(ax)))
+        for ii,(a,t) in enumerate(zip(ax,types),0):
+            ea.pop(0)
+            df_temp = df[(df['Classes'] == t) & (df['Metric'] == m)]
+            sns.pointplot(data=df_temp, x='k', y='Value', hue='Algorithm', capsize=0.2,ax=a)
+            a.get_legend().remove()
+            a.set_title(t,fontsize=12)
+            a.set_xlabel('')
+            a.set_ylabel('')
+            a.set_xticklabels(a.get_xticklabels(),rotation=90,fontsize=8)
+        [fig.delaxes(ax[ii]) for ii in ea]
+        plt.tight_layout()
+        plt.savefig(os.path.join(dir_results,subdir,m+'.eps'))
+        plt.close()
+
+        # for t in types:
+        #     df_temp = df[(df['Classes']==t) & (df['Metric']==m)]
+        #     sns.catplot(data=df_temp,x='k',y='Value',kind='point',hue='Algorithm',capsize=0.2)
+        #     plt.title(t,fontsize=24)
+        #     plt.ylabel(m)
+        #     plt.subplots_adjust(top=0.9)
+        #     plt.xticks(rotation=90,fontsize=12)
+        #     plt.yticks(fontsize=12)
+        #     plt.xlabel('k',fontsize=18)
+        #     plt.ylabel(m,fontsize=18)
+        #     plt.subplots_adjust(bottom=0.15)
+        #     plt.savefig(os.path.join(dir_results,subdir,m+'_'+t+'.eps'))
+        #     plt.close()
 
 def Plot_Performance_Samples(df,dir_results,metrics=None,distance_methods=None):
     subdir = 'Performance'
@@ -251,7 +266,6 @@ def get_score(a,b):
     s_22 =  pairwise2.align.globalxx(b, b)[-1][-1]
     return (1-s_12/s_11)*(1-s_12/s_22)
 
-
 def pairwise_alignment(sequences):
 
     seq_pw = list(itertools.product(sequences,repeat=2))
@@ -320,7 +334,6 @@ def Clustering_Quality(distances,m,l):
 
     return df
 
-
 def phenograph_clustering(d):
     nbrs = NearestNeighbors(n_neighbors=30, metric='precomputed').fit(d)
     d, idx = nbrs.kneighbors(d)
@@ -368,14 +381,14 @@ def phenograph_clustering_freq(d,DTCRU,n_jobs=1):
     DF_Sum.fillna(0.0, inplace=True)
     return DF_Sum, IDX
 
-def KNN_samples(distances,labels,k,metrics,folds):
+def KNN_samples(distances,labels,k,metrics,folds,random_state=None):
     lb = LabelEncoder()
     labels = lb.fit_transform(labels)
 
     if folds > np.min(np.bincount(labels)):
-        skf = KFold(n_splits=folds, random_state=None, shuffle=True)
+        skf = KFold(n_splits=folds, random_state=random_state, shuffle=True)
     else:
-        skf = StratifiedKFold(n_splits=folds, random_state=None, shuffle=True)
+        skf = StratifiedKFold(n_splits=folds, random_state=random_state, shuffle=True)
     neigh = KNeighborsClassifier(n_neighbors=k, metric='precomputed', weights='distance')
 
     pred_list = []
@@ -438,7 +451,6 @@ def KNN_samples(distances,labels,k,metrics,folds):
 def sym_KL(u,v):
     return entropy(u,v) + entropy(v,u)
 
-
 def Get_Prop_Distances(prop_list,names,eps = 1e-9):
     # distance_func = [wasserstein_distance, distance.euclidean, sym_entropy, distance.correlation, distance.braycurtis,
     #                  distance.canberra, distance.chebyshev,
@@ -477,10 +489,12 @@ def Assess_Performance_KNN_Samples(distances_list,distances_names,method_names,d
     k_list = []
     metric_list = []
     val_list = []
-    for k in k_values:
+    split_seeds = np.array(range(len(k_values)))
+
+    for k,seed in zip(k_values,split_seeds):
         for d,n_d,n_m in zip(distances_list,distances_names,method_names):
             try:
-                classes,metric,value,k_l = KNN_samples(d,labels,k=k,metrics=metrics,folds=folds)
+                classes,metric,value,k_l = KNN_samples(d,labels,k=k,metrics=metrics,folds=folds,random_state=seed)
                 metric_list.extend(metric)
                 val_list.extend(value)
                 class_list.extend(classes)
