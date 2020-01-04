@@ -19,7 +19,7 @@ import pandas as pd
 import matplotlib
 matplotlib.rc('font', family='Arial')
 
-load_prev_data = False
+load_prev_data = True
 
 #Get VAE Data
 dir_results = '../unsupervised/Murine_Results'
@@ -77,6 +77,7 @@ ax.legend().remove()
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 plt.legend(fontsize=24)
+fig.savefig(os.path.join(dir_results,'Sup_v_Unsup.eps'))
 
 antigens =['Db-F2', 'Db-M45', 'Db-NP', 'Db-PA', 'Db-PB1', 'Kb-M38', 'Kb-SIY','Kb-TRP2', 'Kb-m139']
 p_val_list = []
@@ -91,4 +92,3 @@ for antigen in antigens:
 df_pval = pd.DataFrame()
 df_pval['antigen'] = antigens
 df_pval['P_Val'] = p_val_list
-
