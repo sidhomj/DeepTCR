@@ -12,7 +12,7 @@ from scipy.spatial.distance import pdist, squareform
 import umap
 from sklearn.cluster import DBSCAN,KMeans
 import sklearn
-import phenograph
+import DeepTCR.phenograph as phenograph
 from scipy.spatial import distance
 import glob
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, MultiLabelBinarizer
