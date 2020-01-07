@@ -2406,8 +2406,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                 embedding_layers = [GO.embedding_layer_v_alpha,GO.embedding_layer_j_alpha,
                                     GO.embedding_layer_v_beta,GO.embedding_layer_d_beta,
-                                    GO.embedding_layer_j_beta]
-                embedding_names = ['v_alpha','j_alpha','v_beta','d_beta','j_beta']
+                                    GO.embedding_layer_j_beta,GO.embedding_layer_hla]
+                embedding_names = ['v_alpha','j_alpha','v_beta','d_beta','j_beta','hla']
                 name_keep = []
                 embedding_keep = []
                 for n,layer in zip(embedding_names,embedding_layers):
@@ -3037,8 +3037,14 @@ class DeepTCR_SS(DeepTCR_S_base):
                     GO.predicted = GO.logits
                     GO.accuracy = GO.loss
 
+                # GO.beta_opt = []
+                # var_list = [GO.beta_ga]
+                # for ii,_ in enumerate(self.lb.classes_,0):
+                #     ga_loss = tf.reduce_sum(GO.logits,0)
+                #     # ga_loss = -ga_loss[ii]+tf.reduce_mean(tf.reduce_sum(ga_loss[0:ii])+tf.reduce_sum(ga_loss[ii+1:])
+                #     GO.beta_opt.append(tf.train.AdamOptimizer(learning_rate=0.001).
+                #                        minimize(ga_loss,var_list=var_list))
                 GO.saver = tf.train.Saver()
-
 
         #Initialize Training
         tf.reset_default_graph()
@@ -3119,6 +3125,117 @@ class DeepTCR_SS(DeepTCR_S_base):
                              self.use_v_alpha, self.use_j_alpha,self.use_hla,
                              self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
                              self.lb_v_alpha, self.lb_j_alpha, self.lb_hla,self.lb], f)
+
+            if self.use_alpha:
+                self.alpha_kernels = tf.tensordot(GO.alpha_kernels,tf.squeeze(tf.squeeze(GO.embedding_layer_seq, 0), 0),axes=[2,1]).eval()
+                with open(os.path.join(self.Name, 'model', 'alpha_kernels.pkl'), 'wb') as f:
+                    pickle.dump(self.alpha_kernels,f,protocol=4)
+            if self.use_beta:
+                #temp = tf.nn.relu(tf.abs(GO.beta_kernels[0])+GO.beta_kernels[1][:,tf.newaxis,tf.newaxis])
+                self.beta_kernels = tf.tensordot(GO.beta_kernels[0],tf.squeeze(tf.squeeze(GO.embedding_layer_seq, 0), 0),axes=[2,1]).eval()
+                with open(os.path.join(self.Name, 'model', 'beta_kernels.pkl'), 'wb') as f:
+                    pickle.dump(self.beta_kernels,f,protocol=4)
+
+            # feed_dict = {GO.gradient_ascent:True,
+            #              GO.X_Seq_beta:self.X_Seq_beta[0:2]}
+            # for _ in range(1000):
+            #     check,_ = sess.run([GO.b,GO.beta_opt[0]],feed_dict)
+            #
+            # check = np.argmax(check,-1)
+            # #Check pred
+            # feed_dict = {GO.gradient_ascent:False,
+            #              GO.X_Seq_beta:np.vstack([check,check])}
+            # print(sess.run(GO.predicted,feed_dict))
+            #
+            # #Vis
+            # check = np.squeeze(np.squeeze(check,0),0)
+            # check = ''.join([self.aa_idx_inv[x] if x!=0 else '_' for x in check])
+            # print(check)
+
+            # preds = []
+            # for ii,_ in enumerate(self.lb.classes_,0):
+            #     feed_dict = {GO.gradient_ascent: True,
+            #                  GO.X_Seq_beta: self.X_Seq_beta[0:2]}
+            #     for e in range(1000):
+            #         _ = sess.run(GO.beta_opt[ii], feed_dict)
+            #
+            #     feed_dict = {GO.X_Seq_beta: self.X_Seq_beta[0:2],
+            #                  GO.gradient_ascent: True,
+            #                  GO.beta_ga: GO.beta_ga.eval()}
+            #     preds.append(sess.run(GO.predicted, feed_dict))
+            # preds = np.vstack(preds)
+
+            #
+            #
+            #
+            #
+            # b_list = []
+            # beta_nf = []
+            # for ii,_ in enumerate(self.lb.classes_,0):
+            #     ga_loss_list = []
+            #     stop_check_list = []
+            #     for e in range(1000):
+            #         ga_loss_temp, _ = sess.run([GO.ga_loss, GO.beta_opt[ii]], feed_dict)
+            #         ga_loss_list.append(ga_loss_temp)
+            #         stop_check_list.append(stop_check(ga_loss_list, 0.001, 50))
+            #         # if e >100:
+            #         #     if np.sum(stop_check_list[-3:]) >= 3:
+            #         #         break
+            #     # plt.scatter(range(e + 1), ga_loss_list)
+            #     check = tf.tensordot(tf.squeeze(tf.squeeze(GO.beta_ga,0),0),tf.squeeze(tf.squeeze(GO.embedding_layer_seq,0),0),[1,1]).eval()
+            #     check = np.argmax(check,-1)
+            #     check = ''.join([self.aa_idx_inv[x] if x != 0 else '_' for x in check])
+            #     print(check)
+            #     beta_nf.append(check)
+            #     #check = np.ndarray.flatten(np.max(check,2))
+            #     check = np.ndarray.flatten(check)
+            #     b_list.append(check)
+            #
+            # b_list = np.vstack(b_list)
+            # b_list = pd.DataFrame(b_list)
+            # b_list.index = self.lb.classes_
+            # sns.clustermap(b_list,standard_scale=1,cmap='bwr')
+            #
+            # beta_nf = np.vstack(beta_nf)
+            # feed_dict = {GO.X_Seq_beta: self.X_Seq_beta[0:2],
+            #              GO.gradient_ascent: True,
+            #              GO.beta_ga: GO.beta_ga.eval()}
+            # pred_check = sess.run(GO.predicted,feed_dict)
+            #
+            #
+            #
+            #
+            #
+            #
+
+
+            # seq_i = np.array([31,31])
+            # feed_dict = {}
+            # if self.use_beta is True:
+            #     feed_dict[GO.X_Seq_beta] = self.X_Seq_beta[seq_i]
+            #
+            # if self.use_v_beta is True:
+            #     feed_dict[GO.X_v_beta] = self.v_beta_num[seq_i]
+            #
+            # if self.use_j_beta is True:
+            #     feed_dict[GO.X_j_beta] = self.j_beta_num[seq_i]
+
+            # gf,bi = sess.run([GO.gene_features_in,GO.beta_in],feed_dict)
+            # # gf = sess.run(GO.gene_features_in,feed_dict)
+            # #bi = sess.run(GO.beta_in,feed_dict)
+            # bi = np.reshape(bi,[bi.shape[0],bi.shape[1]*bi.shape[2]*bi.shape[3]])
+            # gf.shape[1]
+            # all = np.concatenate((gf,bi),axis=1)
+            #
+            # feed_dict = {}
+            # feed_dict[GO.gene_features_in] = gf
+            # feed_dict[GO.beta_in] = bi
+            # sess.run(GO.predicted,feed_dict)
+            #
+            # def netproba(X):
+            #     gf = X[:,0:96]
+            #     bi = X[:,96:]
+
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
                                 trainable_embedding=True,weight_by_class=False,class_weights=None,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,

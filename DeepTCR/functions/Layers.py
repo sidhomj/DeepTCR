@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 class graph_object(object):
     def __init__(self):
@@ -83,7 +84,13 @@ def Get_HLA_Features(self,GO,embedding_dim):
     GO.HLA_Features = tf.matmul(GO.X_hla,GO.embedding_layer_hla)
     return GO.HLA_Features
 
-def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Features',kernel=3,net='ae',
+def GA_Layer(GO,var,name):
+    shape = var.get_shape().as_list()
+    shape[0] = 1
+    ga_var = tf.get_variable(name=name, shape=shape,dtype=tf.float32)
+    return tf.cond(GO.gradient_ascent, lambda: ga_var, lambda: var),ga_var
+
+def Convolutional_Features(GO,inputs,reuse=False,prob=0.0,name='Convolutional_Features',kernel=3,net='ae',
                            size_of_net = 'medium'):
     with tf.variable_scope(name,reuse=reuse):
         if size_of_net == 'small':
@@ -96,6 +103,11 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
             units = size_of_net
 
         conv = tf.layers.conv2d(inputs, units[0], (1, kernel), 1, padding='same')
+        kernels = tf.squeeze(tf.trainable_variables()[-2],0)
+        kernels = tf.transpose(kernels,perm=[2,0,1])
+        conv_bias = tf.trainable_variables()[-1]
+        conv_in = conv
+        conv = conv_in
         conv_out = tf.layers.flatten(tf.reduce_max(conv,2))
         indices = tf.squeeze(tf.cast(tf.argmax(conv, axis=2), tf.float32),1)
         conv = tf.nn.leaky_relu(conv)
@@ -105,7 +117,7 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
         conv_2 = tf.layers.conv2d(conv, units[1], (1, kernel), (1, kernel), padding='same')
         conv_2 = tf.nn.leaky_relu(conv_2)
         conv_2 = tf.layers.dropout(conv_2, prob)
-        conv_2_out = tf.layers.flatten(tf.reduce_max(conv_2,2))
+        #conv_2_out = tf.layers.flatten(tf.reduce_max(conv_2,2))
 
         conv_3 = tf.layers.conv2d(conv_2, units[2], (1, kernel), (1, kernel), padding='same')
         conv_3 = tf.nn.leaky_relu(conv_3)
@@ -113,9 +125,10 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
         conv_3_out = tf.layers.flatten(tf.reduce_max(conv_3,axis=2))
 
         if net == 'ae':
-            return tf.layers.flatten(conv_3),conv_out,indices
+            return tf.layers.flatten(conv_3),conv_out,indices,None,None
         else:
-            return tf.concat((conv_out,conv_2_out,conv_3_out),axis=1),conv_out,indices
+            #return tf.concat((conv_out,conv_2_out,conv_3_out),axis=1),conv_out,indices
+            return conv_3_out, conv_out, indices,(kernels,conv_bias),conv_in
 
 def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
                use_only_gene,use_only_hla,num_fc_layers=0, units_fc=12):
@@ -132,7 +145,16 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
                                        name='Input_Beta')
         GO.X_Seq_beta_OH = tf.one_hot(GO.X_Seq_beta, depth=21)
 
+        # GO.gradient_ascent = tf.placeholder_with_default(False, shape=(), name='grad_ascent')
+        # GO.b1 = tf.get_variable(name='beta_ga',
+        #                         shape=[1, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2], 21],
+        #                         dtype=tf.float32)
+        # b2 = tf.cast(tf.one_hot(GO.X_Seq_beta, depth=21), tf.float32)
+        # GO.X_Seq_beta_OH = tf.cond(GO.gradient_ascent, lambda: GO.b1, lambda: b2)
+
+
     GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
+    GO.gradient_ascent = tf.placeholder_with_default(False, shape=(), name='grad_ascent')
     GO.sp = tf.sparse.placeholder(dtype=tf.float32, shape=[None, None],name='sp')
     GO.X_Freq = tf.placeholder(tf.float32, shape=[None, ], name='Freq')
     GO.i = tf.placeholder(dtype=tf.int32,shape= [None, ])
@@ -145,6 +167,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     GO.X_v_alpha, GO.X_v_alpha_OH, GO.embedding_layer_v_alpha, \
     GO.X_j_alpha, GO.X_j_alpha_OH, GO.embedding_layer_j_alpha, \
     gene_features = Get_Gene_Features(self, GO.embedding_dim_genes, gene_features)
+    GO.gene_features_in = gene_features
+    gene_features = GO.gene_features_in
 
     if trainable_embedding is True:
         # AA Embedding
@@ -167,16 +191,18 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
 
     # Convolutional Features
     if self.use_alpha is True:
-        GO.Seq_Features_alpha, GO.alpha_out, GO.indices_alpha = Convolutional_Features(inputs_seq_embed_alpha,
+        GO.Seq_Features_alpha, GO.alpha_out, GO.indices_alpha,GO.alpha_kernels,GO.alpha_in,GO.alpha_ga = Convolutional_Features(GO,inputs_seq_embed_alpha,
                                                                                        kernel=kernel,
                                                                                        name='alpha_conv', prob=GO.prob,
                                                                                        net=GO.net,size_of_net=GO.size_of_net)
-
     if self.use_beta is True:
-        GO.Seq_Features_beta, GO.beta_out, GO.indices_beta = Convolutional_Features(inputs_seq_embed_beta,
+        #inputs_seq_embed_beta,GO.beta_ga = GA_Layer(GO,inputs_seq_embed_beta,name='beta_ga')
+        GO.Seq_Features_beta, GO.beta_out, GO.indices_beta,GO.beta_kernels,GO.beta_in = Convolutional_Features(GO,inputs_seq_embed_beta,
                                                                                     kernel=kernel,
                                                                                     name='beta_conv', prob=GO.prob,
                                                                                     net=GO.net,size_of_net=GO.size_of_net)
+        #GO.Seq_Features_beta,GO.beta_ga = GA_Layer(GO,GO.Seq_Features_beta,name='beta_ga')
+
 
     Seq_Features = []
     if self.use_alpha is True:
@@ -186,7 +212,6 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
 
     if Seq_Features:
         Seq_Features = tf.concat(Seq_Features, axis=1)
-
 
     Features = [Seq_Features,gene_features]
     for ii,f in enumerate(Features,0):
@@ -206,6 +231,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     if self.use_hla:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
         Features = tf.concat((Features,HLA_Features),axis=1)
+    else:
+        GO.embedding_layer_hla = None
 
     if use_only_seq:
         Features = Seq_Features
@@ -217,11 +244,12 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         Features = HLA_Features
 
     GO.Features_Base = Features
+
     # if (self.use_hla) and (not use_only_hla):
     #     Features = tf.layers.dropout(Features,GO.prob)
     #     Features = tf.layers.dense(Features,Features.shape[1],tf.nn.relu)
 
-    fc = Features
+    fc = GO.Features_Base
     if num_fc_layers != 0:
         for lyr in range(num_fc_layers):
             fc = tf.layers.dropout(fc, GO.prob)

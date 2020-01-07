@@ -15,9 +15,10 @@ from Bio.Alphabet import IUPAC
 #Run Supervised Sequence Classifier
 DTCRS = DeepTCR_SS('Sequence_C',device='/device:GPU:2')
 DTCRS.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
-               aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
+               aa_column_beta=0,count_column=1)
+#v_beta_column=2,j_beta_column=3
 
-DTCRS.Monte_Carlo_CrossVal(folds=10,stop_criterion=0.01)
+DTCRS.Monte_Carlo_CrossVal(folds=10)
 DTCRS.Representative_Sequences(top_seq=20,unique=True)
 
 for item in DTCRS.Rep_Seq:
