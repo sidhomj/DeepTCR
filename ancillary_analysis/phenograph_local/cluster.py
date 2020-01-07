@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import sparse as sp
-from phenograph.core import (gaussian_kernel, parallel_jaccard_kernel, jaccard_kernel,
+from phenograph_local.core import (gaussian_kernel, parallel_jaccard_kernel, jaccard_kernel,
                              find_neighbors, neighbor_graph, graph2binary, runlouvain)
 import time
 import re

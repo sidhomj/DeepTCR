@@ -1,5 +1,5 @@
 import numpy as np
-from phenograph.core import find_neighbors, neighbor_graph, jaccard_kernel
+from phenograph_local.core import find_neighbors, neighbor_graph, jaccard_kernel
 import scipy.sparse as sp
 from sklearn.preprocessing import normalize
 
