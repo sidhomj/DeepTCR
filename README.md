@@ -54,13 +54,6 @@ pip3 install git+https://github.com/sidhomj/DeepTCR.git
 
 ```
 
-Installing DeepTCR should also install all dependencies except for PhenoGraph.
-To install Phenograph separately:
-
-```python
-pip3 install git+https://github.com/jacoblevine/phenograph.git
-```
-
 ## Release History
 
 ### 1.1

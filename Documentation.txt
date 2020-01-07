@@ -18,7 +18,7 @@ DESCRIPTION
     # import umap
     # from sklearn.cluster import DBSCAN,KMeans
     # import sklearn
-    # import phenograph
+    # import DeepTCR.phenograph as phenograph
     # from scipy.spatial import distance
     # import glob
     # from sklearn.preprocessing import LabelEncoder, OneHotEncoder, MultiLabelBinarizer
@@ -291,7 +291,7 @@ CLASSES
      |      corr: float
      |          Spearman's Rank Correlation Coefficient
      |  
-     |  Train(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
+     |  Train(self, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, kernel=5, trainable_embedding=True, weight_by_class=False, class_weights=None, num_fc_layers=0, units_fc=12, drop_out_rate=0.0, suppress_output=False, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, graph_seed=None)
      |      Train Single-Sequence Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -830,6 +830,29 @@ CLASSES
      |          are stored in this dataframe where column names represent
      |          the feature number.
      |  
+     |  Sample_Features(self, set='all', Weight_by_Freq=True)
+     |      Sample-Level Feature Values
+     |      
+     |      This method returns a dataframe with the aggregate sample level features.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      Returns
+     |      self.sample_featres: pandas dataframe
+     |          This function returns the average feature vector for each sample analyzed. This can be used to make further
+     |          downstream comparisons such as inter-repertoire distances.
+     |      ---------------------------------------
+     |  
      |  Structural_Diversity(self, sample=None, n_jobs=1)
      |      Structural Diversity Measurements
      |      
@@ -889,6 +912,9 @@ CLASSES
      |          smaller to get better labeling of the rows.
      |      
      |      Returns
+     |      self.sample_featres: pandas dataframe
+     |          This function returns the average feature vector for each sample analyzed. This can be used to make further
+     |          downstream comparisons such as inter-repertoire distances.
      |      ---------------------------------------
      |  
      |  HeatMap_Sequences(self, set='all', filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_class=None, color_dict=None)
@@ -998,7 +1024,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None, prob_plot=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, sample_per_class=None, filename=None, prob_plot=None, plot_by_class=False)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -1043,6 +1069,9 @@ CLASSES
      |      sample: int
      |          Number of events to sub-sample for visualization.
      |      
+     |      sample_per_class: int
+     |           Number of events to randomly sample per class for UMAP.
+     |      
      |      filename: str
      |          To save umap plot to results folder, enter a name for the file and the umap
      |          will be saved to the results directory.
@@ -1055,6 +1084,38 @@ CLASSES
      |          displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
      |          when the set parameter is turned to 'test'.
      |      
+     |      
+     |      Returns
+     |      
+     |      ---------------------------------------
+     |  
+     |  UMAP_Plot_Samples(self, set='all', filename='UMAP_Samples.tif', Weight_by_Freq=True, scale=5, alpha=1.0)
+     |      UMAP vizualisation of TCR Samples
+     |      
+     |      This method displays the samples in a 2-dimensional UMAP
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      scale: float
+     |          To change size of points, change scale parameter.
+     |      
+     |      alpha: float
+     |          Value between 0-1 that controls transparency of points.
+     |      
+     |      filename: str
+     |          To save umap plot to results folder, enter a name for the file and the umap
+     |          will be saved to the results directory.
+     |          i.e. umap.png
      |      
      |      Returns
      |      
@@ -1525,6 +1586,29 @@ CLASSES
      |          are stored in this dataframe where column names represent
      |          the feature number.
      |  
+     |  Sample_Features(self, set='all', Weight_by_Freq=True)
+     |      Sample-Level Feature Values
+     |      
+     |      This method returns a dataframe with the aggregate sample level features.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      Returns
+     |      self.sample_featres: pandas dataframe
+     |          This function returns the average feature vector for each sample analyzed. This can be used to make further
+     |          downstream comparisons such as inter-repertoire distances.
+     |      ---------------------------------------
+     |  
      |  Structural_Diversity(self, sample=None, n_jobs=1)
      |      Structural Diversity Measurements
      |      
@@ -1584,6 +1668,9 @@ CLASSES
      |          smaller to get better labeling of the rows.
      |      
      |      Returns
+     |      self.sample_featres: pandas dataframe
+     |          This function returns the average feature vector for each sample analyzed. This can be used to make further
+     |          downstream comparisons such as inter-repertoire distances.
      |      ---------------------------------------
      |  
      |  HeatMap_Sequences(self, set='all', filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_class=None, color_dict=None)
@@ -1693,7 +1780,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None, prob_plot=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, sample_per_class=None, filename=None, prob_plot=None, plot_by_class=False)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -1738,6 +1825,9 @@ CLASSES
      |      sample: int
      |          Number of events to sub-sample for visualization.
      |      
+     |      sample_per_class: int
+     |           Number of events to randomly sample per class for UMAP.
+     |      
      |      filename: str
      |          To save umap plot to results folder, enter a name for the file and the umap
      |          will be saved to the results directory.
@@ -1750,6 +1840,38 @@ CLASSES
      |          displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
      |          when the set parameter is turned to 'test'.
      |      
+     |      
+     |      Returns
+     |      
+     |      ---------------------------------------
+     |  
+     |  UMAP_Plot_Samples(self, set='all', filename='UMAP_Samples.tif', Weight_by_Freq=True, scale=5, alpha=1.0)
+     |      UMAP vizualisation of TCR Samples
+     |      
+     |      This method displays the samples in a 2-dimensional UMAP
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      scale: float
+     |          To change size of points, change scale parameter.
+     |      
+     |      alpha: float
+     |          Value between 0-1 that controls transparency of points.
+     |      
+     |      filename: str
+     |          To save umap plot to results folder, enter a name for the file and the umap
+     |          will be saved to the results directory.
+     |          i.e. umap.png
      |      
      |      Returns
      |      
@@ -1865,7 +1987,7 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
-     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, use_only_hla=False, epochs_min=10, stop_criterion=0.01, stop_criterion_window=30, kernel=3, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12)
+     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, use_only_hla=False, epochs_min=0, stop_criterion=0.01, stop_criterion_window=30, kernel=3, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, graph_seed=None, split_seed=None)
      |      Train Variational Autoencoder (VAE)
      |      
      |      This method trains the network and saves features values for sequences
@@ -2323,6 +2445,29 @@ CLASSES
      |          are stored in this dataframe where column names represent
      |          the feature number.
      |  
+     |  Sample_Features(self, set='all', Weight_by_Freq=True)
+     |      Sample-Level Feature Values
+     |      
+     |      This method returns a dataframe with the aggregate sample level features.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      Returns
+     |      self.sample_featres: pandas dataframe
+     |          This function returns the average feature vector for each sample analyzed. This can be used to make further
+     |          downstream comparisons such as inter-repertoire distances.
+     |      ---------------------------------------
+     |  
      |  Structural_Diversity(self, sample=None, n_jobs=1)
      |      Structural Diversity Measurements
      |      
@@ -2382,6 +2527,9 @@ CLASSES
      |          smaller to get better labeling of the rows.
      |      
      |      Returns
+     |      self.sample_featres: pandas dataframe
+     |          This function returns the average feature vector for each sample analyzed. This can be used to make further
+     |          downstream comparisons such as inter-repertoire distances.
      |      ---------------------------------------
      |  
      |  HeatMap_Sequences(self, set='all', filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_class=None, color_dict=None)
@@ -2491,7 +2639,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None, prob_plot=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, sample_per_class=None, filename=None, prob_plot=None, plot_by_class=False)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -2536,6 +2684,9 @@ CLASSES
      |      sample: int
      |          Number of events to sub-sample for visualization.
      |      
+     |      sample_per_class: int
+     |           Number of events to randomly sample per class for UMAP.
+     |      
      |      filename: str
      |          To save umap plot to results folder, enter a name for the file and the umap
      |          will be saved to the results directory.
@@ -2548,6 +2699,38 @@ CLASSES
      |          displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
      |          when the set parameter is turned to 'test'.
      |      
+     |      
+     |      Returns
+     |      
+     |      ---------------------------------------
+     |  
+     |  UMAP_Plot_Samples(self, set='all', filename='UMAP_Samples.tif', Weight_by_Freq=True, scale=5, alpha=1.0)
+     |      UMAP vizualisation of TCR Samples
+     |      
+     |      This method displays the samples in a 2-dimensional UMAP
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      scale: float
+     |          To change size of points, change scale parameter.
+     |      
+     |      alpha: float
+     |          Value between 0-1 that controls transparency of points.
+     |      
+     |      filename: str
+     |          To save umap plot to results folder, enter a name for the file and the umap
+     |          will be saved to the results directory.
+     |          i.e. umap.png
      |      
      |      Returns
      |      
@@ -3499,6 +3682,29 @@ CLASSES
      |          are stored in this dataframe where column names represent
      |          the feature number.
      |  
+     |  Sample_Features(self, set='all', Weight_by_Freq=True)
+     |      Sample-Level Feature Values
+     |      
+     |      This method returns a dataframe with the aggregate sample level features.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      Returns
+     |      self.sample_featres: pandas dataframe
+     |          This function returns the average feature vector for each sample analyzed. This can be used to make further
+     |          downstream comparisons such as inter-repertoire distances.
+     |      ---------------------------------------
+     |  
      |  Structural_Diversity(self, sample=None, n_jobs=1)
      |      Structural Diversity Measurements
      |      
@@ -3558,6 +3764,9 @@ CLASSES
      |          smaller to get better labeling of the rows.
      |      
      |      Returns
+     |      self.sample_featres: pandas dataframe
+     |          This function returns the average feature vector for each sample analyzed. This can be used to make further
+     |          downstream comparisons such as inter-repertoire distances.
      |      ---------------------------------------
      |  
      |  HeatMap_Sequences(self, set='all', filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_class=None, color_dict=None)
@@ -3667,7 +3876,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None, prob_plot=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, sample_per_class=None, filename=None, prob_plot=None, plot_by_class=False)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -3712,6 +3921,9 @@ CLASSES
      |      sample: int
      |          Number of events to sub-sample for visualization.
      |      
+     |      sample_per_class: int
+     |           Number of events to randomly sample per class for UMAP.
+     |      
      |      filename: str
      |          To save umap plot to results folder, enter a name for the file and the umap
      |          will be saved to the results directory.
@@ -3724,6 +3936,38 @@ CLASSES
      |          displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
      |          when the set parameter is turned to 'test'.
      |      
+     |      
+     |      Returns
+     |      
+     |      ---------------------------------------
+     |  
+     |  UMAP_Plot_Samples(self, set='all', filename='UMAP_Samples.tif', Weight_by_Freq=True, scale=5, alpha=1.0)
+     |      UMAP vizualisation of TCR Samples
+     |      
+     |      This method displays the samples in a 2-dimensional UMAP
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      scale: float
+     |          To change size of points, change scale parameter.
+     |      
+     |      alpha: float
+     |          Value between 0-1 that controls transparency of points.
+     |      
+     |      filename: str
+     |          To save umap plot to results folder, enter a name for the file and the umap
+     |          will be saved to the results directory.
+     |          i.e. umap.png
      |      
      |      Returns
      |      
@@ -4110,6 +4354,29 @@ CLASSES
      |          are stored in this dataframe where column names represent
      |          the feature number.
      |  
+     |  Sample_Features(self, set='all', Weight_by_Freq=True)
+     |      Sample-Level Feature Values
+     |      
+     |      This method returns a dataframe with the aggregate sample level features.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      Returns
+     |      self.sample_featres: pandas dataframe
+     |          This function returns the average feature vector for each sample analyzed. This can be used to make further
+     |          downstream comparisons such as inter-repertoire distances.
+     |      ---------------------------------------
+     |  
      |  Structural_Diversity(self, sample=None, n_jobs=1)
      |      Structural Diversity Measurements
      |      
@@ -4178,6 +4445,9 @@ CLASSES
      |          smaller to get better labeling of the rows.
      |      
      |      Returns
+     |      self.sample_featres: pandas dataframe
+     |          This function returns the average feature vector for each sample analyzed. This can be used to make further
+     |          downstream comparisons such as inter-repertoire distances.
      |      ---------------------------------------
      |  
      |  HeatMap_Sequences(self, set='all', filename='Heatmap_Sequences.tif', sample_num=None, sample_num_per_class=None, color_dict=None)
@@ -4287,7 +4557,7 @@ CLASSES
      |          Pairwise distances of all samples
      |      ---------------------------------------
      |  
-     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, filename=None, prob_plot=None)
+     |  UMAP_Plot(self, set='all', by_class=False, by_cluster=False, by_sample=False, freq_weight=False, show_legend=True, scale=100, Load_Prev_Data=False, alpha=1.0, sample=None, sample_per_class=None, filename=None, prob_plot=None, plot_by_class=False)
      |      UMAP vizualisation of TCR Sequences
      |      
      |      This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
@@ -4332,6 +4602,9 @@ CLASSES
      |      sample: int
      |          Number of events to sub-sample for visualization.
      |      
+     |      sample_per_class: int
+     |           Number of events to randomly sample per class for UMAP.
+     |      
      |      filename: str
      |          To save umap plot to results folder, enter a name for the file and the umap
      |          will be saved to the results directory.
@@ -4344,6 +4617,38 @@ CLASSES
      |          displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
      |          when the set parameter is turned to 'test'.
      |      
+     |      
+     |      Returns
+     |      
+     |      ---------------------------------------
+     |  
+     |  UMAP_Plot_Samples(self, set='all', filename='UMAP_Samples.tif', Weight_by_Freq=True, scale=5, alpha=1.0)
+     |      UMAP vizualisation of TCR Samples
+     |      
+     |      This method displays the samples in a 2-dimensional UMAP
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      
+     |      set: str
+     |          To choose which set of sequences to analye, enter either
+     |          'all','train', 'valid',or 'test'. Since the sequences in the train set
+     |          may be overfit, it preferable to generally examine the test set on its own.
+     |      
+     |      Weight_by_Freq: bool
+     |          Option to weight each sequence used in aggregate measure
+     |          of feature across sample by its frequency.
+     |      
+     |      scale: float
+     |          To change size of points, change scale parameter.
+     |      
+     |      alpha: float
+     |          Value between 0-1 that controls transparency of points.
+     |      
+     |      filename: str
+     |          To save umap plot to results folder, enter a name for the file and the umap
+     |          will be saved to the results directory.
+     |          i.e. umap.png
      |      
      |      Returns
      |      
