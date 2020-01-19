@@ -2552,29 +2552,18 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         sparsity_cost = tf.Variable(0.0)
 
                     if ortho_alpha is not None:
-                        def upper_mask(A):
-                            ones = tf.ones_like(A)
-                            mask_a = tf.matrix_band_part(ones, 0, -1)  # Upper triangular matrix of 0s and 1s
-                            mask_b = tf.matrix_band_part(ones, 0, 0)  # Diagonal matrix of 0s and 1s
-                            mask = tf.cast(mask_a - mask_b, dtype=tf.bool)  #
-                            return mask
-
+                        #Get pairwise cosine distances
                         ortho_a = tf.matmul(z_w, z_w, transpose_a=True)
                         norm = tf.norm(z_w,axis=0)
                         cos_norm = tf.matmul(norm[:,tf.newaxis],norm[tf.newaxis,:])
                         ortho_a = tf.math.divide_no_nan(ortho_a,cos_norm)
 
+                        #select for all unique pairwise and take average distance
                         mask = upper_mask(ortho_a)
-                        # if sparsity_alpha is not None:
-                        #     ortho_mask = tf.cast(tf.matmul(z_mask, z_mask, transpose_a=True),dtype=tf.bool)
-                        #     mask = tf.math.logical_and(mask,ortho_mask)
                         ortho_a = tf.abs(tf.boolean_mask(ortho_a, mask))
                         ortho_cost = ortho_alpha * tf.reduce_mean(ortho_a)
                     else:
                         ortho_cost = tf.Variable(0.0)
-
-                    # if sparsity_alpha is not None:
-                    #     z_w = z_mask * z_w
 
                     z_mean = tf.matmul(fc,z_w,name='z_mean')
                     z_log_var = tf.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
@@ -2737,10 +2726,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 train_loss = []
                 latent_loss = []
                 training = True
-                # z_mask_input = np.ones([1,latent_dim]).astype('float32')
                 e = 0
-                # if weight_min is None:
-                #     weight_min = np.mean(np.sum(sparse_weights.eval(), 0)) / latent_dim
 
                 while training:
                     iteration = 0
@@ -2752,9 +2738,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                     for vars in get_batches(Vars, batch_size=batch_size,random=True):
                         feed_dict = {}
-
-                        # if sparsity_alpha is not None:
-                        #     feed_dict[z_mask] = z_mask_input
 
                         if self.use_alpha is True:
                             feed_dict[GO.X_Seq_alpha] = vars[0]
@@ -2798,13 +2781,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                                   "Orthonorm Loss: {:5f}:".format(ortho_loss_i),
                                   "Recon Accuracy: {:.5f}".format(accuracy_i))
 
-                        #if sparsity_alpha is not None:
-                            # z_norm = np.linalg.norm(z_w_train.eval(),axis=0)
-                            # z_exp = z_norm/np.sum(z_norm)
-                            # thresh = 1/latent_dim
-                            # z_mask_input = (z_exp < thresh).astype('float32').reshape(1,-1)
-                            #z_mask_input = (np.sum(sparse_weights.eval(), 0) > weight_min).astype('float32').reshape(1,-1)
-
                         if e >= epochs_min:
                             if accuracy_min is not None:
                                 if np.mean(accuracy_list[-stop_criterion_window:]) > accuracy_min:
@@ -2836,8 +2812,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                 for vars in get_batches(Vars, batch_size=batch_size, random=False):
                     feed_dict = {}
-                    # if sparsity_alpha is not None:
-                    #     feed_dict[z_mask] = z_mask_input
+
                     if self.use_alpha is True:
                         feed_dict[GO.X_Seq_alpha] = vars[0]
                     if self.use_beta is True:
@@ -2935,12 +2910,16 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'rb') as f:
                 features,embed_dict,z_w_val = pickle.load(f)
 
+        eig = np.linalg.norm(z_w_val, axis=0)
+        explained_ratio = eig / np.sum(eig,axis=0)
+        ind = np.flip(np.argsort(explained_ratio))
+        eig = eig[ind]
+        explained_ratio = explained_ratio[ind]
+        features = features[:, ind]
+        z_w_val = z_w_val[:,ind]
+
         if var_explained is not None:
-            exp = np.linalg.norm(z_w_val, axis=0) / np.sum(np.linalg.norm(z_w_val, axis=0))
-            ind = np.flip(np.argsort(exp))
-            sel = np.where(np.cumsum(exp[ind]) > var_explained)[0][0]
-            self.ft_keep = ind[0:sel]
-            features = features[:, self.ft_keep]
+            features = features[:,0:np.where(np.cumsum(explained_ratio) > var_explained)[0][0]]
 
         if norm_features:
             ss = StandardScaler()
@@ -2950,6 +2929,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
         self.embed_dict = embed_dict
         self.z_w = z_w_val
+        self.explained_variance_ = eig
+        self.explained_variance_ratio_ = explained_ratio
         print('Training Done')
 
     def KNN_Sequence_Classifier(self,folds=5, k_values=list(range(1, 500, 25)), rep=5, plot_metrics=False, by_class=False,

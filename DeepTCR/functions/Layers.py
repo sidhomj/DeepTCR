@@ -230,6 +230,13 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     return fc
 
 #Layers for VAE
+def upper_mask(A):
+    ones = tf.ones_like(A)
+    mask_a = tf.matrix_band_part(ones, 0, -1)  # Upper triangular matrix of 0s and 1s
+    mask_b = tf.matrix_band_part(ones, 0, 0)  # Diagonal matrix of 0s and 1s
+    mask = tf.cast(mask_a - mask_b, dtype=tf.bool)  #
+    return mask
+
 def Recon_Loss(inputs,logits):
     #Calculate Per Sample Reconstruction Loss
     shape_layer_1 = inputs.get_shape().as_list()
