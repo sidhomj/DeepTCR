@@ -2441,8 +2441,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                   trainable_embedding=True,use_only_gene=False,use_only_seq=False,use_only_hla=False,
                   epochs_min=0,stop_criterion=0.01,stop_criterion_window=30,
                   kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
-                  graph_seed=None,split_seed=None,sparsity_alpha = None,weight_min = None, ortho_alpha = None,
-                   learning_rate=0.001,norm_features=True,variational_alpha=1e-3,recon_loss_min=None,var_explained=None):
+                  graph_seed=None,split_seed=None,sparsity_alpha = None,ortho_alpha = None,variational_alpha=1e-3,
+                   learning_rate=0.001,norm_features=True,recon_loss_min=None,var_explained=None):
         """
         Train Variational Autoencoder (VAE)
 
