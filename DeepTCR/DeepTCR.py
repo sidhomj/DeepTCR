@@ -2442,7 +2442,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                   epochs_min=0,stop_criterion=0.01,stop_criterion_window=30,
                   kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
                   graph_seed=None,split_seed=None,sparsity_alpha = None,ortho_alpha = None,variational_alpha=1e-3,
-                   learning_rate=0.001,norm_features=True,recon_loss_min=None,var_explained=None):
+                   learning_rate=0.001,standard_scale_features=True,recon_loss_min=None,var_explained=None,norm_features_by_explained_variance=True):
         """
         Train Variational Autoencoder (VAE)
 
@@ -2919,14 +2919,16 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         z_w_val = z_w_val[:,ind]
 
         if var_explained is not None:
-            features = features[:,0:np.where(np.cumsum(explained_ratio) > var_explained)[0][0]]
+            features = features[:,0:np.where(np.cumsum(explained_ratio) > var_explained)[0][0]+1]
 
-        if norm_features:
+        if standard_scale_features:
             ss = StandardScaler()
-            self.features = ss.fit_transform(features)
-        else:
-            self.features = features
+            features = ss.fit_transform(features)
 
+        if norm_features_by_explained_variance:
+            features = features*np.expand_dims(explained_ratio[0:len(features.T)],0)
+
+        self.features = features
         self.embed_dict = embed_dict
         self.z_w = z_w_val
         self.explained_variance_ = eig
