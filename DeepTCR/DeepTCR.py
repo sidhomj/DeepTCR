@@ -2552,16 +2552,23 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         sparsity_cost = tf.Variable(0.0)
 
                     if ortho_alpha is not None:
-                        #Get pairwise cosine distances
+                        #Get pairwise dot product
                         ortho_a = tf.matmul(z_w, z_w, transpose_a=True)
-                        norm = tf.norm(z_w,axis=0)
-                        cos_norm = tf.matmul(norm[:,tf.newaxis],norm[tf.newaxis,:])
-                        ortho_a = tf.math.divide_no_nan(ortho_a,cos_norm)
+                        # norm = tf.norm(z_w,axis=0)
+                        # cos_norm = tf.matmul(norm[:,tf.newaxis],norm[tf.newaxis,:])
+                        # ortho_a = tf.math.divide_no_nan(ortho_a,cos_norm)
 
-                        #select for all unique pairwise and take average distance
+                        #select for all unique pairwise and take dot product
                         mask = upper_mask(ortho_a)
                         ortho_a = tf.abs(tf.boolean_mask(ortho_a, mask))
-                        ortho_cost = ortho_alpha * tf.reduce_mean(ortho_a)
+                        ortho_cost = tf.reduce_mean(ortho_a)
+
+                        #Enforce orthonormality (i.e.magnitude of transformation must be 1)
+                        # norm_loss = norm-1
+                        # ortho_cost += tf.reduce_mean(tf.cast(norm_loss>0,tf.float32)*norm_loss)
+
+                        ortho_cost = ortho_alpha*ortho_cost
+
                     else:
                         ortho_cost = tf.Variable(0.0)
 
