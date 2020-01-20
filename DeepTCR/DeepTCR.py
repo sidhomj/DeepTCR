@@ -2442,7 +2442,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                   epochs_min=0,stop_criterion=0.01,stop_criterion_window=30,
                   kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
                   graph_seed=None,split_seed=None,sparsity_alpha = None,ortho_alpha = None,variational_alpha=1e-3,
-                   learning_rate=0.001,standard_scale_features=True,recon_loss_min=None,var_explained=None,norm_features_by_explained_variance=True):
+                   learning_rate=0.001,recon_loss_min=None,var_explained=None,norm_features_by_explained_variance=False):
         """
         Train Variational Autoencoder (VAE)
 
@@ -2574,10 +2574,10 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                     z_mean = tf.matmul(fc,z_w,name='z_mean')
                     z_log_var = tf.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
-                    latent_costs = []
-                    latent_costs.append(Latent_Loss(z_log_var,z_mean,alpha=variational_alpha))
+                    latent_cost = Latent_Loss(z_log_var,z_mean,alpha=variational_alpha)
 
-                    z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)
+                    epsilon = tf.random_normal(tf.shape(z_mean))
+                    z = z_mean + tf.exp(z_log_var / 2) * epsilon
                     z = tf.identity(z, name='z')
 
                     fc_up = tf.layers.dense(z, 128)
@@ -2688,10 +2688,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                     recon_cost = tf.reduce_sum(recon_losses,1)
                     recon_cost = tf.reduce_mean(recon_cost)
-
-                    latent_cost = 0
-                    for u in latent_costs:
-                        latent_cost += u
 
                     if self.use_w:
                         latent_cost = GO.w*latent_cost
@@ -2846,7 +2842,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     if self.use_w:
                         feed_dict[GO.w] = vars[8]
 
-                    get = z_mean
+                    get = z
                     features_ind, accuracy_check = sess.run([get, accuracy], feed_dict=feed_dict)
                     features_list.append(features_ind)
                     accuracy_list.append(accuracy_check)
@@ -2927,10 +2923,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
         if var_explained is not None:
             features = features[:,0:np.where(np.cumsum(explained_ratio) > var_explained)[0][0]+1]
-
-        if standard_scale_features:
-            ss = StandardScaler()
-            features = ss.fit_transform(features)
 
         if norm_features_by_explained_variance:
             features = features*np.expand_dims(explained_ratio[0:len(features.T)],0)
