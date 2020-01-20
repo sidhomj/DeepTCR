@@ -2900,7 +2900,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 embed_dict = dict(zip(name_keep,embedding_keep))
                 saver.save(sess,os.path.join(self.Name,'model','model.ckpt'))
                 with open(os.path.join(self.Name,'model','model_type.pkl'),'wb') as f:
-                    pickle.dump(['VAE',z_mean.name,self.use_alpha,self.use_beta,
+                    pickle.dump(['VAE',z.name,self.use_alpha,self.use_beta,
                                 self.use_v_beta,self.use_d_beta,self.use_j_beta,
                                 self.use_v_alpha,self.use_j_alpha,self.use_hla,self.use_w,
                                  self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,
