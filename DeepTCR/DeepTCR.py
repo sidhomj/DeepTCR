@@ -2575,6 +2575,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     z_mean = tf.matmul(fc,z_w,name='z_mean')
                     z_log_var = tf.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
                     latent_cost = Latent_Loss(z_log_var,z_mean,alpha=variational_alpha)
+                    z_out = z_mean
 
                     epsilon = tf.random_normal(tf.shape(z_mean))
                     z = z_mean + tf.exp(z_log_var / 2) * epsilon
@@ -2842,7 +2843,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     if self.use_w:
                         feed_dict[GO.w] = vars[8]
 
-                    get = z
+                    get = z_out
                     features_ind, accuracy_check = sess.run([get, accuracy], feed_dict=feed_dict)
                     features_list.append(features_ind)
                     accuracy_list.append(accuracy_check)
@@ -2900,7 +2901,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 embed_dict = dict(zip(name_keep,embedding_keep))
                 saver.save(sess,os.path.join(self.Name,'model','model.ckpt'))
                 with open(os.path.join(self.Name,'model','model_type.pkl'),'wb') as f:
-                    pickle.dump(['VAE',z.name,self.use_alpha,self.use_beta,
+                    pickle.dump(['VAE',get.name,self.use_alpha,self.use_beta,
                                 self.use_v_beta,self.use_d_beta,self.use_j_beta,
                                 self.use_v_alpha,self.use_j_alpha,self.use_hla,self.use_w,
                                  self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,
@@ -2924,8 +2925,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         if var_explained is not None:
             features = features[:,0:np.where(np.cumsum(explained_ratio) > var_explained)[0][0]+1]
 
-        if norm_features_by_explained_variance:
-            features = features*np.expand_dims(explained_ratio[0:len(features.T)],0)
+        # if norm_features_by_explained_variance:
+        #     features = features*np.expand_dims(explained_ratio[0:len(features.T)],0)
 
         self.features = features
         self.embed_dict = embed_dict
