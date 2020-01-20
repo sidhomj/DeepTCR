@@ -2442,7 +2442,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                   epochs_min=0,stop_criterion=0.01,stop_criterion_window=30,
                   kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
                   graph_seed=None,split_seed=None,sparsity_alpha = None,ortho_alpha = None,variational_alpha=1e-3,
-                   learning_rate=0.001,recon_loss_min=None,var_explained=None,norm_features_by_explained_variance=False):
+                   learning_rate=0.001,recon_loss_min=None,var_explained=None):
         """
         Train Variational Autoencoder (VAE)
 
@@ -2554,19 +2554,11 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     if ortho_alpha is not None:
                         #Get pairwise dot product
                         ortho_a = tf.matmul(z_w, z_w, transpose_a=True)
-                        # norm = tf.norm(z_w,axis=0)
-                        # cos_norm = tf.matmul(norm[:,tf.newaxis],norm[tf.newaxis,:])
-                        # ortho_a = tf.math.divide_no_nan(ortho_a,cos_norm)
 
                         #select for all unique pairwise and take dot product
                         mask = upper_mask(ortho_a)
                         ortho_a = tf.abs(tf.boolean_mask(ortho_a, mask))
                         ortho_cost = tf.reduce_mean(ortho_a)
-
-                        #Enforce orthonormality (i.e.magnitude of transformation must be 1)
-                        # norm_loss = norm-1
-                        # ortho_cost += tf.reduce_mean(tf.cast(norm_loss>0,tf.float32)*norm_loss)
-
                         ortho_cost = ortho_alpha*ortho_cost
 
                     else:
@@ -2924,9 +2916,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
         if var_explained is not None:
             features = features[:,0:np.where(np.cumsum(explained_ratio) > var_explained)[0][0]+1]
-
-        # if norm_features_by_explained_variance:
-        #     features = features*np.expand_dims(explained_ratio[0:len(features.T)],0)
 
         self.features = features
         self.embed_dict = embed_dict
