@@ -2774,9 +2774,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                             print("Epoch = {}, Iteration = {}".format(e,iteration),
                                   "Total Loss: {:.3f}:".format(train_loss_i),
                                   "Recon Loss: {:.3f}:".format(recon_loss_i),
-                                  "Latent Loss: {:3f}:".format(latent_loss_i),
-                                  "Sparsity Loss: {:3f}:".format(sparsity_loss_i),
-                                  "Orthonorm Loss: {:3f}:".format(ortho_loss_i),
+                                  "Latent Loss: {:.3f}:".format(latent_loss_i),
+                                  "Sparsity Loss: {:.3f}:".format(sparsity_loss_i),
+                                  "Orthonorm Loss: {:.3f}:".format(ortho_loss_i),
                                   "Recon Accuracy: {:.3f}".format(accuracy_i))
 
                         if e >= epochs_min:
@@ -2879,7 +2879,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     pickle.dump(self.kernel, f)
 
 
-                print('Reconstruction Accuracy: {:.5f}'.format(np.nanmean(accuracy_list)))
+                print('Reconstruction Accuracy: {:.3f}'.format(np.nanmean(accuracy_list)))
 
                 embedding_layers = [GO.embedding_layer_v_alpha,GO.embedding_layer_j_alpha,
                                     GO.embedding_layer_v_beta,GO.embedding_layer_d_beta,
