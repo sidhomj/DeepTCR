@@ -81,6 +81,9 @@ class DeepTCR_base(object):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
+        #Other global parameters
+        self.print_precision =
+
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
                     v_alpha_column=None,j_alpha_column=None,
@@ -2770,12 +2773,12 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                         if suppress_output is False:
                             print("Epoch = {}, Iteration = {}".format(e,iteration),
-                                  "Total Loss: {:.5f}:".format(train_loss_i),
-                                  "Recon Loss: {:.5f}:".format(recon_loss_i),
-                                  "Latent Loss: {:5f}:".format(latent_loss_i),
-                                  "Sparsity Loss: {:5f}:".format(sparsity_loss_i),
-                                  "Orthonorm Loss: {:5f}:".format(ortho_loss_i),
-                                  "Recon Accuracy: {:.5f}".format(accuracy_i))
+                                  "Total Loss: {:.3f}:".format(train_loss_i),
+                                  "Recon Loss: {:.3f}:".format(recon_loss_i),
+                                  "Latent Loss: {:3f}:".format(latent_loss_i),
+                                  "Sparsity Loss: {:3f}:".format(sparsity_loss_i),
+                                  "Orthonorm Loss: {:3f}:".format(ortho_loss_i),
+                                  "Recon Accuracy: {:.3f}".format(accuracy_i))
 
                         if e >= epochs_min:
                             if accuracy_min is not None:
@@ -3555,12 +3558,12 @@ class DeepTCR_SS(DeepTCR_S_base):
                 if suppress_output is False:
                     print("Training_Statistics: \n",
                           "Epoch: {}".format(e + 1),
-                          "Training loss: {:.5f}".format(train_loss),
-                          "Validation loss: {:.5f}".format(valid_loss),
-                          "Testing loss: {:.5f}".format(test_loss),
-                          "Training Accuracy: {:.5}".format(train_accuracy),
-                          "Validation Accuracy: {:.5}".format(valid_accuracy),
-                          "Testing AUC: {:.5}".format(test_auc))
+                          "Training loss: {:.3f}".format(train_loss),
+                          "Validation loss: {:.3f}".format(valid_loss),
+                          "Testing loss: {:.3f}".format(test_loss),
+                          "Training Accuracy: {:.3}".format(train_accuracy),
+                          "Validation Accuracy: {:.3}".format(valid_accuracy),
+                          "Testing AUC: {:.3}".format(test_auc))
 
 
                 if e > epochs_min:
@@ -4205,13 +4208,13 @@ class DeepTCR_WF(DeepTCR_S_base):
                 if suppress_output is False:
                     print("Training_Statistics: \n",
                           "Epoch: {}".format(e),
-                          "Training loss: {:.5f}".format(train_loss),
-                          "Validation loss: {:.5f}".format(valid_loss),
-                          "Testing loss: {:.5f}".format(test_loss),
-                          "Training Accuracy: {:.5}".format(train_accuracy),
-                          "Validation Accuracy: {:.5}".format(valid_accuracy),
-                          "Testing Accuracy: {:.5}".format(test_accuracy),
-                          'Testing AUC: {:.5}'.format(test_auc))
+                          "Training loss: {:.3f}".format(train_loss),
+                          "Validation loss: {:.3f}".format(valid_loss),
+                          "Testing loss: {:.3f}".format(test_loss),
+                          "Training Accuracy: {:.3}".format(train_accuracy),
+                          "Validation Accuracy: {:.3}".format(valid_accuracy),
+                          "Testing Accuracy: {:.3}".format(test_accuracy),
+                          'Testing AUC: {:.3}'.format(test_auc))
 
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore')
