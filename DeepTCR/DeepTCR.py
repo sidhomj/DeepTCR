@@ -82,7 +82,6 @@ class DeepTCR_base(object):
             os.makedirs(directory)
 
         #Other global parameters
-        self.print_precision =
 
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
