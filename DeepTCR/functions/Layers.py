@@ -381,7 +381,7 @@ def Conv_Model_LI(GO, self, trainable_embedding, kernel, use_only_seq,
         Seq_Indices.append(GO.indices_beta)
 
     if Seq_Indices:
-        num_fc_layers_ind = 3
+        num_fc_layers_ind = 6
         Seq_Indices = tf.concat(Seq_Indices, axis=1)
         if num_fc_layers_ind != 0:
             for _ in range(num_fc_layers_ind):

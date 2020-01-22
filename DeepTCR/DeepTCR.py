@@ -2926,6 +2926,480 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         self.explained_variance_ratio_ = explained_ratio
         print('Training Done')
 
+    def Train_CVAE_LI(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
+                  trainable_embedding=True,use_only_gene=False,use_only_seq=False,use_only_hla=False,
+                  epochs_min=0,stop_criterion=0.01,stop_criterion_window=30,
+                  kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
+                  graph_seed=None,split_seed=None,sparsity_alpha = None,ortho_alpha = None,variational_alpha=1e-3,
+                   learning_rate=0.001,recon_loss_min=None,var_explained=None):
+        """
+        Train Variational Autoencoder (VAE)
+
+        This method trains the network and saves features values for sequences
+        to create heatmaps.
+
+        Inputs
+        ---------------------------------------
+
+        latent_dim: int
+            Number of latent dimensions for VAE.
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        accuracy_min: float
+            Minimum reconstruction accuracy before terminating training.
+
+        Load_Prev_Data: bool
+            Load previous feature data from prior training.
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        trainable_embedding: bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        use_only_gene: bool
+            To only use gene-usage features, set to True.
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True.
+
+        use_only_hla: bool
+            To only use hla feaures, set to True.
+
+        epochs_min: int
+            The minimum number of epochs to train the autoencoder.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
+        kernel: int
+            To specify the motif k-mer of the first layer of the autoencoder, change this
+            parameter.
+
+        size_of_net: list or str
+            The convolutional layers of this network have 3 layers for which the use can
+            modify the number of neurons per layer. The user can either specify the size of the network
+            with the following options:
+                - small == [12,32,64] neurons for the 3 respective layers
+                - medium == [32,64,128] neurons for the 3 respective layers
+                - large == [64,128,256] neurons for the 3 respective layers
+                - custom, where the user supplies a list with the number of nuerons for the respective layers
+                    i.e. [3,3,3] would have 3 neurons for all 3 layers.
+
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
+        Returns
+
+        self.vae_features: array
+            An array that contains n x latent_dim containing features for all sequences
+
+        ---------------------------------------
+
+        """
+
+        if Load_Prev_Data is False:
+            GO = graph_object()
+            GO.size_of_net = size_of_net
+            GO.embedding_dim_genes = embedding_dim_genes
+            GO.embedding_dim_aa = embedding_dim_aa
+            GO.embedding_dim_hla = embedding_dim_hla
+            GO.variational_alpha = variational_alpha
+            GO.sparsity_alpha = sparsity_alpha
+            GO.ortho_alpha = ortho_alpha
+
+            graph_model_AE = tf.Graph()
+            with graph_model_AE.device(self.device):
+                with graph_model_AE.as_default():
+                    if graph_seed is not None:
+                        tf.set_random_seed(graph_seed)
+
+                    GO.net = 'ae'
+                    if self.use_w:
+                        GO.w = tf.placeholder(tf.float32, shape=[None])
+                    GO.Features,GO.Indices = Conv_Model_LI(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla)
+                    LLO_Motifs = VAE_Latent_Layer(GO,GO.Features,latent_dim,name='Motif_Features')
+                    LLO_Pos = VAE_Latent_Layer(GO,GO.Indices,latent_dim,name='Pos_Features')
+                    z = tf.concat((LLO_Motifs.z,LLO_Pos.z),axis=1)
+                    latent_cost = (LLO_Motifs.latent_cost + LLO_Pos.latent_cost)/2
+                    sparsity_cost = (LLO_Motifs.sparsity_cost + LLO_Pos.sparsity_cost)/2
+                    ortho_cost = (LLO_Motifs.ortho_cost + LLO_Pos.ortho_cost)/2
+                    #LLO_Motifs = VAE_Latent_Layer(GO,tf.concat((GO.Features,GO.Indices),axis=1),latent_dim)
+                    #z, latent_cost, sparsity_cost, ortho_cost = LLO_Motifs.z, LLO_Motifs.latent_cost, LLO_Motifs.sparsity_cost, LLO_Motifs.ortho_cost
+
+                    fc_up = tf.layers.dense(z, 128)
+                    fc_up = tf.layers.dense(fc_up, 256)
+                    fc_up_flat = fc_up
+                    fc_up = tf.reshape(fc_up, shape=[-1, 1, 4, 64])
+
+                    seq_losses = []
+                    seq_accuracies = []
+                    if self.use_beta:
+                        upsample1_beta = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
+                        upsample2_beta = tf.layers.conv2d_transpose(upsample1_beta, 64, (1, 3), (1, 2), activation=tf.nn.relu)
+
+                        if trainable_embedding is True:
+                            upsample3_beta = tf.layers.conv2d_transpose(upsample2_beta, GO.embedding_dim_aa, (1, 4),(1, 2), activation=tf.nn.relu)
+                            embedding_layer_seq_back = tf.transpose(GO.embedding_layer_seq, perm=(0, 1, 3, 2))
+                            logits_AE_beta = tf.squeeze(tf.tensordot(upsample3_beta, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
+                        else:
+                            logits_AE_beta = tf.layers.conv2d_transpose(upsample2_beta, 21, (1, 4),(1, 2), activation=tf.nn.relu)
+
+                        recon_cost_beta = Recon_Loss(GO.X_Seq_beta, logits_AE_beta)
+                        seq_losses.append(recon_cost_beta)
+
+                        predicted_beta = tf.squeeze(tf.argmax(logits_AE_beta, axis=3), axis=1)
+                        actual_ae_beta = tf.squeeze(GO.X_Seq_beta, axis=1)
+                        w = tf.cast(tf.squeeze(tf.greater(GO.X_Seq_beta, 0), 1), tf.float32)
+                        correct_ae_beta = tf.reduce_sum(w * tf.cast(tf.equal(predicted_beta, actual_ae_beta), tf.float32),axis=1) / tf.reduce_sum(w, axis=1)
+
+                        accuracy_beta = tf.reduce_mean(correct_ae_beta, axis=0)
+                        seq_accuracies.append(accuracy_beta)
+
+                    if self.use_alpha:
+                        upsample1_alpha = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
+                        upsample2_alpha = tf.layers.conv2d_transpose(upsample1_alpha, 64, (1, 3), (1, 2),activation=tf.nn.relu)
+
+                        if trainable_embedding is True:
+                            upsample3_alpha = tf.layers.conv2d_transpose(upsample2_alpha, GO.embedding_dim_aa, (1, 4), (1, 2),activation=tf.nn.relu)
+                            embedding_layer_seq_back = tf.transpose(GO.embedding_layer_seq, perm=(0, 1, 3, 2))
+                            logits_AE_alpha = tf.squeeze(tf.tensordot(upsample3_alpha, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
+                        else:
+                            logits_AE_alpha = tf.layers.conv2d_transpose(upsample2_alpha, 21, (1, 4), (1, 2),activation=tf.nn.relu)
+
+                        recon_cost_alpha = Recon_Loss(GO.X_Seq_alpha, logits_AE_alpha)
+                        seq_losses.append(recon_cost_alpha)
+
+                        predicted_alpha = tf.squeeze(tf.argmax(logits_AE_alpha, axis=3), axis=1)
+                        actual_ae_alpha = tf.squeeze(GO.X_Seq_alpha, axis=1)
+                        w = tf.cast(tf.squeeze(tf.greater(GO.X_Seq_alpha, 0), 1), tf.float32)
+                        correct_ae_alpha = tf.reduce_sum(w * tf.cast(tf.equal(predicted_alpha, actual_ae_alpha), tf.float32), axis=1) / tf.reduce_sum(w, axis=1)
+                        accuracy_alpha = tf.reduce_mean(correct_ae_alpha, axis=0)
+                        seq_accuracies.append(accuracy_alpha)
+
+                    hla_accuracies = []
+                    hla_losses = []
+                    if self.use_hla:
+                        hla_loss, hla_acc = Get_HLA_Loss(fc_up_flat,GO.embedding_layer_hla,GO.X_hla)
+                        hla_losses.append(hla_loss)
+                        hla_accuracies.append(hla_acc)
+
+                    gene_loss = []
+                    gene_accuracies = []
+                    if self.use_v_beta is True:
+                        v_beta_loss,v_beta_acc = Get_Gene_Loss(fc_up_flat,GO.embedding_layer_v_beta,GO.X_v_beta_OH)
+                        gene_loss.append(v_beta_loss)
+                        gene_accuracies.append(v_beta_acc)
+
+                    if self.use_d_beta is True:
+                        d_beta_loss, d_beta_acc = Get_Gene_Loss(fc_up_flat,GO.embedding_layer_d_beta,GO.X_d_beta_OH)
+                        gene_loss.append(d_beta_loss)
+                        gene_accuracies.append(d_beta_acc)
+
+                    if self.use_j_beta is True:
+                        j_beta_loss,j_beta_acc = Get_Gene_Loss(fc_up_flat,GO.embedding_layer_j_beta,GO.X_j_beta_OH)
+                        gene_loss.append(j_beta_loss)
+                        gene_accuracies.append(j_beta_acc)
+
+                    if self.use_v_alpha is True:
+                        v_alpha_loss,v_alpha_acc = Get_Gene_Loss(fc_up_flat,GO.embedding_layer_v_alpha,GO.X_v_alpha_OH)
+                        gene_loss.append(v_alpha_loss)
+                        gene_accuracies.append(v_alpha_acc)
+
+                    if self.use_j_alpha is True:
+                        j_alpha_loss,j_alpha_acc = Get_Gene_Loss(fc_up_flat,GO.embedding_layer_j_alpha,GO.X_j_alpha_OH)
+                        gene_loss.append(j_alpha_loss)
+                        gene_accuracies.append(j_alpha_acc)
+
+                    recon_losses = seq_losses + gene_loss + hla_losses
+                    accuracies = seq_accuracies + gene_accuracies + hla_accuracies
+
+                    if use_only_gene:
+                        recon_losses = gene_loss
+                        accuracies = gene_accuracies
+                    if use_only_seq:
+                        recon_losses = seq_losses
+                        accuracies = seq_accuracies
+                    if use_only_hla:
+                        recon_losses = hla_losses
+                        accuracies = hla_accuracies
+
+                    temp = []
+                    for l in recon_losses:
+                        l = l[:,tf.newaxis]
+                        temp.append(l)
+                    recon_losses = temp
+                    recon_losses = tf.concat(recon_losses,1)
+                    if self.use_w:
+                        recon_losses = GO.w[:,tf.newaxis]*recon_losses
+
+                    recon_cost = tf.reduce_sum(recon_losses,1)
+                    recon_cost = tf.reduce_mean(recon_cost)
+
+                    if self.use_w:
+                        latent_cost = GO.w*latent_cost
+
+                    total_cost = [recon_losses,latent_cost[:,tf.newaxis]]
+                    total_cost = tf.concat(total_cost,1)
+                    total_cost = tf.reduce_sum(total_cost,1)
+                    total_cost = tf.reduce_mean(total_cost)
+
+                    num_acc = len(accuracies)
+                    accuracy = 0
+                    for a in accuracies:
+                        accuracy += a
+                    accuracy = accuracy/num_acc
+                    latent_cost = tf.reduce_mean(latent_cost)
+
+                    opt_ae = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(total_cost)
+                    if sparsity_alpha is not None:
+                        opt_sparse = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(LLO_Motifs.sparsity_cost,var_list=LLO_Motifs.z_w)
+                        opt_ae = tf.group(opt_ae,opt_sparse)
+                        total_cost += LLO_Motifs.sparsity_cost
+
+                        opt_sparse = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(LLO_Pos.sparsity_cost, var_list=LLO_Pos.z_w)
+                        opt_ae = tf.group(opt_ae, opt_sparse)
+                        total_cost += LLO_Pos.sparsity_cost
+
+                    if ortho_alpha is not None:
+                        opt_ortho = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(LLO_Motifs.ortho_cost,var_list=LLO_Motifs.z_w)
+                        opt_ae = tf.group(opt_ae, opt_ortho)
+                        total_cost += LLO_Motifs.ortho_cost
+
+                        opt_ortho = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(LLO_Pos.ortho_cost,var_list=LLO_Pos.z_w)
+                        opt_ae = tf.group(opt_ae, opt_ortho)
+                        total_cost += LLO_Pos.ortho_cost
+
+                    saver = tf.train.Saver()
+
+            tf.reset_default_graph()
+            config = tf.ConfigProto(allow_soft_placement=True)
+            config.gpu_options.allow_growth = True
+
+            with tf.Session(graph=graph_model_AE,config=config) as sess:
+                sess.run(tf.global_variables_initializer())
+                stop_check_list = []
+                accuracy_list = []
+                recon_loss = []
+                train_loss = []
+                latent_loss = []
+                training = True
+                e = 0
+
+                while training:
+                    iteration = 0
+                    Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.v_beta_num,self.d_beta_num,self.j_beta_num,
+                            self.v_alpha_num,self.j_alpha_num,self.hla_data_seq_num,self.w]
+
+                    if split_seed is not None:
+                        np.random.seed(split_seed)
+
+                    for vars in get_batches(Vars, batch_size=batch_size,random=True):
+                        feed_dict = {}
+
+                        if self.use_alpha is True:
+                            feed_dict[GO.X_Seq_alpha] = vars[0]
+                        if self.use_beta is True:
+                            feed_dict[GO.X_Seq_beta] = vars[1]
+
+                        if self.use_v_beta is True:
+                            feed_dict[GO.X_v_beta] = vars[2]
+
+                        if self.use_d_beta is True:
+                            feed_dict[GO.X_d_beta] = vars[3]
+
+                        if self.use_j_beta is True:
+                            feed_dict[GO.X_j_beta] = vars[4]
+
+                        if self.use_v_alpha is True:
+                            feed_dict[GO.X_v_alpha] = vars[5]
+
+                        if self.use_j_alpha is True:
+                            feed_dict[GO.X_j_alpha] = vars[6]
+
+                        if self.use_hla:
+                            feed_dict[GO.X_hla] = vars[7]
+
+                        if self.use_w:
+                            feed_dict[GO.w] = vars[8]
+
+                        train_loss_i, recon_loss_i, latent_loss_i, sparsity_loss_i, ortho_loss_i, accuracy_i, _ = sess.run([total_cost, recon_cost, latent_cost,
+                                                                                                                            sparsity_cost,ortho_cost,accuracy, opt_ae], feed_dict=feed_dict)
+                        accuracy_list.append(accuracy_i)
+                        recon_loss.append(recon_loss_i)
+                        latent_loss.append(latent_loss_i)
+                        train_loss.append(train_loss_i)
+
+                        if suppress_output is False:
+                            print("Epoch = {}, Iteration = {}".format(e,iteration),
+                                  "Total Loss: {:.3f}:".format(train_loss_i),
+                                  "Recon Loss: {:.3f}:".format(recon_loss_i),
+                                  "Latent Loss: {:.3f}:".format(latent_loss_i),
+                                  "Sparsity Loss: {:.3f}:".format(sparsity_loss_i),
+                                  "Orthonorm Loss: {:.3f}:".format(ortho_loss_i),
+                                  "Recon Accuracy: {:.3f}".format(accuracy_i))
+
+                        if e >= epochs_min:
+                            if accuracy_min is not None:
+                                if np.mean(accuracy_list[-stop_criterion_window:]) > accuracy_min:
+                                    training = False
+                                    break
+                            elif recon_loss_min is not None:
+                                if np.mean(recon_loss[-stop_criterion_window:]) < recon_loss_min:
+                                    training = False
+                                    break
+                            else:
+                                with warnings.catch_warnings():
+                                    warnings.simplefilter("ignore")
+                                    stop_check_list.append(stop_check(train_loss,stop_criterion,stop_criterion_window))
+                                    if np.sum(stop_check_list[-3:]) >= 3:
+                                        training = False
+                                        break
+                        iteration += 1
+
+                    e += 1
+
+                features_list = []
+                accuracy_list = []
+                alpha_features_list = []
+                alpha_indices_list = []
+                beta_features_list = []
+                beta_indices_list = []
+                Vars = [self.X_Seq_alpha, self.X_Seq_beta, self.v_beta_num, self.d_beta_num, self.j_beta_num,
+                        self.v_alpha_num, self.j_alpha_num,self.hla_data_seq_num,self.w]
+
+                for vars in get_batches(Vars, batch_size=batch_size, random=False):
+                    feed_dict = {}
+
+                    if self.use_alpha is True:
+                        feed_dict[GO.X_Seq_alpha] = vars[0]
+                    if self.use_beta is True:
+                        feed_dict[GO.X_Seq_beta] = vars[1]
+
+                    if self.use_v_beta is True:
+                        feed_dict[GO.X_v_beta] = vars[2]
+
+                    if self.use_d_beta is True:
+                        feed_dict[GO.X_d_beta] = vars[3]
+
+                    if self.use_j_beta is True:
+                        feed_dict[GO.X_j_beta] = vars[4]
+
+                    if self.use_v_alpha is True:
+                        feed_dict[GO.X_v_alpha] = vars[5]
+
+                    if self.use_j_alpha is True:
+                        feed_dict[GO.X_j_alpha] = vars[6]
+
+                    if self.use_hla:
+                        feed_dict[GO.X_hla] = vars[7]
+
+                    if self.use_w:
+                        feed_dict[GO.w] = vars[8]
+
+                    get = LLO_Motifs.z_mean
+                    features_ind, accuracy_check = sess.run([get, accuracy], feed_dict=feed_dict)
+                    features_list.append(features_ind)
+                    accuracy_list.append(accuracy_check)
+
+                    if self.use_alpha is True:
+                        alpha_ft, alpha_i = sess.run([GO.alpha_out,GO.indices_alpha_out],feed_dict=feed_dict)
+                        alpha_features_list.append(alpha_ft)
+                        alpha_indices_list.append(alpha_i)
+
+                    if self.use_beta is True:
+                        beta_ft, beta_i = sess.run([GO.beta_out,GO.indices_beta_out],feed_dict=feed_dict)
+                        beta_features_list.append(beta_ft)
+                        beta_indices_list.append(beta_i)
+
+                features = np.vstack(features_list)
+                z_w_val = LLO_Motifs.z_w.eval()
+                accuracy_list = np.hstack(accuracy_list)
+                if self.use_alpha is True:
+                    self.alpha_features = np.vstack(alpha_features_list)
+                    self.alpha_indices = np.vstack(alpha_indices_list)
+
+                if self.use_beta is True:
+                    self.beta_features = np.vstack(beta_features_list)
+                    self.beta_indices = np.vstack(beta_indices_list)
+
+                self.kernel = kernel
+                #
+                if self.use_alpha is True:
+                    var_save = [self.alpha_features, self.alpha_indices, self.alpha_sequences]
+                    with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
+                        pickle.dump(var_save, f)
+
+                if self.use_beta is True:
+                    var_save = [self.beta_features, self.beta_indices, self.beta_sequences]
+                    with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
+                        pickle.dump(var_save, f)
+
+                with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
+                    pickle.dump(self.kernel, f)
+
+
+                print('Reconstruction Accuracy: {:.3f}'.format(np.nanmean(accuracy_list)))
+
+                embedding_layers = [GO.embedding_layer_v_alpha,GO.embedding_layer_j_alpha,
+                                    GO.embedding_layer_v_beta,GO.embedding_layer_d_beta,
+                                    GO.embedding_layer_j_beta]
+                embedding_names = ['v_alpha','j_alpha','v_beta','d_beta','j_beta']
+                name_keep = []
+                embedding_keep = []
+                for n,layer in zip(embedding_names,embedding_layers):
+                    if layer is not None:
+                        embedding_keep.append(layer.eval())
+                        name_keep.append(n)
+
+                embed_dict = dict(zip(name_keep,embedding_keep))
+                saver.save(sess,os.path.join(self.Name,'model','model.ckpt'))
+                with open(os.path.join(self.Name,'model','model_type.pkl'),'wb') as f:
+                    pickle.dump(['VAE',get.name,self.use_alpha,self.use_beta,
+                                self.use_v_beta,self.use_d_beta,self.use_j_beta,
+                                self.use_v_alpha,self.use_j_alpha,self.use_hla,self.use_w,
+                                 self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,
+                                 self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb],f)
+
+            with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
+                pickle.dump([features,embed_dict,z_w_val], f,protocol=4)
+
+        else:
+            with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'rb') as f:
+                features,embed_dict,z_w_val = pickle.load(f)
+
+        eig = np.linalg.norm(z_w_val, axis=0)
+        explained_ratio = eig / np.sum(eig,axis=0)
+        ind = np.flip(np.argsort(explained_ratio))
+        eig = eig[ind]
+        explained_ratio = explained_ratio[ind]
+        features = features[:, ind]
+        z_w_val = z_w_val[:,ind]
+
+        if var_explained is not None:
+            features = features[:,0:np.where(np.cumsum(explained_ratio) > var_explained)[0][0]+1]
+
+        self.features = features
+        self.embed_dict = embed_dict
+        self.z_w = z_w_val
+        self.explained_variance_ = eig
+        self.explained_variance_ratio_ = explained_ratio
+        print('Training Done')
+
+
     def KNN_Sequence_Classifier(self,folds=5, k_values=list(range(1, 500, 25)), rep=5, plot_metrics=False, by_class=False,
                                 plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC'],
                                 n_jobs=1,Load_Prev_Data=False):
