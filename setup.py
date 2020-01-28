@@ -14,7 +14,7 @@ with open(req_file) as f:
 setup(
     name="DeepTCR",
     description="Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data",
-    version="1.3.22",
+    version="1.3.23",
     author="John-William Sidhom",
     author_email="jsidhom1@jhmi.edu",
     packages=find_packages(),
@@ -22,6 +22,7 @@ setup(
     url="https://github.com/sidhomj/DeepTCR",
     license="LICENSE",
     long_description=open(os.path.join(dir,"README.md")).read(),
-    long_description_content_type='text/markdown'
+    long_description_content_type='text/markdown',
+    include_package_data=True
 )
 
