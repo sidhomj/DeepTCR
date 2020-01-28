@@ -23,6 +23,5 @@ setup(
     license="LICENSE",
     long_description=open(os.path.join(dir,"README.md")).read(),
     long_description_content_type='text/markdown',
-    include_package_data=True
+    package_data={'DeepTCR':[os.path.join('phenograph','louvain','*')]}
 )
-
