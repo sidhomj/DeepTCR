@@ -14,7 +14,7 @@ with open(req_file) as f:
 setup(
     name="DeepTCR",
     description="Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data",
-    version="1.3.23",
+    version="1.3.24",
     author="John-William Sidhom",
     author_email="jsidhom1@jhmi.edu",
     packages=find_packages(),
