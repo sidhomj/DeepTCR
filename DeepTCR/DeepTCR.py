@@ -2009,7 +2009,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                   trainable_embedding=True,use_only_gene=False,use_only_seq=False,use_only_hla=False,
                   epochs_min=0,stop_criterion=0.01,stop_criterion_window=30,
                   kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
-                  graph_seed=None,split_seed=None):
+                  graph_seed=None,split_seed=None,latent_alpha=1e-3):
         """
         Train Variational Autoencoder (VAE)
 
@@ -2080,6 +2080,10 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         embedding_dim_hla: int
             Learned latent dimensionality of HLA
 
+        latent_alpha: float
+            Penalty coefficient for latent loss. This value changes the degree of latent regularization on
+            the VAE.
+
         Returns
 
         self.vae_features: array
@@ -2110,7 +2114,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     z_mean = tf.layers.dense(fc, latent_dim, activation=None, name='z_mean')
                     z_log_var = tf.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
                     latent_costs = []
-                    latent_costs.append(Latent_Loss(z_log_var,z_mean))
+                    latent_costs.append(Latent_Loss(z_log_var,z_mean),alpha=latent_alpha)
 
                     z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)
                     z = tf.identity(z, name='z')

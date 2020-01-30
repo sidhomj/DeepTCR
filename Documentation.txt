@@ -1987,7 +1987,7 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
-     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, use_only_hla=False, epochs_min=0, stop_criterion=0.01, stop_criterion_window=30, kernel=3, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, graph_seed=None, split_seed=None)
+     |  Train_VAE(self, latent_dim=256, batch_size=10000, accuracy_min=None, Load_Prev_Data=False, suppress_output=False, trainable_embedding=True, use_only_gene=False, use_only_seq=False, use_only_hla=False, epochs_min=0, stop_criterion=0.01, stop_criterion_window=30, kernel=3, size_of_net='medium', embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, graph_seed=None, split_seed=None, latent_alpha=0.001)
      |      Train Variational Autoencoder (VAE)
      |      
      |      This method trains the network and saves features values for sequences
@@ -2056,6 +2056,10 @@ CLASSES
      |      
      |      embedding_dim_hla: int
      |          Learned latent dimensionality of HLA
+     |      
+     |      latent_alpha: float
+     |          Penalty coefficient for latent loss. This value changes the degree of latent regularization on
+     |          the VAE.
      |      
      |      Returns
      |      
@@ -4664,6 +4668,6 @@ CLASSES
      |      list of weak references to the object (if defined)
 
 FILE
-    /home/jsidhom1/DeepTCR/DeepTCR/DeepTCR.py
+    /home/jsidhom1/DeepTCR_master/DeepTCR/DeepTCR.py
 
 
