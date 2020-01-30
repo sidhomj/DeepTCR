@@ -2114,7 +2114,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     z_mean = tf.layers.dense(fc, latent_dim, activation=None, name='z_mean')
                     z_log_var = tf.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
                     latent_costs = []
-                    latent_costs.append(Latent_Loss(z_log_var,z_mean),alpha=latent_alpha)
+                    latent_costs.append(Latent_Loss(z_log_var,z_mean,alpha=latent_alpha))
 
                     z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)
                     z = tf.identity(z, name='z')
