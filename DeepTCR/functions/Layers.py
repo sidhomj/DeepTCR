@@ -115,7 +115,7 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
         if net == 'ae':
             return tf.layers.flatten(conv_3),conv_out,indices
         else:
-            return tf.concat((conv_out,conv_2_out,conv_3_out),axis=1),conv_out,indices
+            return conv_3_out,conv_out,indices
 
 def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
                use_only_gene,use_only_hla,num_fc_layers=0, units_fc=12):
