@@ -2855,7 +2855,8 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             df_temp['Predicted'] = self.predicted
             df_temp.sort_values(by='Predicted',ascending=False,inplace=True)
             df_sample_top = df_temp[0:top_seq]
-            df_sample_bottom = df_temp[-top_seq:]
+            df_temp.sort_values(by='Predicted',ascending=True,inplace=True)
+            df_sample_bottom = df_temp[0:top_seq]
             labels = ['High','Low']
             Rep_Seq.append(df_sample_top)
             Rep_Seq.append(df_sample_bottom)
