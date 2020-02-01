@@ -95,7 +95,8 @@ class DeepTCR_base(object):
         ---------------------------------------
         directory: str
             Path to directory with folders with tsv files are present
-            for analysis. Folders names become labels for files within them.
+            for analysis. Folders names become labels for files within them. If the directory contains
+            the TCRSeq files not organized into classes/labels, DeepTCR will load all files within that directory.
 
         Load_Prev_Data: bool
             Loads Previous Data.
@@ -225,9 +226,14 @@ class DeepTCR_base(object):
 
 
             #Determine classes based on directory names
+            data_in_dirs = True
             if classes is None:
                 classes = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory,d))]
                 classes = [f for f in classes if not f.startswith('.')]
+                if not classes:
+                    classes = ['None']
+                    data_in_dirs = False
+
 
             self.lb = LabelEncoder()
             self.lb.fit(classes)
@@ -260,7 +266,10 @@ class DeepTCR_base(object):
             seq_index = []
             print('Loading Data...')
             for type in self.classes:
-                files_read = glob.glob(os.path.join(directory, type, ext))
+                if data_in_dirs:
+                    files_read = glob.glob(os.path.join(directory, type, ext))
+                else:
+                    files_read = glob.glob(os.path.join(directory,ext))
                 num_ins = len(files_read)
                 args = list(zip(files_read,
                                 [type_of_data_cut] * num_ins,
@@ -278,6 +287,16 @@ class DeepTCR_base(object):
                                 [j_alpha_column]*num_ins))
 
                 DF = p.starmap(Get_DF_Data, args)
+
+                DF_temp = []
+                files_read_temp = []
+                for df,file in zip(DF,files_read):
+                    if df.empty is False:
+                        DF_temp.append(df)
+                        files_read_temp.append(file)
+
+                DF = DF_temp
+                files_read = files_read_temp
 
                 for df, file in zip(DF, files_read):
                     if aa_column_alpha is not None:
