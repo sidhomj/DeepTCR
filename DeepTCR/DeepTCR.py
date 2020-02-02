@@ -3421,10 +3421,10 @@ class DeepTCR_SS(DeepTCR_S_base):
             for ii in range(folds):
                 if ii != folds-1:
                     idx_sel = np.random.choice(idx_left, size=file_per_sample, replace=False)
-                    idx_sel_seq = np.where(self.sample_id==idx_sel)[0]
+                    idx_sel_seq = np.where(np.isin(self.sample_id,idx_sel))[0]
                 else:
                     idx_sel = idx_left
-                    idx_sel_seq = np.where(self.sample_id==idx_sel)[0]
+                    idx_sel_seq = np.where(np.isin(self.sample_id,idx_sel))[0]
 
                 test_idx.append(idx_sel_seq)
                 idx_left = np.setdiff1d(idx_left, idx_sel)
