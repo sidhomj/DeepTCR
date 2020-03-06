@@ -3596,7 +3596,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
               embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,hinge_loss_t=0.0,convergence='validation',
-               graph_seed = None):
+               graph_seed = None,learning_rate=0.001,qualitative_agg=True,quantitative_agg=False,
+               num_agg_layers=0,units_agg=12):
 
         graph_model = tf.Graph()
         GO = graph_object()
@@ -3631,8 +3632,26 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 attention = False
                 Features = tf.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
-                GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
-                GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
+                agg_list = []
+                if qualitative_agg:
+                    #qualitative agg
+                    GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
+                    GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
+                    agg_list.append(GO.Features_Agg)
+                if quantitative_agg:
+                    #quantitative agg
+                    GO.Features_W_c = Features * GO.X_Counts[:, tf.newaxis]
+                    c_b = tf.Variable(name='c_b',initial_value=np.zeros(num_concepts), trainable=True,dtype=tf.float32)
+                    GO.Features_Agg_c = isru(tf.sparse.matmul(GO.sp, GO.Features_W_c)+c_b,l=0,h=1,a=0,b=0)
+                    agg_list.append(GO.Features_Agg_c)
+
+                GO.Features_Agg = tf.concat(agg_list,axis=1)
+
+                if num_agg_layers != 0:
+                    for lyr in range(num_agg_layers):
+                        GO.Features_Agg = tf.layers.dropout(GO.Features_Agg, GO.prob)
+                        GO.Features_Agg = tf.layers.dense(GO.Features_Agg, units_agg, tf.nn.relu)
+
                 GO.logits = tf.layers.dense(GO.Features_Agg, self.Y.shape[1])
                 # if attention:
                 #     GO.logits,GO.w = MIL_Layer(GO.Features,self.Y.shape[1],num_concepts,GO.sp,freq=GO.X_Freq,prob=GO.prob,num_layers=1)
@@ -3663,12 +3682,12 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 var_train = tf.trainable_variables()
                 GO.reg_losses = tf.losses.get_regularization_loss()
-                loss = GO.loss #+ GO.reg_losses
+                loss = GO.loss
 
                 if batch_size_update is None:
-                    GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss,var_list=var_train)
+                    GO.opt = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss,var_list=var_train)
                 else:
-                    GO.opt = tf.train.AdamOptimizer(learning_rate=0.001)
+                    GO.opt = tf.train.AdamOptimizer(learning_rate=learning_rate)
                     GO.grads_and_vars = GO.opt.compute_gradients(loss, var_train)
                     GO.gradients = tf.gradients(loss,var_train)
                     GO.gradients,keep_ii = zip(*[(v,ii) for ii,v in enumerate(GO.gradients) if v is not None])
@@ -3824,7 +3843,9 @@ class DeepTCR_WF(DeepTCR_S_base):
               num_concepts=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,train_loss_min=None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,hinge_loss_t=0.0,convergence='validation'):
+              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,hinge_loss_t=0.0,convergence='validation',
+              learning_rate=0.001,qualitative_agg=True,quantitative_agg=False,
+               num_agg_layers=0,units_agg=12):
 
 
         """
@@ -3938,6 +3959,35 @@ class DeepTCR_WF(DeepTCR_S_base):
         embedding_dim_hla: int
             Learned latent dimensionality of HLA
 
+        learning_rate: float
+            The learning rate for training the neural network. Making this value larger will
+            increase the rate of convergence but can introduce instability into training. For most,
+            altering this value will not be necessary.
+
+        The following two options alter how the predictive signatures in the neural network are aggregated
+        to make a prediction about the repertoire. If qualitative_agg or quantitative_agg are set to True,
+        this will include these different types of aggregation in the predcitions. One can set either to True or
+        both to True and this will allow a user to incorporate features from multiple modes of aggregation.
+
+        qualitative_agg: bool
+            If set to True, the model will aggregate the feature values per repertoire weighted by frequency of each
+            TCR. This is considered a 'qualitative' aggregation as the prediction of the repertoire is based on the relative
+            distribution of the repertoire. In other words, this type of aggregation is a count-independent measure of aggregation.
+            This is the mode of aggregation that has been more thoroughly tested across multiple scientific examples.
+
+        quantitative_agg: bool
+            If set to True, the model will aggregate the feature values per repertoire weighted by counts of each TCR.
+            This is considered a 'quantitative' aggregation as the prediction of the repertoire is based on teh absolute
+            distribution of the repertoire. In other words, this type of aggregation is a count-dependent measure of aggregation.
+            If one believes the counts are important for the predictive value of the model, one can set this parameter to True.
+
+        num_agg_layers: int
+            Following the aggregation layer in the network, one can choose to add more fully-connected layers before
+            the final classification layer. This parameter will set how many layers to add after aggregation. This likely
+            is helpful when using both types of aggregation (as detailed above) to combine those feature values.
+
+        units_agg: int
+            For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
 
         Returns
         ---------------------------------------
@@ -3947,7 +3997,9 @@ class DeepTCR_WF(DeepTCR_S_base):
               num_concepts=num_concepts,weight_by_class=weight_by_class,class_weights=class_weights,trainable_embedding = trainable_embedding,accuracy_min = accuracy_min,train_loss_min=train_loss_min,
                  num_fc_layers=num_fc_layers, units_fc=units_fc, drop_out_rate=drop_out_rate,suppress_output=suppress_output,
               use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,size_of_net=size_of_net,
-              embedding_dim_aa =embedding_dim_aa ,embedding_dim_genes = embedding_dim_genes,embedding_dim_hla=embedding_dim_hla,hinge_loss_t=hinge_loss_t,convergence=convergence)
+              embedding_dim_aa =embedding_dim_aa ,embedding_dim_genes = embedding_dim_genes,embedding_dim_hla=embedding_dim_hla,hinge_loss_t=hinge_loss_t,convergence=convergence,
+                    learning_rate=learning_rate,qualitative_agg=qualitative_agg,quantitative_agg=quantitative_agg,
+               num_agg_layers=num_agg_layers,units_agg=units_agg)
         self._train()
 
     def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25,batch_size_update=None, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
@@ -3956,7 +4008,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                              use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
                              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
                              hinge_loss_t=0.0,convergence='validation',seeds=None,graph_seed=None,batch_seed=None,
-                             random_perm=False):
+                             random_perm=False,learning_rate=0.001,qualitative_agg=True,quantitative_agg=False,
+                            num_agg_layers=0,units_agg=12):
 
 
         """
@@ -4087,6 +4140,35 @@ class DeepTCR_WF(DeepTCR_S_base):
         embedding_dim_hla: int
             Learned latent dimensionality of HLA
 
+        learning_rate: float
+            The learning rate for training the neural network. Making this value larger will
+            increase the rate of convergence but can introduce instability into training. For most,
+            altering this value will not be necessary.
+
+        The following two options alter how the predictive signatures in the neural network are aggregated
+        to make a prediction about the repertoire. If qualitative_agg or quantitative_agg are set to True,
+        this will include these different types of aggregation in the predcitions. One can set either to True or
+        both to True and this will allow a user to incorporate features from multiple modes of aggregation.
+
+        qualitative_agg: bool
+            If set to True, the model will aggregate the feature values per repertoire weighted by frequency of each
+            TCR. This is considered a 'qualitative' aggregation as the prediction of the repertoire is based on the relative
+            distribution of the repertoire. In other words, this type of aggregation is a count-independent measure of aggregation.
+            This is the mode of aggregation that has been more thoroughly tested across multiple scientific examples.
+
+        quantitative_agg: bool
+            If set to True, the model will aggregate the feature values per repertoire weighted by counts of each TCR.
+            This is considered a 'quantitative' aggregation as the prediction of the repertoire is based on teh absolute
+            distribution of the repertoire. In other words, this type of aggregation is a count-dependent measure of aggregation.
+            If one believes the counts are important for the predictive value of the model, one can set this parameter to True.
+
+        num_agg_layers: int
+            Following the aggregation layer in the network, one can choose to add more fully-connected layers before
+            the final classification layer. This parameter will set how many layers to add after aggregation. This likely
+            is helpful when using both types of aggregation (as detailed above) to combine those feature values.
+
+        units_agg: int
+            For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
 
         Returns
 
@@ -4111,7 +4193,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                     use_only_seq=use_only_seq, use_only_gene=use_only_gene, use_only_hla=use_only_hla,
                     size_of_net=size_of_net,
                     embedding_dim_aa=embedding_dim_aa, embedding_dim_genes=embedding_dim_genes,
-                    embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence,graph_seed=graph_seed)
+                    embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence,graph_seed=graph_seed,
+                    learning_rate=learning_rate,qualitative_agg=qualitative_agg,quantitative_agg=quantitative_agg,
+                            num_agg_layers=num_agg_layers,units_agg=units_agg)
 
         for i in range(0, folds):
             if suppress_output is False:
@@ -4168,7 +4252,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                         num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
                         use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
                         embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
-                        hinge_loss_t=0.0,convergence='validation'):
+                        hinge_loss_t=0.0,convergence='validation',learning_rate=0.001,
+                        qualitative_agg=True, quantitative_agg=False,
+                        num_agg_layers=0, units_agg=12):
 
         """
         K_Fold Cross-Validation for Whole Sample Classifier
@@ -4296,6 +4382,36 @@ class DeepTCR_WF(DeepTCR_S_base):
         embedding_dim_hla: int
             Learned latent dimensionality of HLA
 
+        learning_rate: float
+            The learning rate for training the neural network. Making this value larger will
+            increase the rate of convergence but can introduce instability into training. For most,
+            altering this value will not be necessary.
+
+        The following two options alter how the predictive signatures in the neural network are aggregated
+        to make a prediction about the repertoire. If qualitative_agg or quantitative_agg are set to True,
+        this will include these different types of aggregation in the predcitions. One can set either to True or
+        both to True and this will allow a user to incorporate features from multiple modes of aggregation.
+
+        qualitative_agg: bool
+            If set to True, the model will aggregate the feature values per repertoire weighted by frequency of each
+            TCR. This is considered a 'qualitative' aggregation as the prediction of the repertoire is based on the relative
+            distribution of the repertoire. In other words, this type of aggregation is a count-independent measure of aggregation.
+            This is the mode of aggregation that has been more thoroughly tested across multiple scientific examples.
+
+        quantitative_agg: bool
+            If set to True, the model will aggregate the feature values per repertoire weighted by counts of each TCR.
+            This is considered a 'quantitative' aggregation as the prediction of the repertoire is based on teh absolute
+            distribution of the repertoire. In other words, this type of aggregation is a count-dependent measure of aggregation.
+            If one believes the counts are important for the predictive value of the model, one can set this parameter to True.
+
+        num_agg_layers: int
+            Following the aggregation layer in the network, one can choose to add more fully-connected layers before
+            the final classification layer. This parameter will set how many layers to add after aggregation. This likely
+            is helpful when using both types of aggregation (as detailed above) to combine those feature values.
+
+        units_agg: int
+            For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
+
 
         Returns
         ---------------------------------------
@@ -4336,7 +4452,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                     use_only_seq=use_only_seq, use_only_gene=use_only_gene, use_only_hla=use_only_hla,
                     size_of_net=size_of_net,
                     embedding_dim_aa=embedding_dim_aa, embedding_dim_genes=embedding_dim_genes,
-                    embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence)
+                    embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence,
+                    learning_rate=learning_rate,qualitative_agg=qualitative_agg,quantitative_agg=quantitative_agg,
+                            num_agg_layers=num_agg_layers,units_agg=units_agg)
 
         y_test = []
         y_pred = []

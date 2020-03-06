@@ -432,6 +432,7 @@ def Run_Graph_WF_dep(set,sess,self,GO,batch_size,random=True,train=True,drop_out
 
         feed_dict = {GO.Y: vars[-1],
                      GO.X_Freq: self.freq[var_idx],
+                     GO.X_Counts: self.counts[var_idx],
                      GO.sp: sp}
 
         if drop_out_rate is not None:
@@ -515,6 +516,7 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
 
         feed_dict = {GO.Y: vars[-1],
                      GO.X_Freq: self.freq[var_idx],
+                     GO.X_Counts: self.counts[var_idx],
                      GO.sp: sp}
 
         if drop_out_rate is not None:
@@ -566,7 +568,6 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
         else:
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)
-            # sns.clustermap(sess.run(GO.w,feed_dict),cmap='bwr',standard_scale=1)
 
         loss.append(loss_i)
         accuracy.append(accuracy_i)
@@ -629,6 +630,7 @@ def Get_Sequence_Pred(self,batch_size,GO,sess):
         sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
 
         feed_dict = {GO.X_Freq: freq[var_idx],
+                     GO.X_Counts: self.counts[var_idx],
                      GO.sp: sp}
 
         if self.use_alpha is True:
