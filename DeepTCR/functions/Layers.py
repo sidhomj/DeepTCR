@@ -270,4 +270,18 @@ def Get_HLA_Loss(fc,embedding_layer,X_OH,alpha=1.0):
     accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted,tf.cast(X_OH,tf.bool)),tf.float32))
     return loss, accuracy
 
+#Other Layers
+def MultiLevel_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
+                       rate=0.2,units=12,name='ml_weights',reg=0.0):
+    out = []
+    for i in range(num_masks):
+        fc = tf.layers.dropout(X,rate=rate)
+        if i==0:
+            reuse=False
+        else:
+            reuse=True
 
+        with tf.variable_scope(name,reuse=reuse):
+            out.append(tf.layers.dense(fc,units=units,activation=activation,use_bias=use_bias,
+                                       kernel_regularizer=tf.contrib.layers.l1_regularizer(reg)))
+    return tf.reduce_mean(tf.stack(out),0)

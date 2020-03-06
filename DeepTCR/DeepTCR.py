@@ -3,7 +3,7 @@ sys.path.append('../')
 from DeepTCR.functions.Layers import *
 from DeepTCR.functions.utils_u import *
 from DeepTCR.functions.utils_s import *
-from DeepTCR.functions.MIL import *
+from DeepTCR.functions.act_fun import *
 import seaborn as sns
 import colorsys
 from scipy.cluster.hierarchy import linkage,fcluster,dendrogram, leaves_list
