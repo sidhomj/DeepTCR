@@ -3597,7 +3597,8 @@ class DeepTCR_WF(DeepTCR_S_base):
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
               embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,hinge_loss_t=0.0,convergence='validation',
                graph_seed = None,learning_rate=0.001,qualitative_agg=True,quantitative_agg=False,
-               num_agg_layers=0,units_agg=12):
+               num_agg_layers=0,units_agg=12,
+               multisample_dropout=False, multisample_dropout_rate = 0.25,multisample_dropout_num_masks = 10):
 
         graph_model = tf.Graph()
         GO = graph_object()
@@ -3630,7 +3631,6 @@ class DeepTCR_WF(DeepTCR_S_base):
                 else:
                     GO.Y = tf.placeholder(tf.float32, shape=[None, 1])
 
-                attention = False
                 Features = tf.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
                 agg_list = []
                 if qualitative_agg:
@@ -3652,15 +3652,14 @@ class DeepTCR_WF(DeepTCR_S_base):
                         GO.Features_Agg = tf.layers.dropout(GO.Features_Agg, GO.prob)
                         GO.Features_Agg = tf.layers.dense(GO.Features_Agg, units_agg, tf.nn.relu)
 
-                GO.logits = tf.layers.dense(GO.Features_Agg, self.Y.shape[1])
-                # if attention:
-                #     GO.logits,GO.w = MIL_Layer(GO.Features,self.Y.shape[1],num_concepts,GO.sp,freq=GO.X_Freq,prob=GO.prob,num_layers=1)
-                # else:
-                #     #Features = tf.layers.dense(GO.Features,num_concepts,tf.nn.relu)
-                #     Features = tf.layers.dense(GO.Features,num_concepts,lambda x: isru(x, l=0, h=1, a=0, b=0))
-                #     GO.Features_W = Features*GO.X_Freq[:,tf.newaxis]
-                #     GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
-                #     GO.logits = tf.layers.dense(GO.Features_Agg,self.Y.shape[1])
+                if multisample_dropout:
+                    GO.logits = MultiSample_Dropout(GO.Features_Agg,
+                                                    num_masks=multisample_dropout_num_masks,
+                                                    units=self.Y.shape[1],
+                                                    activation=None,
+                                                    rate=multisample_dropout_rate)
+                else:
+                    GO.logits = tf.layers.dense(GO.Features_Agg, self.Y.shape[1])
 
                 per_sample_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits)
                 per_sample_loss = per_sample_loss - hinge_loss_t
@@ -3705,12 +3704,10 @@ class DeepTCR_WF(DeepTCR_S_base):
                 self.GO = GO
                 self.train_params = train_params
                 self.graph_model = graph_model
-                self.attention = attention
                 self.kernel = kernel
 
     def _train(self,write=True,batch_seed=None):
         GO = self.GO
-        attention = self.attention
         graph_model = self.graph_model
         train_params = self.train_params
 
@@ -3797,9 +3794,6 @@ class DeepTCR_WF(DeepTCR_S_base):
                 Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
                 self.features = Get_Latent_Features(self, batch_size_seq, GO, sess)
 
-                if attention:
-                    self.weights = Get_Weights(self,batch_size_seq,GO,sess)
-
             pred, idx = Get_Sequence_Pred(self, batch_size, GO, sess)
             if len(idx.shape) == 0:
                 idx = idx.reshape(-1,1)
@@ -3845,7 +3839,8 @@ class DeepTCR_WF(DeepTCR_S_base):
               use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
               embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,hinge_loss_t=0.0,convergence='validation',
               learning_rate=0.001,qualitative_agg=True,quantitative_agg=False,
-               num_agg_layers=0,units_agg=12):
+               num_agg_layers=0,units_agg=12,
+              multisample_dropout=False, multisample_dropout_rate = 0.25,multisample_dropout_num_masks = 10):
 
 
         """
@@ -3989,6 +3984,20 @@ class DeepTCR_WF(DeepTCR_S_base):
         units_agg: int
             For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
 
+        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
+        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
+        https://arxiv.org/abs/1905.09788
+        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
+
+        multisample_dropout: bool
+            Set this parameter to True to implement this method.
+
+         multisample_dropout_rate: float
+            The dropout rate for this multi-sample dropout layer.
+
+         multisample_dropout_num_masks: int
+            The number of masks to sample from for the Multi-Sample Dropout layer.
+
         Returns
         ---------------------------------------
 
@@ -3999,7 +4008,8 @@ class DeepTCR_WF(DeepTCR_S_base):
               use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,size_of_net=size_of_net,
               embedding_dim_aa =embedding_dim_aa ,embedding_dim_genes = embedding_dim_genes,embedding_dim_hla=embedding_dim_hla,hinge_loss_t=hinge_loss_t,convergence=convergence,
                     learning_rate=learning_rate,qualitative_agg=qualitative_agg,quantitative_agg=quantitative_agg,
-               num_agg_layers=num_agg_layers,units_agg=units_agg)
+               num_agg_layers=num_agg_layers,units_agg=units_agg,
+                    multisample_dropout=multisample_dropout, multisample_dropout_rate = multisample_dropout_rate,multisample_dropout_num_masks = multisample_dropout_num_masks)
         self._train()
 
     def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25,batch_size_update=None, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
@@ -4009,7 +4019,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                              embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
                              hinge_loss_t=0.0,convergence='validation',seeds=None,graph_seed=None,batch_seed=None,
                              random_perm=False,learning_rate=0.001,qualitative_agg=True,quantitative_agg=False,
-                            num_agg_layers=0,units_agg=12):
+                            num_agg_layers=0,units_agg=12,
+                             multisample_dropout=False, multisample_dropout_rate = 0.25,multisample_dropout_num_masks = 10):
 
 
         """
@@ -4170,6 +4181,20 @@ class DeepTCR_WF(DeepTCR_S_base):
         units_agg: int
             For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
 
+        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
+        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
+        https://arxiv.org/abs/1905.09788
+        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
+
+        multisample_dropout: bool
+            Set this parameter to True to implement this method.
+
+         multisample_dropout_rate: float
+            The dropout rate for this multi-sample dropout layer.
+
+         multisample_dropout_num_masks: int
+            The number of masks to sample from for the Multi-Sample Dropout layer.
+
         Returns
 
         self.DFs_pred: dict of dataframes
@@ -4195,7 +4220,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                     embedding_dim_aa=embedding_dim_aa, embedding_dim_genes=embedding_dim_genes,
                     embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence,graph_seed=graph_seed,
                     learning_rate=learning_rate,qualitative_agg=qualitative_agg,quantitative_agg=quantitative_agg,
-                            num_agg_layers=num_agg_layers,units_agg=units_agg)
+                            num_agg_layers=num_agg_layers,units_agg=units_agg,
+                    multisample_dropout=multisample_dropout, multisample_dropout_rate = multisample_dropout_rate,multisample_dropout_num_masks = multisample_dropout_num_masks)
 
         for i in range(0, folds):
             if suppress_output is False:
@@ -4254,7 +4280,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                         embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
                         hinge_loss_t=0.0,convergence='validation',learning_rate=0.001,
                         qualitative_agg=True, quantitative_agg=False,
-                        num_agg_layers=0, units_agg=12):
+                        num_agg_layers=0, units_agg=12,
+                        multisample_dropout=False, multisample_dropout_rate = 0.25,multisample_dropout_num_masks = 10):
 
         """
         K_Fold Cross-Validation for Whole Sample Classifier
@@ -4412,6 +4439,19 @@ class DeepTCR_WF(DeepTCR_S_base):
         units_agg: int
             For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
 
+        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
+        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
+        https://arxiv.org/abs/1905.09788
+        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
+
+        multisample_dropout: bool
+            Set this parameter to True to implement this method.
+
+         multisample_dropout_rate: float
+            The dropout rate for this multi-sample dropout layer.
+
+         multisample_dropout_num_masks: int
+            The number of masks to sample from for the Multi-Sample Dropout layer.
 
         Returns
         ---------------------------------------
@@ -4454,7 +4494,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                     embedding_dim_aa=embedding_dim_aa, embedding_dim_genes=embedding_dim_genes,
                     embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence,
                     learning_rate=learning_rate,qualitative_agg=qualitative_agg,quantitative_agg=quantitative_agg,
-                            num_agg_layers=num_agg_layers,units_agg=units_agg)
+                            num_agg_layers=num_agg_layers,units_agg=units_agg,
+                    multisample_dropout=multisample_dropout, multisample_dropout_rate = multisample_dropout_rate,multisample_dropout_num_masks = multisample_dropout_num_masks)
 
         y_test = []
         y_pred = []

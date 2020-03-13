@@ -271,8 +271,43 @@ def Get_HLA_Loss(fc,embedding_layer,X_OH,alpha=1.0):
     return loss, accuracy
 
 #Other Layers
-def MultiLevel_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
-                       rate=0.2,units=12,name='ml_weights',reg=0.0):
+def MultiSample_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
+                       rate=0.25,units=12,name='ml_weights',reg=0.0):
+    """
+    Multi-Sample Dropout Layer
+
+    Implements Mutli-Sample Dropout layer from "Multi-Sample Dropout for Accelerated Training and Better Generalization"
+    https://arxiv.org/abs/1905.09788
+
+    Inputs
+    ---------------------------------------
+    num_masks: int
+        Number of dropout masks to sample from.
+
+    activation: func
+        activation function to use on layer
+
+    use_bias: bool
+        Whether to incorporate bias.
+
+    rate: float
+        dropout rate
+
+    units: int
+        Number of output nodes
+
+    name: str
+        Name of layer (tensorflow variable scope)
+
+    reg: float
+        alpha for l1 regulariization on final layer (feature selection)
+
+    Returns
+    ---------------------------------------
+
+    output of layer of dimensionality [?,units]
+
+    """
     out = []
     for i in range(num_masks):
         fc = tf.layers.dropout(X,rate=rate)
