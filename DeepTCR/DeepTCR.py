@@ -3591,6 +3591,12 @@ class DeepTCR_WF(DeepTCR_S_base):
                 self.train[i] = np.concatenate((self.train[i],self.valid[i]),axis=0)
                 self.valid[i] = self.test[i]
 
+    def _reset_models(self):
+        self.models_dir = os.path.join(self.Name,'models')
+        if os.path.exists(self.models_dir):
+            shutil.rmtree(self.models_dir)
+        os.makedirs(self.models_dir)
+
     def _build(self,batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,kernel=5,
               num_concepts=12,weight_by_class=False,class_weights=None,trainable_embedding = True,accuracy_min = None,train_loss_min=None,
                  num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
@@ -3700,13 +3706,13 @@ class DeepTCR_WF(DeepTCR_S_base):
                 correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
                 GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
 
-                GO.saver = tf.train.Saver()
+                GO.saver = tf.train.Saver(max_to_keep=None)
                 self.GO = GO
                 self.train_params = train_params
                 self.graph_model = graph_model
                 self.kernel = kernel
 
-    def _train(self,write=True,batch_seed=None):
+    def _train(self,write=True,batch_seed=None,iteration=0):
         GO = self.GO
         graph_model = self.graph_model
         train_params = self.train_params
@@ -3819,12 +3825,12 @@ class DeepTCR_WF(DeepTCR_S_base):
                 with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
                     pickle.dump(self.kernel, f)
 
-                GO.saver.save(sess, os.path.join(self.Name, 'model', 'model.ckpt'))
+                GO.saver.save(sess, os.path.join(self.Name, 'models', 'model_' + str(iteration), 'model.ckpt'))
 
                 if self.use_hla:
                     self.HLA_embed = GO.embedding_layer_hla.eval()
 
-                with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
+                with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'wb') as f:
                     pickle.dump(['WF',GO.predicted.name,self.use_alpha, self.use_beta,
                                  self.use_v_beta, self.use_d_beta, self.use_j_beta,
                                  self.use_v_alpha, self.use_j_alpha,self.use_hla,
@@ -4002,6 +4008,8 @@ class DeepTCR_WF(DeepTCR_S_base):
         ---------------------------------------
 
         """
+        #Create directory for models
+        self._reset_models()
         self._build(batch_size = batch_size,batch_size_update = batch_size_update, epochs_min = epochs_min,stop_criterion=stop_criterion,stop_criterion_window=stop_criterion_window,kernel=kernel,
               num_concepts=num_concepts,weight_by_class=weight_by_class,class_weights=class_weights,trainable_embedding = trainable_embedding,accuracy_min = accuracy_min,train_loss_min=train_loss_min,
                  num_fc_layers=num_fc_layers, units_fc=units_fc, drop_out_rate=drop_out_rate,suppress_output=suppress_output,
@@ -4209,6 +4217,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         files = []
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         counts = np.zeros_like(self.predicted)
+        self._reset_models()
         self._build(batch_size=batch_size, batch_size_update=batch_size_update, epochs_min=epochs_min,
                     stop_criterion=stop_criterion, stop_criterion_window=stop_criterion_window, kernel=kernel,
                     num_concepts=num_concepts, weight_by_class=weight_by_class, class_weights=class_weights,
@@ -4231,11 +4240,12 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,combine_train_valid=combine_train_valid,
                                       random_perm=random_perm)
-            if i == folds-1:
-                write = True
-            else:
-                write = False
-            self._train(write=write,batch_seed=batch_seed)
+            # if i == folds-1:
+            #     write = True
+            # else:
+            #     write = False
+            write = True
+            self._train(write=write,batch_seed=batch_seed,iteration=i)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -4545,15 +4555,126 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.y_pred = np.vstack(y_pred)
         print('K-fold Cross Validation Completed')
 
+    def _inf(self,data,model='model_0'):
+        X_Seq_alpha = data.X_Seq_alpha
+        X_Seq_beta = data.X_Seq_beta
+        v_beta_num = data.v_beta_num
+        d_beta_num = data.d_beta_num
+        j_beta_num = data.j_beta_num
+        v_alpha_num = data.v_alpha_num
+        j_alpha_num = data.j_alpha_num
+        hla_data_seq_num = data.hla_data_seq_num
+        freq = data.freq
+        counts = data.counts
+        batch_size = data.batch_size
+        sample_labels = data.sample_labels
+        get = data.get
+
+        tf.reset_default_graph()
+        config = tf.ConfigProto(allow_soft_placement=True)
+        config.gpu_options.allow_growth = True
+        with tf.Session(config=config) as sess:
+            # saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', 'model.ckpt.meta'))
+            # saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name, 'model')))
+            saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models',model, 'model.ckpt.meta'))
+            saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name,'models', model)))
+            graph = tf.get_default_graph()
+
+            X_Freq = graph.get_tensor_by_name('Freq:0')
+            X_Counts = graph.get_tensor_by_name('Counts:0')
+            sp_i = graph.get_tensor_by_name('sp/indices:0')
+            sp_v = graph.get_tensor_by_name('sp/values:0')
+            sp_s = graph.get_tensor_by_name('sp/shape:0')
+
+            if self.use_alpha is True:
+                X_Seq_alpha_v = graph.get_tensor_by_name('Input_Alpha:0')
+
+            if self.use_beta is True:
+                X_Seq_beta_v = graph.get_tensor_by_name('Input_Beta:0')
+
+            if self.use_v_beta is True:
+                X_v_beta = graph.get_tensor_by_name('Input_V_Beta:0')
+
+            if self.use_d_beta is True:
+                X_d_beta = graph.get_tensor_by_name('Input_D_Beta:0')
+
+            if self.use_j_beta is True:
+                X_j_beta = graph.get_tensor_by_name('Input_J_Beta:0')
+
+            if self.use_v_alpha is True:
+                X_v_alpha = graph.get_tensor_by_name('Input_V_Alpha:0')
+
+            if self.use_j_alpha is True:
+                X_j_alpha = graph.get_tensor_by_name('Input_J_Alpha:0')
+
+            if self.use_hla:
+                X_hla = graph.get_tensor_by_name('HLA:0')
+
+            get_obj = graph.get_tensor_by_name(get)
+
+            out_list = []
+            sample_list = np.unique(sample_labels)
+            for vars in get_batches([sample_list], batch_size=batch_size, random=False):
+                var_idx = np.where(np.isin(sample_labels, vars[0]))[0]
+                lb = LabelEncoder()
+                lb.fit(vars[0])
+                i = lb.transform(sample_labels[var_idx])
+
+                OH = OneHotEncoder(categories='auto')
+                sp = OH.fit_transform(i.reshape(-1, 1)).T
+                sp = sp.tocoo()
+                indices = np.mat([sp.row, sp.col]).T
+
+                feed_dict = {X_Freq: freq[var_idx],
+                             X_Counts: counts[var_idx],
+                             sp_i: indices,
+                             sp_v: sp.data,
+                             sp_s: sp.shape}
+
+                if self.use_alpha is True:
+                    feed_dict[X_Seq_alpha_v] = X_Seq_alpha[var_idx]
+                if self.use_beta is True:
+                    feed_dict[X_Seq_beta_v] = X_Seq_beta[var_idx]
+
+                if self.use_v_beta is True:
+                    feed_dict[X_v_beta] = v_beta_num[var_idx]
+
+                if self.use_d_beta is True:
+                    feed_dict[X_d_beta] = d_beta_num[var_idx]
+
+                if self.use_j_beta is True:
+                    feed_dict[X_j_beta] = j_beta_num[var_idx]
+
+                if self.use_v_alpha is True:
+                    feed_dict[X_v_alpha] = v_alpha_num[var_idx]
+
+                if self.use_j_alpha is True:
+                    feed_dict[X_j_alpha] = j_alpha_num[var_idx]
+
+                if self.use_hla:
+                    feed_dict[X_hla] = hla_data_seq_num[var_idx]
+
+                out_list.append(sess.run(get_obj,feed_dict=feed_dict))
+
+        out_list = np.vstack(out_list)
+        return sample_list, out_list
+
     def Sample_Inference(self,sample_labels,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
-                  v_alpha=None, j_alpha=None, p=None,hla=None,freq=None,counts=None, batch_size=10):
+                  v_alpha=None, j_alpha=None, p=None,hla=None,freq=None,counts=None, batch_size=10,models=None):
 
         """
         Predicting outputs of sample/repertoire model on new data
 
         This method allows a user to take a pre-trained sample/repertoire classifier
         and generate outputs from the model on new data. This will return predicted probabilites
-        for the given classes for the new data.
+        for the given classes for the new data. If the model has been trained in Monte-Carlo or K-Fold Cross-Validation,
+        there will be a model created for each iteration of the cross-validation. if the 'models' parameter is left as None,
+        this method will conudct inference for all models trained in cross-validation and output the average predicted value per sample
+        along with the distribution of predictions for futher downstream use. For example, by looking at the distribution of
+        predictions for a given sample over all models trained, one can determine which samples have a high level of certainty
+        in their predictions versus those with lower level of certainty. In essense, by training a multiple models in cross-validation schemes,
+        this can allow the user to generate a distribution of predictions on a per-sample basis which provides a better understanding of the prediction.
+        Alternatively, one can choose to fill in the the models parameter with a list of models the user wants to use for inference.
 
         To load data from directories, one can use the Get_Data method from the base class to automatically
         format the data into the proper format to be then input into this method.
@@ -4603,22 +4724,32 @@ class DeepTCR_WF(DeepTCR_S_base):
         batch_size: int
             Batch size for inference.
 
+        models: list
+            List of models in Name_Of_Object/models to use for inference. If left as None, this method will use all models
+            in that directory.
+
         Returns
-
-        out:dict
-            A dictionary of predicted probabilities for the respective classes
-
-        self.Inference_Pred: ndarray
-            An array with the predicted probabilites for all classes
 
         self.Inference_Sample_List: ndarray
             An array with the sample list corresponding the predicted probabilities.
+
+        self.Inference_Pred: ndarray
+            An array with the predicted probabilites for all classes. These represent the average probability
+            of all models used for inference.
+
+        self.Inference_Pred_Dict: dict
+            A dictionary of predicted probabilities for the respective classes. These represent the average probability
+            of all models used for inference.
+
+        self.Inference_Pred_Dist: ndarray
+            An array with the predicted probabilites for all classes on a per model basis.
+            shape = [Number of Models, Number of Samples, Number of Classes]
 
         ---------------------------------------
 
         """
 
-        with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'rb') as f:
+        with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'rb') as f:
             model_type,get,self.use_alpha,self.use_beta,\
                 self.use_v_beta,self.use_d_beta,self.use_j_beta,\
                 self.use_v_alpha,self.use_j_alpha,self.use_hla,\
@@ -4703,6 +4834,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             try:
                 hla_data_seq_num = np.zeros(shape=[len_input,self.lb_hla.classes_.shape[0]])
             except:
+                hla_data_seq_num = np.zeros(shape=[len_input,1])
                 pass
 
         if p is None:
@@ -4724,101 +4856,47 @@ class DeepTCR_WF(DeepTCR_S_base):
                 freq.append(c/count_dict[n])
             freq = np.asarray(freq)
 
-        tf.reset_default_graph()
-        config = tf.ConfigProto(allow_soft_placement=True)
-        config.gpu_options.allow_growth = True
-        with tf.Session(config=config) as sess:
-            saver = tf.train.import_meta_graph(os.path.join(self.Name, 'model', 'model.ckpt.meta'))
-            saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name, 'model')))
-            graph = tf.get_default_graph()
+        data = graph_object()
+        data.X_Seq_alpha = X_Seq_alpha
+        data.X_Seq_beta = X_Seq_beta
+        data.v_beta_num = v_beta_num
+        data.d_beta_num = d_beta_num
+        data.j_beta_num = j_beta_num
+        data.v_alpha_num = v_alpha_num
+        data.j_alpha_num = j_alpha_num
+        data.hla_data_seq_num = hla_data_seq_num
+        data.freq = freq
+        data.counts = counts
+        data.batch_size = batch_size
+        data.sample_labels = sample_labels
+        data.get = get
 
-            X_Freq = graph.get_tensor_by_name('Freq:0')
-            sp_i = graph.get_tensor_by_name('sp/indices:0')
-            sp_v = graph.get_tensor_by_name('sp/values:0')
-            sp_s = graph.get_tensor_by_name('sp/shape:0')
+        if models is None:
+            directory = os.path.join(self.Name,'models')
+            models = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
+            models = [f for f in models if not f.startswith('.')]
 
-            if self.use_alpha is True:
-                X_Seq_alpha_v = graph.get_tensor_by_name('Input_Alpha:0')
+        predicted = []
+        for m in models:
+            sample_list,pred = self._inf(data,model=m)
+            predicted.append(pred)
 
-            if self.use_beta is True:
-                X_Seq_beta_v = graph.get_tensor_by_name('Input_Beta:0')
+        predicted_dist = []
+        for p in predicted:
+            predicted_dist.append(np.expand_dims(p,0))
+        predicted_dist = np.vstack(predicted_dist)
 
-            if self.use_v_beta is True:
-                X_v_beta = graph.get_tensor_by_name('Input_V_Beta:0')
-
-            if self.use_d_beta is True:
-                X_d_beta = graph.get_tensor_by_name('Input_D_Beta:0')
-
-            if self.use_j_beta is True:
-                X_j_beta = graph.get_tensor_by_name('Input_J_Beta:0')
-
-            if self.use_v_alpha is True:
-                X_v_alpha = graph.get_tensor_by_name('Input_V_Alpha:0')
-
-            if self.use_j_alpha is True:
-                X_j_alpha = graph.get_tensor_by_name('Input_J_Alpha:0')
-
-            if self.use_hla:
-                X_hla = graph.get_tensor_by_name('HLA:0')
-
-            get_obj = graph.get_tensor_by_name(get)
-
-            out_list = []
-            sample_list = np.unique(sample_labels)
-            for vars in get_batches([sample_list], batch_size=batch_size, random=False):
-                var_idx = np.where(np.isin(sample_labels, vars[0]))[0]
-                lb = LabelEncoder()
-                lb.fit(vars[0])
-                i = lb.transform(sample_labels[var_idx])
-
-                OH = OneHotEncoder(categories='auto')
-                sp = OH.fit_transform(i.reshape(-1, 1)).T
-                sp = sp.tocoo()
-                indices = np.mat([sp.row, sp.col]).T
-
-                feed_dict = {X_Freq: freq[var_idx],
-                             sp_i: indices,
-                             sp_v: sp.data,
-                             sp_s: sp.shape}
-
-                if self.use_alpha is True:
-                    feed_dict[X_Seq_alpha_v] = X_Seq_alpha[var_idx]
-                if self.use_beta is True:
-                    feed_dict[X_Seq_beta_v] = X_Seq_beta[var_idx]
-
-                if self.use_v_beta is True:
-                    feed_dict[X_v_beta] = v_beta_num[var_idx]
-
-                if self.use_d_beta is True:
-                    feed_dict[X_d_beta] = d_beta_num[var_idx]
-
-                if self.use_j_beta is True:
-                    feed_dict[X_j_beta] = j_beta_num[var_idx]
-
-                if self.use_v_alpha is True:
-                    feed_dict[X_v_alpha] = v_alpha_num[var_idx]
-
-                if self.use_j_alpha is True:
-                    feed_dict[X_j_alpha] = j_alpha_num[var_idx]
-
-                if self.use_hla:
-                    feed_dict[X_hla] = hla_data_seq_num[var_idx]
-
-                out_list.append(sess.run(get_obj,feed_dict=feed_dict))
-
-        out_list = np.vstack(out_list)
+        self.Inference_Sample_List = sample_list
+        self.Inference_Pred_Dist = predicted_dist
+        self.Inference_Pred =  np.mean(predicted_dist,0)
 
         DFs = []
         for ii,c in enumerate(self.lb.classes_,0):
             df_temp = pd.DataFrame()
-            df_temp['Samples'] = sample_list
-            df_temp['Pred'] = out_list[:,ii]
+            df_temp['Samples'] = self.Inference_Sample_List
+            df_temp['Pred'] = self.Inference_Pred[:,ii]
             DFs.append(df_temp)
-
-        self.Inference_Pred = out_list
-        self.Inference_Sample_List = sample_list
-        return dict(zip(self.lb.classes_,DFs))
-
+        self.Inference_Pred_Dict = dict(zip(self.lb.classes_,DFs))
 
 
 
