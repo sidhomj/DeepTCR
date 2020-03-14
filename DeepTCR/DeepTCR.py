@@ -3567,6 +3567,9 @@ class DeepTCR_WF(DeepTCR_S_base):
             to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
             when to stop training will be based on the test data (which is considered a form of over-fitting).
 
+        random_perm: bool
+            To do random permutation testing, one can set this parameter to True and this will shuffle the labels.
+
         Returns
         ---------------------------------------
 
@@ -3961,10 +3964,6 @@ class DeepTCR_WF(DeepTCR_S_base):
             The number of masks to sample from for the Multi-Sample Dropout layer.
 
 
-        batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,
-              accuracy_min = None,train_loss_min=None,hinge_loss_t=0.0,convergence='validation',learning_rate=0.001, suppress_output=False,
-              batch_seed = None
-
         Training Parameters
 
         batch_size: int
@@ -4025,26 +4024,24 @@ class DeepTCR_WF(DeepTCR_S_base):
         """
         #Create directory for models
         self._reset_models()
-        self._build(batch_size = batch_size,batch_size_update = batch_size_update, epochs_min = epochs_min,stop_criterion=stop_criterion,stop_criterion_window=stop_criterion_window,kernel=kernel,
-              num_concepts=num_concepts,weight_by_class=weight_by_class,class_weights=class_weights,trainable_embedding = trainable_embedding,accuracy_min = accuracy_min,train_loss_min=train_loss_min,
-                 num_fc_layers=num_fc_layers, units_fc=units_fc, drop_out_rate=drop_out_rate,suppress_output=suppress_output,
-              use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,size_of_net=size_of_net,
-              embedding_dim_aa =embedding_dim_aa ,embedding_dim_genes = embedding_dim_genes,embedding_dim_hla=embedding_dim_hla,hinge_loss_t=hinge_loss_t,convergence=convergence,
-                    graph_seed = graph_seed,learning_rate=learning_rate,qualitative_agg=qualitative_agg,quantitative_agg=quantitative_agg,
-               num_agg_layers=num_agg_layers,units_agg=units_agg,
-                    multisample_dropout=multisample_dropout, multisample_dropout_rate = multisample_dropout_rate,multisample_dropout_num_masks = multisample_dropout_num_masks)
-        self._train(batch_seed=batch_seed)
+        self._build(kernel,num_concepts,trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
+               num_fc_layers, units_fc,weight_by_class, class_weights,
+               use_only_seq, use_only_gene, use_only_hla, size_of_net,graph_seed,
+               qualitative_agg, quantitative_agg, num_agg_layers, units_agg,
+               drop_out_rate,multisample_dropout, multisample_dropout_rate,multisample_dropout_num_masks,
+               batch_size,batch_size_update, epochs_min,stop_criterion,stop_criterion_window,
+              accuracy_min,train_loss_min,hinge_loss_t,convergence,learning_rate, suppress_output)
+        self._train(write=True,batch_seed=batch_seed,iteration=0)
 
-    def Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, epochs_min=25, batch_size=25,batch_size_update=None, LOO=None,stop_criterion=0.25,stop_criterion_window=10,
-                             kernel=5,num_concepts=12,weight_by_class=False,class_weights=None, trainable_embedding=True,accuracy_min = None,combine_train_valid=False,train_loss_min=None,
-                             num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
-                             use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                             embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
-                             hinge_loss_t=0.0,convergence='validation',seeds=None,graph_seed=None,batch_seed=None,
-                             random_perm=False,learning_rate=0.001,qualitative_agg=True,quantitative_agg=False,
-                            num_agg_layers=0,units_agg=12,
-                             multisample_dropout=False, multisample_dropout_rate = 0.25,multisample_dropout_num_masks = 10):
-
+    def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,combine_train_valid=False,random_perm=False,seeds=None,
+                             kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
+                             num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
+                             use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium',graph_seed=None,
+                             qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12,
+                             drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25,multisample_dropout_num_masks=10,
+                             batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
+                             accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation',learning_rate=0.001, suppress_output=False,
+                             batch_seed=None):
 
         """
         Monte Carlo Cross-Validation for Whole Sample Classifier
@@ -4056,6 +4053,8 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         Inputs
         ---------------------------------------
+        Monte-Carlo Parameters
+
         folds: int
             Number of iterations for Cross-Validation
 
@@ -4065,27 +4064,25 @@ class DeepTCR_WF(DeepTCR_S_base):
         LOO: int
             Number of samples to leave-out in Leave-One-Out Cross-Validation
 
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
+        combine_train_valid: bool
+            To combine the training and validation partitions into one which will be used for training
+            and updating the model parameters, set this to True. This will also set the validation partition
+            to the test partition. In other words, new train set becomes (original train + original valid) and then
+            new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
+            to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
+            to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
+            when to stop training will be based on the test data (which is considered a form of over-fitting).
 
-        batch_size_update: int
-            In the case that the size of the samples are very large, one may not want to update
-            the weights of the network as often as batches are put onto the gpu. Therefore, if
-            one wants to update the weights less often than how often the batches of data are put onto the
-            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
-            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
-            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
-            gpu's for training and there are memory constraints from very large samples.
+        random_perm: bool
+            To do random permutation testing, one can set this parameter to True and this will shuffle the labels.
 
-        epochs_min: int
-            Minimum number of epochs for training neural network.
+        seeds: nd.array
+            In order to set a deterministic train/test split over the Monte-Carlo Simulations, one can provide an array
+            of seeds for each MC simulation. This will result in the same train/test split over the N MC simulations.
+            This parameter, if provided, should have the same size of the value of folds.
 
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
 
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
+        Model Parameters
 
         kernel: int
             Size of convolutional kernel for first layer of convolutions.
@@ -4093,6 +4090,25 @@ class DeepTCR_WF(DeepTCR_S_base):
         num_concepts: int
             Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the
             repertoires being analyed, one can adjust this hyperparameter.
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
 
         weight_by_class: bool
             Option to weight loss by the inverse of the class frequency. Useful for
@@ -4103,54 +4119,13 @@ class DeepTCR_WF(DeepTCR_S_base):
             can provide a dictionary with these weights.
                 i.e. {'A':1.0,'B':2.0'}
 
-        trainable_embedding; bool
-            Toggle to control whether a trainable embedding layer is used or native
-            one-hot representation for convolutional layers.
-
-        accuracy_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training accuracy is achieved, at which point, training ceases.
-
-        train_loss_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training loss is achieved, at which point, training ceases.
-
-        hinge_loss_t: float
-            The per sample loss minimum at which the loss of that sample is not used
-            to penalize the model anymore. In other words, once a per sample loss has hit
-            this value, it gets set to 0.0.
-
-        convergence: str
-            This parameter determines which loss to assess the convergence criteria on.
-            Options are 'validation' or 'training'. This is useful in the case one wants
-            to change the convergence criteria on the training data when the training and validation
-            partitions have been combined and used to training the model.
-
-        combine_train_valid: bool
-            To combine the training and validation partitions into one which will be used for training
-            and updating the model parameters, set this to True. This will also set the validation partition
-            to the test partition. Therefore, if setting this parameter to True, change one of the training parameters
-            to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set.
-
-        num_fc_layers: int
-            Number of fully connected layers following convolutional layer.
-
-        units_fc: int
-            Number of nodes per fully-connected layers following convolutional layer.
-
-        drop_out_rate: float
-            drop out rate for fully connected layers
-
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
 
         use_only_gene: bool
             To only use gene-usage features, set to True. This will turn off features from
             the sequences.
-
-        use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
 
         use_only_hla: bool
             To only use hla feaures, set to True.
@@ -4165,19 +4140,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
-
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
-
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
-
-        learning_rate: float
-            The learning rate for training the neural network. Making this value larger will
-            increase the rate of convergence but can introduce instability into training. For most,
-            altering this value will not be necessary.
+        graph_seed: int
+            For deterministic initialization of weights of the graph, set this to value of choice.
 
         The following two options alter how the predictive signatures in the neural network are aggregated
         to make a prediction about the repertoire. If qualitative_agg or quantitative_agg are set to True,
@@ -4204,6 +4168,9 @@ class DeepTCR_WF(DeepTCR_S_base):
         units_agg: int
             For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
 
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
         The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
         "Multi-Sample Dropout for Accelerated Training and Better Generalization"
         https://arxiv.org/abs/1905.09788
@@ -4217,6 +4184,61 @@ class DeepTCR_WF(DeepTCR_S_base):
 
          multisample_dropout_num_masks: int
             The number of masks to sample from for the Multi-Sample Dropout layer.
+
+
+        Training Parameters
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        batch_size_update: int
+            In the case that the size of the samples are very large, one may not want to update
+            the weights of the network as often as batches are put onto the gpu. Therefore, if
+            one wants to update the weights less often than how often the batches of data are put onto the
+            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
+            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
+            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
+            gpu's for training and there are memory constraints from very large samples.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
+        accuracy_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training accuracy is achieved, at which point, training ceases.
+
+        train_loss_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training loss is achieved, at which point, training ceases.
+
+        hinge_loss_t: float
+            The per sample loss minimum at which the loss of that sample is not used
+            to penalize the model anymore. In other words, once a per sample loss has hit
+            this value, it gets set to 0.0.
+
+        convergence: str
+            This parameter determines which loss to assess the convergence criteria on.
+            Options are 'validation' or 'training'. This is useful in the case one wants
+            to change the convergence criteria on the training data when the training and validation
+            partitions have been combined and used to training the model.
+
+        learning_rate: float
+            The learning rate for training the neural network. Making this value larger will
+            increase the rate of convergence but can introduce instability into training. For most,
+            altering this value will not be necessary.
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        batch_seed: int
+            For deterministic batching during training, set this value to an integer of choice.
 
         Returns
 
@@ -4233,19 +4255,13 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         counts = np.zeros_like(self.predicted)
         self._reset_models()
-        self._build(batch_size=batch_size, batch_size_update=batch_size_update, epochs_min=epochs_min,
-                    stop_criterion=stop_criterion, stop_criterion_window=stop_criterion_window, kernel=kernel,
-                    num_concepts=num_concepts, weight_by_class=weight_by_class, class_weights=class_weights,
-                    trainable_embedding=trainable_embedding, accuracy_min=accuracy_min, train_loss_min=train_loss_min,
-                    num_fc_layers=num_fc_layers, units_fc=units_fc, drop_out_rate=drop_out_rate,
-                    suppress_output=suppress_output,
-                    use_only_seq=use_only_seq, use_only_gene=use_only_gene, use_only_hla=use_only_hla,
-                    size_of_net=size_of_net,
-                    embedding_dim_aa=embedding_dim_aa, embedding_dim_genes=embedding_dim_genes,
-                    embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence,graph_seed=graph_seed,
-                    learning_rate=learning_rate,qualitative_agg=qualitative_agg,quantitative_agg=quantitative_agg,
-                            num_agg_layers=num_agg_layers,units_agg=units_agg,
-                    multisample_dropout=multisample_dropout, multisample_dropout_rate = multisample_dropout_rate,multisample_dropout_num_masks = multisample_dropout_num_masks)
+        self._build(kernel, num_concepts, trainable_embedding, embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
+                    num_fc_layers, units_fc, weight_by_class, class_weights,
+                    use_only_seq, use_only_gene, use_only_hla, size_of_net, graph_seed,
+                    qualitative_agg, quantitative_agg, num_agg_layers, units_agg,
+                    drop_out_rate, multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
+                    batch_size, batch_size_update, epochs_min, stop_criterion, stop_criterion_window,
+                    accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
 
         for i in range(0, folds):
             if suppress_output is False:
@@ -4255,12 +4271,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,combine_train_valid=combine_train_valid,
                                       random_perm=random_perm)
-            # if i == folds-1:
-            #     write = True
-            # else:
-            #     write = False
-            write = True
-            self._train(write=write,batch_seed=batch_seed,iteration=i)
+            self._train(write=True,batch_seed=batch_seed,iteration=i)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -4297,16 +4308,15 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
-    def K_Fold_CrossVal(self,folds=None,epochs_min=25,batch_size=25,batch_size_update=None,stop_criterion=0.25, stop_criterion_window=10,kernel=5,
-                        num_concepts=12, weight_by_class=False,class_weights=None, iterations=None,
-                        trainable_embedding=True, accuracy_min = None,train_loss_min=None,combine_train_valid=False,
-                        num_fc_layers=0, units_fc=12, drop_out_rate=0.0,suppress_output=False,
-                        use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                        embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
-                        hinge_loss_t=0.0,convergence='validation',learning_rate=0.001,
-                        qualitative_agg=True, quantitative_agg=False,
-                        num_agg_layers=0, units_agg=12,
-                        multisample_dropout=False, multisample_dropout_rate = 0.25,multisample_dropout_num_masks = 10):
+    def K_Fold_CrossVal(self,folds=None,combine_train_valid=False,
+                        kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
+                        num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
+                        use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
+                        qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12,
+                        drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10,
+                        batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
+                        accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
+                        batch_seed=None):
 
         """
         K_Fold Cross-Validation for Whole Sample Classifier
@@ -4318,30 +4328,23 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         Inputs
         ---------------------------------------
+
+        K-Fold Parameters
+
         folds: int
             Number of Folds
 
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
+        combine_train_valid: bool
+            To combine the training and validation partitions into one which will be used for training
+            and updating the model parameters, set this to True. This will also set the validation partition
+            to the test partition. In other words, new train set becomes (original train + original valid) and then
+            new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
+            to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
+            to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
+            when to stop training will be based on the test data (which is considered a form of over-fitting).
 
-        batch_size_update: int
-            In the case that the size of the samples are very large, one may not want to update
-            the weights of the network as often as batches are put onto the gpu. Therefore, if
-            one wants to update the weights less often than how often the batches of data are put onto the
-            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
-            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
-            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
-            gpu's for training and there are memory constraints from very large samples.
 
-        epochs_min: int
-            Minimum number of epochs for training neural network.
-
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
-
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
+        Model Parameters
 
         kernel: int
             Size of convolutional kernel for first layer of convolutions.
@@ -4349,6 +4352,25 @@ class DeepTCR_WF(DeepTCR_S_base):
         num_concepts: int
             Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the
             repertoires being analyed, one can adjust this hyperparameter.
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
 
         weight_by_class: bool
             Option to weight loss by the inverse of the class frequency. Useful for
@@ -4359,58 +4381,13 @@ class DeepTCR_WF(DeepTCR_S_base):
             can provide a dictionary with these weights.
                 i.e. {'A':1.0,'B':2.0'}
 
-        iterations: int
-            Option to specify how many iterations one wants to complete before
-            terminating training. Useful for very large datasets.
-
-        trainable_embedding; bool
-            Toggle to control whether a trainable embedding layer is used or native
-            one-hot representation for convolutional layers.
-
-        accuracy_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training accuracy is achieved, at which point, training ceases.
-
-        train_loss_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training loss is achieved, at which point, training ceases.
-
-        hinge_loss_t: float
-            The per sample loss minimum at which the loss of that sample is not used
-            to penalize the model anymore. In other words, once a per sample loss has hit
-            this value, it gets set to 0.0.
-
-        convergence: str
-            This parameter determines which loss to assess the convergence criteria on.
-            Options are 'validation' or 'training'. This is useful in the case one wants
-            to change the convergence criteria on the training data when the training and validation
-            partitions have been combined and used to training the model.
-
-        combine_train_valid: bool
-            To combine the training and validation partitions into one which will be used for training
-            and updating the model parameters, set this to True. This will also set the validation partition
-            to the test partition. Therefore, if setting this parameter to True, change one of the training parameters
-            to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set.
-
-        num_fc_layers: int
-            Number of fully connected layers following convolutional layer.
-
-        units_fc: int
-            Number of nodes per fully-connected layers following convolutional layer.
-
-        drop_out_rate: float
-            drop out rate for fully connected layers
-
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
 
         use_only_gene: bool
             To only use gene-usage features, set to True. This will turn off features from
             the sequences.
-
-        use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
 
         use_only_hla: bool
             To only use hla feaures, set to True.
@@ -4425,19 +4402,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
-
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
-
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
-
-        learning_rate: float
-            The learning rate for training the neural network. Making this value larger will
-            increase the rate of convergence but can introduce instability into training. For most,
-            altering this value will not be necessary.
+        graph_seed: int
+            For deterministic initialization of weights of the graph, set this to value of choice.
 
         The following two options alter how the predictive signatures in the neural network are aggregated
         to make a prediction about the repertoire. If qualitative_agg or quantitative_agg are set to True,
@@ -4464,6 +4430,9 @@ class DeepTCR_WF(DeepTCR_S_base):
         units_agg: int
             For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
 
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
         The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
         "Multi-Sample Dropout for Accelerated Training and Better Generalization"
         https://arxiv.org/abs/1905.09788
@@ -4477,6 +4446,61 @@ class DeepTCR_WF(DeepTCR_S_base):
 
          multisample_dropout_num_masks: int
             The number of masks to sample from for the Multi-Sample Dropout layer.
+
+
+        Training Parameters
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        batch_size_update: int
+            In the case that the size of the samples are very large, one may not want to update
+            the weights of the network as often as batches are put onto the gpu. Therefore, if
+            one wants to update the weights less often than how often the batches of data are put onto the
+            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
+            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
+            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
+            gpu's for training and there are memory constraints from very large samples.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
+        accuracy_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training accuracy is achieved, at which point, training ceases.
+
+        train_loss_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training loss is achieved, at which point, training ceases.
+
+        hinge_loss_t: float
+            The per sample loss minimum at which the loss of that sample is not used
+            to penalize the model anymore. In other words, once a per sample loss has hit
+            this value, it gets set to 0.0.
+
+        convergence: str
+            This parameter determines which loss to assess the convergence criteria on.
+            Options are 'validation' or 'training'. This is useful in the case one wants
+            to change the convergence criteria on the training data when the training and validation
+            partitions have been combined and used to training the model.
+
+        learning_rate: float
+            The learning rate for training the neural network. Making this value larger will
+            increase the rate of convergence but can introduce instability into training. For most,
+            altering this value will not be necessary.
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        batch_seed: int
+            For deterministic batching during training, set this value to an integer of choice.
 
         Returns
         ---------------------------------------
@@ -4509,19 +4533,13 @@ class DeepTCR_WF(DeepTCR_S_base):
             idx_left = np.setdiff1d(idx_left, idx_sel)
 
         self._reset_models()
-        self._build(batch_size=batch_size, batch_size_update=batch_size_update, epochs_min=epochs_min,
-                    stop_criterion=stop_criterion, stop_criterion_window=stop_criterion_window, kernel=kernel,
-                    num_concepts=num_concepts, weight_by_class=weight_by_class, class_weights=class_weights,
-                    trainable_embedding=trainable_embedding, accuracy_min=accuracy_min, train_loss_min=train_loss_min,
-                    num_fc_layers=num_fc_layers, units_fc=units_fc, drop_out_rate=drop_out_rate,
-                    suppress_output=suppress_output,
-                    use_only_seq=use_only_seq, use_only_gene=use_only_gene, use_only_hla=use_only_hla,
-                    size_of_net=size_of_net,
-                    embedding_dim_aa=embedding_dim_aa, embedding_dim_genes=embedding_dim_genes,
-                    embedding_dim_hla=embedding_dim_hla, hinge_loss_t=hinge_loss_t, convergence=convergence,
-                    learning_rate=learning_rate,qualitative_agg=qualitative_agg,quantitative_agg=quantitative_agg,
-                            num_agg_layers=num_agg_layers,units_agg=units_agg,
-                    multisample_dropout=multisample_dropout, multisample_dropout_rate = multisample_dropout_rate,multisample_dropout_num_masks = multisample_dropout_num_masks)
+        self._build(kernel, num_concepts, trainable_embedding, embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
+                    num_fc_layers, units_fc, weight_by_class, class_weights,
+                    use_only_seq, use_only_gene, use_only_hla, size_of_net, graph_seed,
+                    qualitative_agg, quantitative_agg, num_agg_layers, units_agg,
+                    drop_out_rate, multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
+                    batch_size, batch_size_update, epochs_min, stop_criterion, stop_criterion_window,
+                    accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
 
         y_test = []
         y_pred = []
@@ -4542,7 +4560,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                     self.valid[i] = self.test[i]
 
             self.LOO = None
-            self._train(write=True, batch_seed=None, iteration=ii)
+            self._train(write=True, batch_seed=batch_seed, iteration=ii)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -4557,11 +4575,6 @@ class DeepTCR_WF(DeepTCR_S_base):
                     if ii > 0:
                         if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
                             print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
-
-
-            if iterations is not None:
-                if ii+1 >= iterations:
-                    break
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
