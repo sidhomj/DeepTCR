@@ -348,7 +348,7 @@ def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,ker
 
     return Rep_Seq_Features
 
-def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=None):
+def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=None,multisample_dropout_rate=None):
     loss = []
     accuracy = []
     predicted_list = []
@@ -364,6 +364,9 @@ def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
 
         if drop_out_rate is not None:
             feed_dict[GO.prob] = drop_out_rate
+
+        if multisample_dropout_rate is not None:
+            feed_dict[GO.prob_multisample] = multisample_dropout_rate
 
         if self.use_alpha is True:
             feed_dict[GO.X_Seq_alpha] = vars[0]
@@ -484,7 +487,7 @@ def Run_Graph_WF_dep(set,sess,self,GO,batch_size,random=True,train=True,drop_out
         auc = 0.0
     return loss,accuracy,predicted_out,auc
 
-def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train=True,drop_out_rate=None):
+def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train=True,drop_out_rate=None,multisample_dropout_rate=None):
     loss = []
     accuracy = []
     predicted_list = []
@@ -521,6 +524,9 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
 
         if drop_out_rate is not None:
             feed_dict[GO.prob] = drop_out_rate
+
+        if multisample_dropout_rate is not None:
+            feed_dict[GO.prob_multisample] = multisample_dropout_rate
 
         if self.use_alpha is True:
             feed_dict[GO.X_Seq_alpha] = self.X_Seq_alpha[var_idx]

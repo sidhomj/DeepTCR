@@ -133,6 +133,7 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         GO.X_Seq_beta_OH = tf.one_hot(GO.X_Seq_beta, depth=21)
 
     GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
+    GO.prob_multisample = tf.placeholder_with_default(0.0, shape=(), name='prob_multisample')
     GO.sp = tf.sparse.placeholder(dtype=tf.float32, shape=[None, None],name='sp')
     GO.X_Freq = tf.placeholder(tf.float32, shape=[None, ], name='Freq')
     GO.X_Counts = tf.placeholder(tf.float32, shape=[None, ], name='Counts')

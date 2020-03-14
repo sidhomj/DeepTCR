@@ -2766,11 +2766,11 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         This method allows the user to query which sequences were most predicted to belong to a given class along
         with the motifs that were learned for these representative sequences.
         Of note, this method only reports sequences that were in the test set so as not to return highly predicted
-        sequences that were over-fit in the training set. To obtain the highest predictd sequences in all the data,
+        sequences that were over-fit in the training set. To obtain the highest predicted sequences in all the data,
         run a K-fold cross-validation or Monte-Carlo cross-validation before running this method. In this way,
         the predicted probability will have been assigned to a sequence only when it was in the independent test set.
 
-        In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regressio
+        In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regression
         model are returned in the Rep_Seq Dict.
 
         Inputs
@@ -2888,8 +2888,8 @@ class DeepTCR_SS(DeepTCR_S_base):
             Fraction of sample to be used for valid and test set.
 
         LOO: int
-            Number of samples to leave-out in Leave-One-Out Cross-Validation. For example,
-            when set to 2, 2 samples will be left out for the validation set and 2 samples will be left
+            Number of sequences to leave-out in Leave-One-Out Cross-Validation. For example,
+            when set to 20, 20 sequences will be left out for the validation set and 20 samples will be left
             out for the test set.
 
         split_by_sample: int
@@ -2932,93 +2932,20 @@ class DeepTCR_SS(DeepTCR_S_base):
         if (self.valid[0].size == 0) or (self.test[0].size == 0):
             raise Exception('Choose different train/valid/test parameters!')
 
-    def Train(self,batch_size = 1000, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
-                 trainable_embedding=True,weight_by_class=False,class_weights=None,
-                 num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
-                 use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                 embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,graph_seed=None):
-        """
-        Train Single-Sequence Classifier
+    def _reset_models(self):
+        self.models_dir = os.path.join(self.Name,'models')
+        if os.path.exists(self.models_dir):
+            shutil.rmtree(self.models_dir)
+        os.makedirs(self.models_dir)
 
-        This method trains the network and saves features values at the
-        end of training for motif analysis.
-
-        Inputs
-        ---------------------------------------
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
-
-        epochs_min: int
-            Minimum number of epochs for training neural network.
-
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
-
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
-
-        kernel: int
-            Size of convolutional kernel.
-
-        trainable_embedding; bool
-            Toggle to control whether a trainable embedding layer is used or native
-            one-hot representation for convolutional layers.
-
-        weight_by_class: bool
-            Option to weight loss by the inverse of the class frequency. Useful for
-            unbalanced classes.
-
-        class_weights: dict
-            In order to specify custom weights for each class during training, one
-            can provide a dictionary with these weights.
-                i.e. {'A':1.0,'B':2.0'}
-
-        num_fc_layers: int
-            Number of fully connected layers following convolutional layer.
-
-        units_fc: int
-            Number of nodes per fully-connected layers following convolutional layer.
-
-        drop_out_rate: float
-            drop out rate for fully connected layers
-
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
-
-        use_only_gene: bool
-            To only use gene-usage features, set to True.
-
-        use_only_seq: bool
-            To only use sequence feaures, set to True.
-
-        use_only_hla: bool
-            To only use hla feaures, set to True.
-
-        size_of_net: list or str
-            The convolutional layers of this network have 3 layers for which the use can
-            modify the number of neurons per layer. The user can either specify the size of the network
-            with the following options:
-                - small == [12,32,64] neurons for the 3 respective layers
-                - medium == [32,64,128] neurons for the 3 respective layers
-                - large == [64,128,256] neurons for the 3 respective layers
-                - custom, where the user supplies a list with the number of nuerons for the respective layers
-                    i.e. [3,3,3] would have 3 neurons for all 3 layers.
-
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
-
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
-
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
+    def _build(self,kernel = 5,trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
+               num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
+               use_only_seq = False, use_only_gene = False, use_only_hla = False, size_of_net = 'medium',graph_seed = None,
+               drop_out_rate=0.0,multisample_dropout = False, multisample_dropout_rate = 0.25, multisample_dropout_num_masks = 10,
+               batch_size = 1000, epochs_min = 10, stop_criterion = 0.001, stop_criterion_window = 10,
+               accuracy_min = None, train_loss_min = None, hinge_loss_t = 0.0, convergence = 'validation', learning_rate = 0.001, suppress_output = False):
 
 
-        Returns
-        ---------------------------------------
-
-        """
         graph_model = tf.Graph()
         GO = graph_object()
         GO.on_graph_clustering=False
@@ -3026,6 +2953,17 @@ class DeepTCR_SS(DeepTCR_S_base):
         GO.embedding_dim_genes = embedding_dim_genes
         GO.embedding_dim_aa = embedding_dim_aa
         GO.embedding_dim_hla = embedding_dim_hla
+        train_params = graph_object()
+        train_params.batch_size = batch_size
+        train_params.epochs_min = epochs_min
+        train_params.stop_criterion = stop_criterion
+        train_params.stop_criterion_window  = stop_criterion_window
+        train_params.accuracy_min = accuracy_min
+        train_params.train_loss_min = train_loss_min
+        train_params.convergence = convergence
+        train_params.suppress_output = suppress_output
+        train_params.drop_out_rate = drop_out_rate
+        train_params.multisample_dropout_rate = multisample_dropout_rate
 
         with graph_model.device(self.device):
             with graph_model.as_default():
@@ -3041,26 +2979,45 @@ class DeepTCR_SS(DeepTCR_S_base):
                     GO.Y = tf.placeholder(tf.float32, shape=[None, 1])
 
                 if self.regression is False:
-                    GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
+                    if multisample_dropout:
+                        GO.logits = MultiSample_Dropout(GO.Features,
+                                                        num_masks=multisample_dropout_num_masks,
+                                                        units=self.Y.shape[1],
+                                                        activation=None,
+                                                        rate=GO.prob_multisample)
+                    else:
+                        GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
 
+                    per_sample_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits)
+                    per_sample_loss = per_sample_loss - hinge_loss_t
+                    per_sample_loss = tf.cast((per_sample_loss > 0), tf.float32) * per_sample_loss
                     if weight_by_class is True:
                         class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
-                        weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True), axis=1)
-                        GO.loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                        weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
+                        GO.loss = tf.reduce_mean(weights * per_sample_loss)
                     elif class_weights is not None:
-                        weights = np.zeros([1,len(self.lb.classes_)]).astype(np.float32)
+                        weights = np.zeros([1, len(self.lb.classes_)]).astype(np.float32)
                         for key in class_weights:
-                            weights[:,self.lb.transform([key])[0]]=class_weights[key]
+                            weights[:, self.lb.transform([key])[0]] = class_weights[key]
                         class_weights = tf.constant(weights)
                         weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
-                        GO.loss = tf.reduce_mean(weights * tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                        GO.loss = tf.reduce_mean(weights * per_sample_loss)
                     else:
-                        GO.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits))
+                        GO.loss = tf.reduce_mean(per_sample_loss)
+
                 else:
-                    GO.logits = tf.layers.dense(GO.Features,1)
+                    if multisample_dropout:
+                        GO.logits = MultiSample_Dropout(GO.Features,
+                                                        num_masks=multisample_dropout_num_masks,
+                                                        units=1,
+                                                        activation=None,
+                                                        rate=GO.prob_multisample)
+                    else:
+                        GO.logits = tf.layers.dense(GO.Features, 1)
+
                     GO.loss = tf.reduce_mean(tf.square(GO.Y-GO.logits))
 
-                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
+                GO.opt = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(GO.loss)
 
                 if self.regression is False:
                     with tf.name_scope('Accuracy_Measurements'):
@@ -3071,7 +3028,29 @@ class DeepTCR_SS(DeepTCR_S_base):
                     GO.predicted = GO.logits
                     GO.accuracy = GO.loss
 
-                GO.saver = tf.train.Saver()
+                GO.saver = tf.train.Saver(max_to_keep=None)
+
+                self.GO = GO
+                self.train_params = train_params
+                self.graph_model = graph_model
+                self.kernel = kernel
+
+    def _train(self,batch_seed=None,iteration=0):
+
+        GO = self.GO
+        graph_model = self.graph_model
+        train_params = self.train_params
+
+        batch_size = train_params.batch_size
+        epochs_min = train_params.epochs_min
+        stop_criterion = train_params.stop_criterion
+        stop_criterion_window = train_params.stop_criterion_window
+        accuracy_min = train_params.accuracy_min
+        train_loss_min = train_params.train_loss_min
+        convergence = train_params.convergence
+        suppress_output = train_params.suppress_output
+        drop_out_rate = train_params.drop_out_rate
+        multisample_dropout_rate = train_params.multisample_dropout_rate
 
 
         #Initialize Training
@@ -3082,11 +3061,18 @@ class DeepTCR_SS(DeepTCR_S_base):
             sess.run(tf.global_variables_initializer())
 
             val_loss_total = []
+            train_accuracy_total = []
+            train_loss_total = []
             stop_check_list = []
             e = 0
             while True:
+                if batch_seed is not None:
+                    np.random.seed(batch_seed)
                 train_loss, train_accuracy, train_predicted,train_auc = \
-                    Run_Graph_SS(self.train,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=drop_out_rate)
+                    Run_Graph_SS(self.train,sess,self,GO,batch_size,random=True,train=True,drop_out_rate=drop_out_rate,multisample_dropout_rate=multisample_dropout_rate)
+
+                train_accuracy_total.append(train_accuracy)
+                train_loss_total.append(train_loss)
 
                 valid_loss, valid_accuracy, valid_predicted,valid_auc = \
                     Run_Graph_SS(self.valid,sess,self,GO,batch_size,random=False,train=False)
@@ -3109,14 +3095,28 @@ class DeepTCR_SS(DeepTCR_S_base):
                           "Validation Accuracy: {:.5}".format(valid_accuracy),
                           "Testing AUC: {:.5}".format(test_auc))
 
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore')
+                    if e > epochs_min:
+                        if accuracy_min is not None:
+                            if np.mean(train_accuracy_total[-3:]) >= accuracy_min:
+                                break
+                        elif train_loss_min is not None:
+                            if np.mean(train_loss_total[-3:]) < train_loss_min:
+                                break
+                        elif convergence == 'validation':
+                            if val_loss_total:
+                                stop_check_list.append(stop_check(val_loss_total, stop_criterion, stop_criterion_window))
+                                if np.sum(stop_check_list[-3:]) >= 3:
+                                    break
 
-                if e > epochs_min:
-                    stop_check_list.append(stop_check(val_loss_total, stop_criterion, stop_criterion_window))
-                    if np.sum(stop_check_list[-3:]) >= 3:
-                        break
+                        elif convergence == 'training':
+                            if train_loss_total:
+                                stop_check_list.append(stop_check(train_loss_total, stop_criterion, stop_criterion_window))
+                                if np.sum(stop_check_list[-3:]) >= 3:
+                                    break
 
                 e += 1
-
 
             Get_Seq_Features_Indices(self,batch_size,GO,sess)
             self.features = Get_Latent_Features(self,batch_size,GO,sess)
@@ -3128,8 +3128,6 @@ class DeepTCR_SS(DeepTCR_S_base):
 
             if hasattr(self,'predicted'):
                 self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
-
-            self.kernel = kernel
 
             #
             if self.use_alpha is True:
@@ -3146,51 +3144,30 @@ class DeepTCR_SS(DeepTCR_S_base):
                 pickle.dump(self.kernel, f)
 
             print('Done Training')
-            GO.saver.save(sess, os.path.join(self.Name, 'model', 'model.ckpt'))
-            with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'wb') as f:
-                pickle.dump(['SS',GO.predicted.name,self.use_alpha, self.use_beta,
+            GO.saver.save(sess, os.path.join(self.Name, 'models', 'model_' + str(iteration), 'model.ckpt'))
+            with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'wb') as f:
+                pickle.dump(['SS', GO.predicted.name, self.use_alpha, self.use_beta,
                              self.use_v_beta, self.use_d_beta, self.use_j_beta,
-                             self.use_v_alpha, self.use_j_alpha,self.use_hla,
+                             self.use_v_alpha, self.use_j_alpha, self.use_hla,
                              self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
-                             self.lb_v_alpha, self.lb_j_alpha, self.lb_hla,self.lb], f)
+                             self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb], f)
 
-    def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
-                                trainable_embedding=True,weight_by_class=False,class_weights=None,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
-                                use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                             embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
-                             split_by_sample=False):
+    def Train(self,kernel = 5,trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
+               num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
+               use_only_seq = False, use_only_gene = False, use_only_hla = False, size_of_net = 'medium',graph_seed = None,
+               drop_out_rate=0.0,multisample_dropout = False, multisample_dropout_rate = 0.25, multisample_dropout_num_masks = 10,
+               batch_size = 1000, epochs_min = 10, stop_criterion = 0.001, stop_criterion_window = 10,
+               accuracy_min = None, train_loss_min = None, hinge_loss_t = 0.0, convergence = 'validation', learning_rate = 0.001, suppress_output = False,
+                batch_seed = None):
+        """
+        Train Single-Sequence Classifier
 
-        '''
-        Monte Carlo Cross-Validation for Single-Sequence Classifier
-
-        If the number of sequences is small but training the single-sequence classifier, one
-        can use Monte Carlo Cross Validation to train a number of iterations before assessing
-        predictive performance.After this method is run, the AUC_Curve method can be run to
-        assess the overall performance.
+        This method trains the network and saves features values at the
+        end of training for motif analysis.
 
         Inputs
         ---------------------------------------
-        folds: int
-            Number of iterations for Cross-Validation
-
-        test_size: float
-            Fraction of sample to be used for valid and test set.
-
-        LOO: int
-            Number of sequences to leave-out in Leave-One-Out Cross-Validation
-
-        epochs_min: int
-            Minimum number of epochs for training neural network.
-
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
-
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
-
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
+        Model Parameters
 
         kernel: int
             Size of convolutional kernel for first layer of convolutions.
@@ -3198,6 +3175,21 @@ class DeepTCR_SS(DeepTCR_S_base):
         trainable_embedding; bool
             Toggle to control whether a trainable embedding layer is used or native
             one-hot representation for convolutional layers.
+
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
 
         weight_by_class: bool
             Option to weight loss by the inverse of the class frequency. Useful for
@@ -3208,23 +3200,13 @@ class DeepTCR_SS(DeepTCR_S_base):
             can provide a dictionary with these weights.
                 i.e. {'A':1.0,'B':2.0'}
 
-        num_fc_layers: int
-            Number of fully connected layers following convolutional layer.
-
-        units_fc: int
-            Number of nodes per fully-connected layers following convolutional layer.
-
-        drop_out_rate: float
-            drop out rate for fully connected layers
-
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
 
         use_only_gene: bool
-            To only use gene-usage features, set to True.
-
-        use_only_seq: bool
-            To only use sequence feaures, set to True.
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
 
         use_only_hla: bool
             To only use hla feaures, set to True.
@@ -3239,6 +3221,137 @@ class DeepTCR_SS(DeepTCR_S_base):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
+        graph_seed: int
+            For deterministic initialization of weights of the graph, set this to value of choice.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
+        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
+        https://arxiv.org/abs/1905.09788
+        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
+
+        multisample_dropout: bool
+            Set this parameter to True to implement this method.
+
+         multisample_dropout_rate: float
+            The dropout rate for this multi-sample dropout layer.
+
+         multisample_dropout_num_masks: int
+            The number of masks to sample from for the Multi-Sample Dropout layer.
+
+
+        Training Parameters
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
+        accuracy_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training accuracy is achieved, at which point, training ceases.
+
+        train_loss_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training loss is achieved, at which point, training ceases.
+
+        hinge_loss_t: float
+            The per sequence loss minimum at which the loss of that sequence is not used
+            to penalize the model anymore. In other words, once a per sequence loss has hit
+            this value, it gets set to 0.0.
+
+        convergence: str
+            This parameter determines which loss to assess the convergence criteria on.
+            Options are 'validation' or 'training'. This is useful in the case one wants
+            to change the convergence criteria on the training data when the training and validation
+            partitions have been combined and used to training the model.
+
+        learning_rate: float
+            The learning rate for training the neural network. Making this value larger will
+            increase the rate of convergence but can introduce instability into training. For most,
+            altering this value will not be necessary.
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        batch_seed: int
+            For deterministic batching during training, set this value to an integer of choice.
+
+        Returns
+        ---------------------------------------
+
+        """
+        self._reset_models()
+        self._build(kernel,trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
+               num_fc_layers, units_fc,weight_by_class, class_weights,
+               use_only_seq, use_only_gene, use_only_hla, size_of_net,graph_seed,
+               drop_out_rate,multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
+               batch_size, epochs_min, stop_criterion, stop_criterion_window,
+               accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
+        self._train(batch_seed=batch_seed,iteration=0)
+
+    def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,split_by_sample=False,seeds=None,
+                             kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
+                             num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
+                             use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
+                             drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10,
+                             batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
+                             accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
+                             batch_seed=None):
+
+        '''
+        Monte Carlo Cross-Validation for Single-Sequence Classifier
+
+        If the number of sequences is small but training the single-sequence classifier, one
+        can use Monte Carlo Cross Validation to train a number of iterations before assessing
+        predictive performance.After this method is run, the AUC_Curve method can be run to
+        assess the overall performance.
+
+        Inputs
+        ---------------------------------------
+        Monte-Carlo Parameters
+
+        folds: int
+            Number of iterations for Cross-Validation
+
+        test_size: float
+            Fraction of sample to be used for valid and test set.
+
+        LOO: int
+            Number of sequences to leave-out in Leave-One-Out Cross-Validation. For example,
+            when set to 20, 20 sequences will be left out for the validation set and 20 samples will be left
+            out for the test set.
+
+        split_by_sample: int
+            In the case one wants to train the single sequence classifer but not to mix the train/test
+            sets with sequences from different samples, one can set this parameter to True to do the train/test
+            splits by sample.
+
+        seeds: nd.array
+            In order to set a deterministic train/test split over the Monte-Carlo Simulations, one can provide an array
+            of seeds for each MC simulation. This will result in the same train/test split over the N MC simulations.
+            This parameter, if provided, should have the same size of the value of folds.
+
+
+        Model Parameters
+
+        kernel: int
+            Size of convolutional kernel for first layer of convolutions.
+
+        trainable_embedding; bool
+            Toggle to control whether a trainable embedding layer is used or native
+            one-hot representation for convolutional layers.
+
         embedding_dim_aa: int
             Learned latent dimensionality of amino-acids.
 
@@ -3248,11 +3361,107 @@ class DeepTCR_SS(DeepTCR_S_base):
         embedding_dim_hla: int
             Learned latent dimensionality of HLA
 
-        split_by_sample: int
-            In the case one wants to train the single sequence classifer but not to mix the train/test
-            sets with sequences from different samples, one can set this parameter to True to do the train/test
-            splits by sample.
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
 
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
+
+        weight_by_class: bool
+            Option to weight loss by the inverse of the class frequency. Useful for
+            unbalanced classes.
+
+        class_weights: dict
+            In order to specify custom weights for each class during training, one
+            can provide a dictionary with these weights.
+                i.e. {'A':1.0,'B':2.0'}
+
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
+
+        use_only_gene: bool
+            To only use gene-usage features, set to True. This will turn off features from
+            the sequences.
+
+        use_only_hla: bool
+            To only use hla feaures, set to True.
+
+        size_of_net: list or str
+            The convolutional layers of this network have 3 layers for which the use can
+            modify the number of neurons per layer. The user can either specify the size of the network
+            with the following options:
+                - small == [12,32,64] neurons for the 3 respective layers
+                - medium == [32,64,128] neurons for the 3 respective layers
+                - large == [64,128,256] neurons for the 3 respective layers
+                - custom, where the user supplies a list with the number of nuerons for the respective layers
+                    i.e. [3,3,3] would have 3 neurons for all 3 layers.
+
+        graph_seed: int
+            For deterministic initialization of weights of the graph, set this to value of choice.
+
+        drop_out_rate: float
+            drop out rate for fully connected layers
+
+        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
+        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
+        https://arxiv.org/abs/1905.09788
+        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
+
+        multisample_dropout: bool
+            Set this parameter to True to implement this method.
+
+         multisample_dropout_rate: float
+            The dropout rate for this multi-sample dropout layer.
+
+         multisample_dropout_num_masks: int
+            The number of masks to sample from for the Multi-Sample Dropout layer.
+
+
+        Training Parameters
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
+        accuracy_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training accuracy is achieved, at which point, training ceases.
+
+        train_loss_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training loss is achieved, at which point, training ceases.
+
+        hinge_loss_t: float
+            The per sequence loss minimum at which the loss of that sequence is not used
+            to penalize the model anymore. In other words, once a per sequence loss has hit
+            this value, it gets set to 0.0.
+
+        convergence: str
+            This parameter determines which loss to assess the convergence criteria on.
+            Options are 'validation' or 'training'. This is useful in the case one wants
+            to change the convergence criteria on the training data when the training and validation
+            partitions have been combined and used to training the model.
+
+        learning_rate: float
+            The learning rate for training the neural network. Making this value larger will
+            increase the rate of convergence but can introduce instability into training. For most,
+            altering this value will not be necessary.
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        batch_seed: int
+            For deterministic batching during training, set this value to an integer of choice.
 
         Returns
         ---------------------------------------
@@ -3264,17 +3473,21 @@ class DeepTCR_SS(DeepTCR_S_base):
         y_test = []
         predicted = np.zeros_like(self.predicted)
         counts = np.zeros_like(self.predicted)
+        self._reset_models()
+        self._build(kernel,trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
+               num_fc_layers, units_fc,weight_by_class, class_weights,
+               use_only_seq, use_only_gene, use_only_hla, size_of_net,graph_seed,
+               drop_out_rate,multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
+               batch_size, epochs_min, stop_criterion, stop_criterion_window,
+               accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
+
         for i in range(0, folds):
             if suppress_output is False:
                 print(i)
+            if seeds is not None:
+                np.random.seed(seeds[i])
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,split_by_sample=split_by_sample)
-            self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
-                          kernel=kernel,weight_by_class=weight_by_class,class_weights=class_weights,
-                          trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
-                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
-                          use_only_seq=use_only_seq,use_only_gene=use_only_gene,use_only_hla=use_only_hla,
-                       size_of_net=size_of_net,stop_criterion_window=stop_criterion_window,
-                       embedding_dim_aa=embedding_dim_aa,embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla)
+            self._train(batch_seed=batch_seed,iteration=i)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -3300,10 +3513,15 @@ class DeepTCR_SS(DeepTCR_S_base):
         self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
-    def K_Fold_CrossVal(self,folds=None,epochs_min=10,batch_size=1000,stop_criterion=0.001,stop_criterion_window=10,kernel=5,
-                           trainable_embedding=True,weight_by_class=False,class_weights=None,num_fc_layers=0,units_fc=12,drop_out_rate=0.0,suppress_output=False,
-                           iterations=None,use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',
-                        embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,split_by_sample=False):
+    def K_Fold_CrossVal(self,folds=None,split_by_sample=False,
+                        kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
+                        num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
+                        use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
+                        drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10,
+                        batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
+                        accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
+                        batch_seed=None):
+
         '''
         K_Fold Cross-Validation for Single-Sequence Classifier
 
@@ -3314,22 +3532,18 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         Inputs
         ---------------------------------------
+        K-Fold Parameters
 
         folds: int
             Number of Folds
 
-        epochs_min: int
-            Minimum number of epochs for training neural network.
+        split_by_sample: int
+            In the case one wants to train the single sequence classifer but not to mix the train/test
+            sets with sequences from different samples, one can set this parameter to True to do the train/test
+            splits by sample.
 
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
 
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
-
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
+        Model Parameters
 
         kernel: int
             Size of convolutional kernel for first layer of convolutions.
@@ -3337,6 +3551,21 @@ class DeepTCR_SS(DeepTCR_S_base):
         trainable_embedding; bool
             Toggle to control whether a trainable embedding layer is used or native
             one-hot representation for convolutional layers.
+
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
+
+        num_fc_layers: int
+            Number of fully connected layers following convolutional layer.
+
+        units_fc: int
+            Number of nodes per fully-connected layers following convolutional layer.
 
         weight_by_class: bool
             Option to weight loss by the inverse of the class frequency. Useful for
@@ -3347,29 +3576,13 @@ class DeepTCR_SS(DeepTCR_S_base):
             can provide a dictionary with these weights.
                 i.e. {'A':1.0,'B':2.0'}
 
-        num_fc_layers: int
-            Number of fully connected layers following convolutional layer.
-
-        units_fc: int
-            Number of nodes per fully-connected layers following convolutional layer.
-
-        drop_out_rate: float
-            drop out rate for fully connected layers
-
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
-
-        iterations: int
-            Option to specify how many iterations one wants to complete before
-            terminating training. Useful for very large datasets.
+        use_only_seq: bool
+            To only use sequence feaures, set to True. This will turn off features learned
+            from gene usage.
 
         use_only_gene: bool
             To only use gene-usage features, set to True. This will turn off features from
             the sequences.
-
-        use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
 
         use_only_hla: bool
             To only use hla feaures, set to True.
@@ -3384,19 +3597,71 @@ class DeepTCR_SS(DeepTCR_S_base):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
+        graph_seed: int
+            For deterministic initialization of weights of the graph, set this to value of choice.
 
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
+        drop_out_rate: float
+            drop out rate for fully connected layers
 
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
+        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
+        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
+        https://arxiv.org/abs/1905.09788
+        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
 
-        split_by_sample: int
-            In the case one wants to train the single sequence classifer but not to mix the train/test
-            sets with sequences from different samples, one can set this parameter to True to do the train/test
-            splits by sample.
+        multisample_dropout: bool
+            Set this parameter to True to implement this method.
+
+         multisample_dropout_rate: float
+            The dropout rate for this multi-sample dropout layer.
+
+         multisample_dropout_num_masks: int
+            The number of masks to sample from for the Multi-Sample Dropout layer.
+
+
+        Training Parameters
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        epochs_min: int
+            Minimum number of epochs for training neural network.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
+        accuracy_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training accuracy is achieved, at which point, training ceases.
+
+        train_loss_min: float
+            Optional parameter to allow alternative training strategy until minimum
+            training loss is achieved, at which point, training ceases.
+
+        hinge_loss_t: float
+            The per sequence loss minimum at which the loss of that sequence is not used
+            to penalize the model anymore. In other words, once a per sequence loss has hit
+            this value, it gets set to 0.0.
+
+        convergence: str
+            This parameter determines which loss to assess the convergence criteria on.
+            Options are 'validation' or 'training'. This is useful in the case one wants
+            to change the convergence criteria on the training data when the training and validation
+            partitions have been combined and used to training the model.
+
+        learning_rate: float
+            The learning rate for training the neural network. Making this value larger will
+            increase the rate of convergence but can introduce instability into training. For most,
+            altering this value will not be necessary.
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        batch_seed: int
+            For deterministic batching during training, set this value to an integer of choice.
 
         Returns
         ---------------------------------------
@@ -3442,6 +3707,14 @@ class DeepTCR_SS(DeepTCR_S_base):
             idx = list(range(len(self.Y)))
 
 
+        self._reset_models()
+        self._build(kernel, trainable_embedding, embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
+                    num_fc_layers, units_fc, weight_by_class, class_weights,
+                    use_only_seq, use_only_gene, use_only_hla, size_of_net, graph_seed,
+                    drop_out_rate, multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
+                    batch_size, epochs_min, stop_criterion, stop_criterion_window,
+                    accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
+
         y_test = []
         y_pred = []
         for ii in range(folds):
@@ -3470,19 +3743,10 @@ class DeepTCR_SS(DeepTCR_S_base):
                                                                test_idx = test_idx[ii],Y=self.Y)
 
             self.LOO = None
-
-            self.Train(epochs_min=epochs_min, batch_size=batch_size,stop_criterion=stop_criterion,
-                          kernel=kernel,weight_by_class=weight_by_class,class_weights=class_weights,
-                          trainable_embedding=trainable_embedding,num_fc_layers=num_fc_layers,
-                          units_fc=units_fc,drop_out_rate=drop_out_rate,suppress_output=suppress_output,
-                          use_only_gene=use_only_gene,use_only_seq=use_only_seq,use_only_hla=use_only_hla,
-                       size_of_net=size_of_net,stop_criterion_window=stop_criterion_window,
-                       embedding_dim_aa=embedding_dim_aa,embedding_dim_genes=embedding_dim_genes,embedding_dim_hla=embedding_dim_hla)
-
+            self._train(batch_seed=batch_seed,iteration=ii)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
-
 
             if self.regression is False:
                 y_test2 = np.vstack(y_test)
@@ -3495,11 +3759,6 @@ class DeepTCR_SS(DeepTCR_S_base):
                         if ii > 0:
                             if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
                                 print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
-
-
-            if iterations is not None:
-                if ii > iterations:
-                    break
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
@@ -3632,6 +3891,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         train_params.convergence = convergence
         train_params.suppress_output = suppress_output
         train_params.drop_out_rate = drop_out_rate
+        train_params.multisample_dropout_rate = multisample_dropout_rate
         GO.size_of_net = size_of_net
         GO.embedding_dim_genes = embedding_dim_genes
         GO.embedding_dim_aa = embedding_dim_aa
@@ -3676,7 +3936,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                                                     num_masks=multisample_dropout_num_masks,
                                                     units=self.Y.shape[1],
                                                     activation=None,
-                                                    rate=multisample_dropout_rate)
+                                                    rate=GO.prob_multisample)
                 else:
                     GO.logits = tf.layers.dense(GO.Features_Agg, self.Y.shape[1])
 
@@ -3740,6 +4000,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         convergence = train_params.convergence
         suppress_output = train_params.suppress_output
         drop_out_rate = train_params.drop_out_rate
+        multisample_dropout_rate = train_params.multisample_dropout_rate
 
         tf.reset_default_graph()
         config = tf.ConfigProto(allow_soft_placement=True)
@@ -3758,7 +4019,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                     np.random.seed(batch_seed)
                 train_loss, train_accuracy, train_predicted,train_auc = \
                     Run_Graph_WF(self.train,sess,self,GO,batch_size,batch_size_update,random=True,train=True,
-                                 drop_out_rate=drop_out_rate)
+                                 drop_out_rate=drop_out_rate,multisample_dropout_rate=multisample_dropout_rate)
 
                 train_accuracy_total.append(train_accuracy)
                 train_loss_total.append(train_loss)
