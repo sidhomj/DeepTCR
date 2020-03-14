@@ -2024,11 +2024,11 @@ class vis_class(object):
 
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
-    def Train_VAE(self,latent_dim=256,batch_size=10000,accuracy_min=None,Load_Prev_Data=False,suppress_output = False,
-                  trainable_embedding=True,use_only_gene=False,use_only_seq=False,use_only_hla=False,
-                  epochs_min=0,stop_criterion=0.01,stop_criterion_window=30,
-                  kernel=3,size_of_net = 'medium',embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
-                  graph_seed=None,split_seed=None,latent_alpha=1e-3):
+    def Train_VAE(self,latent_dim=256, kernel = 5, trainable_embedding=True, embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
+                  use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',latent_alpha=1e-3, graph_seed=None,
+                  batch_size=10000, epochs_min=0,stop_criterion=0.01,stop_criterion_window=30, accuracy_min=None,
+                  suppress_output = False,split_seed=None,Load_Prev_Data=False):
+
         """
         Train Variational Autoencoder (VAE)
 
@@ -2038,47 +2038,35 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         Inputs
         ---------------------------------------
 
+        Model Parameters
+
         latent_dim: int
             Number of latent dimensions for VAE.
 
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
-
-        accuracy_min: float
-            Minimum reconstruction accuracy before terminating training.
-
-        Load_Prev_Data: bool
-            Load previous feature data from prior training.
-
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
+        kernel: int
+            The motif k-mer of the first convolutional layer of the graph.
 
         trainable_embedding: bool
             Toggle to control whether a trainable embedding layer is used or native
             one-hot representation for convolutional layers.
 
-        use_only_gene: bool
-            To only use gene-usage features, set to True.
+        embedding_dim_aa: int
+            Learned latent dimensionality of amino-acids.
+
+        embedding_dim_genes: int
+            Learned latent dimensionality of VDJ genes
+
+        embedding_dim_hla: int
+            Learned latent dimensionality of HLA
 
         use_only_seq: bool
             To only use sequence feaures, set to True.
 
+        use_only_gene: bool
+            To only use gene-usage features, set to True.
+
         use_only_hla: bool
             To only use hla feaures, set to True.
-
-        epochs_min: int
-            The minimum number of epochs to train the autoencoder.
-
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
-
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
-
-        kernel: int
-            To specify the motif k-mer of the first layer of the autoencoder, change this
-            parameter.
 
         size_of_net: list or str
             The convolutional layers of this network have 3 layers for which the use can
@@ -2090,22 +2078,44 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
-
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
-
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
-
         latent_alpha: float
             Penalty coefficient for latent loss. This value changes the degree of latent regularization on
             the VAE.
 
+        graph_seed: int
+            For deterministic initialization of weights of the graph, set this to value of choice.
+
+
+        Training Parameters
+
+        batch_size: int
+            Size of batch to be used for each training iteration of the net.
+
+        epochs_min: int
+            The minimum number of epochs to train the autoencoder.
+
+        stop_criterion: float
+            Minimum percent decrease in determined interval (below) to continue
+            training. Used as early stopping criterion.
+
+        stop_criterion_window: int
+            The window of data to apply the stopping criterion.
+
+        accuracy_min: float
+            Minimum reconstruction accuracy before terminating training.
+
+        suppress_output: bool
+            To suppress command line output with training statisitcs, set to True.
+
+        split_seed: int
+            For deterministic batching of data during training, one can set this parameter to value of choice.
+
+        Load_Prev_Data: bool
+            Load previous feature data from prior training.
+
         Returns
 
-        self.vae_features: array
+        self.features: array
             An array that contains n x latent_dim containing features for all sequences
 
         ---------------------------------------
