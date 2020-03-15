@@ -806,13 +806,17 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000)
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000, models=None)
      |      Predicting outputs of sequence models on new data
      |      
      |      This method allows a user to take a pre-trained autoencoder/sequence classifier
      |      and generate outputs from the model on new data. For the autoencoder, this returns
      |      the features from the latent space. For the sequence classifier, it is the probability
      |      of belonging to each class.
+     |      
+     |      In the case that multiple models have been trained via MC or K-fold Cross-Validation strategy for the
+     |      sequence classifier, this method can use some or all trained models in an ensemble fashion to provide the
+     |      average prediction per sequence as well as the distribution of predictions from all trained models.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -850,10 +854,29 @@ CLASSES
      |      batch_size: int
      |          Batch size for inference.
      |      
+     |      models: list
+     |          In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals),
+     |          one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in
+     |          Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the
+     |          distribution of outputs for the user.
+     |      
      |      Returns
+     |      [features, features_dist]
      |      
      |      features: array
-     |          An array that contains n x latent_dim containing features for all sequences
+     |          shape = [N, latent_dim]
+     |      
+     |          An array that contains n x latent_dim containing features for all sequences. For the VAE, this represents
+     |          the features from the latent space. For the sequence classifier, this represents the probabilities for every
+     |          class or the regressed value from the sequence regressor. In the case of multiple models being used for infernece
+     |          in ensemble, this becomes the average prediction over all models.
+     |      
+     |      features_dist: array
+     |          shape = [n_models,N,latent_dim]
+     |      
+     |          An array that contains the output of all models separately for each input sequence. This output is useful
+     |          if using multiple models in ensemble to predict on a new sequence. This output describes the distribution
+     |          of the predictions over all models.
      |      
      |      ---------------------------------------
      |  
@@ -1563,13 +1586,17 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000)
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000, models=None)
      |      Predicting outputs of sequence models on new data
      |      
      |      This method allows a user to take a pre-trained autoencoder/sequence classifier
      |      and generate outputs from the model on new data. For the autoencoder, this returns
      |      the features from the latent space. For the sequence classifier, it is the probability
      |      of belonging to each class.
+     |      
+     |      In the case that multiple models have been trained via MC or K-fold Cross-Validation strategy for the
+     |      sequence classifier, this method can use some or all trained models in an ensemble fashion to provide the
+     |      average prediction per sequence as well as the distribution of predictions from all trained models.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -1607,10 +1634,29 @@ CLASSES
      |      batch_size: int
      |          Batch size for inference.
      |      
+     |      models: list
+     |          In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals),
+     |          one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in
+     |          Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the
+     |          distribution of outputs for the user.
+     |      
      |      Returns
+     |      [features, features_dist]
      |      
      |      features: array
-     |          An array that contains n x latent_dim containing features for all sequences
+     |          shape = [N, latent_dim]
+     |      
+     |          An array that contains n x latent_dim containing features for all sequences. For the VAE, this represents
+     |          the features from the latent space. For the sequence classifier, this represents the probabilities for every
+     |          class or the regressed value from the sequence regressor. In the case of multiple models being used for infernece
+     |          in ensemble, this becomes the average prediction over all models.
+     |      
+     |      features_dist: array
+     |          shape = [n_models,N,latent_dim]
+     |      
+     |          An array that contains the output of all models separately for each input sequence. This output is useful
+     |          if using multiple models in ensemble to predict on a new sequence. This output describes the distribution
+     |          of the predictions over all models.
      |      
      |      ---------------------------------------
      |  
@@ -2437,13 +2483,17 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000)
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000, models=None)
      |      Predicting outputs of sequence models on new data
      |      
      |      This method allows a user to take a pre-trained autoencoder/sequence classifier
      |      and generate outputs from the model on new data. For the autoencoder, this returns
      |      the features from the latent space. For the sequence classifier, it is the probability
      |      of belonging to each class.
+     |      
+     |      In the case that multiple models have been trained via MC or K-fold Cross-Validation strategy for the
+     |      sequence classifier, this method can use some or all trained models in an ensemble fashion to provide the
+     |      average prediction per sequence as well as the distribution of predictions from all trained models.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -2481,10 +2531,29 @@ CLASSES
      |      batch_size: int
      |          Batch size for inference.
      |      
+     |      models: list
+     |          In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals),
+     |          one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in
+     |          Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the
+     |          distribution of outputs for the user.
+     |      
      |      Returns
+     |      [features, features_dist]
      |      
      |      features: array
-     |          An array that contains n x latent_dim containing features for all sequences
+     |          shape = [N, latent_dim]
+     |      
+     |          An array that contains n x latent_dim containing features for all sequences. For the VAE, this represents
+     |          the features from the latent space. For the sequence classifier, this represents the probabilities for every
+     |          class or the regressed value from the sequence regressor. In the case of multiple models being used for infernece
+     |          in ensemble, this becomes the average prediction over all models.
+     |      
+     |      features_dist: array
+     |          shape = [n_models,N,latent_dim]
+     |      
+     |          An array that contains the output of all models separately for each input sequence. This output is useful
+     |          if using multiple models in ensemble to predict on a new sequence. This output describes the distribution
+     |          of the predictions over all models.
      |      
      |      ---------------------------------------
      |  
@@ -3876,13 +3945,17 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000)
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000, models=None)
      |      Predicting outputs of sequence models on new data
      |      
      |      This method allows a user to take a pre-trained autoencoder/sequence classifier
      |      and generate outputs from the model on new data. For the autoencoder, this returns
      |      the features from the latent space. For the sequence classifier, it is the probability
      |      of belonging to each class.
+     |      
+     |      In the case that multiple models have been trained via MC or K-fold Cross-Validation strategy for the
+     |      sequence classifier, this method can use some or all trained models in an ensemble fashion to provide the
+     |      average prediction per sequence as well as the distribution of predictions from all trained models.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -3920,10 +3993,29 @@ CLASSES
      |      batch_size: int
      |          Batch size for inference.
      |      
+     |      models: list
+     |          In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals),
+     |          one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in
+     |          Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the
+     |          distribution of outputs for the user.
+     |      
      |      Returns
+     |      [features, features_dist]
      |      
      |      features: array
-     |          An array that contains n x latent_dim containing features for all sequences
+     |          shape = [N, latent_dim]
+     |      
+     |          An array that contains n x latent_dim containing features for all sequences. For the VAE, this represents
+     |          the features from the latent space. For the sequence classifier, this represents the probabilities for every
+     |          class or the regressed value from the sequence regressor. In the case of multiple models being used for infernece
+     |          in ensemble, this becomes the average prediction over all models.
+     |      
+     |      features_dist: array
+     |          shape = [n_models,N,latent_dim]
+     |      
+     |          An array that contains the output of all models separately for each input sequence. This output is useful
+     |          if using multiple models in ensemble to predict on a new sequence. This output describes the distribution
+     |          of the predictions over all models.
      |      
      |      ---------------------------------------
      |  
@@ -4549,13 +4641,17 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000)
+     |  Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, p=None, hla=None, batch_size=10000, models=None)
      |      Predicting outputs of sequence models on new data
      |      
      |      This method allows a user to take a pre-trained autoencoder/sequence classifier
      |      and generate outputs from the model on new data. For the autoencoder, this returns
      |      the features from the latent space. For the sequence classifier, it is the probability
      |      of belonging to each class.
+     |      
+     |      In the case that multiple models have been trained via MC or K-fold Cross-Validation strategy for the
+     |      sequence classifier, this method can use some or all trained models in an ensemble fashion to provide the
+     |      average prediction per sequence as well as the distribution of predictions from all trained models.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -4593,10 +4689,29 @@ CLASSES
      |      batch_size: int
      |          Batch size for inference.
      |      
+     |      models: list
+     |          In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals),
+     |          one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in
+     |          Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the
+     |          distribution of outputs for the user.
+     |      
      |      Returns
+     |      [features, features_dist]
      |      
      |      features: array
-     |          An array that contains n x latent_dim containing features for all sequences
+     |          shape = [N, latent_dim]
+     |      
+     |          An array that contains n x latent_dim containing features for all sequences. For the VAE, this represents
+     |          the features from the latent space. For the sequence classifier, this represents the probabilities for every
+     |          class or the regressed value from the sequence regressor. In the case of multiple models being used for infernece
+     |          in ensemble, this becomes the average prediction over all models.
+     |      
+     |      features_dist: array
+     |          shape = [n_models,N,latent_dim]
+     |      
+     |          An array that contains the output of all models separately for each input sequence. This output is useful
+     |          if using multiple models in ensemble to predict on a new sequence. This output describes the distribution
+     |          of the predictions over all models.
      |      
      |      ---------------------------------------
      |  
