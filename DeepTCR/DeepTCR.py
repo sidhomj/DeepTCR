@@ -781,7 +781,7 @@ class DeepTCR_base(object):
         print('Data Loaded')
 
     def Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
-                  v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10000):
+                  v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10000,models=None):
         """
         Predicting outputs of sequence models on new data
 
@@ -789,6 +789,10 @@ class DeepTCR_base(object):
         and generate outputs from the model on new data. For the autoencoder, this returns
         the features from the latent space. For the sequence classifier, it is the probability
         of belonging to each class.
+
+        In the case that multiple models have been trained via MC or K-fold Cross-Validation strategy for the
+        sequence classifier, this method can use some or all trained models in an ensemble fashion to provide the
+        average prediction per sequence as well as the distribution of predictions from all trained models.
 
         Inputs
         ---------------------------------------
@@ -826,26 +830,45 @@ class DeepTCR_base(object):
         batch_size: int
             Batch size for inference.
 
+        models: list
+            In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals),
+            one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in
+            Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the
+            distribution of outputs for the user.
+
         Returns
+        [features, features_dist]
 
         features: array
-            An array that contains n x latent_dim containing features for all sequences
+            shape = [N, latent_dim]
+
+            An array that contains n x latent_dim containing features for all sequences. For the VAE, this represents
+            the features from the latent space. For the sequence classifier, this represents the probabilities for every
+            class or the regressed value from the sequence regressor. In the case of multiple models being used for infernece
+            in ensemble, this becomes the average prediction over all models.
+
+        features_dist: array
+            shape = [n_models,N,latent_dim]
+
+            An array that contains the output of all models separately for each input sequence. This output is useful
+            if using multiple models in ensemble to predict on a new sequence. This output describes the distribution
+            of the predictions over all models.
 
         ---------------------------------------
 
         """
-        with open(os.path.join(self.Name, 'model', 'model_type.pkl'), 'rb') as f:
+        with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'rb') as f:
             model_type,get,self.use_alpha,self.use_beta,\
                 self.use_v_beta,self.use_d_beta,self.use_j_beta,\
                 self.use_v_alpha,self.use_j_alpha,self.use_hla,\
                 self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,\
                 self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb= pickle.load(f)
 
-        out = inference_method_ss(get,alpha_sequences,beta_sequences,
+        out, out_dist = inference_method_ss(get,alpha_sequences,beta_sequences,
                                v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
-                                p,batch_size,self)
+                                p,batch_size,self,models)
 
-        return out
+        return out, out_dist
 
 class feature_analytics_class(object):
     def Structural_Diversity(self, sample=None, n_jobs=1):
@@ -2024,6 +2047,12 @@ class vis_class(object):
 
 class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
+    def _reset_models(self):
+        self.models_dir = os.path.join(self.Name,'models')
+        if os.path.exists(self.models_dir):
+            shutil.rmtree(self.models_dir)
+        os.makedirs(self.models_dir)
+
     def Train_VAE(self,latent_dim=256, kernel = 5, trainable_embedding=True, embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
                   use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',latent_alpha=1e-3, graph_seed=None,
                   batch_size=10000, epochs_min=0,stop_criterion=0.01,stop_criterion_window=30, accuracy_min=None,
@@ -2278,8 +2307,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                     opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
 
-                    saver = tf.train.Saver()
+                    GO.saver = tf.train.Saver(max_to_keep=None)
 
+            self._reset_models()
             tf.reset_default_graph()
             config = tf.ConfigProto(allow_soft_placement=True)
             config.gpu_options.allow_growth = True
@@ -2450,11 +2480,12 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                 embed_dict = dict(zip(name_keep,embedding_keep))
 
-                saver.save(sess,os.path.join(self.Name,'model','model.ckpt'))
-                with open(os.path.join(self.Name,'model','model_type.pkl'),'wb') as f:
+                iteration = 0
+                GO.saver.save(sess, os.path.join(self.Name, 'models', 'model_' + str(iteration), 'model.ckpt'))
+                with open(os.path.join(self.Name,'models','model_type.pkl'),'wb') as f:
                     pickle.dump(['VAE',z_mean.name,self.use_alpha,self.use_beta,
                                 self.use_v_beta,self.use_d_beta,self.use_j_beta,
-                                self.use_v_alpha,self.use_j_alpha,self.use_hla,self.use_w,
+                                self.use_v_alpha,self.use_j_alpha,self.use_hla,
                                  self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,
                                  self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb],f)
 
@@ -4869,12 +4900,12 @@ class DeepTCR_WF(DeepTCR_S_base):
         tf.reset_default_graph()
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
-        with tf.Session(config=config) as sess:
+        saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', model, 'model.ckpt.meta'),clear_devices=True)
+        graph = tf.get_default_graph()
+        with tf.Session(graph=graph,config=config) as sess:
             # saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', 'model.ckpt.meta'))
             # saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name, 'model')))
-            saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models',model, 'model.ckpt.meta'))
             saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name,'models', model)))
-            graph = tf.get_default_graph()
 
             X_Freq = graph.get_tensor_by_name('Freq:0')
             X_Counts = graph.get_tensor_by_name('Counts:0')

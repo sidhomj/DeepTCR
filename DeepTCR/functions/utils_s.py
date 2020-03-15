@@ -837,8 +837,92 @@ def Get_Latent_Features_GCN(self,batch_size,GO,sess):
 
     return Features
 
-def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
-                     p,batch_size,self):
+def _inf_ss(data,model='model_0'):
+    self = data.self
+    X_Seq_alpha = data.X_Seq_alpha
+    X_Seq_beta = data.X_Seq_beta
+    v_beta_num = data.v_beta_num
+    d_beta_num = data.d_beta_num
+    j_beta_num = data.j_beta_num
+    v_alpha_num = data.v_alpha_num
+    j_alpha_num = data.j_alpha_num
+    hla_data_seq_num = data.hla_data_seq_num
+    batch_size = data.batch_size
+    get = data.get
+
+    tf.reset_default_graph()
+    config = tf.ConfigProto(allow_soft_placement=True)
+    config.gpu_options.allow_growth = True
+    saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', model, 'model.ckpt.meta'),clear_devices=True)
+    graph = tf.get_default_graph()
+    with tf.Session(graph=graph,config=config) as sess:
+        saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name, 'models', model)))
+
+        if self.use_alpha is True:
+            X_Seq_alpha_v = graph.get_tensor_by_name('Input_Alpha:0')
+
+        if self.use_beta is True:
+            X_Seq_beta_v = graph.get_tensor_by_name('Input_Beta:0')
+
+        if self.use_v_beta is True:
+            X_v_beta = graph.get_tensor_by_name('Input_V_Beta:0')
+
+        if self.use_d_beta is True:
+            X_d_beta = graph.get_tensor_by_name('Input_D_Beta:0')
+
+        if self.use_j_beta is True:
+            X_j_beta = graph.get_tensor_by_name('Input_J_Beta:0')
+
+        if self.use_v_alpha is True:
+            X_v_alpha = graph.get_tensor_by_name('Input_V_Alpha:0')
+
+        if self.use_j_alpha is True:
+            X_j_alpha = graph.get_tensor_by_name('Input_J_Alpha:0')
+
+        if self.use_hla:
+            X_hla = graph.get_tensor_by_name('HLA:0')
+
+        get_obj = graph.get_tensor_by_name(get)
+
+        out_list = []
+        Vars = [X_Seq_alpha, X_Seq_beta, v_beta_num, d_beta_num, j_beta_num,
+                v_alpha_num, j_alpha_num,hla_data_seq_num]
+
+        for vars in get_batches(Vars, batch_size=batch_size):
+            feed_dict = {}
+            if self.use_alpha is True:
+                feed_dict[X_Seq_alpha_v] = vars[0]
+            if self.use_beta is True:
+                feed_dict[X_Seq_beta_v] = vars[1]
+
+            if self.use_v_beta is True:
+                feed_dict[X_v_beta] = vars[2]
+
+            if self.use_d_beta is True:
+                feed_dict[X_d_beta] = vars[3]
+
+            if self.use_j_beta is True:
+                feed_dict[X_j_beta] = vars[4]
+
+            if self.use_v_alpha is True:
+                feed_dict[X_v_alpha] = vars[5]
+
+            if self.use_j_alpha is True:
+                feed_dict[X_j_alpha] = vars[6]
+
+            if self.use_hla:
+                feed_dict[X_hla] = vars[7]
+
+            get_ind = sess.run(get_obj, feed_dict=feed_dict)
+            out_list.append(get_ind)
+
+        return np.vstack(out_list)
+
+class data_object(object):
+    def __init__(self):
+        self.init=0
+
+def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,p,batch_size,self,models):
 
     inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha,hla]
     for i in inputs:
@@ -923,74 +1007,35 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
         p.close()
         p.join()
 
-    tf.reset_default_graph()
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    with tf.Session(config=config) as sess:
-        saver = tf.train.import_meta_graph(os.path.join(self.Name, 'model', 'model.ckpt.meta'))
-        saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name, 'model')))
-        graph = tf.get_default_graph()
+    data = data_object()
+    data.self = self
+    data.X_Seq_alpha = X_Seq_alpha
+    data.X_Seq_beta = X_Seq_beta
+    data.v_beta_num = v_beta_num
+    data.d_beta_num = d_beta_num
+    data.j_beta_num = j_beta_num
+    data.v_alpha_num = v_alpha_num
+    data.j_alpha_num = j_alpha_num
+    data.hla_data_seq_num = hla_data_seq_num
+    data.batch_size = batch_size
+    data.get = get
 
-        if self.use_alpha is True:
-            X_Seq_alpha_v = graph.get_tensor_by_name('Input_Alpha:0')
+    if models is None:
+        directory = os.path.join(self.Name, 'models')
+        models = [d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
+        models = [f for f in models if not f.startswith('.')]
 
-        if self.use_beta is True:
-            X_Seq_beta_v = graph.get_tensor_by_name('Input_Beta:0')
+    predicted = []
+    for m in models:
+        pred = _inf_ss(data, model=m)
+        predicted.append(pred)
 
-        if self.use_v_beta is True:
-            X_v_beta = graph.get_tensor_by_name('Input_V_Beta:0')
+    predicted_dist = []
+    for p in predicted:
+        predicted_dist.append(np.expand_dims(p, 0))
+    predicted_dist = np.vstack(predicted_dist)
 
-        if self.use_d_beta is True:
-            X_d_beta = graph.get_tensor_by_name('Input_D_Beta:0')
-
-        if self.use_j_beta is True:
-            X_j_beta = graph.get_tensor_by_name('Input_J_Beta:0')
-
-        if self.use_v_alpha is True:
-            X_v_alpha = graph.get_tensor_by_name('Input_V_Alpha:0')
-
-        if self.use_j_alpha is True:
-            X_j_alpha = graph.get_tensor_by_name('Input_J_Alpha:0')
-
-        if self.use_hla:
-            X_hla = graph.get_tensor_by_name('HLA:0')
-
-        get_obj = graph.get_tensor_by_name(get)
-
-        out_list = []
-        Vars = [X_Seq_alpha, X_Seq_beta, v_beta_num, d_beta_num, j_beta_num,
-                v_alpha_num, j_alpha_num,hla_data_seq_num]
-
-        for vars in get_batches(Vars, batch_size=batch_size):
-            feed_dict = {}
-            if self.use_alpha is True:
-                feed_dict[X_Seq_alpha_v] = vars[0]
-            if self.use_beta is True:
-                feed_dict[X_Seq_beta_v] = vars[1]
-
-            if self.use_v_beta is True:
-                feed_dict[X_v_beta] = vars[2]
-
-            if self.use_d_beta is True:
-                feed_dict[X_d_beta] = vars[3]
-
-            if self.use_j_beta is True:
-                feed_dict[X_j_beta] = vars[4]
-
-            if self.use_v_alpha is True:
-                feed_dict[X_v_alpha] = vars[5]
-
-            if self.use_j_alpha is True:
-                feed_dict[X_j_alpha] = vars[6]
-
-            if self.use_hla:
-                feed_dict[X_hla] = vars[7]
-
-            get_ind = sess.run(get_obj, feed_dict=feed_dict)
-            out_list.append(get_ind)
-
-        return np.vstack(out_list)
-
+    return np.mean(predicted_dist,0), predicted_dist
 
 def stop_check(loss,stop_criterion,stop_criterion_window):
     w = loss[-stop_criterion_window:]
