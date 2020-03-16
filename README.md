@@ -80,6 +80,15 @@ Added ability to do regression for sequence-based model.
 Third release including improved repertoire classification architecture. Details in method will follow 
 in manuscript.
 
+#### 1.3.XX
+Major refactoring of code and adding more features including:
+- Multi-Model Inference. When training the supervised sequence or repertoire classifier, in Monte-Carlo or K-Fold 
+Cross Validation, a separate model will be stored for each cross-validation. When using the inference engine, 
+users can choose to do an ensemble inference of some of many of the trained models.
+- HLA Supertype Integration. Previous versions allowed users to provide HLA alleles for additional dimension of featurization
+for the TCR. In this version, when providing HLA (either via the Get_Data or Load_Data methods), one now has the option of 
+assigning the HLA-A and B genes to known supertypes for a more biologically functional representation of HLA.
+
 
 
 
