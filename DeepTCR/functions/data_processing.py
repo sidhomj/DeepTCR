@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import re
 import os
+import pickle
 
 def Embed_Seq_Num(seq,aa_idx,maxlength):
     seq_embed = np.zeros((1, maxlength)).astype('int64')
@@ -179,3 +180,21 @@ def supertype_conv(df,keep_non_AB_alleles=False):
     hla_sup[colname] = df[colname]
     hla_sup = pd.concat([hla_sup, pd.DataFrame(hla_list_sup)], axis=1)
     return hla_sup
+
+def save_model_data(self,saver,sess,name,get,iteration=0):
+    saver.save(sess, os.path.join(self.Name, 'models', 'model_' + str(iteration), 'model.ckpt'))
+    with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'wb') as f:
+        pickle.dump([name, get.name, self.use_alpha, self.use_beta,
+                     self.use_v_beta, self.use_d_beta, self.use_j_beta,
+                     self.use_v_alpha, self.use_j_alpha, self.use_hla, self.use_hla_sup, self.keep_non_AB_alleles,
+                     self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
+                     self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb], f)
+
+def load_model_data(self):
+    with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'rb') as f:
+        model_type, get, self.use_alpha, self.use_beta, \
+        self.use_v_beta, self.use_d_beta, self.use_j_beta, \
+        self.use_v_alpha, self.use_j_alpha, self.use_hla, self.use_hla_sup,self.keep_non_AB_alleles, \
+        self.lb_v_beta, self.lb_d_beta, self.lb_j_beta, \
+        self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb = pickle.load(f)
+    return model_type,get

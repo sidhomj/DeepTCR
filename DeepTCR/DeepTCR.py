@@ -61,6 +61,8 @@ class DeepTCR_base(object):
         self.use_v_alpha = False
         self.use_j_alpha = False
         self.use_hla = False
+        self.use_hla_sup = False
+        self.keep_non_AB_alleles = False
         self.regression = False
         self.use_w = False
 
@@ -436,6 +438,8 @@ class DeepTCR_base(object):
                 hla_df = pd.read_csv(hla)
                 if use_hla_supertype:
                     hla_df = supertype_conv(hla_df,keep_non_AB_alleles)
+                    self.use_hla_sup = True
+                    self.keep_non_AB_alleles = keep_non_AB_alleles
                 hla_df = hla_df.set_index(hla_df.columns[0])
                 hla_id = []
                 hla_data = []
@@ -500,7 +504,8 @@ class DeepTCR_base(object):
                              v_beta, d_beta,j_beta,v_alpha,j_alpha,
                              v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,
                              self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,
-                             self.lb_hla, hla_data, hla_data_num,hla_data_seq,hla_data_seq_num,self.use_hla],f,protocol=4)
+                             self.lb_hla, hla_data, hla_data_num,hla_data_seq,hla_data_seq_num,
+                             self.use_hla,self.use_hla_sup,self.keep_non_AB_alleles],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
@@ -510,7 +515,8 @@ class DeepTCR_base(object):
                     v_beta, d_beta,j_beta,v_alpha,j_alpha,\
                     v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,\
                     self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,\
-                    self.lb_hla, hla_data,hla_data_num,hla_data_seq,hla_data_seq_num,self.use_hla = pickle.load(f)
+                    self.lb_hla, hla_data,hla_data_num,hla_data_seq,hla_data_seq_num,\
+                self.use_hla,self.use_hla_sup,self.keep_non_AB_alleles = pickle.load(f)
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
@@ -796,6 +802,8 @@ class DeepTCR_base(object):
                         h = [x for x in h if x.startswith('A') or x.startswith('B')]
                     hla_list_sup.append(np.array([hla_dict[x] if x.startswith('A') or x.startswith('B') else x for x in h]))
                 hla = hla_list_sup
+                self.use_hla_sup = True
+                self.keep_non_AB_alleles = keep_non_AB_alleles
 
             self.lb_hla = MultiLabelBinarizer()
             self.hla_data_seq_num = self.lb_hla.fit_transform(hla)
@@ -877,6 +885,11 @@ class DeepTCR_base(object):
             to the alleles seen for that sequence.
                 ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
 
+            If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA
+            in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those
+            HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to
+            this method in the supertype designation.
+
         p: multiprocessing pool object
             a pre-formed pool object can be passed to method for multiprocessing tasks.
 
@@ -910,13 +923,7 @@ class DeepTCR_base(object):
         ---------------------------------------
 
         """
-        with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'rb') as f:
-            model_type,get,self.use_alpha,self.use_beta,\
-                self.use_v_beta,self.use_d_beta,self.use_j_beta,\
-                self.use_v_alpha,self.use_j_alpha,self.use_hla,\
-                self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,\
-                self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb= pickle.load(f)
-
+        model_type,get = load_model_data(self)
         out, out_dist = inference_method_ss(get,alpha_sequences,beta_sequences,
                                v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
                                 p,batch_size,self,models)
@@ -2533,14 +2540,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                 embed_dict = dict(zip(name_keep,embedding_keep))
 
-                iteration = 0
-                GO.saver.save(sess, os.path.join(self.Name, 'models', 'model_' + str(iteration), 'model.ckpt'))
-                with open(os.path.join(self.Name,'models','model_type.pkl'),'wb') as f:
-                    pickle.dump(['VAE',z_mean.name,self.use_alpha,self.use_beta,
-                                self.use_v_beta,self.use_d_beta,self.use_j_beta,
-                                self.use_v_alpha,self.use_j_alpha,self.use_hla,
-                                 self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,
-                                 self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb],f)
+                #save model data and information for inference engine
+                save_model_data(self,GO.saver,sess,name='VAE',get=z_mean)
 
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
                 pickle.dump([features,embed_dict], f,protocol=4)
@@ -3228,13 +3229,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                 pickle.dump(self.kernel, f)
 
             print('Done Training')
-            GO.saver.save(sess, os.path.join(self.Name, 'models', 'model_' + str(iteration), 'model.ckpt'))
-            with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'wb') as f:
-                pickle.dump(['SS', GO.predicted.name, self.use_alpha, self.use_beta,
-                             self.use_v_beta, self.use_d_beta, self.use_j_beta,
-                             self.use_v_alpha, self.use_j_alpha, self.use_hla,
-                             self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
-                             self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb], f)
+            # save model data and information for inference engine
+            save_model_data(self, GO.saver, sess, name='SS', get=GO.predicted)
 
     def Train(self,kernel = 5,trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
                num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
@@ -4183,17 +4179,11 @@ class DeepTCR_WF(DeepTCR_S_base):
                 with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
                     pickle.dump(self.kernel, f)
 
-                GO.saver.save(sess, os.path.join(self.Name, 'models', 'model_' + str(iteration), 'model.ckpt'))
-
                 if self.use_hla:
                     self.HLA_embed = GO.embedding_layer_hla.eval()
 
-                with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'wb') as f:
-                    pickle.dump(['WF',GO.predicted.name,self.use_alpha, self.use_beta,
-                                 self.use_v_beta, self.use_d_beta, self.use_j_beta,
-                                 self.use_v_alpha, self.use_j_alpha,self.use_hla,
-                                 self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
-                                 self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb], f)
+                # save model data and information for inference engine
+                save_model_data(self, GO.saver, sess, name='WF', get=GO.predicted,iteration=iteration)
 
             print('Done Training')
 
@@ -5098,6 +5088,11 @@ class DeepTCR_WF(DeepTCR_S_base):
             to the alleles seen for that sequence.
                 ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
 
+            If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA
+            in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those
+            HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to
+            this method in the supertype designation.
+
         p: multiprocessing pool object
             a pre-formed pool object can be passed to method for multiprocessing tasks.
 
@@ -5128,14 +5123,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         ---------------------------------------
 
         """
-
-        with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'rb') as f:
-            model_type,get,self.use_alpha,self.use_beta,\
-                self.use_v_beta,self.use_d_beta,self.use_j_beta,\
-                self.use_v_alpha,self.use_j_alpha,self.use_hla,\
-                self.lb_v_beta,self.lb_d_beta,self.lb_j_beta,\
-                self.lb_v_alpha,self.lb_j_alpha,self.lb_hla,self.lb= pickle.load(f)
-
+        model_type, get  = load_model_data(self)
         len_input = len(sample_labels)
 
         if p is None:
@@ -5209,6 +5197,18 @@ class DeepTCR_WF(DeepTCR_S_base):
             j_alpha = np.asarray([None] * len_input)
 
         if hla is not None:
+            if self.use_hla_sup:
+                dir_path = os.path.dirname(os.path.realpath(__file__))
+                df_supertypes = pd.read_csv(os.path.join(dir_path, 'functions', 'Supertype_Data_Dict.csv'))
+                hla_dict = dict(zip(df_supertypes['Allele'], df_supertypes['Supertype_2']))
+
+                hla_list_sup = []
+                for h in hla:
+                    if not self.keep_non_AB_alleles:
+                        h = [x for x in h if x.startswith('A') or x.startswith('B')]
+                    hla_list_sup.append(
+                        np.array([hla_dict[x] if x.startswith('A') or x.startswith('B') else x for x in h]))
+                hla = hla_list_sup
             hla_data_seq_num = self.lb_hla.transform(hla)
         else:
             try:

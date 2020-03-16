@@ -999,6 +999,18 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
         j_alpha = np.asarray([None] * len_input)
 
     if hla is not None:
+        if self.use_hla_sup:
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            df_supertypes = pd.read_csv(os.path.join(dir_path, 'Supertype_Data_Dict.csv'))
+            hla_dict = dict(zip(df_supertypes['Allele'], df_supertypes['Supertype_2']))
+
+            hla_list_sup = []
+            for h in hla:
+                if not self.keep_non_AB_alleles:
+                    h = [x for x in h if x.startswith('A') or x.startswith('B')]
+                hla_list_sup.append(
+                    np.array([hla_dict[x] if x.startswith('A') or x.startswith('B') else x for x in h]))
+            hla = hla_list_sup
         hla_data_seq_num = self.lb_hla.transform(hla)
     else:
         hla_data_seq_num = np.zeros(shape=[len_input])
