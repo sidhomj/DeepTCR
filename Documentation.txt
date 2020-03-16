@@ -609,7 +609,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -696,6 +696,20 @@ CLASSES
      |          find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
      |          backgrounds.
      |      
+     |      use_hla_supertype: bool
+     |          Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+     |          may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+     |          This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+     |          6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+     |          representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+     |          the reference below, it will be assigned to a known supertype.
+     |      
+     |          For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+     |          designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+     |          HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+     |      
+     |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+     |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
      |      Returns
      |      
@@ -722,7 +736,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, w=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -774,6 +788,21 @@ CLASSES
      |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
+     |      use_hla_supertype: bool
+     |          Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+     |          may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+     |          This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+     |          6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+     |          representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+     |          the reference below, it will be assigned to a known supertype.
+     |      
+     |          For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+     |          designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+     |          HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+     |      
+     |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+     |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -1389,7 +1418,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -1476,6 +1505,20 @@ CLASSES
      |          find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
      |          backgrounds.
      |      
+     |      use_hla_supertype: bool
+     |          Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+     |          may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+     |          This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+     |          6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+     |          representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+     |          the reference below, it will be assigned to a known supertype.
+     |      
+     |          For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+     |          designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+     |          HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+     |      
+     |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+     |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
      |      Returns
      |      
@@ -1502,7 +1545,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, w=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -1554,6 +1597,21 @@ CLASSES
      |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
+     |      use_hla_supertype: bool
+     |          Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+     |          may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+     |          This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+     |          6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+     |          representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+     |          the reference below, it will be assigned to a known supertype.
+     |      
+     |          For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+     |          designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+     |          HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+     |      
+     |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+     |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -2286,7 +2344,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -2373,6 +2431,20 @@ CLASSES
      |          find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
      |          backgrounds.
      |      
+     |      use_hla_supertype: bool
+     |          Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+     |          may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+     |          This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+     |          6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+     |          representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+     |          the reference below, it will be assigned to a known supertype.
+     |      
+     |          For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+     |          designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+     |          HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+     |      
+     |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+     |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
      |      Returns
      |      
@@ -2399,7 +2471,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, w=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -2451,6 +2523,21 @@ CLASSES
      |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
+     |      use_hla_supertype: bool
+     |          Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+     |          may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+     |          This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+     |          6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+     |          representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+     |          the reference below, it will be assigned to a known supertype.
+     |      
+     |          For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+     |          designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+     |          HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+     |      
+     |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+     |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -3748,7 +3835,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -3835,6 +3922,20 @@ CLASSES
      |          find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
      |          backgrounds.
      |      
+     |      use_hla_supertype: bool
+     |          Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+     |          may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+     |          This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+     |          6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+     |          representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+     |          the reference below, it will be assigned to a known supertype.
+     |      
+     |          For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+     |          designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+     |          HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+     |      
+     |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+     |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
      |      Returns
      |      
@@ -3861,7 +3962,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, w=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -3913,6 +4014,21 @@ CLASSES
      |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
+     |      use_hla_supertype: bool
+     |          Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+     |          may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+     |          This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+     |          6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+     |          representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+     |          the reference below, it will be assigned to a known supertype.
+     |      
+     |          For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+     |          designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+     |          HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+     |      
+     |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+     |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -4444,7 +4560,7 @@ CLASSES
     class DeepTCR_base(builtins.object)
      |  Methods defined here:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -4531,6 +4647,20 @@ CLASSES
      |          find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
      |          backgrounds.
      |      
+     |      use_hla_supertype: bool
+     |          Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+     |          may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+     |          This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+     |          6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+     |          representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+     |          the reference below, it will be assigned to a known supertype.
+     |      
+     |          For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+     |          designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+     |          HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+     |      
+     |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+     |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
      |      Returns
      |      
@@ -4557,7 +4687,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, w=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -4609,6 +4739,21 @@ CLASSES
      |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
+     |      use_hla_supertype: bool
+     |          Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+     |          may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+     |          This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+     |          6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+     |          representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+     |          the reference below, it will be assigned to a known supertype.
+     |      
+     |          For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+     |          designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+     |          HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+     |      
+     |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+     |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
