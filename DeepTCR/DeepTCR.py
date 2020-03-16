@@ -537,7 +537,7 @@ class DeepTCR_base(object):
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
                   v_alpha=None,j_alpha=None,class_labels=None,sample_labels=None,freq=None,counts=None,Y=None,
-                  p=None,hla=None,w=None):
+                  p=None,hla=None,use_hla_supertype=False,w=None):
         """
         Load Data programatically into DeepTCR.
 
@@ -590,6 +590,21 @@ class DeepTCR_base(object):
             as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
             to the alleles seen for that sequence.
                 ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+
+        use_hla_supertype: bool
+            Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+            may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+            This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+            6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+            representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+            the reference below, it will be assigned to a known supertype.
+
+            For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+            designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+            HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+
+            Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+            HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
 
         p: multiprocessing pool object
             a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -760,6 +775,17 @@ class DeepTCR_base(object):
             self.freq = freq
 
         if hla is not None:
+            if use_hla_supertype:
+                dir_path = os.path.dirname(os.path.realpath(__file__))
+                df_supertypes = pd.read_csv(os.path.join(dir_path,'functions', 'Supertype_Data_Dict.csv'))
+                hla_dict = dict(zip(df_supertypes['Allele'], df_supertypes['Supertype_2']))
+
+                hla_list_sup = []
+                for h in hla:
+                    h = [x for x in h if x.startswith('A') or x.startswith('B')]
+                    hla_list_sup.append(np.array([hla_dict[x] for x in h]))
+                hla = hla_list_sup
+
             self.lb_hla = MultiLabelBinarizer()
             self.hla_data_seq_num = self.lb_hla.fit_transform(hla)
             self.hla_data_seq = hla
