@@ -85,7 +85,7 @@ class DeepTCR_base(object):
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
                     v_alpha_column=None,j_alpha_column=None,
                     v_beta_column=None,j_beta_column=None,d_beta_column=None,
-                 p=None,hla=None):
+                 p=None,hla=None,use_hla_supertype=False):
         """
         Get Data for DeepTCR
 
@@ -173,6 +173,20 @@ class DeepTCR_base(object):
             find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
             backgrounds.
 
+        use_hla_supertype: bool
+            Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
+            may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
+            This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
+            6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
+            representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
+            the reference below, it will be assigned to a known supertype.
+
+            For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
+            designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
+            HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+
+            Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
+            HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
 
         Returns
 
@@ -415,6 +429,8 @@ class DeepTCR_base(object):
             if hla is not None:
                 self.use_hla = True
                 hla_df = pd.read_csv(hla)
+                if use_hla_supertype:
+                    hla_df = supertype_conv(hla_df)
                 hla_df = hla_df.set_index(hla_df.columns[0])
                 hla_id = []
                 hla_data = []

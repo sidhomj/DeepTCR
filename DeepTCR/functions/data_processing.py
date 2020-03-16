@@ -4,7 +4,7 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import re
-
+import os
 
 def Embed_Seq_Num(seq,aa_idx,maxlength):
     seq_embed = np.zeros((1, maxlength)).astype('int64')
@@ -154,3 +154,27 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
             df = df_temp
 
     return df
+
+def supertype_conv(df):
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    df_supertypes = pd.read_csv(os.path.join(dir_path,'Supertype_Data_Dict.csv'))
+    hla_dict = dict(zip(df_supertypes['Allele'], df_supertypes['Supertype_2']))
+
+    temp = df.iloc[:,1:]
+
+    hla_list_ab = []
+    for t in temp.iterrows():
+        t = list(filter(None, list(t[1])))
+        t = [x for x in t if isinstance(x,str)]
+        t = np.array([x for x in t if x.startswith('A') or x.startswith('B')])
+        hla_list_ab.append(t)
+
+    hla_list_sup = []
+    for h in hla_list_ab:
+        hla_list_sup.append(np.array([hla_dict[x] for x in h]))
+
+    hla_sup = pd.DataFrame()
+    colname = df.columns[0]
+    hla_sup[colname] = df[colname]
+    hla_sup = pd.concat([hla_sup, pd.DataFrame(hla_list_sup)], axis=1)
+    return hla_sup
