@@ -155,7 +155,7 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
 
     return df
 
-def supertype_conv(df):
+def supertype_conv(df,keep_non_AB_alleles=False):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     df_supertypes = pd.read_csv(os.path.join(dir_path,'Supertype_Data_Dict.csv'))
     hla_dict = dict(zip(df_supertypes['Allele'], df_supertypes['Supertype_2']))
@@ -166,12 +166,13 @@ def supertype_conv(df):
     for t in temp.iterrows():
         t = list(filter(None, list(t[1])))
         t = [x for x in t if isinstance(x,str)]
-        t = np.array([x for x in t if x.startswith('A') or x.startswith('B')])
+        if not keep_non_AB_alleles:
+            t = np.array([x for x in t if x.startswith('A') or x.startswith('B')])
         hla_list_ab.append(t)
 
     hla_list_sup = []
     for h in hla_list_ab:
-        hla_list_sup.append(np.array([hla_dict[x] for x in h]))
+        hla_list_sup.append(np.array([hla_dict[x] if x.startswith('A') or x.startswith('B') else x for x in h]))
 
     hla_sup = pd.DataFrame()
     colname = df.columns[0]

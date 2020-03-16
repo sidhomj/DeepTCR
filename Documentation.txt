@@ -609,7 +609,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False, keep_non_AB_alleles=False)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -711,6 +711,11 @@ CLASSES
      |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
      |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
+     |      keep_non_AB_alleles: bool
+     |          If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+     |          (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+     |          one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
+     |      
      |      Returns
      |      
      |      self.alpha_sequences: ndarray
@@ -736,7 +741,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, w=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, keep_non_AB_alleles=False, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -803,6 +808,11 @@ CLASSES
      |      
      |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
      |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
+     |      
+     |      keep_non_AB_alleles: bool
+     |          If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+     |          (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+     |          one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -1418,7 +1428,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False, keep_non_AB_alleles=False)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -1520,6 +1530,11 @@ CLASSES
      |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
      |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
+     |      keep_non_AB_alleles: bool
+     |          If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+     |          (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+     |          one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
+     |      
      |      Returns
      |      
      |      self.alpha_sequences: ndarray
@@ -1545,7 +1560,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, w=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, keep_non_AB_alleles=False, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -1612,6 +1627,11 @@ CLASSES
      |      
      |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
      |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
+     |      
+     |      keep_non_AB_alleles: bool
+     |          If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+     |          (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+     |          one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -2344,7 +2364,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False, keep_non_AB_alleles=False)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -2446,6 +2466,11 @@ CLASSES
      |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
      |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
+     |      keep_non_AB_alleles: bool
+     |          If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+     |          (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+     |          one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
+     |      
      |      Returns
      |      
      |      self.alpha_sequences: ndarray
@@ -2471,7 +2496,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, w=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, keep_non_AB_alleles=False, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -2538,6 +2563,11 @@ CLASSES
      |      
      |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
      |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
+     |      
+     |      keep_non_AB_alleles: bool
+     |          If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+     |          (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+     |          one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -3835,7 +3865,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False, keep_non_AB_alleles=False)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -3937,6 +3967,11 @@ CLASSES
      |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
      |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
+     |      keep_non_AB_alleles: bool
+     |          If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+     |          (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+     |          one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
+     |      
      |      Returns
      |      
      |      self.alpha_sequences: ndarray
@@ -3962,7 +3997,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, w=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, keep_non_AB_alleles=False, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -4029,6 +4064,11 @@ CLASSES
      |      
      |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
      |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
+     |      
+     |      keep_non_AB_alleles: bool
+     |          If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+     |          (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+     |          one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -4560,7 +4600,7 @@ CLASSES
     class DeepTCR_base(builtins.object)
      |  Methods defined here:
      |  
-     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False)
+     |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False, keep_non_AB_alleles=False)
      |      Get Data for DeepTCR
      |      
      |      Parse Data into appropriate inputs for neural network from directories where data is stored.
@@ -4662,6 +4702,11 @@ CLASSES
      |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
      |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
      |      
+     |      keep_non_AB_alleles: bool
+     |          If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+     |          (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+     |          one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
+     |      
      |      Returns
      |      
      |      self.alpha_sequences: ndarray
@@ -4687,7 +4732,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, w=None)
+     |  Load_Data(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, class_labels=None, sample_labels=None, freq=None, counts=None, Y=None, p=None, hla=None, use_hla_supertype=False, keep_non_AB_alleles=False, w=None)
      |      Load Data programatically into DeepTCR.
      |      
      |      DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
@@ -4754,6 +4799,11 @@ CLASSES
      |      
      |          Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
      |          HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
+     |      
+     |      keep_non_AB_alleles: bool
+     |          If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+     |          (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+     |          one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.

@@ -85,7 +85,7 @@ class DeepTCR_base(object):
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
                     v_alpha_column=None,j_alpha_column=None,
                     v_beta_column=None,j_beta_column=None,d_beta_column=None,
-                 p=None,hla=None,use_hla_supertype=False):
+                 p=None,hla=None,use_hla_supertype=False,keep_non_AB_alleles=False):
         """
         Get Data for DeepTCR
 
@@ -187,6 +187,11 @@ class DeepTCR_base(object):
 
             Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
             HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
+
+        keep_non_AB_alleles: bool
+            If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+            (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+            one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
 
         Returns
 
@@ -430,7 +435,7 @@ class DeepTCR_base(object):
                 self.use_hla = True
                 hla_df = pd.read_csv(hla)
                 if use_hla_supertype:
-                    hla_df = supertype_conv(hla_df)
+                    hla_df = supertype_conv(hla_df,keep_non_AB_alleles)
                 hla_df = hla_df.set_index(hla_df.columns[0])
                 hla_id = []
                 hla_data = []
@@ -537,7 +542,7 @@ class DeepTCR_base(object):
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
                   v_alpha=None,j_alpha=None,class_labels=None,sample_labels=None,freq=None,counts=None,Y=None,
-                  p=None,hla=None,use_hla_supertype=False,w=None):
+                  p=None,hla=None,use_hla_supertype=False,keep_non_AB_alleles=False,w=None):
         """
         Load Data programatically into DeepTCR.
 
@@ -605,6 +610,11 @@ class DeepTCR_base(object):
 
             Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
             HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
+
+        keep_non_AB_alleles: bool
+            If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
+            (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+            one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
 
         p: multiprocessing pool object
             a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -782,8 +792,9 @@ class DeepTCR_base(object):
 
                 hla_list_sup = []
                 for h in hla:
-                    h = [x for x in h if x.startswith('A') or x.startswith('B')]
-                    hla_list_sup.append(np.array([hla_dict[x] for x in h]))
+                    if not keep_non_AB_alleles:
+                        h = [x for x in h if x.startswith('A') or x.startswith('B')]
+                    hla_list_sup.append(np.array([hla_dict[x] if x.startswith('A') or x.startswith('B') else x for x in h]))
                 hla = hla_list_sup
 
             self.lb_hla = MultiLabelBinarizer()
