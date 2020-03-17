@@ -271,6 +271,20 @@ def Get_HLA_Loss(fc,embedding_layer,X_OH,alpha=1.0):
     accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted,tf.cast(X_OH,tf.bool)),tf.float32))
     return loss, accuracy
 
+
+def calc_entropy(a):
+    return -tf.reduce_sum(a * tf.log(a))
+
+def calc_norm_entropy(a):
+    return calc_entropy(a) / tf.log(tf.cast(tf.shape(a)[0], tf.float32))
+
+def sparsity_loss(z_w,sparsity_alpha):
+    eigen = tf.linalg.norm(z_w, axis=0)
+    eigen_prop = eigen / tf.reduce_sum(eigen)
+    sparsity_cost = calc_norm_entropy(eigen_prop)
+    sparsity_cost = sparsity_alpha * sparsity_cost
+    return sparsity_cost
+
 #Other Layers
 def MultiSample_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
                        rate=0.25,units=12,name='ml_weights',reg=0.0):

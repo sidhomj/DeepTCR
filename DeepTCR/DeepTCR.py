@@ -2114,9 +2114,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         os.makedirs(self.models_dir)
 
     def Train_VAE(self,latent_dim=256, kernel = 5, trainable_embedding=True, embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
-                  use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',latent_alpha=1e-3, graph_seed=None,
+                  use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',latent_alpha=1e-3,sparsity_alpha=None,var_explained=None,graph_seed=None,
                   batch_size=10000, epochs_min=0,stop_criterion=0.01,stop_criterion_window=30, accuracy_min=None,
-                  suppress_output = False,split_seed=None,Load_Prev_Data=False):
+                  suppress_output = False,learning_rate=0.001,split_seed=None,Load_Prev_Data=False):
 
         """
         Train Variational Autoencoder (VAE)
@@ -2171,6 +2171,22 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             Penalty coefficient for latent loss. This value changes the degree of latent regularization on
             the VAE.
 
+        sparsity_alpha: float
+            When training an autoencoder, the number of latent nodes required to model the underlying distribution
+            of the data is often arrived to by trial and error and tuning this hyperparameter. In many cases, by using
+            too many latent nodes, one my fit the distribution but downstream analysis tasks may be computationally
+            burdensome with i.e. 256 latent features. Additionally, there can be a high level of colinearlity among
+            these latent features. In our implemnetation of VAE, we introduce this concept of a sparsity constraint which
+            turns off latent nodes in a soft fashion throughout straining and acts as another mode of regularization to
+            find the minimal number of latent features to model the underlying distribution. Following training, one can
+            set the var_explained parameter to select the number of latent nodes required  to cover X percent variation
+            explained akin to PCA analysis. This results in a lower dimensional space and more linearly indepeendent
+            latent space. Good starting value is 1.0.
+
+        var_explained: float (0-1.0)
+            Following training, one can select the number of latent features that explain N% of the variance in the
+            data. The output of the method will be the features in order of the explained variance.
+
         graph_seed: int
             For deterministic initialization of weights of the graph, set this to value of choice.
 
@@ -2207,6 +2223,12 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         self.features: array
             An array that contains n x latent_dim containing features for all sequences
 
+        self.explained_variance_ : array
+            The explained variance for the N number of latent features in order of descending value.
+
+        self.explained_variance_ratio_ : array
+            The explained variance ratio for the N number of latent features in order of descending value.
+
         ---------------------------------------
 
         """
@@ -2228,11 +2250,12 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         GO.w = tf.placeholder(tf.float32, shape=[None])
                     GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla)
                     fc = tf.layers.dense(GO.Features, 256)
-                    fc = tf.layers.dense(fc, 128)
-                    z_mean = tf.layers.dense(fc, latent_dim, activation=None, name='z_mean')
+                    fc = tf.layers.dense(fc, latent_dim)
+                    z_w = tf.get_variable(name='z_w',shape=[latent_dim,latent_dim])
+                    z_mean = tf.matmul(fc,z_w)
+                    z_mean = tf.identity(z_mean,'z_mean')
                     z_log_var = tf.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
-                    latent_costs = []
-                    latent_costs.append(Latent_Loss(z_log_var,z_mean,alpha=latent_alpha))
+                    latent_cost = Latent_Loss(z_log_var,z_mean,alpha=latent_alpha)
 
                     z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)
                     z = tf.identity(z, name='z')
@@ -2346,10 +2369,6 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     recon_cost = tf.reduce_sum(recon_losses,1)
                     recon_cost = tf.reduce_mean(recon_cost)
 
-                    latent_cost = 0
-                    for u in latent_costs:
-                        latent_cost += u
-
                     if self.use_w:
                         latent_cost = GO.w*latent_cost
 
@@ -2365,7 +2384,15 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     accuracy = accuracy/num_acc
                     latent_cost = tf.reduce_mean(latent_cost)
 
-                    opt_ae = tf.train.AdamOptimizer().minimize(total_cost)
+                    opt_ae = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(total_cost)
+
+                    if sparsity_alpha is not None:
+                        sparsity_cost = sparsity_loss(z_w,sparsity_alpha)
+                        total_cost += sparsity_cost
+                        opt_sparse = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(sparsity_cost,var_list=z_w)
+                        opt_ae = tf.group(opt_ae,opt_sparse)
+                    else:
+                        sparsity_cost = tf.Variable(0.0)
 
                     GO.saver = tf.train.Saver(max_to_keep=None)
 
@@ -2419,7 +2446,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         if self.use_w:
                             feed_dict[GO.w] = vars[8]
 
-                        train_loss_i, recon_loss_i, latent_loss_i, accuracy_i, _ = sess.run([total_cost, recon_cost, latent_cost, accuracy, opt_ae], feed_dict=feed_dict)
+                        train_loss_i, recon_loss_i, latent_loss_i, sparsity_loss_i, accuracy_i, _ = sess.run([total_cost, recon_cost, latent_cost, sparsity_cost, accuracy, opt_ae], feed_dict=feed_dict)
                         accuracy_list.append(accuracy_i)
                         recon_loss.append(recon_loss_i)
                         latent_loss.append(latent_loss_i)
@@ -2429,7 +2456,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                             print("Epoch = {}, Iteration = {}".format(e,iteration),
                                   "Total Loss: {:.5f}:".format(train_loss_i),
                                   "Recon Loss: {:.5f}:".format(recon_loss_i),
-                                  "Latent Loss: {:5f}:".format(latent_loss_i),
+                                  "Latent Loss: {:.5f}:".format(latent_loss_i),
+                                  "Sparsity Loss: {:.5f}:".format(sparsity_loss_i),
                                   "Recon Accuracy: {:.5f}".format(accuracy_i))
 
                         if e >= epochs_min:
@@ -2542,6 +2570,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                 #save model data and information for inference engine
                 save_model_data(self,GO.saver,sess,name='VAE',get=z_mean)
+                self.z_w = z_w.eval()
 
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
                 pickle.dump([features,embed_dict], f,protocol=4)
@@ -2551,8 +2580,23 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 features,embed_dict = pickle.load(f)
 
 
+        #sort features by variance explained
+        cov = np.cov(features.T)
+        explained_variance = np.diag(cov)
+        ind = np.flip(np.argsort(explained_variance))
+        explained_variance = explained_variance[ind]
+        explained_variance_ratio = explained_variance/np.sum(explained_variance)
+        features = features[:,ind]
+        z_w_val = self.z_w[:,ind]
+
+        if var_explained is not None:
+            features = features[:,0:np.where(np.cumsum(explained_variance_ratio) > var_explained)[0][0]+1]
+
         self.features = features
         self.embed_dict = embed_dict
+        self.z_w = z_w_val
+        self.explained_variance_ = explained_variance
+        self.explained_variance_ratio_ = explained_variance_ratio
         print('Training Done')
 
     def KNN_Sequence_Classifier(self,folds=5, k_values=list(range(1, 500, 25)), rep=5, plot_metrics=False, by_class=False,
