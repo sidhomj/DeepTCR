@@ -1047,7 +1047,13 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
         predicted_dist.append(np.expand_dims(p, 0))
     predicted_dist = np.vstack(predicted_dist)
 
-    return np.mean(predicted_dist,0), predicted_dist
+    out,out_dist = np.mean(predicted_dist,0), predicted_dist
+
+    if self.ind is not None:
+        out = out[:,self.ind]
+        out_dist = out_dist[:,:,self.ind]
+
+    return out, out_dist
 
 def stop_check(loss,stop_criterion,stop_criterion_window):
     w = loss[-stop_criterion_window:]

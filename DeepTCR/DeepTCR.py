@@ -65,6 +65,7 @@ class DeepTCR_base(object):
         self.keep_non_AB_alleles = False
         self.regression = False
         self.use_w = False
+        self.ind = None
 
         #Create dataframes for assigning AA to ints
         aa_idx, aa_mat = make_aa_df()
@@ -2391,6 +2392,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         total_cost += sparsity_cost
                         opt_sparse = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(sparsity_cost,var_list=z_w)
                         opt_ae = tf.group(opt_ae,opt_sparse)
+                        self.use_sparsity = True
                     else:
                         sparsity_cost = tf.Variable(0.0)
 
@@ -2568,33 +2570,30 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                 embed_dict = dict(zip(name_keep,embedding_keep))
 
+                # sort features by variance explained
+                cov = np.cov(features.T)
+                explained_variance = np.diag(cov)
+                ind = np.flip(np.argsort(explained_variance))
+                explained_variance = explained_variance[ind]
+                explained_variance_ratio = explained_variance / np.sum(explained_variance)
+                features = features[:, ind]
+
+                if var_explained is not None:
+                    features = features[:, 0:np.where(np.cumsum(explained_variance_ratio) > var_explained)[0][0] + 1]
+
+                self.ind = ind[:features.shape[1]]
                 #save model data and information for inference engine
                 save_model_data(self,GO.saver,sess,name='VAE',get=z_mean)
-                self.z_w = z_w.eval()
 
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
-                pickle.dump([features,embed_dict], f,protocol=4)
+                pickle.dump([features,embed_dict,explained_variance,explained_variance_ratio], f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'rb') as f:
-                features,embed_dict = pickle.load(f)
-
-
-        #sort features by variance explained
-        cov = np.cov(features.T)
-        explained_variance = np.diag(cov)
-        ind = np.flip(np.argsort(explained_variance))
-        explained_variance = explained_variance[ind]
-        explained_variance_ratio = explained_variance/np.sum(explained_variance)
-        features = features[:,ind]
-        z_w_val = self.z_w[:,ind]
-
-        if var_explained is not None:
-            features = features[:,0:np.where(np.cumsum(explained_variance_ratio) > var_explained)[0][0]+1]
+                features,embed_dict,explained_variance,explained_variance_ratio = pickle.load(f)
 
         self.features = features
         self.embed_dict = embed_dict
-        self.z_w = z_w_val
         self.explained_variance_ = explained_variance
         self.explained_variance_ratio_ = explained_variance_ratio
         print('Training Done')

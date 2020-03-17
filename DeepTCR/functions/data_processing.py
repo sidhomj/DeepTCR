@@ -188,7 +188,8 @@ def save_model_data(self,saver,sess,name,get,iteration=0):
                      self.use_v_beta, self.use_d_beta, self.use_j_beta,
                      self.use_v_alpha, self.use_j_alpha, self.use_hla, self.use_hla_sup, self.keep_non_AB_alleles,
                      self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
-                     self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb], f)
+                     self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb,
+                     self.ind], f)
 
 def load_model_data(self):
     with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'rb') as f:
@@ -196,5 +197,6 @@ def load_model_data(self):
         self.use_v_beta, self.use_d_beta, self.use_j_beta, \
         self.use_v_alpha, self.use_j_alpha, self.use_hla, self.use_hla_sup,self.keep_non_AB_alleles, \
         self.lb_v_beta, self.lb_d_beta, self.lb_j_beta, \
-        self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb = pickle.load(f)
+        self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb,\
+            self.ind = pickle.load(f)
     return model_type,get
