@@ -96,4 +96,3 @@ compact latent space even if the initial latent_dim is unnecessarily high to mod
 
 
 
-
