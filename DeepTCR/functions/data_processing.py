@@ -156,25 +156,20 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
 
     return df
 
-def supertype_conv(df,keep_non_AB_alleles=False):
+def supertype_conv_op(hla,keep_non_supertype_alleles=False):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     df_supertypes = pd.read_csv(os.path.join(dir_path,'Supertype_Data_Dict.csv'))
     hla_dict = dict(zip(df_supertypes['Allele'], df_supertypes['Supertype_2']))
-
-    temp = df.iloc[:,1:]
-
-    hla_list_ab = []
-    for t in temp.iterrows():
-        t = list(filter(None, list(t[1])))
-        t = [x for x in t if isinstance(x,str)]
-        if not keep_non_AB_alleles:
-            t = np.array([x for x in t if x.startswith('A') or x.startswith('B')])
-        hla_list_ab.append(t)
-
     hla_list_sup = []
-    for h in hla_list_ab:
-        hla_list_sup.append(np.array([hla_dict[x] if x.startswith('A') or x.startswith('B') else x for x in h]))
+    for h in hla:
+        if not keep_non_supertype_alleles:
+            h = [x for x in h if x in hla_dict.keys()]
+        hla_list_sup.append(np.array([hla_dict[x] if x in hla_dict.keys() else x for x in h]))
+    return hla_list_sup
 
+def supertype_conv(df,keep_non_supertype_alleles=False):
+    hla = np.array(df.iloc[:,1:])
+    hla_list_sup = supertype_conv_op(hla,keep_non_supertype_alleles)
     hla_sup = pd.DataFrame()
     colname = df.columns[0]
     hla_sup[colname] = df[colname]
@@ -186,7 +181,7 @@ def save_model_data(self,saver,sess,name,get,iteration=0):
     with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'wb') as f:
         pickle.dump([name, get.name, self.use_alpha, self.use_beta,
                      self.use_v_beta, self.use_d_beta, self.use_j_beta,
-                     self.use_v_alpha, self.use_j_alpha, self.use_hla, self.use_hla_sup, self.keep_non_AB_alleles,
+                     self.use_v_alpha, self.use_j_alpha, self.use_hla, self.use_hla_sup, self.keep_non_supertype_alleles,
                      self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
                      self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb,
                      self.ind], f)
@@ -195,7 +190,7 @@ def load_model_data(self):
     with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'rb') as f:
         model_type, get, self.use_alpha, self.use_beta, \
         self.use_v_beta, self.use_d_beta, self.use_j_beta, \
-        self.use_v_alpha, self.use_j_alpha, self.use_hla, self.use_hla_sup,self.keep_non_AB_alleles, \
+        self.use_v_alpha, self.use_j_alpha, self.use_hla, self.use_hla_sup,self.keep_non_supertype_alleles, \
         self.lb_v_beta, self.lb_d_beta, self.lb_j_beta, \
         self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb,\
             self.ind = pickle.load(f)

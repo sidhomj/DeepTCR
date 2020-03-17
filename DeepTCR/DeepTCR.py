@@ -62,7 +62,7 @@ class DeepTCR_base(object):
         self.use_j_alpha = False
         self.use_hla = False
         self.use_hla_sup = False
-        self.keep_non_AB_alleles = False
+        self.keep_non_supertype_alleles = False
         self.regression = False
         self.use_w = False
         self.ind = None
@@ -88,7 +88,7 @@ class DeepTCR_base(object):
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
                     v_alpha_column=None,j_alpha_column=None,
                     v_beta_column=None,j_beta_column=None,d_beta_column=None,
-                 p=None,hla=None,use_hla_supertype=False,keep_non_AB_alleles=False):
+                 p=None,hla=None,use_hla_supertype=False,keep_non_supertype_alleles=False):
         """
         Get Data for DeepTCR
 
@@ -191,9 +191,9 @@ class DeepTCR_base(object):
             Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
             HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
 
-        keep_non_AB_alleles: bool
+        keep_non_supertype_alleles: bool
             If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
-            (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+            (i.e. HLA-C alleles or certain HLA-A or HLA-B alleles) or discard them for the analysis. In order to keep these alleles,
             one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
 
         Returns
@@ -438,9 +438,9 @@ class DeepTCR_base(object):
                 self.use_hla = True
                 hla_df = pd.read_csv(hla)
                 if use_hla_supertype:
-                    hla_df = supertype_conv(hla_df,keep_non_AB_alleles)
+                    hla_df = supertype_conv(hla_df,keep_non_supertype_alleles)
                     self.use_hla_sup = True
-                    self.keep_non_AB_alleles = keep_non_AB_alleles
+                    self.keep_non_supertype_alleles = keep_non_supertype_alleles
                 hla_df = hla_df.set_index(hla_df.columns[0])
                 hla_id = []
                 hla_data = []
@@ -506,7 +506,7 @@ class DeepTCR_base(object):
                              v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,
                              self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,
                              self.lb_hla, hla_data, hla_data_num,hla_data_seq,hla_data_seq_num,
-                             self.use_hla,self.use_hla_sup,self.keep_non_AB_alleles],f,protocol=4)
+                             self.use_hla,self.use_hla_sup,self.keep_non_supertype_alleles],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
@@ -517,7 +517,7 @@ class DeepTCR_base(object):
                     v_beta_num, d_beta_num, j_beta_num,v_alpha_num,j_alpha_num,\
                     self.use_v_beta,self.use_d_beta,self.use_j_beta,self.use_v_alpha,self.use_j_alpha,\
                     self.lb_hla, hla_data,hla_data_num,hla_data_seq,hla_data_seq_num,\
-                self.use_hla,self.use_hla_sup,self.keep_non_AB_alleles = pickle.load(f)
+                self.use_hla,self.use_hla_sup,self.keep_non_supertype_alleles = pickle.load(f)
 
         self.X_Seq_alpha = X_Seq_alpha
         self.X_Seq_beta = X_Seq_beta
@@ -549,7 +549,7 @@ class DeepTCR_base(object):
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
                   v_alpha=None,j_alpha=None,class_labels=None,sample_labels=None,freq=None,counts=None,Y=None,
-                  p=None,hla=None,use_hla_supertype=False,keep_non_AB_alleles=False,w=None):
+                  p=None,hla=None,use_hla_supertype=False,keep_non_supertype_alleles=False,w=None):
         """
         Load Data programatically into DeepTCR.
 
@@ -618,9 +618,9 @@ class DeepTCR_base(object):
             Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
             HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
 
-        keep_non_AB_alleles: bool
+        keep_non_supertype_alleles: bool
             If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
-            (i.e. HLA-C alleles) or discard them for the analysis. In order to keep these non HLA-A or B alleles,
+            (i.e. HLA-C alleles or certain HLA-A or HLA-B alleles) or discard them for the analysis. In order to keep these alleles,
             one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
 
         p: multiprocessing pool object
@@ -793,18 +793,9 @@ class DeepTCR_base(object):
 
         if hla is not None:
             if use_hla_supertype:
-                dir_path = os.path.dirname(os.path.realpath(__file__))
-                df_supertypes = pd.read_csv(os.path.join(dir_path,'functions', 'Supertype_Data_Dict.csv'))
-                hla_dict = dict(zip(df_supertypes['Allele'], df_supertypes['Supertype_2']))
-
-                hla_list_sup = []
-                for h in hla:
-                    if not keep_non_AB_alleles:
-                        h = [x for x in h if x.startswith('A') or x.startswith('B')]
-                    hla_list_sup.append(np.array([hla_dict[x] if x.startswith('A') or x.startswith('B') else x for x in h]))
-                hla = hla_list_sup
+                hla = supertype_conv_op(hla,keep_non_supertype_alleles)
                 self.use_hla_sup = True
-                self.keep_non_AB_alleles = keep_non_AB_alleles
+                self.keep_non_supertype_alleles = keep_non_supertype_alleles
 
             self.lb_hla = MultiLabelBinarizer()
             self.hla_data_seq_num = self.lb_hla.fit_transform(hla)
@@ -5242,17 +5233,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         if hla is not None:
             if self.use_hla_sup:
-                dir_path = os.path.dirname(os.path.realpath(__file__))
-                df_supertypes = pd.read_csv(os.path.join(dir_path, 'functions', 'Supertype_Data_Dict.csv'))
-                hla_dict = dict(zip(df_supertypes['Allele'], df_supertypes['Supertype_2']))
-
-                hla_list_sup = []
-                for h in hla:
-                    if not self.keep_non_AB_alleles:
-                        h = [x for x in h if x.startswith('A') or x.startswith('B')]
-                    hla_list_sup.append(
-                        np.array([hla_dict[x] if x.startswith('A') or x.startswith('B') else x for x in h]))
-                hla = hla_list_sup
+                hla = supertype_conv_op(hla,self.keep_non_supertype_alleles)
             hla_data_seq_num = self.lb_hla.transform(hla)
         else:
             try:
