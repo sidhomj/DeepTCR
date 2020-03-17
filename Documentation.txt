@@ -887,6 +887,11 @@ CLASSES
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
+     |          If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA
+     |          in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those
+     |          HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to
+     |          this method in the supertype designation.
+     |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
@@ -1706,6 +1711,11 @@ CLASSES
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
+     |          If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA
+     |          in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those
+     |          HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to
+     |          this method in the supertype designation.
+     |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
@@ -2270,7 +2280,7 @@ CLASSES
      |          performance metric.
      |      ---------------------------------------
      |  
-     |  Train_VAE(self, latent_dim=256, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', latent_alpha=0.001, graph_seed=None, batch_size=10000, epochs_min=0, stop_criterion=0.01, stop_criterion_window=30, accuracy_min=None, suppress_output=False, split_seed=None, Load_Prev_Data=False)
+     |  Train_VAE(self, latent_dim=256, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', latent_alpha=0.001, sparsity_alpha=None, var_explained=None, graph_seed=None, batch_size=10000, epochs_min=0, stop_criterion=0.01, stop_criterion_window=30, accuracy_min=None, suppress_output=False, learning_rate=0.001, split_seed=None, Load_Prev_Data=False)
      |      Train Variational Autoencoder (VAE)
      |      
      |      This method trains the network and saves features values for sequences
@@ -2323,6 +2333,22 @@ CLASSES
      |          Penalty coefficient for latent loss. This value changes the degree of latent regularization on
      |          the VAE.
      |      
+     |      sparsity_alpha: float
+     |          When training an autoencoder, the number of latent nodes required to model the underlying distribution
+     |          of the data is often arrived to by trial and error and tuning this hyperparameter. In many cases, by using
+     |          too many latent nodes, one my fit the distribution but downstream analysis tasks may be computationally
+     |          burdensome with i.e. 256 latent features. Additionally, there can be a high level of colinearlity among
+     |          these latent features. In our implemnetation of VAE, we introduce this concept of a sparsity constraint which
+     |          turns off latent nodes in a soft fashion throughout straining and acts as another mode of regularization to
+     |          find the minimal number of latent features to model the underlying distribution. Following training, one can
+     |          set the var_explained parameter to select the number of latent nodes required  to cover X percent variation
+     |          explained akin to PCA analysis. This results in a lower dimensional space and more linearly indepeendent
+     |          latent space. Good starting value is 1.0.
+     |      
+     |      var_explained: float (0-1.0)
+     |          Following training, one can select the number of latent features that explain N% of the variance in the
+     |          data. The output of the method will be the features in order of the explained variance.
+     |      
      |      graph_seed: int
      |          For deterministic initialization of weights of the graph, set this to value of choice.
      |      
@@ -2354,10 +2380,17 @@ CLASSES
      |      Load_Prev_Data: bool
      |          Load previous feature data from prior training.
      |      
+     |      
      |      Returns
      |      
      |      self.features: array
      |          An array that contains n x latent_dim containing features for all sequences
+     |      
+     |      self.explained_variance_ : array
+     |          The explained variance for the N number of latent features in order of descending value.
+     |      
+     |      self.explained_variance_ratio_ : array
+     |          The explained variance ratio for the N number of latent features in order of descending value.
      |      
      |      ---------------------------------------
      |  
@@ -2641,6 +2674,11 @@ CLASSES
      |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
+     |          If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA
+     |          in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those
+     |          HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to
+     |          this method in the supertype designation.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -3586,6 +3624,11 @@ CLASSES
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
+     |          If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA
+     |          in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those
+     |          HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to
+     |          this method in the supertype designation.
+     |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
      |      
@@ -4142,6 +4185,11 @@ CLASSES
      |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
+     |          If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA
+     |          in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those
+     |          HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to
+     |          this method in the supertype designation.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
@@ -4877,6 +4925,11 @@ CLASSES
      |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+     |      
+     |          If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA
+     |          in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those
+     |          HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to
+     |          this method in the supertype designation.
      |      
      |      p: multiprocessing pool object
      |          a pre-formed pool object can be passed to method for multiprocessing tasks.
