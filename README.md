@@ -91,6 +91,7 @@ assigning the HLA-A and B genes to known supertypes for a more biologically func
 - VAE now has an optional method by which to find a minimal number of latent features to model the underlying distribution
 by incorporating a sparsity regularization on the latent layer. When using this feature, the VAE will provide a more 
 compact latent space even if the initial latent_dim is unnecessarily high to model the distribution of data.
+- Supervised models now have an additional option to use Multi-Sample Dropout to improve training and generalization.
 
 
 
