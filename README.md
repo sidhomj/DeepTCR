@@ -88,6 +88,9 @@ users can choose to do an ensemble inference of some or many of the trained mode
 - HLA Supertype Integration. Previous versions allowed users to provide HLA alleles for additional dimension of featurization
 for the TCR. In this version, when providing HLA (either via the Get_Data or Load_Data methods), one now has the option of 
 assigning the HLA-A and B genes to known supertypes for a more biologically functional representation of HLA.
+- VAE now has an optional method by which to find a minimal number of latent features to model the underlying distribution
+by incorporating a sparsity regularization on the latent layer. When using this feature, the VAE will provide a more 
+compact latent space even if the initial latent_dim is unnecessarily high to model the distribution of data.
 
 
 
