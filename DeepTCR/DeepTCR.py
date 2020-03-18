@@ -3061,7 +3061,7 @@ class DeepTCR_SS(DeepTCR_S_base):
     def _build(self,kernel = 5,trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
                num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
                use_only_seq = False, use_only_gene = False, use_only_hla = False, size_of_net = 'medium',graph_seed = None,
-               drop_out_rate=0.0,multisample_dropout = False, multisample_dropout_rate = 0.25, multisample_dropout_num_masks = 10,
+               drop_out_rate=0.0,multisample_dropout = False, multisample_dropout_rate = 0.50, multisample_dropout_num_masks = 64,
                batch_size = 1000, epochs_min = 10, stop_criterion = 0.001, stop_criterion_window = 10,
                accuracy_min = None, train_loss_min = None, hinge_loss_t = 0.0, convergence = 'validation', learning_rate = 0.001, suppress_output = False):
 
@@ -3270,7 +3270,7 @@ class DeepTCR_SS(DeepTCR_S_base):
     def Train(self,kernel = 5,trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
                num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
                use_only_seq = False, use_only_gene = False, use_only_hla = False, size_of_net = 'medium',graph_seed = None,
-               drop_out_rate=0.0,multisample_dropout = False, multisample_dropout_rate = 0.25, multisample_dropout_num_masks = 10,
+               drop_out_rate=0.0,multisample_dropout = False, multisample_dropout_rate = 0.50, multisample_dropout_num_masks = 64,
                batch_size = 1000, epochs_min = 10, stop_criterion = 0.001, stop_criterion_window = 10,
                accuracy_min = None, train_loss_min = None, hinge_loss_t = 0.0, convergence = 'validation', learning_rate = 0.001, suppress_output = False,
                 batch_seed = None):
@@ -3419,7 +3419,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                              kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                              num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
                              use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
-                             drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10,
+                             drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50, multisample_dropout_num_masks=64,
                              batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                              accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
                              batch_seed=None):
@@ -3632,7 +3632,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                         kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                         num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
                         use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
-                        drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10,
+                        drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50, multisample_dropout_num_masks=64,
                         batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                         accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
                         batch_seed=None):
@@ -3989,7 +3989,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                num_fc_layers=0, units_fc=12,weight_by_class=False, class_weights=None,
                use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium',graph_seed = None,
                qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12,
-               drop_out_rate=0.0,multisample_dropout=False, multisample_dropout_rate = 0.25,multisample_dropout_num_masks = 10,
+               drop_out_rate=0.0,multisample_dropout=False, multisample_dropout_rate = 0.50,multisample_dropout_num_masks = 64,
                batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,
               accuracy_min = None,train_loss_min=None,hinge_loss_t=0.0,convergence='validation',learning_rate=0.001, suppress_output=False):
 
@@ -4226,7 +4226,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                num_fc_layers=0, units_fc=12,weight_by_class=False, class_weights=None,
                use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium',graph_seed = None,
                qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12,
-               drop_out_rate=0.0,multisample_dropout=False, multisample_dropout_rate = 0.25,multisample_dropout_num_masks = 10,
+               drop_out_rate=0.0,multisample_dropout=False, multisample_dropout_rate = 0.50,multisample_dropout_num_masks = 64,
                batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,
               accuracy_min = None,train_loss_min=None,hinge_loss_t=0.0,convergence='validation',learning_rate=0.001, suppress_output=False,
               batch_seed = None):
@@ -4418,7 +4418,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                              num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
                              use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium',graph_seed=None,
                              qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12,
-                             drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25,multisample_dropout_num_masks=10,
+                             drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50,multisample_dropout_num_masks=64,
                              batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
                              accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation',learning_rate=0.001, suppress_output=False,
                              batch_seed=None):
@@ -4693,7 +4693,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                         num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
                         use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
                         qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12,
-                        drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10,
+                        drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50, multisample_dropout_num_masks=64,
                         batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
                         accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
                         batch_seed=None):
