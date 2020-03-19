@@ -159,6 +159,7 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
 def supertype_conv_op(hla,keep_non_supertype_alleles=False):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     df_supertypes = pd.read_csv(os.path.join(dir_path,'Supertype_Data_Dict.csv'))
+    df_supertypes = df_supertypes[~df_supertypes['Supertype_2'].isin(['AU', 'BU'])]
     hla_dict = dict(zip(df_supertypes['Allele'], df_supertypes['Supertype_2']))
     hla_list_sup = []
     for h in hla:
