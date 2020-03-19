@@ -4982,8 +4982,6 @@ class DeepTCR_WF(DeepTCR_S_base):
             saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', model, 'model.ckpt.meta'),clear_devices=True)
         graph = tf.get_default_graph()
         with tf.Session(graph=graph,config=config) as sess:
-            # saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', 'model.ckpt.meta'))
-            # saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name, 'model')))
             saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name,'models', model)))
 
             X_Freq = graph.get_tensor_by_name('Freq:0')
