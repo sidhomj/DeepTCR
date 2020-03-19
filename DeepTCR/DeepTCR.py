@@ -597,9 +597,9 @@ class DeepTCR_base(object):
             these numerical values for this input. As of latest release, regression is only available
             for sequence classifier.
 
-        hla: ndarray of tuples
+        hla: ndarray of tuples/arrays
             To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-            as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+            as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring
             to the alleles seen for that sequence.
                 ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
 
@@ -871,9 +871,9 @@ class DeepTCR_base(object):
         j_alpha: ndarray of strings
             A 1d array with the j-alpha genes for inference.
 
-        hla: ndarray of tuples
+        hla: ndarray of tuples/arrays
             To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-            as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+            as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring
             to the alleles seen for that sequence.
                 ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
 
@@ -5117,9 +5117,9 @@ class DeepTCR_WF(DeepTCR_S_base):
         freq: ndarray of float values
             A 1d array with the frequencies for each sequence.
 
-        hla: ndarray of tuples
+        hla: ndarray of tuples/arrays
             To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-            as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+            as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring
             to the alleles seen for that sequence.
                 ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
 

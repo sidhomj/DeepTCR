@@ -78,7 +78,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, split_by_sample=False, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
+     |  K_Fold_CrossVal(self, folds=None, split_by_sample=False, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
      |      K_Fold Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -222,7 +222,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, split_by_sample=False, seeds=None, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, split_by_sample=False, seeds=None, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
      |      Monte Carlo Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -400,7 +400,7 @@ CLASSES
      |      corr: float
      |          Spearman's Rank Correlation Coefficient
      |  
-     |  Train(self, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
+     |  Train(self, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
      |      Train Single-Sequence Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -790,9 +790,9 @@ CLASSES
      |          these numerical values for this input. As of latest release, regression is only available
      |          for sequence classifier.
      |      
-     |      hla: ndarray of tuples
+     |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
@@ -883,9 +883,9 @@ CLASSES
      |      j_alpha: ndarray of strings
      |          A 1d array with the j-alpha genes for inference.
      |      
-     |      hla: ndarray of tuples
+     |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
@@ -1616,9 +1616,9 @@ CLASSES
      |          these numerical values for this input. As of latest release, regression is only available
      |          for sequence classifier.
      |      
-     |      hla: ndarray of tuples
+     |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
@@ -1709,9 +1709,9 @@ CLASSES
      |      j_alpha: ndarray of strings
      |          A 1d array with the j-alpha genes for inference.
      |      
-     |      hla: ndarray of tuples
+     |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
@@ -2582,9 +2582,9 @@ CLASSES
      |          these numerical values for this input. As of latest release, regression is only available
      |          for sequence classifier.
      |      
-     |      hla: ndarray of tuples
+     |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
@@ -2675,9 +2675,9 @@ CLASSES
      |      j_alpha: ndarray of strings
      |          A 1d array with the j-alpha genes for inference.
      |      
-     |      hla: ndarray of tuples
+     |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
@@ -3185,7 +3185,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, combine_train_valid=False, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
+     |  K_Fold_CrossVal(self, folds=None, combine_train_valid=False, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -3372,7 +3372,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, combine_train_valid=False, random_perm=False, seeds=None, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, combine_train_valid=False, random_perm=False, seeds=None, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -3626,9 +3626,9 @@ CLASSES
      |      freq: ndarray of float values
      |          A 1d array with the frequencies for each sequence.
      |      
-     |      hla: ndarray of tuples
+     |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
@@ -3666,7 +3666,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Train(self, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.25, multisample_dropout_num_masks=10, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
+     |  Train(self, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
      |      Train Whole-Sample Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -4095,9 +4095,9 @@ CLASSES
      |          these numerical values for this input. As of latest release, regression is only available
      |          for sequence classifier.
      |      
-     |      hla: ndarray of tuples
+     |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
@@ -4188,9 +4188,9 @@ CLASSES
      |      j_alpha: ndarray of strings
      |          A 1d array with the j-alpha genes for inference.
      |      
-     |      hla: ndarray of tuples
+     |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
@@ -4837,9 +4837,9 @@ CLASSES
      |          these numerical values for this input. As of latest release, regression is only available
      |          for sequence classifier.
      |      
-     |      hla: ndarray of tuples
+     |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
@@ -4930,9 +4930,9 @@ CLASSES
      |      j_alpha: ndarray of strings
      |          A 1d array with the j-alpha genes for inference.
      |      
-     |      hla: ndarray of tuples
+     |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-     |          as an ndarray that is (N,) for each sequence where each entry is a tuple of strings referring
+     |          as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring
      |          to the alleles seen for that sequence.
      |              ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
      |      
