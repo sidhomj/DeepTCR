@@ -4978,7 +4978,8 @@ class DeepTCR_WF(DeepTCR_S_base):
         tf.reset_default_graph()
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
-        saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', model, 'model.ckpt.meta'),clear_devices=True)
+        with tf.device(self.device):
+            saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', model, 'model.ckpt.meta'),clear_devices=True)
         graph = tf.get_default_graph()
         with tf.Session(graph=graph,config=config) as sess:
             # saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', 'model.ckpt.meta'))

@@ -853,7 +853,8 @@ def _inf_ss(data,model='model_0'):
     tf.reset_default_graph()
     config = tf.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allow_growth = True
-    saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', model, 'model.ckpt.meta'),clear_devices=True)
+    with tf.device(self.device):
+        saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', model, 'model.ckpt.meta'),clear_devices=True)
     graph = tf.get_default_graph()
     with tf.Session(graph=graph,config=config) as sess:
         saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name, 'models', model)))
