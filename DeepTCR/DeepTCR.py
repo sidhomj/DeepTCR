@@ -3037,7 +3037,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         else:
             sample = np.unique(self.sample_id)
             Y = np.asarray([self.Y[np.where(self.sample_id == x)[0][0]] for x in sample])
-            train, valid, test = Get_Train_Valid_Test([sample], Y, test_size=test_size,LOO=LOO)
+            train, valid, test = Get_Train_Valid_Test([sample], Y, test_size=test_size,regression=self.regression,LOO=LOO)
 
             self.train_idx = np.where(np.isin(self.sample_id, train[0]))[0]
             self.valid_idx = np.where(np.isin(self.sample_id, valid[0]))[0]
