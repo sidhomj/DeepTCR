@@ -16,11 +16,13 @@ import seaborn as sns
 from NN_Assessment_utils import *
 import pickle
 import os
+import matplotlib
+matplotlib.rc('font', family='Arial')
 
 #Instantiate training object
 DTCRU = DeepTCR_U('Murine_U')
 #Load Data
-DTCRU.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
+DTCRU.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,
                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
 #Get distances from various methods
@@ -54,37 +56,41 @@ with open('Murine_seqalign.pkl','rb') as f:
 distances_seqalign = distances_seqalign + distances_seqalign.T
 distances_seqalign = squareform(distances_seqalign)
 
-distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene,distances_hamming,distances_kmer,distances_seqalign]
-names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Hamming','K-mer','Global-Seq-Align']
+# distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene,distances_hamming,distances_kmer,distances_seqalign]
+# names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Hamming','K-mer','Global-Seq-Align']
+
+distances_list = [distances_seqalign,distances_kmer,distances_hamming, distances_vae_seq,distances_vae_gene,distances_vae_seq_gene]
+names = ['Global-Seq-Align', 'K-mer', 'Hamming', 'VAE-Seq', 'VAE-VDJ', 'VAE-Seq-VDJ']
 
 dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
 #Assess Clustering Quality of Various Methods
-df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
-df_cq.to_csv('data_fig1b.csv')
-fig,ax = plt.subplots()
-sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=200,
-                hue='Algorithm',alpha=0.5,linewidth=.25,ax=ax)
-plt.xlabel('Variance Ratio Criterion',fontsize=18)
-plt.ylabel('Adjusted Mutual Information',fontsize=18)
-plt.xticks(fontsize=12)
-plt.yticks(fontsize=12)
-plt.title('Clustering Quality',fontsize=22)
-plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
+# df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
+# df_cq.to_csv(os.path.join(dir_results,'data_fig1b.csv'))
+# fig,ax = plt.subplots()
+# sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=200,
+#                 hue='Algorithm',alpha=0.5,linewidth=.25,ax=ax)
+# plt.xlabel('Variance Ratio Criterion',fontsize=18)
+# plt.ylabel('Adjusted Mutual Information',fontsize=18)
+# plt.xticks(fontsize=12)
+# plt.yticks(fontsize=12)
+# plt.title('Clustering Quality',fontsize=22)
+# plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 
 #Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results)
-df_metrics.to_csv('data_fig1c.csv')
+df_metrics.to_csv(os.path.join(dir_results,'data_fig1c.csv'))
 Plot_Performance(df_metrics,dir_results)
 
 subdir = 'Performance_Summary'
 if not os.path.exists(os.path.join(dir_results,subdir)):
     os.makedirs(os.path.join(dir_results,subdir))
 
+order = ['Global-Seq-Align','K-mer','Hamming','VAE-Seq','VAE-VDJ','VAE-Seq-VDJ']
 for m in np.unique(df_metrics['Metric']):
-    sns.catplot(data=df_metrics[df_metrics['Metric']==m],x='Algorithm',y='Value',kind='violin')
+    sns.catplot(data=df_metrics[df_metrics['Metric']==m],x='Algorithm',y='Value',kind='violin',order=order)
     plt.ylabel(m)
     plt.xticks(rotation=45)
     plt.xlabel('')
