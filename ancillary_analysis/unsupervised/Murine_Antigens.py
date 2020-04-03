@@ -74,6 +74,7 @@ plt.ylabel('Adjusted Mutual Information',fontsize=18)
 plt.xticks(fontsize=12)
 plt.yticks(fontsize=12)
 plt.title('Clustering Quality',fontsize=22)
+plt.tight_layout()
 plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 
 #Assess performance metrtics via K-Nearest Neighbors

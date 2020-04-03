@@ -61,6 +61,7 @@ if not os.path.exists(dir_results):
 
 #Assess Clustering Quality of Various Methods
 df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
+df_cq.to_csv(os.path.join(dir_results,'data_fig1d.csv'))
 fig,ax = plt.subplots()
 sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=200,
                 hue='Algorithm',alpha=0.5,linewidth=.25,ax=ax)
@@ -69,12 +70,13 @@ plt.ylabel('Adjusted Mutual Information',fontsize=18)
 plt.xticks(fontsize=12)
 plt.yticks(fontsize=12)
 plt.title('Clustering Quality',fontsize=22)
+plt.tight_layout()
 plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 
 
 #Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results)
-df_metrics.to_csv(os.path.join(dir_results,'data_fig1d.csv'))
+df_metrics.to_csv(os.path.join(dir_results,'data_fig1e.csv'))
 Plot_Performance(df_metrics,dir_results)
 
 subdir = 'Performance_Summary'
