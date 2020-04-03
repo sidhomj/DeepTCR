@@ -52,9 +52,8 @@ with open('Human_seqalign.pkl','rb') as f:
 distances_seqalign = distances_seqalign + distances_seqalign.T
 distances_seqalign = squareform(distances_seqalign)
 
-distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene,distances_hamming,distances_kmer,distances_seqalign]
-names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Hamming','K-mer','Global-Seq-Align']
-
+distances_list = [distances_seqalign,distances_kmer,distances_hamming, distances_vae_seq,distances_vae_gene,distances_vae_seq_gene]
+names = ['Global-Seq-Align', 'K-mer', 'Hamming', 'VAE-Seq', 'VAE-VDJ', 'VAE-Seq-VDJ']
 
 dir_results = 'Human_Results'
 if not os.path.exists(dir_results):
@@ -75,15 +74,16 @@ plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 
 #Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results)
+df_metrics.to_csv(os.path.join(dir_results,'data_fig1d.csv'))
 Plot_Performance(df_metrics,dir_results)
 
 subdir = 'Performance_Summary'
 if not os.path.exists(os.path.join(dir_results,subdir)):
     os.makedirs(os.path.join(dir_results,subdir))
 
-
+order = ['Global-Seq-Align','K-mer','Hamming','VAE-Seq','VAE-VDJ','VAE-Seq-VDJ']
 for m in np.unique(df_metrics['Metric']):
-    sns.catplot(data=df_metrics[df_metrics['Metric']==m],x='Algorithm',y='Value',kind='violin')
+    sns.catplot(data=df_metrics[df_metrics['Metric']==m],x='Algorithm',y='Value',kind='violin',order=order)
     plt.ylabel(m)
     plt.xticks(rotation=45)
     plt.xlabel('')

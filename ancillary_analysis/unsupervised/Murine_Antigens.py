@@ -56,9 +56,6 @@ with open('Murine_seqalign.pkl','rb') as f:
 distances_seqalign = distances_seqalign + distances_seqalign.T
 distances_seqalign = squareform(distances_seqalign)
 
-# distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene,distances_hamming,distances_kmer,distances_seqalign]
-# names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Hamming','K-mer','Global-Seq-Align']
-
 distances_list = [distances_seqalign,distances_kmer,distances_hamming, distances_vae_seq,distances_vae_gene,distances_vae_seq_gene]
 names = ['Global-Seq-Align', 'K-mer', 'Hamming', 'VAE-Seq', 'VAE-VDJ', 'VAE-Seq-VDJ']
 
@@ -107,6 +104,14 @@ for ii in range(len(names)):
     idx_2 = df_test['Algorithm'] == names[ii+1]
     t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
     print(p_val)
+
+from scipy.stats import ttest_rel
+df_test = df_metrics[df_metrics['Metric']==method]
+idx_1 = df_test['Algorithm'] == names[5]
+idx_2 = df_test['Algorithm'] == names[0]
+t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
+print(p_val)
+
 
 #Assess Length Dependency of various methods
 SRCC = []
