@@ -67,17 +67,17 @@ if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
 #Assess Clustering Quality of Various Methods
-# df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
-# df_cq.to_csv(os.path.join(dir_results,'data_fig1b.csv'))
-# fig,ax = plt.subplots()
-# sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=200,
-#                 hue='Algorithm',alpha=0.5,linewidth=.25,ax=ax)
-# plt.xlabel('Variance Ratio Criterion',fontsize=18)
-# plt.ylabel('Adjusted Mutual Information',fontsize=18)
-# plt.xticks(fontsize=12)
-# plt.yticks(fontsize=12)
-# plt.title('Clustering Quality',fontsize=22)
-# plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
+df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
+df_cq.to_csv(os.path.join(dir_results,'data_fig1b.csv'))
+fig,ax = plt.subplots()
+sns.scatterplot(data=df_cq,x='Variance Ratio Criteria',y='Adjusted Mutual Information',s=200,
+                hue='Algorithm',alpha=0.5,linewidth=.25,ax=ax)
+plt.xlabel('Variance Ratio Criterion',fontsize=18)
+plt.ylabel('Adjusted Mutual Information',fontsize=18)
+plt.xticks(fontsize=12)
+plt.yticks(fontsize=12)
+plt.title('Clustering Quality',fontsize=22)
+plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 
 #Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results)
