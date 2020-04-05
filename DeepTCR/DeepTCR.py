@@ -2879,7 +2879,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         df_out.to_csv(os.path.join(self.directory_results,'AUC.csv'),index=False)
         self.AUC_DF = df_out
 
-    def Representative_Sequences(self,top_seq=10,motif_seq=5,unique=False):
+    def Representative_Sequences(self,top_seq=10,motif_seq=5,unique=False,make_seq_logos=True):
         """
         Identify most highly predicted sequences for each class and corresponding motifs.
 
@@ -2892,6 +2892,9 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regression
         model are returned in the Rep_Seq Dict.
+
+        This method will also determine enriched motifs the network has learned and creates seq logos and fasta files
+        in the results folder.
 
         Inputs
         ---------------------------------------
@@ -2908,6 +2911,10 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             Otherwise, this method will return the magnitude of enriched motifs of one class vs all other classes.
             To learn more specific/uniquely defining motifs, set this parameter to True at the expense of returning less
             motifs.
+
+        make_seq_logos: bool
+            In order to make seq logos for visualization of enriched motifs, set this to True. Whether this is set to
+            True or not, the fast files that define enriched motifs will still be saved.
 
         Returns
 
@@ -2975,12 +2982,12 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             if self.use_alpha:
                 self.Req_Seq_Features_alpha = Motif_Features(self, self.alpha_features, self.alpha_indices,
                                                              self.alpha_sequences, self.directory_results,
-                                                             'alpha', self.kernel, unique, motif_seq)
+                                                             'alpha', self.kernel, unique, motif_seq,make_seq_logos)
 
             if self.use_beta:
                 self.Req_Seq_Features_beta = Motif_Features(self, self.beta_features, self.beta_indices,
                                                             self.beta_sequences, self.directory_results,
-                                                            'beta', self.kernel, unique, motif_seq)
+                                                            'beta', self.kernel, unique, motif_seq,make_seq_logos)
         else:
             df_temp['Predicted'] = self.predicted
             df_temp.sort_values(by='Predicted',ascending=False,inplace=True)

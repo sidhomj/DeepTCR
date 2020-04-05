@@ -15,6 +15,7 @@ import tensorflow as tf
 from multiprocessing import Pool
 from DeepTCR.functions.data_processing import *
 from sklearn.model_selection import train_test_split
+import logomaker
 
 def custom_train_test_split(X,Y,test_size,stratify):
     idx = np.array(range(len(X)))
@@ -268,7 +269,25 @@ def Diff_Features(features,indices,sequences,type,sample_id,p_val_threshold,
 
     return seq_features_df_pos
 
-def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,kernel,unique,motif_seq):
+def Get_Logo_df(motifs_logo,kernel):
+    df_motifs = pd.DataFrame(motifs_logo)
+    df_motifs = df_motifs[0].apply(lambda x: pd.Series(list(x)))
+    cols = np.unique(df_motifs)
+    df_out = pd.DataFrame()
+    df_out['pos'] = list(range(kernel))
+    for c in cols:
+        df_out[c] = None
+    df_out.set_index('pos', inplace=True)
+    for i in range(kernel):
+        temp = df_motifs[i].value_counts()
+        for k in np.array(temp.index):
+            df_out.loc[i, k] = temp[k] / np.sum(temp)
+    df_out.fillna(value=0.0, inplace=True)
+    if 'X' in cols:
+        df_out.drop(columns=['X'], inplace=True)
+    return df_out
+
+def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,kernel,unique,motif_seq,make_seq_logos=True):
     features = MinMaxScaler().fit_transform(features)
     DFs = []
     seq_list = []
@@ -317,10 +336,12 @@ def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,ker
             ind_sel = ind_sel[sel_ind[:motif_seq]]
 
             motifs = []
+            motifs_logo = []
             for ii, i in enumerate(ind_sel, 0):
                 motif = seq_sel[ii][int(i):int(i) + kernel]
                 if len(motif) < kernel:
                     motif = motif + 'X' * (kernel - len(motif))
+                motifs_logo.append(motif)
                 motif = motif.lower()
                 motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
                 motifs.append(motif)
@@ -329,22 +350,15 @@ def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,ker
             SeqIO.write(motifs, os.path.join(directory_results, 'Motifs', sub_dir,c, mag_write+'_feature_' + str(ft) + '.fasta'),
                         'fasta')
 
-    #
-    # for jj,ft in enumerate(features.T,0):
-    #     sel_ind = np.flip(np.argsort(ft), -1)
-    #     seq_sel = sequences[sel_ind[:top_seq]]
-    #     ind_sel = indices[sel_ind[:top_seq],jj]
-    #
-    #     motifs = []
-    #     for ii, i in enumerate(ind_sel, 0):
-    #         motif = seq_sel[ii][int(i):int(i) + kernel]
-    #         if len(motif) < kernel:
-    #             motif = motif + 'X' * (kernel - len(motif))
-    #         motif = motif.lower()
-    #         motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
-    #         motifs.append(motif)
-    #
-    #     SeqIO.write(motifs, os.path.join(directory_results,'Motifs',sub_dir,'feature_'+ str(jj) +'.fasta'), 'fasta')
+            if make_seq_logos:
+                df_out = Get_Logo_df(motifs_logo,kernel)
+                if df_out.shape[1] >=1:
+                    ax = logomaker.Logo(df_out,color_scheme='weblogo_protein')
+                    ax.style_spines(spines=['top', 'right','left','bottom'], visible=False)
+                    ax.ax.set_xticks([])
+                    ax.ax.set_yticks([])
+                    ax.fig.savefig(os.path.join(directory_results, 'Motifs', sub_dir,c, mag_write+'_feature_' + str(ft) + '.eps'))
+                    plt.close()
 
     return Rep_Seq_Features
 
