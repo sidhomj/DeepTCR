@@ -3272,7 +3272,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
             print('Done Training')
             # save model data and information for inference engine
-            save_model_data(self, GO.saver, sess, name='SS', get=GO.predicted)
+            save_model_data(self, GO.saver, sess, name='SS', get=GO.predicted,iteration=iteration)
 
     def Train(self,kernel = 5,trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
                num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
