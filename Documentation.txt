@@ -41,7 +41,7 @@ CLASSES
         vis_class
     
     class DeepTCR_SS(DeepTCR_S_base)
-     |  DeepTCR_SS(Name, max_length=40, device='/device:GPU:0')
+     |  DeepTCR_SS(Name, max_length=40, device=0)
      |  
      |  Method resolution order:
      |      DeepTCR_SS
@@ -562,7 +562,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Representative_Sequences(self, top_seq=10, motif_seq=5, unique=False)
+     |  Representative_Sequences(self, top_seq=10, motif_seq=5, make_seq_logos=True, color_scheme='weblogo_protein', logo_file_format='.eps')
      |      Identify most highly predicted sequences for each class and corresponding motifs.
      |      
      |      This method allows the user to query which sequences were most predicted to belong to a given class along
@@ -575,6 +575,12 @@ CLASSES
      |      In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regression
      |      model are returned in the Rep_Seq Dict.
      |      
+     |      This method will also determine motifs the network has learned that are highly associated with the label through
+     |      multi-nomial linear regression and creates seq logos and fasta files in the results folder. Within a folder
+     |      for a given class, the motifs are sorted by their linear coefficient. The coefficient is in the file name
+     |      (i.e. 0_0.125_feature_2.eps reflects the the 0th highest feature with a coefficient of 0.125.
+     |      
+     |      
      |      Inputs
      |      ---------------------------------------
      |      
@@ -585,11 +591,24 @@ CLASSES
      |          The number of sequences to use to generate each motif. The more sequences, the possibly more noisy
      |          the seq_logo will be.
      |      
-     |      unique: bool
-     |          To only select for uniquely enriched motifs for a given class, set this parameter to True.
-     |          Otherwise, this method will return the magnitude of enriched motifs of one class vs all other classes.
-     |          To learn more specific/uniquely defining motifs, set this parameter to True at the expense of returning less
-     |          motifs.
+     |      make_seq_logos: bool
+     |          In order to make seq logos for visualization of enriched motifs, set this to True. Whether this is set to
+     |          True or not, the fast files that define enriched motifs will still be saved.
+     |      
+     |      color_scheme: str
+     |          color scheme to use for LogoMaker.
+     |          options are:
+     |              weblogo_protein
+     |              skylign_protein
+     |              dmslogo_charge
+     |              dmslogo_funcgroup
+     |              hydrophobicity
+     |              chemistry
+     |              charge
+     |              NajafabadiEtAl2017
+     |      
+     |      logo_file_format: str
+     |          The type of image file one wants to save the seqlogo as. Default is vector-based format (.eps)
      |      
      |      Returns
      |      
@@ -597,14 +616,17 @@ CLASSES
      |          This dictionary of dataframes holds for each class the top sequences and their respective
      |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
      |      
-     |      self.Rep_Seq_Features_(alpha/beta): dictionary of dataframes
-     |          This dictionary of dataframes holds information for which features were uniquely enriched
-     |          for each class.
+     |      self.Rep_Seq_Features_(alpha/beta): dataframe
+     |          This dataframe holds information for which features were associated by a multinomial linear model
+     |          to the predicted probabilities of the neural network. The values in this dataframe are the linear model
+     |          coefficients. This allows one to see which features were associated with the output of the trained
+     |          neural network. These are also the same values that are on the motif seqlogo files in the results folder.
      |      
      |      Furthermore, the motifs are written in the results directory underneath the Motifs folder. To find the beta
-     |      motifs for a given class, look under Motifs/beta/class_name/. These fasta files are labeled by the magnitude
-     |      enrichment of that given feature for that given class followed by the number name of the feature. These fasta files
-     |      can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi"
+     |      motifs for a given class, look under Motifs/beta/class_name/. These fasta/logo files are labeled by the linear
+     |      coefficient of that given feature for that given class followed by the number name of the feature. These fasta files
+     |      can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi" or are present
+     |      in the folder for direct visualization.
      |      
      |      ---------------------------------------
      |  
@@ -926,7 +948,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  __init__(self, Name, max_length=40, device='/device:GPU:0')
+     |  __init__(self, Name, max_length=40, device=0)
      |      Initialize Training Object.
      |      
      |      Initializes object and sets initial parameters.
@@ -939,9 +961,11 @@ CLASSES
      |      max_length: int
      |          maximum length of CDR3 sequence
      |      
-     |      device: str
+     |      device: int
      |          In the case user is using tensorflow-gpu, one can
      |          specify the particular device to build the graphs on.
+     |          This selects which GPU the user wants to put the graph
+     |          and train on.
      |      
      |      Returns
      |      ---------------------------------------
@@ -1349,7 +1373,7 @@ CLASSES
      |      ---------------------------------------
     
     class DeepTCR_S_base(DeepTCR_base, feature_analytics_class, vis_class)
-     |  DeepTCR_S_base(Name, max_length=40, device='/device:GPU:0')
+     |  DeepTCR_S_base(Name, max_length=40, device=0)
      |  
      |  Method resolution order:
      |      DeepTCR_S_base
@@ -1388,7 +1412,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Representative_Sequences(self, top_seq=10, motif_seq=5, unique=False)
+     |  Representative_Sequences(self, top_seq=10, motif_seq=5, make_seq_logos=True, color_scheme='weblogo_protein', logo_file_format='.eps')
      |      Identify most highly predicted sequences for each class and corresponding motifs.
      |      
      |      This method allows the user to query which sequences were most predicted to belong to a given class along
@@ -1401,6 +1425,12 @@ CLASSES
      |      In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regression
      |      model are returned in the Rep_Seq Dict.
      |      
+     |      This method will also determine motifs the network has learned that are highly associated with the label through
+     |      multi-nomial linear regression and creates seq logos and fasta files in the results folder. Within a folder
+     |      for a given class, the motifs are sorted by their linear coefficient. The coefficient is in the file name
+     |      (i.e. 0_0.125_feature_2.eps reflects the the 0th highest feature with a coefficient of 0.125.
+     |      
+     |      
      |      Inputs
      |      ---------------------------------------
      |      
@@ -1411,11 +1441,24 @@ CLASSES
      |          The number of sequences to use to generate each motif. The more sequences, the possibly more noisy
      |          the seq_logo will be.
      |      
-     |      unique: bool
-     |          To only select for uniquely enriched motifs for a given class, set this parameter to True.
-     |          Otherwise, this method will return the magnitude of enriched motifs of one class vs all other classes.
-     |          To learn more specific/uniquely defining motifs, set this parameter to True at the expense of returning less
-     |          motifs.
+     |      make_seq_logos: bool
+     |          In order to make seq logos for visualization of enriched motifs, set this to True. Whether this is set to
+     |          True or not, the fast files that define enriched motifs will still be saved.
+     |      
+     |      color_scheme: str
+     |          color scheme to use for LogoMaker.
+     |          options are:
+     |              weblogo_protein
+     |              skylign_protein
+     |              dmslogo_charge
+     |              dmslogo_funcgroup
+     |              hydrophobicity
+     |              chemistry
+     |              charge
+     |              NajafabadiEtAl2017
+     |      
+     |      logo_file_format: str
+     |          The type of image file one wants to save the seqlogo as. Default is vector-based format (.eps)
      |      
      |      Returns
      |      
@@ -1423,14 +1466,17 @@ CLASSES
      |          This dictionary of dataframes holds for each class the top sequences and their respective
      |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
      |      
-     |      self.Rep_Seq_Features_(alpha/beta): dictionary of dataframes
-     |          This dictionary of dataframes holds information for which features were uniquely enriched
-     |          for each class.
+     |      self.Rep_Seq_Features_(alpha/beta): dataframe
+     |          This dataframe holds information for which features were associated by a multinomial linear model
+     |          to the predicted probabilities of the neural network. The values in this dataframe are the linear model
+     |          coefficients. This allows one to see which features were associated with the output of the trained
+     |          neural network. These are also the same values that are on the motif seqlogo files in the results folder.
      |      
      |      Furthermore, the motifs are written in the results directory underneath the Motifs folder. To find the beta
-     |      motifs for a given class, look under Motifs/beta/class_name/. These fasta files are labeled by the magnitude
-     |      enrichment of that given feature for that given class followed by the number name of the feature. These fasta files
-     |      can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi"
+     |      motifs for a given class, look under Motifs/beta/class_name/. These fasta/logo files are labeled by the linear
+     |      coefficient of that given feature for that given class followed by the number name of the feature. These fasta files
+     |      can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi" or are present
+     |      in the folder for direct visualization.
      |      
      |      ---------------------------------------
      |  
@@ -1752,7 +1798,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  __init__(self, Name, max_length=40, device='/device:GPU:0')
+     |  __init__(self, Name, max_length=40, device=0)
      |      Initialize Training Object.
      |      
      |      Initializes object and sets initial parameters.
@@ -1765,9 +1811,11 @@ CLASSES
      |      max_length: int
      |          maximum length of CDR3 sequence
      |      
-     |      device: str
+     |      device: int
      |          In the case user is using tensorflow-gpu, one can
      |          specify the particular device to build the graphs on.
+     |          This selects which GPU the user wants to put the graph
+     |          and train on.
      |      
      |      Returns
      |      ---------------------------------------
@@ -2175,7 +2223,7 @@ CLASSES
      |      ---------------------------------------
     
     class DeepTCR_U(DeepTCR_base, feature_analytics_class, vis_class)
-     |  DeepTCR_U(Name, max_length=40, device='/device:GPU:0')
+     |  DeepTCR_U(Name, max_length=40, device=0)
      |  
      |  Method resolution order:
      |      DeepTCR_U
@@ -2718,7 +2766,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  __init__(self, Name, max_length=40, device='/device:GPU:0')
+     |  __init__(self, Name, max_length=40, device=0)
      |      Initialize Training Object.
      |      
      |      Initializes object and sets initial parameters.
@@ -2731,9 +2779,11 @@ CLASSES
      |      max_length: int
      |          maximum length of CDR3 sequence
      |      
-     |      device: str
+     |      device: int
      |          In the case user is using tensorflow-gpu, one can
      |          specify the particular device to build the graphs on.
+     |          This selects which GPU the user wants to put the graph
+     |          and train on.
      |      
      |      Returns
      |      ---------------------------------------
@@ -3141,7 +3191,7 @@ CLASSES
      |      ---------------------------------------
     
     class DeepTCR_WF(DeepTCR_S_base)
-     |  DeepTCR_WF(Name, max_length=40, device='/device:GPU:0')
+     |  DeepTCR_WF(Name, max_length=40, device=0)
      |  
      |  Method resolution order:
      |      DeepTCR_WF
@@ -3867,7 +3917,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Representative_Sequences(self, top_seq=10, motif_seq=5, unique=False)
+     |  Representative_Sequences(self, top_seq=10, motif_seq=5, make_seq_logos=True, color_scheme='weblogo_protein', logo_file_format='.eps')
      |      Identify most highly predicted sequences for each class and corresponding motifs.
      |      
      |      This method allows the user to query which sequences were most predicted to belong to a given class along
@@ -3880,6 +3930,12 @@ CLASSES
      |      In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regression
      |      model are returned in the Rep_Seq Dict.
      |      
+     |      This method will also determine motifs the network has learned that are highly associated with the label through
+     |      multi-nomial linear regression and creates seq logos and fasta files in the results folder. Within a folder
+     |      for a given class, the motifs are sorted by their linear coefficient. The coefficient is in the file name
+     |      (i.e. 0_0.125_feature_2.eps reflects the the 0th highest feature with a coefficient of 0.125.
+     |      
+     |      
      |      Inputs
      |      ---------------------------------------
      |      
@@ -3890,11 +3946,24 @@ CLASSES
      |          The number of sequences to use to generate each motif. The more sequences, the possibly more noisy
      |          the seq_logo will be.
      |      
-     |      unique: bool
-     |          To only select for uniquely enriched motifs for a given class, set this parameter to True.
-     |          Otherwise, this method will return the magnitude of enriched motifs of one class vs all other classes.
-     |          To learn more specific/uniquely defining motifs, set this parameter to True at the expense of returning less
-     |          motifs.
+     |      make_seq_logos: bool
+     |          In order to make seq logos for visualization of enriched motifs, set this to True. Whether this is set to
+     |          True or not, the fast files that define enriched motifs will still be saved.
+     |      
+     |      color_scheme: str
+     |          color scheme to use for LogoMaker.
+     |          options are:
+     |              weblogo_protein
+     |              skylign_protein
+     |              dmslogo_charge
+     |              dmslogo_funcgroup
+     |              hydrophobicity
+     |              chemistry
+     |              charge
+     |              NajafabadiEtAl2017
+     |      
+     |      logo_file_format: str
+     |          The type of image file one wants to save the seqlogo as. Default is vector-based format (.eps)
      |      
      |      Returns
      |      
@@ -3902,14 +3971,17 @@ CLASSES
      |          This dictionary of dataframes holds for each class the top sequences and their respective
      |          probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
      |      
-     |      self.Rep_Seq_Features_(alpha/beta): dictionary of dataframes
-     |          This dictionary of dataframes holds information for which features were uniquely enriched
-     |          for each class.
+     |      self.Rep_Seq_Features_(alpha/beta): dataframe
+     |          This dataframe holds information for which features were associated by a multinomial linear model
+     |          to the predicted probabilities of the neural network. The values in this dataframe are the linear model
+     |          coefficients. This allows one to see which features were associated with the output of the trained
+     |          neural network. These are also the same values that are on the motif seqlogo files in the results folder.
      |      
      |      Furthermore, the motifs are written in the results directory underneath the Motifs folder. To find the beta
-     |      motifs for a given class, look under Motifs/beta/class_name/. These fasta files are labeled by the magnitude
-     |      enrichment of that given feature for that given class followed by the number name of the feature. These fasta files
-     |      can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi"
+     |      motifs for a given class, look under Motifs/beta/class_name/. These fasta/logo files are labeled by the linear
+     |      coefficient of that given feature for that given class followed by the number name of the feature. These fasta files
+     |      can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi" or are present
+     |      in the folder for direct visualization.
      |      
      |      ---------------------------------------
      |  
@@ -4231,7 +4303,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  __init__(self, Name, max_length=40, device='/device:GPU:0')
+     |  __init__(self, Name, max_length=40, device=0)
      |      Initialize Training Object.
      |      
      |      Initializes object and sets initial parameters.
@@ -4244,9 +4316,11 @@ CLASSES
      |      max_length: int
      |          maximum length of CDR3 sequence
      |      
-     |      device: str
+     |      device: int
      |          In the case user is using tensorflow-gpu, one can
      |          specify the particular device to build the graphs on.
+     |          This selects which GPU the user wants to put the graph
+     |          and train on.
      |      
      |      Returns
      |      ---------------------------------------
@@ -4654,7 +4728,7 @@ CLASSES
      |      ---------------------------------------
     
     class DeepTCR_base(builtins.object)
-     |  DeepTCR_base(Name, max_length=40, device='/device:GPU:0')
+     |  DeepTCR_base(Name, max_length=40, device=0)
      |  
      |  Methods defined here:
      |  
@@ -4973,7 +5047,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  __init__(self, Name, max_length=40, device='/device:GPU:0')
+     |  __init__(self, Name, max_length=40, device=0)
      |      Initialize Training Object.
      |      
      |      Initializes object and sets initial parameters.
@@ -4986,9 +5060,11 @@ CLASSES
      |      max_length: int
      |          maximum length of CDR3 sequence
      |      
-     |      device: str
+     |      device: int
      |          In the case user is using tensorflow-gpu, one can
      |          specify the particular device to build the graphs on.
+     |          This selects which GPU the user wants to put the graph
+     |          and train on.
      |      
      |      Returns
      |      ---------------------------------------
