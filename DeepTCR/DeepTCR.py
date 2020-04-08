@@ -26,7 +26,7 @@ from scipy.stats import spearmanr,gaussian_kde
 
 class DeepTCR_base(object):
 
-    def __init__(self,Name,max_length=40,device='/device:GPU:0'):
+    def __init__(self,Name,max_length=40,device=0):
         """
         Initialize Training Object.
 
@@ -40,9 +40,11 @@ class DeepTCR_base(object):
         max_length: int
             maximum length of CDR3 sequence
 
-        device: str
+        device: int
             In the case user is using tensorflow-gpu, one can
             specify the particular device to build the graphs on.
+            This selects which GPU the user wants to put the graph
+            and train on.
 
         Returns
         ---------------------------------------
@@ -54,7 +56,7 @@ class DeepTCR_base(object):
         self.max_length = max_length
         self.use_beta = False
         self.use_alpha = False
-        self.device = device
+        self.device = '/device:GPU:'+str(device)
         self.use_v_beta = False
         self.use_d_beta = False
         self.use_j_beta = False
@@ -2879,7 +2881,8 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         df_out.to_csv(os.path.join(self.directory_results,'AUC.csv'),index=False)
         self.AUC_DF = df_out
 
-    def Representative_Sequences(self,top_seq=10,motif_seq=5,unique=False,make_seq_logos=True):
+    def Representative_Sequences(self,top_seq=10,motif_seq=5,make_seq_logos=True,
+                                 color_scheme='weblogo_protein',logo_file_format='.eps'):
         """
         Identify most highly predicted sequences for each class and corresponding motifs.
 
@@ -2893,8 +2896,11 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regression
         model are returned in the Rep_Seq Dict.
 
-        This method will also determine enriched motifs the network has learned and creates seq logos and fasta files
-        in the results folder.
+        This method will also determine motifs the network has learned that are highly associated with the label through
+        multi-nomial linear regression and creates seq logos and fasta files in the results folder. Within a folder
+        for a given class, the motifs are sorted by their linear coefficient. The coefficient is in the file name
+        (i.e. 0_0.125_feature_2.eps reflects the the 0th highest feature with a coefficient of 0.125.
+
 
         Inputs
         ---------------------------------------
@@ -2906,15 +2912,24 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             The number of sequences to use to generate each motif. The more sequences, the possibly more noisy
             the seq_logo will be.
 
-        unique: bool
-            To only select for uniquely enriched motifs for a given class, set this parameter to True.
-            Otherwise, this method will return the magnitude of enriched motifs of one class vs all other classes.
-            To learn more specific/uniquely defining motifs, set this parameter to True at the expense of returning less
-            motifs.
-
         make_seq_logos: bool
             In order to make seq logos for visualization of enriched motifs, set this to True. Whether this is set to
             True or not, the fast files that define enriched motifs will still be saved.
+
+        color_scheme: str
+            color scheme to use for LogoMaker.
+            options are:
+                weblogo_protein
+                skylign_protein
+                dmslogo_charge
+                dmslogo_funcgroup
+                hydrophobicity
+                chemistry
+                charge
+                NajafabadiEtAl2017
+
+        logo_file_format: str
+            The type of image file one wants to save the seqlogo as. Default is vector-based format (.eps)
 
         Returns
 
@@ -2922,14 +2937,17 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             This dictionary of dataframes holds for each class the top sequences and their respective
             probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
 
-        self.Rep_Seq_Features_(alpha/beta): dictionary of dataframes
-            This dictionary of dataframes holds information for which features were uniquely enriched
-            for each class.
+        self.Rep_Seq_Features_(alpha/beta): dataframe
+            This dataframe holds information for which features were associated by a multinomial linear model
+            to the predicted probabilities of the neural network. The values in this dataframe are the linear model
+            coefficients. This allows one to see which features were associated with the output of the trained
+            neural network. These are also the same values that are on the motif seqlogo files in the results folder.
 
         Furthermore, the motifs are written in the results directory underneath the Motifs folder. To find the beta
-        motifs for a given class, look under Motifs/beta/class_name/. These fasta files are labeled by the magnitude
-        enrichment of that given feature for that given class followed by the number name of the feature. These fasta files
-        can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi"
+        motifs for a given class, look under Motifs/beta/class_name/. These fasta/logo files are labeled by the linear
+        coefficient of that given feature for that given class followed by the number name of the feature. These fasta files
+        can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi" or are present
+        in the folder for direct visualization.
 
         ---------------------------------------
 
@@ -2937,8 +2955,9 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         """
         dir = 'Rep_Sequences'
         dir = os.path.join(self.directory_results, dir)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
+        os.makedirs(dir)
 
         file_list = [f for f in os.listdir(dir)]
         [os.remove(os.path.join(dir, f)) for f in file_list]
@@ -2982,12 +3001,14 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             if self.use_alpha:
                 self.Req_Seq_Features_alpha = Motif_Features(self, self.alpha_features, self.alpha_indices,
                                                              self.alpha_sequences, self.directory_results,
-                                                             'alpha', self.kernel, unique, motif_seq,make_seq_logos)
+                                                             'alpha', self.kernel, motif_seq,make_seq_logos,
+                                                                 color_scheme,logo_file_format)
 
             if self.use_beta:
                 self.Req_Seq_Features_beta = Motif_Features(self, self.beta_features, self.beta_indices,
                                                             self.beta_sequences, self.directory_results,
-                                                            'beta', self.kernel, unique, motif_seq,make_seq_logos)
+                                                            'beta', self.kernel, motif_seq,make_seq_logos,
+                                                                color_scheme,logo_file_format)
         else:
             df_temp['Predicted'] = self.predicted
             df_temp.sort_values(by='Predicted',ascending=False,inplace=True)
@@ -2997,8 +3018,22 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             labels = ['High','Low']
             Rep_Seq.append(df_sample_top)
             Rep_Seq.append(df_sample_bottom)
+            df_sample_top.to_csv(os.path.join(dir,'high.csv'),index=False)
+            df_sample_bottom.to_csv(os.path.join(dir,'low.csv'),index=False)
 
             self.Rep_Seq = dict(zip(labels,Rep_Seq))
+
+            if self.use_alpha:
+                self.Req_Seq_Features_alpha = Motif_Features_Reg(self, self.alpha_features, self.alpha_indices,
+                                                             self.alpha_sequences, self.directory_results,
+                                                             'alpha', self.kernel, motif_seq,make_seq_logos,
+                                                                 color_scheme,logo_file_format)
+
+            if self.use_beta:
+                self.Req_Seq_Features_beta = Motif_Features_Reg(self, self.beta_features, self.beta_indices,
+                                                            self.beta_sequences, self.directory_results,
+                                                            'beta', self.kernel, motif_seq,make_seq_logos,
+                                                                color_scheme,logo_file_format)
 
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,split_by_sample=False):

@@ -5,7 +5,7 @@ import pandas as pd
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
-from scipy.stats import mannwhitneyu
+from scipy.stats import mannwhitneyu, spearmanr
 import os
 from Bio.Alphabet import IUPAC
 import seaborn as sns
@@ -16,6 +16,8 @@ from multiprocessing import Pool
 from DeepTCR.functions.data_processing import *
 from sklearn.model_selection import train_test_split
 import logomaker
+import shutil
+from sklearn.linear_model import LinearRegression
 
 def custom_train_test_split(X,Y,test_size,stratify):
     idx = np.array(range(len(X)))
@@ -287,7 +289,136 @@ def Get_Logo_df(motifs_logo,kernel):
         df_out.drop(columns=['X'], inplace=True)
     return df_out
 
-def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,kernel,unique,motif_seq,make_seq_logos=True):
+
+def Motif_Features(self,features,indices,sequences,directory_results,sub_dir,kernel,
+                       motif_seq,make_seq_logos=True,color_scheme='weblogo_protein',
+                       logo_file_format='.eps'):
+    dir = os.path.join(directory_results,'Motifs',sub_dir)
+    if os.path.exists(dir):
+        shutil.rmtree(dir)
+    os.makedirs(dir)
+    keep_idx = np.sum(self.predicted,-1)!=0
+    predicted = self.predicted[keep_idx]
+    features = features[keep_idx]
+    indices = indices[keep_idx]
+    sequences = sequences[keep_idx]
+    Y = self.Y[keep_idx]
+
+    # corr = np.zeros([features.shape[1],self.predicted.shape[1]])
+    # for ii,f in enumerate(features.T,0):
+    #     for jj,p in enumerate(self.predicted.T,0):
+    #         corr[ii,jj],_ = spearmanr(f,p)
+
+    corr = np.zeros([features.shape[1],predicted.shape[1]])
+    LR = LinearRegression()
+    for jj, p in enumerate(predicted.T, 0):
+        LR.fit(features,p)
+        corr[:,jj] = LR.coef_
+
+    for zz,c in enumerate(self.lb.classes_,0):
+        dir = os.path.join(directory_results,'Motifs',sub_dir,c)
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
+        os.makedirs(dir)
+        corr_temp = corr[:,zz]
+        idx = np.flip(np.argsort(corr_temp))
+        for jj,ft in enumerate(idx,0):
+            idx_sort = np.flip(np.argsort(predicted[:,zz]))
+            ind_sort = indices[idx_sort,ft]
+            seq_sort = sequences[idx_sort]
+            label_sort = Y[idx_sort,zz]
+            ind_sort = ind_sort[label_sort==1]
+            seq_sort = seq_sort[label_sort==1]
+            motifs = []
+            motifs_logo = []
+            for ii,(s,i) in enumerate(zip(seq_sort,ind_sort),0):
+                motif = s[int(i):int(i)+kernel]
+                if len(motif) < kernel:
+                    motif = motif + 'X' * (kernel - len(motif))
+                motifs_logo.append(motif)
+                motif = motif.lower()
+                motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
+                motifs.append(motif)
+                if ii > motif_seq-2:
+                    break
+
+            mag_write = str(np.around(corr[ft,zz], 3))
+            SeqIO.write(motifs, os.path.join(directory_results, 'Motifs', sub_dir, c,
+                                             str(jj)+'_'+mag_write + '_feature_' + str(ft) + '.fasta'),'fasta')
+
+            if make_seq_logos:
+                plt.ioff()
+                df_out = Get_Logo_df(motifs_logo, kernel)
+                if df_out.shape[1] >= 1:
+                    ax = logomaker.Logo(df_out, color_scheme=color_scheme)
+                    ax.style_spines(spines=['top', 'right', 'left', 'bottom'], visible=False)
+                    ax.ax.set_xticks([])
+                    ax.ax.set_yticks([])
+                    ax.fig.savefig(os.path.join(directory_results, 'Motifs', sub_dir, c,
+                                                str(jj)+'_'+mag_write + '_feature_' + str(ft) + logo_file_format))
+                    plt.close()
+    out = pd.DataFrame(corr)
+    out.columns = self.lb.classes_
+    return out
+
+def Motif_Features_Reg(self,features,indices,sequences,directory_results,sub_dir,kernel,
+                       motif_seq,make_seq_logos=True,color_scheme='weblogo_protein',
+                       logo_file_format='.eps'):
+    dir = os.path.join(directory_results,'Motifs',sub_dir)
+    if os.path.exists(dir):
+        shutil.rmtree(dir)
+    os.makedirs(dir)
+    keep_idx = np.sum(self.predicted,-1)!=0
+    predicted = self.predicted[keep_idx]
+    features = features[keep_idx]
+    indices = indices[keep_idx]
+    sequences = sequences[keep_idx]
+
+    corr = np.zeros([features.shape[1],predicted.shape[1]])
+    LR = LinearRegression()
+    for jj, p in enumerate(predicted.T, 0):
+        LR.fit(features,p)
+        corr[:,jj] = LR.coef_
+
+    zz = 0
+    corr_temp = corr[:, zz]
+    idx = np.flip(np.argsort(corr_temp))
+    for jj, ft in enumerate(idx, 0):
+        idx_sort = np.flip(np.argsort(predicted[:, zz]))
+        ind_sort = indices[idx_sort, ft]
+        seq_sort = sequences[idx_sort]
+        motifs = []
+        motifs_logo = []
+        for ii, (s, i) in enumerate(zip(seq_sort, ind_sort), 0):
+            motif = s[int(i):int(i) + kernel]
+            if len(motif) < kernel:
+                motif = motif + 'X' * (kernel - len(motif))
+            motifs_logo.append(motif)
+            motif = motif.lower()
+            motif = SeqRecord(Seq(motif, IUPAC.protein), str(ii))
+            motifs.append(motif)
+            if ii > motif_seq - 2:
+                break
+
+        mag_write = str(np.around(corr[ft, zz], 3))
+        SeqIO.write(motifs, os.path.join(directory_results, 'Motifs', sub_dir,
+                                         str(jj) + '_' + mag_write + '_feature_' + str(ft) + '.fasta'), 'fasta')
+
+        if make_seq_logos:
+            plt.ioff()
+            df_out = Get_Logo_df(motifs_logo, kernel)
+            if df_out.shape[1] >= 1:
+                ax = logomaker.Logo(df_out, color_scheme=color_scheme)
+                ax.style_spines(spines=['top', 'right', 'left', 'bottom'], visible=False)
+                ax.ax.set_xticks([])
+                ax.ax.set_yticks([])
+                ax.fig.savefig(os.path.join(directory_results, 'Motifs', sub_dir,
+                                            str(jj) + '_' + mag_write + '_feature_' + str(ft) + logo_file_format))
+                plt.close()
+
+    return pd.DataFrame(corr)
+
+def Motif_Features_dep(self,features,indices,sequences,directory_results,sub_dir,kernel,unique,motif_seq,make_seq_logos=True):
     features = MinMaxScaler().fit_transform(features)
     DFs = []
     seq_list = []

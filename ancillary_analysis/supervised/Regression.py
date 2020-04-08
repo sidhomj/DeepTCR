@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 
 df = pd.read_csv('../../Data/10x_Data/Data_Regression.csv')
-DTCRS = DeepTCR_SS('reg',device='/gpu:2')
+DTCRS = DeepTCR_SS('reg',device=2)
 p = Pool(40)
 
 #Get alpha/beta sequences

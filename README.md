@@ -94,6 +94,8 @@ compact latent space even if the initial latent_dim is unnecessarily high to mod
 - Supervised models now have an additional option to use Multi-Sample Dropout to improve training and generalization.
 - Incorporation of LogoMaker so now when Representative Sequences are generated along with enriched motifs,
 seq logos are made and saved directly in the results folder under Motifs.
+- Improved Motif Identification algorithm behind supervised method Representative_Sequences that uses a multinomial
+linear model to identify which motifs are associated to predicted probabilites from neural network.
 
 
 
