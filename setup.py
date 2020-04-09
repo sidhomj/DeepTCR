@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys
 import os
-from subprocess import check_output, CalledProcessError
+from subprocess import check_output
 
 if sys.version_info.major != 3:
     raise RuntimeError("DeepTCR requires Python 3")
