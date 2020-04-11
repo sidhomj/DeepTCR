@@ -2807,7 +2807,10 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 sns.catplot(data=df_out, x='Metric', y='Value', kind=plot_type)
 
 class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
-    def AUC_Curve(self,by=None,filename='AUC.tif',title=None,plot=True):
+    def AUC_Curve(self,by=None,filename='AUC.tif',title=None,plot=True,diag_line=True,
+                  xtick_size = None, ytick_size=None, xlabel_size = None, ylabel_size=None,
+                  legend_font_size=None,frameon=True,legend_loc = 'lower right',
+                  figsize=None):
         """
         AUC Curve for both Sequence and Repertoire/Sample Classifiers
 
@@ -2826,6 +2829,31 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         plot: bool
             To suppress plotting and just save the data/figure, set to False.
 
+        diag_line: bool
+            To plot the line/diagonal of y=x defining no predictive power, set to True.
+            To remove from plot, set to False.
+
+        xtick_size: float
+            Size of xticks
+
+        ytick_size: float
+            Size of yticks
+
+        xlabel_size: float
+            Size of xlabel
+
+        ylabel_size: float
+            Size of ylabel
+
+        legend_font_size: float
+            Size of legend
+
+        frameon: bool
+            Whether to show frame around legend.
+
+        figsize: tuple
+            To change the default size of the figure, set this to size of figure (i.e. - (10,10) )
+
         Returns
 
         self.AUC_DF: Pandas Dataframe
@@ -2841,8 +2869,15 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         y_pred = self.y_pred
         auc_scores = []
         classes = []
-        plt.figure()
-        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+        if plot is False:
+            plt.ioff()
+        if figsize is not None:
+            fig, ax = plt.subplots(figsize=figsize)
+        else:
+            plt.figure()
+
+        if diag_line:
+            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
         plt.xlabel('False Positive Rate')
@@ -2864,11 +2899,28 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             fpr, tpr, _ = roc_curve(y_test[:, ii], y_pred[:, ii])
             plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score))
 
-        plt.legend(loc="lower right")
+        plt.legend(loc=legend_loc,frameon=frameon)
+        if legend_font_size is not None:
+            plt.legend(prop={'size': legend_font_size},loc=legend_loc,frameon=frameon)
 
         if title is not None:
             plt.title(title)
 
+        ax = plt.gca()
+
+        if xlabel_size is not None:
+            ax.xaxis.label.set_size(xlabel_size)
+
+        if ylabel_size is not None:
+            ax.yaxis.label.set_size(ylabel_size)
+
+        if xtick_size is not None:
+            plt.xticks(fontsize=xtick_size)
+
+        if ytick_size is not None:
+            plt.yticks(fontsize=ytick_size)
+
+        plt.tight_layout()
         plt.savefig(os.path.join(self.directory_results,filename))
         if plot is True:
             plt.show(block=False)
@@ -3925,7 +3977,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         print('K-fold Cross Validation Completed')
 
-    def SRCC(self,s=10,kde=False):
+    def SRCC(self,s=10,kde=False,title=None):
         """
         Spearman's Rank Correlation Coefficient Plot
 
@@ -3942,28 +3994,35 @@ class DeepTCR_SS(DeepTCR_S_base):
             To do a kernel density estimation per point and plot this as a color-scheme,
             set to True. Warning: this option will take longer to run.
 
+        title: str
+            Title for the plot.
+
         Returns
         ---------------------------------------
         corr: float
             Spearman's Rank Correlation Coefficient
+
+        ax: matplotlib axis
+            axis on which plot is drawn
         """
         x,y = np.squeeze(self.y_pred,-1), np.squeeze(self.y_test,-1)
         corr, _ = spearmanr(x,y)
 
-        plt.figure()
+        fig,ax = plt.subplots()
         if kde:
             xy = np.vstack([x, y])
             z = gaussian_kde(xy)(xy)
             r = np.argsort(z)
             x, y, z = x[r], y[r], z[r]
-            plt.scatter(x, y, s=s, c=z, cmap=plt.cm.jet)
+            ax.scatter(x, y, s=s, c=z, cmap=plt.cm.jet)
         else:
-            plt.scatter(x,y,s=s)
+            ax.scatter(x,y,s=s)
 
-        plt.xlabel('Predicted')
-        plt.ylabel('Actual')
-        plt.title('SRCC Plot')
-        return corr
+        ax.set_xlabel('Predicted')
+        ax.set_ylabel('Actual')
+        if title is not None:
+            plt.title(title)
+        return corr, ax
 
 class DeepTCR_WF(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,combine_train_valid=False,random_perm=False):
