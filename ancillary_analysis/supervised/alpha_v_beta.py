@@ -8,6 +8,7 @@ from multiprocessing import Pool
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score, roc_curve
 import os
+import numpy as np
 
 p = Pool(80)
 dir_results = 'alpha_v_beta_results'
@@ -23,6 +24,9 @@ antigens = ['ATP6AP1-KLG_G3W',
 
 opt = ['alpha','beta','alpha_beta']
 
+folds = 100
+graph_seed = 0
+seeds = np.array(range(folds))
 for a in antigens:
     y_pred_list = []
     y_test_list = []
@@ -37,7 +41,7 @@ for a in antigens:
             DTCR = DeepTCR_SS('alpha_v_beta_SS')
             DTCR.Get_Data(directory='../../Data/Zhang/'+a,aa_column_alpha=0,aa_column_beta=1,p=p)
 
-        DTCR.Monte_Carlo_CrossVal(folds=50,weight_by_class=True)
+        DTCR.Monte_Carlo_CrossVal(folds=folds,weight_by_class=True,graph_seed=graph_seed,seeds=seeds)
         y_pred_list.append(DTCR.y_pred)
         y_test_list.append(DTCR.y_test)
 
@@ -45,8 +49,8 @@ for a in antigens:
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate',fontsize=14)
-    plt.ylabel('True Positive Rate',fontsize=14)
+    plt.xlabel('False Positive Rate',fontsize=24)
+    plt.ylabel('True Positive Rate',fontsize=24)
     for ii, o in enumerate(opt, 0):
         y_test = y_test_list[ii]
         y_pred = y_pred_list[ii]
@@ -56,8 +60,9 @@ for a in antigens:
 
     plt.legend(loc="lower right",fontsize=14)
     plt.title(a,fontsize=22)
-    plt.xticks(fontsize=14)
-    plt.yticks(fontsize=14)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.tight_layout()
     plt.savefig(os.path.join(dir_results,a+ '_AUC.eps'))
     plt.close()
 
