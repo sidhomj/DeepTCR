@@ -12,6 +12,8 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
 import numpy as np
+import os
+import shutil
 
 #Run Supervised Sequence Classifier
 DTCRS = DeepTCR_SS('Sequence_C',device=6)
@@ -22,7 +24,12 @@ folds = 100
 seeds = np.array(range(folds))
 graph_seed = 0
 DTCRS.Monte_Carlo_CrossVal(folds=folds,graph_seed=graph_seed,seeds=seeds)
-DTCRS.Representative_Sequences(top_seq=50,motif_seq=10,color_scheme='hydrophobicity')
+DTCRS.Representative_Sequences(top_seq=25,motif_seq=10,color_scheme='hydrophobicity')
+
+dir = 'Murine_Rep_Sequences'
+if os.path.exists(dir):
+    shutil.rmtree(dir)
+os.makedirs(dir)
 
 for item in DTCRS.Rep_Seq:
     t = DTCRS.Rep_Seq[item]
@@ -34,4 +41,7 @@ for item in DTCRS.Rep_Seq:
     out = []
     for s in seq:
         out.append(SeqRecord(Seq(s, IUPAC.protein), s))
-    SeqIO.write(out,item+'.fasta','fasta')
+    SeqIO.write(out,os.path.join(dir,item+'.fasta'),'fasta')
+
+
+

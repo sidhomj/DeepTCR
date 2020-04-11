@@ -6,6 +6,9 @@ the 9 murine antigens in the manuscript.."""
 
 from DeepTCR.DeepTCR import DeepTCR_SS
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rc('font', family='Arial')
 
 #Run Supervised Sequence Classifier
 DTCRS = DeepTCR_SS('Sequence_C')
@@ -14,5 +17,6 @@ DTCRS.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,aggre
 folds = 100
 seeds = np.array(range(folds))
 graph_seed = 0
-DTCRS.Monte_Carlo_CrossVal(folds=10,seeds=seeds,graph_seed=graph_seed)
-DTCRS.AUC_Curve()
+DTCRS.Monte_Carlo_CrossVal(folds=folds,seeds=seeds,graph_seed=graph_seed)
+DTCRS.AUC_Curve(xlabel_size=24,ylabel_size=24,xtick_size=18,ytick_size=18,legend_font_size=14,frameon=False,
+                diag_line=False)

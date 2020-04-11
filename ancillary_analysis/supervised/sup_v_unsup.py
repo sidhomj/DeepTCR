@@ -18,22 +18,16 @@ from scipy.stats import ttest_ind
 
 
 #Run VAE
-DTCRU = DeepTCR_U('Sequence_C',device='/gpu:1')
+DTCRU = DeepTCR_U('Sequence_C',device=1)
 DTCRU.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
-
-DTCRU.Train_VAE(Load_Prev_Data=False,use_only_gene=True)
-distances_vae_gene = pdist(DTCRU.features, metric='euclidean')
-
-# #VAE_- Sequencs Alone+
-DTCRU.Train_VAE(Load_Prev_Data=False,use_only_seq=True)
-distances_vae_seq = pdist(DTCRU.features, metric='euclidean')
-
-DTCRU.Train_VAE(Load_Prev_Data=False)
+graph_seed = 0
+split_seed = 0
+DTCRU.Train_VAE(Load_Prev_Data=False,graph_seed=graph_seed,split_seed=split_seed)
 distances_vae_seq_gene = pdist(DTCRU.features, metric='euclidean')
 
-distances_list = [distances_vae_seq,distances_vae_gene,distances_vae_seq_gene]
-names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ']
+distances_list = [distances_vae_seq_gene]
+names = ['VAE-Seq-VDJ']
 
 dir_results = 'sup_v_unsup_results'
 if not os.path.exists(dir_results):
@@ -48,29 +42,19 @@ df_u['Method'] = df_metrics['Algorithm']
 df_u['Type'] = 'Unsupervised'
 
 #Run Supervised Sequence Classifier
-DTCRS = DeepTCR_SS('Sequence_C')
+DTCRS = DeepTCR_SS('Sequence_C',device=1)
 DTCRS.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=True,aggregate_by_aa=True,
                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
 AUC = []
 Class = []
 Method = []
-for i in range(10):
+folds = 100
+seeds = np.array(range(folds))
+for i in range(folds):
+    np.random.seed(seeds[i])
     DTCRS.Get_Train_Valid_Test()
-
-    DTCRS.Train(use_only_seq=True)
-    DTCRS.AUC_Curve(plot=False)
-    AUC.extend(DTCRS.AUC_DF['AUC'].tolist())
-    Class.extend(DTCRS.AUC_DF['Class'].tolist())
-    Method.extend(['Sup-Seq']*len(DTCRS.AUC_DF))
-
-    DTCRS.Train(use_only_gene=True)
-    DTCRS.AUC_Curve(plot=False)
-    AUC.extend(DTCRS.AUC_DF['AUC'].tolist())
-    Class.extend(DTCRS.AUC_DF['Class'].tolist())
-    Method.extend(['Sup-VDJ']*len(DTCRS.AUC_DF))
-
-    DTCRS.Train()
+    DTCRS.Train(graph_seed=graph_seed)
     DTCRS.AUC_Curve(plot=False)
     AUC.extend(DTCRS.AUC_DF['AUC'].tolist())
     Class.extend(DTCRS.AUC_DF['Class'].tolist())
@@ -83,7 +67,6 @@ df_s['AUC'] = AUC
 df_s['Method'] = Method
 df_s['Type'] = 'Supervised'
 
-
 df_comp = pd.concat((df_u,df_s),axis=0)
 
 dir_results = 'Sup_V_Unsup_Results'
@@ -94,16 +77,19 @@ df_comp.to_csv(os.path.join(dir_results,'df_comp.csv'))
 
 df_comp = pd.read_csv(os.path.join(dir_results,'df_comp.csv'))
 
-sns.violinplot(data=df_comp,x='Class',y='AUC',hue='Method')
+sns.violinplot(data=df_comp,x='Class',y='AUC',hue='Method',cut=0)
 plt.xticks(rotation=45)
 plt.xlabel('')
-plt.ylabel('AUC',fontsize=28)
-plt.xticks(fontsize=18)
+plt.ylabel('AUC',fontsize=32)
+plt.xticks(fontsize=48)
 plt.subplots_adjust(bottom=0.15)
 ax = plt.gca()
 ax.legend().remove()
-plt.legend(fontsize=24)
-
+plt.legend(fontsize=24,frameon=False)
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
+ax.tick_params(axis="x", labelsize=20)
+ax.tick_params(axis='y', labelsize=20)
 
 
 names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Sup-Seq','Sup-VDJ','Sup-Seq-VDJ']

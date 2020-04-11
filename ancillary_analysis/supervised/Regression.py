@@ -25,11 +25,13 @@ y_test = []
 antigen = []
 #Iterate through all antigens
 for i in range(2,df.columns.shape[0]):
+    i=16
     print(df.iloc[:,i].name)
     sel = df.iloc[:,i]
     Y = np.log2(np.asarray(sel.tolist()) + 1)
     DTCRS.Load_Data(alpha_sequences=alpha, beta_sequences=beta, Y=Y,p=p)
     DTCRS.K_Fold_CrossVal(split_by_sample=False,folds=5)
+    DTCRS.SRCC(kde=True)
     y_pred.append(DTCRS.y_pred)
     y_test.append(DTCRS.y_test)
     antigen.append([sel.name]*len(DTCRS.y_pred))
