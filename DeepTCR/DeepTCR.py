@@ -3722,7 +3722,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
-    def K_Fold_CrossVal(self,folds=None,split_by_sample=False,
+    def K_Fold_CrossVal(self,folds=None,split_by_sample=False,seeds=None,
                         kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                         num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
                         use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
@@ -3751,6 +3751,10 @@ class DeepTCR_SS(DeepTCR_S_base):
             sets with sequences from different samples, one can set this parameter to True to do the train/test
             splits by sample.
 
+        seeds: nd.array
+            In order to set a deterministic train/test split over the K-Fold Simulations, one can provide an array
+            of seeds for each K-fold simulation. This will result in the same train/test split over the N Fold simulations.
+            This parameter, if provided, should have the same size of the value of folds.
 
         Model Parameters
 
@@ -3887,6 +3891,8 @@ class DeepTCR_SS(DeepTCR_S_base):
             file_per_sample = len(self.Y) // folds
             test_idx = []
             for ii in range(folds):
+                if seeds is not None:
+                    np.random.seed(seeds[ii])
                 if ii != folds-1:
                     idx_sel = np.random.choice(idx_left, size=file_per_sample, replace=False)
                 else:
@@ -3903,6 +3909,8 @@ class DeepTCR_SS(DeepTCR_S_base):
             file_per_sample = len(np.unique(self.sample_id)) // folds
             test_idx = []
             for ii in range(folds):
+                if seeds is not None:
+                    np.random.seed(seeds[ii])
                 if ii != folds-1:
                     idx_sel = np.random.choice(idx_left, size=file_per_sample, replace=False)
                     idx_sel_seq = np.where(np.isin(self.sample_id,idx_sel))[0]
@@ -4789,7 +4797,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
-    def K_Fold_CrossVal(self,folds=None,combine_train_valid=False,
+    def K_Fold_CrossVal(self,folds=None,combine_train_valid=False,seeds=None,
                         kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                         num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
                         use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
@@ -4824,6 +4832,10 @@ class DeepTCR_WF(DeepTCR_S_base):
             to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
             when to stop training will be based on the test data (which is considered a form of over-fitting).
 
+        seeds: nd.array
+            In order to set a deterministic train/test split over the K-Fold Simulations, one can provide an array
+            of seeds for each K-fold simulation. This will result in the same train/test split over the N Fold simulations.
+            This parameter, if provided, should have the same size of the value of folds.
 
         Model Parameters
 
@@ -5005,6 +5017,8 @@ class DeepTCR_WF(DeepTCR_S_base):
         file_per_sample = num_samples // folds
         test_idx = []
         for ii in range(folds):
+            if seeds is not None:
+                np.random.seed(seeds[ii])
             if ii != folds-1:
                 idx_sel = np.random.choice(idx_left, size=file_per_sample, replace=False)
             else:
