@@ -12,7 +12,7 @@ file = 'aucs_nefhw9.pkl'
 file = 'aucs_nefyt9.pkl'
 
 with open(file,'rb') as f:
-    aucs,group_1 = pickle.load(f)
+    aucs,group = pickle.load(f)
 
 aucs = aucs.T + aucs
 aucs[aucs<0.5] = 0.5
@@ -20,8 +20,8 @@ aucs = 1 - aucs
 aucs = 2*aucs
 
 df = pd.DataFrame(aucs)
-df.index = group_1
-df.columns = group_1
+df.index = group
+df.columns = group
 # df.drop(columns='NoPeptide',inplace=True)
 # df.drop(labels='NoPeptide',inplace=True)
 sns.clustermap(data=df,cmap='bwr',row_cluster=True,col_cluster=True)

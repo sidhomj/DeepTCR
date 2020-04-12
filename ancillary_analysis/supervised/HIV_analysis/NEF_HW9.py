@@ -10,8 +10,7 @@ os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 folds=25
 
-files = glob.glob('Data/*.tsv')
-files = files[0:-1]
+files = glob.glob('../../../Data/HIV/*.tsv')
 samples = []
 labels = []
 for file in files:
@@ -22,7 +21,7 @@ for file in files:
 label_dict = dict(zip(samples,labels))
 
 DTCR = DeepTCR_WF('load')
-DTCR.Get_Data('Data',aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,
+DTCR.Get_Data('../../../Data/HIV',aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,
               type_of_data_cut='Read_Cut',data_cut=10)
 
 idx = np.isin(DTCR.sample_id,np.array(list(label_dict.keys())))
@@ -34,7 +33,7 @@ sample_labels = DTCR.sample_id[idx]
 counts = DTCR.counts[idx]
 class_labels  = np.array([label_dict[x] for x in sample_labels])
 
-group = ['HTQGYFPDW',  'NTQGYFPDW','NoPeptide']
+group = ['HTQGYFPDW','NTQGYFPDW','NoPeptide']
 
 aucs = np.zeros([len(group),len(group)])
 p = Pool(40)
@@ -44,7 +43,7 @@ for ii in range(len(group)):
         if ii != jj:
             label_keep = np.array([group[ii],group[jj]])
             idx = np.isin(class_labels, label_keep)
-            DTCR = DeepTCR_WF('train', device='/device:GPU:3')
+            DTCR = DeepTCR_WF('train', device=gpu)
             DTCR.Load_Data(beta_sequences=beta_sequences[idx],
                            v_beta=v_beta[idx],
                            d_beta=d_beta[idx],

@@ -8,7 +8,7 @@ from multiprocessing import Pool
 gpu = 3
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
-folds=5
+folds=25
 
 files = glob.glob('Data/*.tsv')
 files = files[0:-1]

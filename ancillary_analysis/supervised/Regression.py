@@ -75,3 +75,5 @@ for a in ant:
     plt.ylabel('Log2(counts+1)',fontsize=12)
     plt.savefig(os.path.join(dir,a+'.eps'))
     plt.close()
+
+check=1
