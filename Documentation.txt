@@ -78,7 +78,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, split_by_sample=False, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
+     |  K_Fold_CrossVal(self, folds=None, split_by_sample=False, seeds=None, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
      |      K_Fold Cross-Validation for Single-Sequence Classifier
      |      
      |      If the number of sequences is small but training the single-sequence classifier, one
@@ -98,6 +98,10 @@ CLASSES
      |          sets with sequences from different samples, one can set this parameter to True to do the train/test
      |          splits by sample.
      |      
+     |      seeds: nd.array
+     |          In order to set a deterministic train/test split over the K-Fold Simulations, one can provide an array
+     |          of seeds for each K-fold simulation. This will result in the same train/test split over the N Fold simulations.
+     |          This parameter, if provided, should have the same size of the value of folds.
      |      
      |      Model Parameters
      |      
@@ -379,7 +383,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  SRCC(self, s=10, kde=False)
+     |  SRCC(self, s=10, kde=False, title=None)
      |      Spearman's Rank Correlation Coefficient Plot
      |      
      |      In the case one is doing a regression-based model for the sequence classiifer,
@@ -395,10 +399,16 @@ CLASSES
      |          To do a kernel density estimation per point and plot this as a color-scheme,
      |          set to True. Warning: this option will take longer to run.
      |      
+     |      title: str
+     |          Title for the plot.
+     |      
      |      Returns
      |      ---------------------------------------
      |      corr: float
      |          Spearman's Rank Correlation Coefficient
+     |      
+     |      ax: matplotlib axis
+     |          axis on which plot is drawn
      |  
      |  Train(self, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
      |      Train Single-Sequence Classifier
@@ -534,7 +544,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_S_base:
      |  
-     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None, plot=True)
+     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None, plot=True, diag_line=True, xtick_size=None, ytick_size=None, xlabel_size=None, ylabel_size=None, legend_font_size=None, frameon=True, legend_loc='lower right', figsize=None)
      |      AUC Curve for both Sequence and Repertoire/Sample Classifiers
      |      
      |      Inputs
@@ -551,6 +561,31 @@ CLASSES
      |      
      |      plot: bool
      |          To suppress plotting and just save the data/figure, set to False.
+     |      
+     |      diag_line: bool
+     |          To plot the line/diagonal of y=x defining no predictive power, set to True.
+     |          To remove from plot, set to False.
+     |      
+     |      xtick_size: float
+     |          Size of xticks
+     |      
+     |      ytick_size: float
+     |          Size of yticks
+     |      
+     |      xlabel_size: float
+     |          Size of xlabel
+     |      
+     |      ylabel_size: float
+     |          Size of ylabel
+     |      
+     |      legend_font_size: float
+     |          Size of legend
+     |      
+     |      frameon: bool
+     |          Whether to show frame around legend.
+     |      
+     |      figsize: tuple
+     |          To change the default size of the figure, set this to size of figure (i.e. - (10,10) )
      |      
      |      Returns
      |      
@@ -1384,7 +1419,7 @@ CLASSES
      |  
      |  Methods defined here:
      |  
-     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None, plot=True)
+     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None, plot=True, diag_line=True, xtick_size=None, ytick_size=None, xlabel_size=None, ylabel_size=None, legend_font_size=None, frameon=True, legend_loc='lower right', figsize=None)
      |      AUC Curve for both Sequence and Repertoire/Sample Classifiers
      |      
      |      Inputs
@@ -1401,6 +1436,31 @@ CLASSES
      |      
      |      plot: bool
      |          To suppress plotting and just save the data/figure, set to False.
+     |      
+     |      diag_line: bool
+     |          To plot the line/diagonal of y=x defining no predictive power, set to True.
+     |          To remove from plot, set to False.
+     |      
+     |      xtick_size: float
+     |          Size of xticks
+     |      
+     |      ytick_size: float
+     |          Size of yticks
+     |      
+     |      xlabel_size: float
+     |          Size of xlabel
+     |      
+     |      ylabel_size: float
+     |          Size of ylabel
+     |      
+     |      legend_font_size: float
+     |          Size of legend
+     |      
+     |      frameon: bool
+     |          Whether to show frame around legend.
+     |      
+     |      figsize: tuple
+     |          To change the default size of the figure, set this to size of figure (i.e. - (10,10) )
      |      
      |      Returns
      |      
@@ -3235,7 +3295,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, combine_train_valid=False, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
+     |  K_Fold_CrossVal(self, folds=None, combine_train_valid=False, seeds=None, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -3260,6 +3320,10 @@ CLASSES
      |          to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
      |          when to stop training will be based on the test data (which is considered a form of over-fitting).
      |      
+     |      seeds: nd.array
+     |          In order to set a deterministic train/test split over the K-Fold Simulations, one can provide an array
+     |          of seeds for each K-fold simulation. This will result in the same train/test split over the N Fold simulations.
+     |          This parameter, if provided, should have the same size of the value of folds.
      |      
      |      Model Parameters
      |      
@@ -3889,7 +3953,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_S_base:
      |  
-     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None, plot=True)
+     |  AUC_Curve(self, by=None, filename='AUC.tif', title=None, plot=True, diag_line=True, xtick_size=None, ytick_size=None, xlabel_size=None, ylabel_size=None, legend_font_size=None, frameon=True, legend_loc='lower right', figsize=None)
      |      AUC Curve for both Sequence and Repertoire/Sample Classifiers
      |      
      |      Inputs
@@ -3906,6 +3970,31 @@ CLASSES
      |      
      |      plot: bool
      |          To suppress plotting and just save the data/figure, set to False.
+     |      
+     |      diag_line: bool
+     |          To plot the line/diagonal of y=x defining no predictive power, set to True.
+     |          To remove from plot, set to False.
+     |      
+     |      xtick_size: float
+     |          Size of xticks
+     |      
+     |      ytick_size: float
+     |          Size of yticks
+     |      
+     |      xlabel_size: float
+     |          Size of xlabel
+     |      
+     |      ylabel_size: float
+     |          Size of ylabel
+     |      
+     |      legend_font_size: float
+     |          Size of legend
+     |      
+     |      frameon: bool
+     |          Whether to show frame around legend.
+     |      
+     |      figsize: tuple
+     |          To change the default size of the figure, set this to size of figure (i.e. - (10,10) )
      |      
      |      Returns
      |      
