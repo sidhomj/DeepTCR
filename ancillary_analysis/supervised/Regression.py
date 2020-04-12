@@ -23,13 +23,16 @@ beta = np.asarray(df['beta'].tolist())
 y_pred = []
 y_test = []
 antigen = []
+folds = 5
+seeds = np.array(range(folds))
+graph_seed = 0
 #Iterate through all antigens
 for i in range(2,df.columns.shape[0]):
     print(df.iloc[:,i].name)
     sel = df.iloc[:,i]
     Y = np.log2(np.asarray(sel.tolist()) + 1)
     DTCRS.Load_Data(alpha_sequences=alpha, beta_sequences=beta, Y=Y,p=p)
-    DTCRS.K_Fold_CrossVal(split_by_sample=False,folds=5)
+    DTCRS.K_Fold_CrossVal(folds=folds,seeds=seeds,graph_seed=graph_seed)
     y_pred.append(DTCRS.y_pred)
     y_test.append(DTCRS.y_test)
     antigen.append([sel.name]*len(DTCRS.y_pred))
@@ -44,7 +47,6 @@ df_out['Antigen'] = antigen
 df_out['Y_Pred'] = y_pred
 df_out['Y_Test'] = y_test
 df_out.to_csv('Regression_Results.csv',index=False)
-
 
 #Load Data
 df_out = pd.read_csv('Regression_Results.csv')
