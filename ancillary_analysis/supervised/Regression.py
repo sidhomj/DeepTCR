@@ -25,13 +25,11 @@ y_test = []
 antigen = []
 #Iterate through all antigens
 for i in range(2,df.columns.shape[0]):
-    i=16
     print(df.iloc[:,i].name)
     sel = df.iloc[:,i]
     Y = np.log2(np.asarray(sel.tolist()) + 1)
     DTCRS.Load_Data(alpha_sequences=alpha, beta_sequences=beta, Y=Y,p=p)
     DTCRS.K_Fold_CrossVal(split_by_sample=False,folds=5)
-    DTCRS.SRCC(kde=True)
     y_pred.append(DTCRS.y_pred)
     y_test.append(DTCRS.y_test)
     antigen.append([sel.name]*len(DTCRS.y_pred))
@@ -47,10 +45,16 @@ df_out['Y_Pred'] = y_pred
 df_out['Y_Test'] = y_test
 df_out.to_csv('Regression_Results.csv',index=False)
 
+
 #Load Data
 df_out = pd.read_csv('Regression_Results.csv')
 ant = np.unique(df_out['Antigen'])
 
+dir  = 'density_plots'
+if not os.path.exists(dir):
+    os.makedirs(dir)
+
+plt.ioff()
 #Create Plots
 for a in ant:
     df_temp = df_out[df_out['Antigen'] == a]
@@ -66,6 +70,6 @@ for a in ant:
     plt.xlim([0,10])
     plt.ylim([0,10])
     plt.xlabel('Predicted',fontsize=12)
-    plt.ylabel('Log2(counts)',fontsize=12)
-    plt.savefig(os.path.join('density_plots',a+'.eps'))
+    plt.ylabel('Log2(counts+1)',fontsize=12)
+    plt.savefig(os.path.join(dir,a+'.eps'))
     plt.close()
