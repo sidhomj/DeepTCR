@@ -17,3 +17,6 @@ df_mcpas_sel['cdr3'] = df_mcpas_beta['CDR3.beta.aa']
 df_out = pd.concat([df_vdj_sel,df_mcpas_sel])
 df_out.drop_duplicates(inplace=True)
 df_out.to_csv('vdj_mcpas.csv',index=False)
+
+sel = 'ISPRTLNAW'
+sel = df_vdj[df_vdj['Epitope']==sel]

@@ -4,6 +4,7 @@ from DeepTCR.functions.Layers import *
 from DeepTCR.functions.utils_u import *
 from DeepTCR.functions.utils_s import *
 from DeepTCR.functions.act_fun import *
+from DeepTCR.functions.plot_func import *
 import seaborn as sns
 import colorsys
 from scipy.cluster.hierarchy import linkage,fcluster,dendrogram, leaves_list
@@ -836,7 +837,7 @@ class DeepTCR_base(object):
         print('Data Loaded')
 
     def Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
-                  v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10000,models=None):
+                  v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10000,models=None,return_dist=False):
         """
         Predicting outputs of sequence models on new data
 
@@ -896,6 +897,10 @@ class DeepTCR_base(object):
             Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the
             distribution of outputs for the user.
 
+        return_dist: bool
+            If the user wants to also return teh distribution of sequence predicionts over all models use dfor inference,
+            one should set this value to True.
+
         Returns
         [features, features_dist]
 
@@ -922,7 +927,10 @@ class DeepTCR_base(object):
                                v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
                                 p,batch_size,self,models)
 
-        return out, out_dist
+        if return_dist:
+            return out, out_dist
+        else:
+            return out
 
 class feature_analytics_class(object):
     def Structural_Diversity(self, sample=None, n_jobs=1):
@@ -2807,7 +2815,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 sns.catplot(data=df_out, x='Metric', y='Value', kind=plot_type)
 
 class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
-    def AUC_Curve(self,by=None,filename='AUC.tif',title=None,plot=True,diag_line=True,
+    def AUC_Curve(self,by=None,filename='AUC.tif',title=None,title_font=None,plot=True,diag_line=True,
                   xtick_size = None, ytick_size=None, xlabel_size = None, ylabel_size=None,
                   legend_font_size=None,frameon=True,legend_loc = 'lower right',
                   figsize=None):
@@ -2825,6 +2833,9 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         title: str
             Optional Title to put on ROC Curve.
+
+        title_font: int
+            Optional font size for title
 
         plot: bool
             To suppress plotting and just save the data/figure, set to False.
@@ -2904,7 +2915,10 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             plt.legend(prop={'size': legend_font_size},loc=legend_loc,frameon=frameon)
 
         if title is not None:
-            plt.title(title)
+            if title_font is not None:
+                plt.title(title,fontsize=title_font)
+            else:
+                plt.title(title)
 
         ax = plt.gca()
 
@@ -3086,6 +3100,282 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                                                             self.beta_sequences, self.directory_results,
                                                             'beta', self.kernel, motif_seq,make_seq_logos,
                                                                 color_scheme,logo_file_format)
+
+    def _residue(self,alpha_sequence,beta_sequence,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
+                 p,batch_size,models):
+        if self.model_type == 'SS':
+            inf_func = self.Sequence_Inference
+        elif self.model_type == 'WF':
+            inf_func = self.Sample_Inference
+
+        df_alpha = pd.DataFrame()
+        df_beta = pd.DataFrame()
+        if alpha_sequence is not None:
+            alpha_list,pos,ref,alt = make_seq_list(alpha_sequence,ref= list(self.aa_idx.keys()))
+            len_list = len(alpha_list)
+
+            if beta_sequence is None:
+                beta_sequences = None
+            else:
+                beta_sequences = np.array([beta_sequence] * len_list)
+
+            if v_beta is None:
+                v_beta = None
+            else:
+                v_beta = np.array([v_beta]*len_list)
+
+            if d_beta is None:
+                d_beta = None
+            else:
+                d_beta = np.array([d_beta]*len_list)
+
+            if j_beta is None:
+                j_beta = None
+            else:
+                j_beta =  np.array([j_beta]*len_list)
+
+            if v_alpha is None:
+                v_alpha = None
+            else:
+                v_alpha =  np.array([v_alpha]*len_list)
+
+            if j_alpha is None:
+                j_alpha = None
+            else:
+                j_alpha = np.array([j_alpha]*len_list)
+
+            if hla is None:
+                hla = None
+            else:
+                hla = np.array([hla]*len_list)
+
+            out = inf_func(beta_sequences = beta_sequences,
+                                 alpha_sequences = np.array(alpha_list),
+                                 v_beta = v_beta,
+                                 d_beta = d_beta,
+                                 j_beta = j_beta,
+                                 v_alpha = v_alpha,
+                                 j_alpha = j_alpha,
+                                 p = p,
+                                 hla = hla,
+                                 batch_size = batch_size,
+                                 models=models)
+
+            df_alpha['alpha'] = alpha_list
+            df_alpha['pos'] = pos
+            df_alpha['ref'] = ref
+            df_alpha['alt'] = alt
+            if self.regression:
+                df_alpha['high'] = out[:,0]
+            else:
+                for ii in range(out.shape[1]):
+                    df_alpha[self.lb.inverse_transform([ii])[0]] = out[:,ii]
+
+        if beta_sequence is not None:
+            beta_list,pos,ref,alt = make_seq_list(beta_sequence,ref= list(self.aa_idx.keys()))
+            len_list = len(beta_list)
+            if alpha_sequence is None:
+                alpha_sequences = None
+            else:
+                alpha_sequences = np.array([alpha_sequence] * len_list)
+
+            if v_beta is None:
+                v_beta = None
+            else:
+                v_beta = np.array([v_beta]*len_list)
+
+            if d_beta is None:
+                d_beta = None
+            else:
+                d_beta = np.array([d_beta]*len_list)
+
+            if j_beta is None:
+                j_beta = None
+            else:
+                j_beta =  np.array([j_beta]*len_list)
+
+            if v_alpha is None:
+                v_alpha = None
+            else:
+                v_alpha =  np.array([v_alpha]*len_list)
+
+            if j_alpha is None:
+                j_alpha = None
+            else:
+                j_alpha = np.array([j_alpha]*len_list)
+
+            if hla is None:
+                hla = None
+            else:
+                hla = np.array([hla]*len_list)
+
+            out = inf_func(beta_sequences = np.array(beta_list),
+                                 alpha_sequences = alpha_sequences,
+                                 v_beta = v_beta,
+                                 d_beta = d_beta,
+                                 j_beta = j_beta,
+                                 v_alpha = v_alpha,
+                                 j_alpha = j_alpha,
+                                 p = p,
+                                 hla = hla,
+                                 batch_size = batch_size,
+                                 models=models)
+
+            df_beta['beta'] = beta_list
+            df_beta['pos'] = pos
+            df_beta['ref'] = ref
+            df_beta['alt'] = alt
+            if self.regression:
+                df_beta['high'] = out[:,0]
+            else:
+                for ii in range(out.shape[1]):
+                    df_beta[self.lb.inverse_transform([ii])[0]] = out[:,ii]
+
+            return df_alpha,df_beta
+
+    def Residue_Sensitivity_Logo(self,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
+                  v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10000,models=None,
+                                 figsize=(10,8),low_color='red',medium_color='green',high_color='blue',
+                                    font_name='Times New Roman',class_sel=None,
+                                 cmap=None):
+
+        if p is None:
+            p = Pool(40)
+
+        inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha, hla]
+
+        for i in inputs:
+            if i is not None:
+                assert isinstance(i,np.ndarray),'Inputs into DeepTCR must come in as numpy arrays!'
+
+        inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla]
+        for i in inputs:
+            if i is not None:
+                len_input = len(i)
+                break
+
+        if alpha_sequences is None:
+            alpha_sequences = np.array([None]*len_input)
+
+        if beta_sequences is None:
+            beta_sequences = np.array([None]*len_input)
+
+        if v_beta is None:
+            v_beta = np.array([None]*len_input)
+
+        if d_beta is None:
+            d_beta = np.array([None] * len_input)
+
+        if j_beta is None:
+            j_beta = np.array([None]*len_input)
+
+        if v_alpha is None:
+            v_alpha = np.array([None]*len_input)
+
+        if j_alpha is None:
+            j_alpha = np.array([None]*len_input)
+
+        if hla is None:
+            hla = np.array([None]*len_input)
+
+        self.model_type,get = load_model_data(self)
+
+        alpha_matrices = []
+        alpha_masks = []
+        beta_matrices = []
+        beta_masks = []
+        df_alpha_list = []
+        df_beta_list = []
+        for i in range(len_input):
+            df_alpha,df_beta = self._residue(alpha_sequences[i],beta_sequences[i],
+                          v_beta[i],d_beta[i],j_beta[i],
+                          v_alpha[i],j_alpha[i],hla[i],
+                          p,batch_size,models)
+            df_alpha_list.append(df_alpha)
+            df_beta_list.append(df_beta)
+            if not df_alpha.empty:
+                if self.regression:
+                    temp = np.zeros(shape=[len(alpha_sequences[i]),len(self.aa_idx.keys())])
+                    temp_mask = np.zeros(shape=[len(alpha_sequences[i]),len(self.aa_idx.keys())])
+                    for _ in df_alpha.iterrows():
+                        temp[_[1]['pos'],self.aa_idx[_[1]['alt']]-1] =_[1]['high']
+                        if _[1]['ref'] == _[1]['alt']:
+                            temp_mask[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                    alpha_matrices.append(temp)
+                    alpha_masks.append(temp_mask)
+                else:
+                    temp = []
+                    temp_mask = []
+                    for ii, cl in enumerate(self.lb.classes_, 0):
+                        temp_i = np.zeros(shape=[len(alpha_sequences[i]), len(self.aa_idx.keys())])
+                        temp_mask_i = np.zeros(shape=[len(alpha_sequences[i]), len(self.aa_idx.keys())])
+                        for _ in df_alpha.iterrows():
+                            temp_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1][cl]
+                            if _[1]['ref'] == _[1]['alt']:
+                                temp_mask_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                        temp.append(temp_i)
+                        temp_mask.append(temp_mask_i)
+                    temp = np.stack(temp, 0)
+                    temp_mask = np.stack(temp_mask, 0)
+                    alpha_matrices.append(temp)
+                    alpha_masks.append(temp_mask)
+
+            if not df_beta.empty:
+                if self.regression:
+                    temp = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
+                    temp_mask = np.zeros(shape=[len(beta_sequences[i]),len(self.aa_idx.keys())])
+                    for _ in df_beta.iterrows():
+                        temp[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1]['high']
+                        if _[1]['ref'] == _[1]['alt']:
+                            temp_mask[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                    beta_matrices.append(temp)
+                    beta_masks.append(temp_mask)
+                else:
+                    temp = []
+                    temp_mask = []
+                    for ii,cl in enumerate(self.lb.classes_,0):
+                        temp_i = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
+                        temp_mask_i = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
+                        for _ in df_beta.iterrows():
+                            temp_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1][cl]
+                            if _[1]['ref'] == _[1]['alt']:
+                                temp_mask_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                        temp.append(temp_i)
+                        temp_mask.append(temp_mask_i)
+                    temp = np.stack(temp,0)
+                    temp_mask = np.stack(temp_mask,0)
+                    temp = temp[self.lb.transform([class_sel])[0]]
+                    temp_mask = temp_mask[self.lb.transform([class_sel])[0]]
+                    beta_matrices.append(temp)
+                    beta_masks.append(temp_mask)
+
+
+        if p is None:
+            p.close()
+            p.join()
+
+        if self.use_alpha & self.use_beta:
+            fig, ax = plt.subplots(1, 2, figsize=figsize)
+            sensitivity_logo(alpha_sequences,alpha_matrices,alpha_masks,ax=ax[0],
+                             low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
+                             regression=self.regression,cmap=cmap)
+            sensitivity_logo(beta_sequences,beta_matrices,beta_masks,ax=ax[1],
+                             low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
+                             regression=self.regression,cmap=cmap)
+            plt.tight_layout()
+        else:
+            fig, ax = plt.subplots(figsize=figsize)
+            if self.use_alpha:
+                sensitivity_logo(alpha_sequences, alpha_matrices, alpha_masks, ax=ax,
+                                 low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
+                                 regression=self.regression,cmap=cmap)
+            if self.use_beta:
+                sensitivity_logo(beta_sequences, beta_matrices, beta_masks, ax=ax,
+                                 low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
+                                 regression=self.regression,cmap=cmap)
+            plt.tight_layout()
+
+        return ax
 
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,split_by_sample=False):
@@ -5178,8 +5468,8 @@ class DeepTCR_WF(DeepTCR_S_base):
         out_list = np.vstack(out_list)
         return sample_list, out_list
 
-    def Sample_Inference(self,sample_labels,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
-                  v_alpha=None, j_alpha=None, p=None,hla=None,freq=None,counts=None, batch_size=10,models=None):
+    def Sample_Inference(self,sample_labels=None,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
+                  v_alpha=None, j_alpha=None, p=None,hla=None,freq=None,counts=None, batch_size=10,models=None,return_dist=False):
 
         """
         Predicting outputs of sample/repertoire model on new data
@@ -5252,6 +5542,10 @@ class DeepTCR_WF(DeepTCR_S_base):
             List of models in Name_Of_Object/models to use for inference. If left as None, this method will use all models
             in that directory.
 
+        return_dist: bool
+            If the user wants to also return teh distribution of sequence predicionts over all models use dfor inference,
+            one should set this value to True.
+
         Returns
 
         self.Inference_Sample_List: ndarray
@@ -5272,8 +5566,24 @@ class DeepTCR_WF(DeepTCR_S_base):
         ---------------------------------------
 
         """
+        inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha, hla]
+
+        for i in inputs:
+            if i is not None:
+                assert isinstance(i,np.ndarray),'Inputs into DeepTCR must come in as numpy arrays!'
+
+        inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla]
+        for i in inputs:
+            if i is not None:
+                len_input = len(i)
+                break
+
+        seq_inf = False
+        if sample_labels is None:
+            sample_labels = np.array([str(x) for x in range(len_input)])
+            seq_inf = True
+
         model_type, get  = load_model_data(self)
-        len_input = len(sample_labels)
 
         if p is None:
             p = Pool(40)
@@ -5416,6 +5726,16 @@ class DeepTCR_WF(DeepTCR_S_base):
             df_temp['Pred'] = self.Inference_Pred[:,ii]
             DFs.append(df_temp)
         self.Inference_Pred_Dict = dict(zip(self.lb.classes_,DFs))
+
+        if seq_inf:
+            df_temp['Samples'] = df_temp['Samples'].astype(int)
+            df_temp.sort_values(by='Samples', inplace=True)
+            resort_idx = np.array(list(df_temp.index))
+
+            if return_dist:
+                return self.Inference_Pred[resort_idx], self.Inference_Pred_Dist[resort_idx]
+            else:
+                return self.Inference_Pred[resort_idx]
 
 
 

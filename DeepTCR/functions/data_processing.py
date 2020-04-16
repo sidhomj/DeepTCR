@@ -185,7 +185,7 @@ def save_model_data(self,saver,sess,name,get,iteration=0):
                      self.use_v_alpha, self.use_j_alpha, self.use_hla, self.use_hla_sup, self.keep_non_supertype_alleles,
                      self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,
                      self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb,
-                     self.ind], f)
+                     self.ind,self.regression], f)
 
 def load_model_data(self):
     with open(os.path.join(self.Name, 'models', 'model_type.pkl'), 'rb') as f:
@@ -194,5 +194,24 @@ def load_model_data(self):
         self.use_v_alpha, self.use_j_alpha, self.use_hla, self.use_hla_sup,self.keep_non_supertype_alleles, \
         self.lb_v_beta, self.lb_d_beta, self.lb_j_beta, \
         self.lb_v_alpha, self.lb_j_alpha, self.lb_hla, self.lb,\
-            self.ind = pickle.load(f)
+            self.ind,self.regression = pickle.load(f)
     return model_type,get
+
+def make_seq_list(seq,
+                  ref=['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W',
+                       'Y']):
+    seq_run = list(seq)
+    seq_run_list = []
+    pos = []
+    ref_list = []
+    alt_list = []
+    for ii, c in enumerate(seq_run, 0):
+        seq_run_temp = seq_run.copy()
+        for r in ref:
+            seq_run_temp[ii] = r
+            seq_run_list.append(''.join(seq_run_temp))
+            pos.append(ii)
+            ref_list.append(seq_run[ii])
+            alt_list.append(r)
+    return (seq_run_list, pos, ref_list, alt_list)
+
