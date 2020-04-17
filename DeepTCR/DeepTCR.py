@@ -3237,7 +3237,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                                 v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10000,models=None,
                                  figsize=(10,8),low_color='red',medium_color='white',high_color='blue',
                                     font_name='Times New Roman',class_sel=None,
-                                 cmap=None,min_size=0.0,edgecolor='black',edgewidth=0.25,
+                                 cmap=None,min_size=0.0,edgecolor='black',edgewidth=0.25,background_color='white',
                                  Load_Prev_Data=False):
 
         if Load_Prev_Data is False:
@@ -3381,28 +3381,28 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         max_mean_diff = np.max(max_mean_diff)
 
         if self.use_alpha & self.use_beta:
-            fig, ax = plt.subplots(1, 2, figsize=figsize)
+            fig, ax = plt.subplots(1, 2, figsize=figsize,facecolor=background_color)
             sensitivity_logo(alpha_sequences,alpha_matrices,alpha_masks,ax=ax[0],
                              low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
                              cmap=cmap,max_max_diff=max_max_diff,max_mean_diff=max_mean_diff,
-                             min_size=min_size,edgecolor=edgecolor,edgewidth=edgewidth)
+                             min_size=min_size,edgecolor=edgecolor,edgewidth=edgewidth,background_color=background_color)
             sensitivity_logo(beta_sequences,beta_matrices,beta_masks,ax=ax[1],
                              low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
                              cmap=cmap,max_max_diff=max_max_diff,max_mean_diff=max_mean_diff,
-                             min_size=min_size,edgecolor=edgecolor,edgewidth=edgewidth)
+                             min_size=min_size,edgecolor=edgecolor,edgewidth=edgewidth,background_color=background_color)
             plt.tight_layout()
         else:
-            fig, ax = plt.subplots(figsize=figsize)
+            fig, ax = plt.subplots(figsize=figsize,facecolor=background_color)
             if self.use_alpha:
                 sensitivity_logo(alpha_sequences, alpha_matrices, alpha_masks, ax=ax,
                                  low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
                                  cmap=cmap, max_max_diff=max_max_diff, max_mean_diff=max_mean_diff,
-                                 min_size=min_size, edgecolor=edgecolor, edgewidth=edgewidth)
+                                 min_size=min_size, edgecolor=edgecolor, edgewidth=edgewidth,background_color=background_color)
             if self.use_beta:
                 sensitivity_logo(beta_sequences, beta_matrices, beta_masks, ax=ax,
                                  low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
                                  cmap=cmap, max_max_diff=max_max_diff, max_mean_diff=max_mean_diff,
-                                 min_size=min_size, edgecolor=edgecolor, edgewidth=edgewidth)
+                                 min_size=min_size, edgecolor=edgecolor, edgewidth=edgewidth,background_color=background_color)
             plt.tight_layout()
 
         return ax

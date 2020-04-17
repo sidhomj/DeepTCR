@@ -46,6 +46,7 @@ def sensitivity_logo(sequences,matrices,masks,ax=None,low_color='red',medium_col
     ax.spines['bottom'].set_visible(False)
     ax.set_xticks([])
     ax.set_yticks([])
+    ax.set_facecolor(background_color)
     xticks = np.arange(0.5, max_len + .5)
     for ii, sequence in enumerate(sequences, 0):
         obs_val = matrices[ii] * masks[ii]
