@@ -3234,145 +3234,175 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             return df_alpha,df_beta
 
     def Residue_Sensitivity_Logo(self,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
-                  v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10000,models=None,
-                                 figsize=(10,8),low_color='red',medium_color='green',high_color='blue',
+                                v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10000,models=None,
+                                 figsize=(10,8),low_color='red',medium_color='white',high_color='blue',
                                     font_name='Times New Roman',class_sel=None,
-                                 cmap=None):
+                                 cmap=None,min_size=0.0,edgecolor='black',edgewidth=0.25,
+                                 Load_Prev_Data=False):
 
-        if p is None:
-            p = Pool(40)
+        if Load_Prev_Data is False:
+            if p is None:
+                p = Pool(40)
 
-        inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha, hla]
+            inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha, hla]
 
-        for i in inputs:
-            if i is not None:
-                assert isinstance(i,np.ndarray),'Inputs into DeepTCR must come in as numpy arrays!'
+            for i in inputs:
+                if i is not None:
+                    assert isinstance(i,np.ndarray),'Inputs into DeepTCR must come in as numpy arrays!'
 
-        inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla]
-        for i in inputs:
-            if i is not None:
-                len_input = len(i)
-                break
+            inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla]
+            for i in inputs:
+                if i is not None:
+                    len_input = len(i)
+                    break
 
-        if alpha_sequences is None:
-            alpha_sequences = np.array([None]*len_input)
+            if alpha_sequences is None:
+                alpha_sequences = np.array([None]*len_input)
 
-        if beta_sequences is None:
-            beta_sequences = np.array([None]*len_input)
+            if beta_sequences is None:
+                beta_sequences = np.array([None]*len_input)
 
-        if v_beta is None:
-            v_beta = np.array([None]*len_input)
+            if v_beta is None:
+                v_beta = np.array([None]*len_input)
 
-        if d_beta is None:
-            d_beta = np.array([None] * len_input)
+            if d_beta is None:
+                d_beta = np.array([None] * len_input)
 
-        if j_beta is None:
-            j_beta = np.array([None]*len_input)
+            if j_beta is None:
+                j_beta = np.array([None]*len_input)
 
-        if v_alpha is None:
-            v_alpha = np.array([None]*len_input)
+            if v_alpha is None:
+                v_alpha = np.array([None]*len_input)
 
-        if j_alpha is None:
-            j_alpha = np.array([None]*len_input)
+            if j_alpha is None:
+                j_alpha = np.array([None]*len_input)
 
-        if hla is None:
-            hla = np.array([None]*len_input)
+            if hla is None:
+                hla = np.array([None]*len_input)
 
-        self.model_type,get = load_model_data(self)
+            self.model_type,get = load_model_data(self)
 
-        alpha_matrices = []
-        alpha_masks = []
-        beta_matrices = []
-        beta_masks = []
-        df_alpha_list = []
-        df_beta_list = []
-        for i in range(len_input):
-            df_alpha,df_beta = self._residue(alpha_sequences[i],beta_sequences[i],
-                          v_beta[i],d_beta[i],j_beta[i],
-                          v_alpha[i],j_alpha[i],hla[i],
-                          p,batch_size,models)
-            df_alpha_list.append(df_alpha)
-            df_beta_list.append(df_beta)
-            if not df_alpha.empty:
-                if self.regression:
-                    temp = np.zeros(shape=[len(alpha_sequences[i]),len(self.aa_idx.keys())])
-                    temp_mask = np.zeros(shape=[len(alpha_sequences[i]),len(self.aa_idx.keys())])
-                    for _ in df_alpha.iterrows():
-                        temp[_[1]['pos'],self.aa_idx[_[1]['alt']]-1] =_[1]['high']
-                        if _[1]['ref'] == _[1]['alt']:
-                            temp_mask[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
-                    alpha_matrices.append(temp)
-                    alpha_masks.append(temp_mask)
-                else:
-                    temp = []
-                    temp_mask = []
-                    for ii, cl in enumerate(self.lb.classes_, 0):
-                        temp_i = np.zeros(shape=[len(alpha_sequences[i]), len(self.aa_idx.keys())])
-                        temp_mask_i = np.zeros(shape=[len(alpha_sequences[i]), len(self.aa_idx.keys())])
+            alpha_matrices = []
+            alpha_masks = []
+            beta_matrices = []
+            beta_masks = []
+            df_alpha_list = []
+            df_beta_list = []
+            for i in range(len_input):
+                df_alpha,df_beta = self._residue(alpha_sequences[i],beta_sequences[i],
+                              v_beta[i],d_beta[i],j_beta[i],
+                              v_alpha[i],j_alpha[i],hla[i],
+                              p,batch_size,models)
+                df_alpha_list.append(df_alpha)
+                df_beta_list.append(df_beta)
+                if not df_alpha.empty:
+                    if self.regression:
+                        temp = np.zeros(shape=[len(alpha_sequences[i]),len(self.aa_idx.keys())])
+                        temp_mask = np.zeros(shape=[len(alpha_sequences[i]),len(self.aa_idx.keys())])
                         for _ in df_alpha.iterrows():
-                            temp_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1][cl]
+                            temp[_[1]['pos'],self.aa_idx[_[1]['alt']]-1] =_[1]['high']
                             if _[1]['ref'] == _[1]['alt']:
-                                temp_mask_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
-                        temp.append(temp_i)
-                        temp_mask.append(temp_mask_i)
-                    temp = np.stack(temp, 0)
-                    temp_mask = np.stack(temp_mask, 0)
-                    alpha_matrices.append(temp)
-                    alpha_masks.append(temp_mask)
+                                temp_mask[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                        alpha_matrices.append(temp)
+                        alpha_masks.append(temp_mask)
+                    else:
+                        temp = []
+                        temp_mask = []
+                        for ii, cl in enumerate(self.lb.classes_, 0):
+                            temp_i = np.zeros(shape=[len(alpha_sequences[i]), len(self.aa_idx.keys())])
+                            temp_mask_i = np.zeros(shape=[len(alpha_sequences[i]), len(self.aa_idx.keys())])
+                            for _ in df_alpha.iterrows():
+                                temp_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1][cl]
+                                if _[1]['ref'] == _[1]['alt']:
+                                    temp_mask_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                            temp.append(temp_i)
+                            temp_mask.append(temp_mask_i)
+                        temp = np.stack(temp, 0)
+                        temp_mask = np.stack(temp_mask, 0)
+                        alpha_matrices.append(temp)
+                        alpha_masks.append(temp_mask)
 
-            if not df_beta.empty:
-                if self.regression:
-                    temp = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
-                    temp_mask = np.zeros(shape=[len(beta_sequences[i]),len(self.aa_idx.keys())])
-                    for _ in df_beta.iterrows():
-                        temp[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1]['high']
-                        if _[1]['ref'] == _[1]['alt']:
-                            temp_mask[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
-                    beta_matrices.append(temp)
-                    beta_masks.append(temp_mask)
-                else:
-                    temp = []
-                    temp_mask = []
-                    for ii,cl in enumerate(self.lb.classes_,0):
-                        temp_i = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
-                        temp_mask_i = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
+                if not df_beta.empty:
+                    if self.regression:
+                        temp = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
+                        temp_mask = np.zeros(shape=[len(beta_sequences[i]),len(self.aa_idx.keys())])
                         for _ in df_beta.iterrows():
-                            temp_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1][cl]
+                            temp[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1]['high']
                             if _[1]['ref'] == _[1]['alt']:
-                                temp_mask_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
-                        temp.append(temp_i)
-                        temp_mask.append(temp_mask_i)
-                    temp = np.stack(temp,0)
-                    temp_mask = np.stack(temp_mask,0)
-                    temp = temp[self.lb.transform([class_sel])[0]]
-                    temp_mask = temp_mask[self.lb.transform([class_sel])[0]]
-                    beta_matrices.append(temp)
-                    beta_masks.append(temp_mask)
+                                temp_mask[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                        beta_matrices.append(temp)
+                        beta_masks.append(temp_mask)
+                    else:
+                        temp = []
+                        temp_mask = []
+                        for ii,cl in enumerate(self.lb.classes_,0):
+                            temp_i = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
+                            temp_mask_i = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
+                            for _ in df_beta.iterrows():
+                                temp_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1][cl]
+                                if _[1]['ref'] == _[1]['alt']:
+                                    temp_mask_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                            temp.append(temp_i)
+                            temp_mask.append(temp_mask_i)
+                        temp = np.stack(temp,0)
+                        temp_mask = np.stack(temp_mask,0)
+                        temp = temp[self.lb.transform([class_sel])[0]]
+                        temp_mask = temp_mask[self.lb.transform([class_sel])[0]]
+                        beta_matrices.append(temp)
+                        beta_masks.append(temp_mask)
 
 
-        if p is None:
-            p.close()
-            p.join()
+            if p is None:
+                p.close()
+                p.join()
+
+            with open(os.path.join(self.Name,'sens_data.pkl'),'wb') as f:
+                pickle.dump([alpha_sequences,alpha_matrices,alpha_masks,
+                             beta_sequences,beta_matrices,beta_masks],f,protocol=4)
+
+        else:
+            with open(os.path.join(self.Name,'sens_data.pkl'),'rb') as f:
+                alpha_sequences, alpha_matrices, alpha_masks,\
+                beta_sequences, beta_matrices, beta_masks = pickle.load(f)
+
+        max_max_diff = []
+        max_mean_diff = []
+        if self.use_alpha:
+            max_max_diff_alpha,max_mean_diff_alpha = get_max_val(alpha_matrices,alpha_masks)
+            max_max_diff.append(max_max_diff_alpha)
+            max_mean_diff.append(max_mean_diff_alpha)
+
+        if self.use_beta:
+            max_max_diff_beta, max_mean_diff_beta = get_max_val(beta_matrices, beta_masks)
+            max_max_diff.append(max_max_diff_beta)
+            max_mean_diff.append(max_mean_diff_beta)
+
+        max_max_diff = np.max(max_max_diff)
+        max_mean_diff = np.max(max_mean_diff)
 
         if self.use_alpha & self.use_beta:
             fig, ax = plt.subplots(1, 2, figsize=figsize)
             sensitivity_logo(alpha_sequences,alpha_matrices,alpha_masks,ax=ax[0],
                              low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
-                             regression=self.regression,cmap=cmap)
+                             cmap=cmap,max_max_diff=max_max_diff,max_mean_diff=max_mean_diff,
+                             min_size=min_size,edgecolor=edgecolor,edgewidth=edgewidth)
             sensitivity_logo(beta_sequences,beta_matrices,beta_masks,ax=ax[1],
                              low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
-                             regression=self.regression,cmap=cmap)
+                             cmap=cmap,max_max_diff=max_max_diff,max_mean_diff=max_mean_diff,
+                             min_size=min_size,edgecolor=edgecolor,edgewidth=edgewidth)
             plt.tight_layout()
         else:
             fig, ax = plt.subplots(figsize=figsize)
             if self.use_alpha:
                 sensitivity_logo(alpha_sequences, alpha_matrices, alpha_masks, ax=ax,
                                  low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
-                                 regression=self.regression,cmap=cmap)
+                                 cmap=cmap, max_max_diff=max_max_diff, max_mean_diff=max_mean_diff,
+                                 min_size=min_size, edgecolor=edgecolor, edgewidth=edgewidth)
             if self.use_beta:
                 sensitivity_logo(beta_sequences, beta_matrices, beta_masks, ax=ax,
                                  low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
-                                 regression=self.regression,cmap=cmap)
+                                 cmap=cmap, max_max_diff=max_max_diff, max_mean_diff=max_mean_diff,
+                                 min_size=min_size, edgecolor=edgecolor, edgewidth=edgewidth)
             plt.tight_layout()
 
         return ax
