@@ -3319,6 +3319,8 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                             temp_mask.append(temp_mask_i)
                         temp = np.stack(temp, 0)
                         temp_mask = np.stack(temp_mask, 0)
+                        temp = temp[self.lb.transform([class_sel])[0]]
+                        temp_mask = temp_mask[self.lb.transform([class_sel])[0]]
                         alpha_matrices.append(temp)
                         alpha_masks.append(temp_mask)
 
@@ -3357,13 +3359,13 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                 p.join()
 
             with open(os.path.join(self.Name,'sens_data.pkl'),'wb') as f:
-                pickle.dump([alpha_sequences,alpha_matrices,alpha_masks,
-                             beta_sequences,beta_matrices,beta_masks],f,protocol=4)
+                pickle.dump([alpha_sequences,alpha_matrices,alpha_masks,df_alpha_list,
+                             beta_sequences,beta_matrices,beta_masks,df_beta_list],f,protocol=4)
 
         else:
             with open(os.path.join(self.Name,'sens_data.pkl'),'rb') as f:
-                alpha_sequences, alpha_matrices, alpha_masks,\
-                beta_sequences, beta_matrices, beta_masks = pickle.load(f)
+                alpha_sequences, alpha_matrices, alpha_masks,df_alpha_list,\
+                beta_sequences, beta_matrices, beta_masks,df_beta_list = pickle.load(f)
 
         max_max_diff = []
         max_mean_diff = []
@@ -3405,7 +3407,9 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                                  min_size=min_size, edgecolor=edgecolor, edgewidth=edgewidth,background_color=background_color)
             plt.tight_layout()
 
-        return ax
+        self.df_alpha_list = df_alpha_list
+        self.df_beta_list = df_beta_list
+        return fig,ax
 
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,split_by_sample=False):
