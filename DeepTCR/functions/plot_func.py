@@ -13,7 +13,8 @@ def get_max_val(matrices, masks):
         diff = matrices[ii] - obs_val[:, np.newaxis]
         max_max_diff.append(np.max(np.max(np.abs(diff), 1)))
         max_mean_diff.append(np.max(np.mean(np.abs(diff), 1)))
-    return np.max(max_max_diff),np.max(max_mean_diff)
+    # return np.max(max_max_diff),np.max(max_mean_diff)
+    return max_max_diff,max_mean_diff
 
 def sensitivity_logo(sequences,matrices,masks,ax=None,low_color='red',medium_color='white',high_color='blue',
                      font_name='Times New Roman',cmap=None,max_max_diff=None,max_mean_diff=None,
@@ -22,6 +23,8 @@ def sensitivity_logo(sequences,matrices,masks,ax=None,low_color='red',medium_col
     sequences = np.flip(sequences,axis=0)
     matrices = np.flip(matrices,axis=0)
     masks = np.flip(masks,axis=0)
+    max_mean_diff = np.flip(max_mean_diff,axis=0)
+    max_max_diff = np.flip(max_max_diff,axis=0)
 
     if max_max_diff is None:
         max_max_diff,max_mean_diff = get_max_val(matrices,masks)
@@ -52,9 +55,8 @@ def sensitivity_logo(sequences,matrices,masks,ax=None,low_color='red',medium_col
         obs_val = matrices[ii] * masks[ii]
         obs_val = obs_val[np.nonzero(obs_val)]
         diff = matrices[ii] - obs_val[:, np.newaxis]
-        dir = np.mean(diff, 1)/max_mean_diff
-        mag = np.max(np.abs(diff), 1)/max_max_diff
-
+        dir = np.mean(diff, 1)/max_mean_diff[ii]
+        mag = np.max(np.abs(diff), 1)/max_max_diff[ii]
         for jj, (m,d, c) in enumerate(zip(mag,dir, sequence), 0):
             color = cmap(norm(d))[0:3]
             if m < min_size:

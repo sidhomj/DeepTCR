@@ -3238,8 +3238,9 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                                  figsize=(10,8),low_color='red',medium_color='white',high_color='blue',
                                     font_name='Times New Roman',class_sel=None,
                                  cmap=None,min_size=0.0,edgecolor='black',edgewidth=0.25,background_color='white',
-                                 Load_Prev_Data=False):
+                                 Load_Prev_Data=False,norm_to_seq=True):
 
+        self.model_type, get = load_model_data(self)
         if Load_Prev_Data is False:
             if p is None:
                 p = Pool(40)
@@ -3279,8 +3280,6 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
             if hla is None:
                 hla = np.array([None]*len_input)
-
-            self.model_type,get = load_model_data(self)
 
             alpha_matrices = []
             alpha_masks = []
@@ -3379,8 +3378,14 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             max_max_diff.append(max_max_diff_beta)
             max_mean_diff.append(max_mean_diff_beta)
 
-        max_max_diff = np.max(max_max_diff)
-        max_mean_diff = np.max(max_mean_diff)
+        if norm_to_seq:
+            max_max_diff = np.max(np.vstack(max_max_diff),0)
+            max_mean_diff = np.max(np.vstack(max_mean_diff),0)
+        else:
+            max_max_diff = np.max(max_max_diff)
+            max_mean_diff = np.max(max_mean_diff)
+            max_max_diff = np.array([max_max_diff]*len(alpha_sequences))
+            max_mean_diff = np.array([max_mean_diff]*len(alpha_sequences))
 
         if self.use_alpha & self.use_beta:
             fig, ax = plt.subplots(1, 2, figsize=figsize,facecolor=background_color)
