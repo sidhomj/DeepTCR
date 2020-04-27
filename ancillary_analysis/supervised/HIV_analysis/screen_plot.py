@@ -57,7 +57,27 @@ class_dict = {}
 for n,g in zip(group_name,group):
     for e in g:
         class_dict[e] = n
+df_screen['Epitope Family'] = df_screen['epitope'].map(class_dict)
+df_screen.to_csv('screen_plot.csv',index=False)
 
-df_screen['group'] = df_screen['epitope'].map(class_dict)
-sns.scatterplot(data=df_screen,x='pred_diff',y='auc',hue='group',s=100)
+ax = sns.scatterplot(data=df_screen,x='pred_diff',y='auc',hue='Epitope Family',s=100,hue_order=group_name)
+# ax = sns.scatterplot(data=df_screen,x='proportion',y='auc',hue='Epitope Family',s=100,hue_order=group_name)
+plt.axhline(0.90,color='grey',linewidth=3,linestyle='dashed')
+handles, labels = ax.get_legend_handles_labels()
+ax.legend(handles=handles[1:], labels=labels[1:])
+# plt.legend(prop={'size': 18}, loc='lower right', frameon=False)
+plt.setp(plt.gca().get_legend().get_texts(), fontsize='18')
+ax.get_legend().draw_frame(False)
+plt.xlabel('Delta Prediction', fontsize=24)
+plt.ylabel('AUC', fontsize=24)
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.subplots_adjust(bottom=0.15,left=0.15)
+plt.savefig('screen.eps')
+
+
+# df_screen.sort_values(by='pred_diff',inplace=True,ascending=False)
 df_screen.sort_values(by='pred_diff',inplace=True,ascending=False)
+df_screen.reset_index(drop=True,inplace=True)
+
+df_sel = df_screen[df_screen['auc'] > 0.90]
