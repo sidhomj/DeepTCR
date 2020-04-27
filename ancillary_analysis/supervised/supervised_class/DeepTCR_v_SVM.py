@@ -17,7 +17,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 DTCRS = DeepTCR_SS('Sequence_C')
-DTCRS.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
+DTCRS.Get_Data(directory='../../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 kmer_features = kmer_search(DTCRS.beta_sequences)
 clf_svm = SVC(probability=True)
