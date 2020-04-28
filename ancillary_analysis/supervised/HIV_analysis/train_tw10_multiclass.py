@@ -2,7 +2,7 @@ from DeepTCR.DeepTCR import DeepTCR_WF, DeepTCR_SS
 import glob
 import os
 import numpy as np
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, roc_curve
 from multiprocessing import Pool
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
@@ -46,8 +46,25 @@ count_train = np.hstack(count_train)
 DTCR = DeepTCR_SS('tw10_seq',device=gpu)
 DTCR.Load_Data(beta_sequences=seq_train,class_labels=label_train)
 DTCR.Monte_Carlo_CrossVal(folds=folds,graph_seed=graph_seed,seeds=seeds,convergence='training')
-DTCR.AUC_Curve(xlabel_size=24,ylabel_size=24,xtick_size=18,ytick_size=18,legend_font_size=8,frameon=False,
-                diag_line=False)
+y_pred = DTCR.predicted
+y_test = DTCR.Y
+plt.figure(figsize=(6,5))
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+for ii,cl in enumerate(DTCR.lb.classes_,0):
+    fpr,tpr,_ = roc_curve(y_test[:,ii],y_pred[:,ii])
+    roc_score = roc_auc_score(y_test[:,ii],y_pred[:,ii])
+    label = '%s = %0.3f'  % (cl,roc_score)
+    plt.plot(fpr,tpr,lw=2,label=label)
+plt.legend(loc='lower right', frameon=False,prop={'size': 10})
+ax = plt.gca()
+ax.xaxis.label.set_size(24)
+ax.yaxis.label.set_size(24)
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.subplots_adjust(bottom=0.15,left=0.15)
 plt.savefig('multiclass_roc.eps')
 
 #Learn UMAP
@@ -111,3 +128,4 @@ rep_seq = DTCR.Rep_Seq[test_peptide]['beta'][0:10]
 DTCR.Residue_Sensitivity_Logo(beta_sequences=np.array(rep_seq),models=models,
                                 class_sel=test_peptide,Load_Prev_Data=False,background_color='black',
                               edgewidth=0.0,figsize=(3,4),min_size=0.25,norm_to_seq=True)
+plt.savefig(test_peptide+'.png',dpi=1200)
