@@ -65,7 +65,7 @@ ax.yaxis.label.set_size(24)
 plt.xticks(fontsize=18)
 plt.yticks(fontsize=18)
 plt.subplots_adjust(bottom=0.15,left=0.15)
-plt.savefig('multiclass_roc.eps')
+plt.savefig('multiclass_roc.png',dpi=1200)
 
 #Learn UMAP
 X_2 = umap.UMAP().fit_transform(DTCR.predicted)
@@ -101,7 +101,7 @@ for ii,l in enumerate(DTCR.lb.classes_,0):
     x = X_2[sel_idx,0]
     y = X_2[sel_idx,1]
     x,y,c,_,_ = GKDE(x,y)
-    ax.scatter(x,y,c=c,cmap='jet',s=20)
+    ax.scatter(x,y,c=c,cmap='jet',s=100)
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     ax.set_title(l,fontsize=36)
