@@ -46,7 +46,9 @@ count_train = np.hstack(count_train)
 DTCR = DeepTCR_SS('tw10_seq',device=gpu)
 DTCR.Load_Data(beta_sequences=seq_train,class_labels=label_train)
 DTCR.Monte_Carlo_CrossVal(folds=folds,graph_seed=graph_seed,seeds=seeds,convergence='training')
-DTCR.AUC_Curve()
+DTCR.AUC_Curve(xlabel_size=24,ylabel_size=24,xtick_size=18,ytick_size=18,legend_font_size=8,frameon=False,
+                diag_line=False)
+plt.savefig('multiclass_roc.eps')
 
 #Learn UMAP
 X_2 = umap.UMAP().fit_transform(DTCR.predicted)
