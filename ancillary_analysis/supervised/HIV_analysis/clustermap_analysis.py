@@ -6,11 +6,11 @@ import numpy as np
 
 
 file = 'aucs_gagtw10.pkl'
-file = 'aucs_gagiw9.pkl'
-file = 'aucs_gagkk15.pkl'
-file = 'aucs_nefkf9.pkl'
-file = 'aucs_nefhw9.pkl'
-file = 'aucs_nefyt9.pkl'
+# file = 'aucs_gagiw9.pkl'
+# file = 'aucs_gagkk15.pkl'
+# file = 'aucs_nefkf9.pkl'
+# file = 'aucs_nefhw9.pkl'
+# file = 'aucs_nefyt9.pkl'
 
 with open(file,'rb') as f:
     aucs,group = pickle.load(f)

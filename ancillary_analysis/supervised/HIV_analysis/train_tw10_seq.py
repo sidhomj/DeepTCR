@@ -2,15 +2,10 @@ from DeepTCR.DeepTCR import DeepTCR_WF
 import glob
 import os
 import numpy as np
-from sklearn.metrics import roc_auc_score
 from multiprocessing import Pool
-import matplotlib.pyplot as plt
-from scipy.stats import gaussian_kde
-import seaborn as sns
-import pandas as pd
 import pickle
 
-gpu = 1
+gpu = 0
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 folds=100
@@ -40,24 +35,14 @@ sample_labels = DTCR.sample_id[idx]
 counts = DTCR.counts[idx]
 class_labels  = np.array([label_dict[x] for x in sample_labels])
 
-group_1 = ['TSNLQEQIAW', 'TSNLQEQIGW', 'TSTLAEQIAW', 'TSTLAEQMAW',
+group = ['TSTLAEQIAW', 'TSTLAEQMAW',
        'TSTLAEQVAW', 'TSTLQEQIEW', 'TSTLQEQIGW', 'TSTLSEQIAW',
        'TSTLSEQVAW', 'TSTLTEQIAW', 'TSTLTEQVAW', 'TSTLVEQIAW']
-group_2 = ['ISPRTLNAW', 'MSPRTLNAW']
-group_3 =  ['KIRLRPGGKKKYKLK', 'KIRLRPGGKKRYKLK']
-group_4 = ['KAALDLSHF','KAAVDLSHF', 'KGALDLSHF','KSALDLSHF','TAALDMSHF']
-group_5 = ['HTQGYFPDW','NTQGYFPDW']
-group_6 =  ['FFPDWQNYT','YFPDWQNYT']
-
-
-group = np.hstack([group_1,group_2,group_3,group_4,group_5,group_6])
-
 p = Pool(40)
-aucs = []
-pred_diff = []
-predicted = []
 sequences = []
-proportion = []
+seq_class_labels = []
+predicted = []
+seq_counts = []
 for ii in range(len(group)):
     label_keep = np.array([group[ii], 'CEF','NoPeptide','AY9'])
     idx = np.isin(class_labels, label_keep)
@@ -73,19 +58,13 @@ for ii in range(len(group)):
                               LOO=2, combine_train_valid=True, num_concepts=64,
                               convergence='training',train_loss_min=0.1)
     c = np.where(DTCR.lb.classes_ == group[ii])[0][0]
-    aucs.append(roc_auc_score(DTCR.y_test[:,c],DTCR.y_pred[:,c]))
-    idx_pos = DTCR.y_test[:, c] == 1
-    mag = np.mean(DTCR.y_pred[idx_pos, c]) - np.mean(DTCR.y_pred[~idx_pos, c])
-    pred_diff.append(mag)
-    predicted.append(DTCR.predicted[:,c])
-    sequences.append(DTCR.beta_sequences)
+    sel_idx = (group[ii] == DTCR.class_id)
+    seq = DTCR.beta_sequences[sel_idx]
+    pred = DTCR.predicted[sel_idx,c]
+    sequences.append(seq)
+    seq_class_labels.append(DTCR.class_id[sel_idx])
+    predicted.append(pred)
+    seq_counts.append(DTCR.counts[sel_idx])
 
-p.close()
-p.join()
-df_auc = pd.DataFrame()
-df_auc['epitope'] = group
-df_auc['auc'] = aucs
-df_auc['pred_diff'] = pred_diff
-df_auc.to_csv('screen.csv',index=False)
-with open('screen.pkl','wb') as f:
-    pickle.dump([df_auc,sequences,predicted],f,protocol=4)
+with open('tw10_seq.pkl','wb') as f:
+    pickle.dump([sequences,seq_class_labels,predicted,seq_counts],f,protocol=4)
