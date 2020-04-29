@@ -68,12 +68,8 @@ import pickle
 with open('aucs_gagiw9.pkl','wb') as f:
     pickle.dump([aucs,preds,group],f,protocol=4)
 
-df_preds = pd.DataFrame()
-df_preds['y_test'] = DTCR.y_test[:,0]
-df_preds['y_pred'] = DTCR.y_pred[:,0]
+ii = 0
 import seaborn as sns
-sns.violinplot(data=df_preds,x='y_test',y='y_pred',cut=0)
-
 #Preds Distribution
 import matplotlib.pyplot as plt
 test_peptide = group[jj]
@@ -93,3 +89,4 @@ plt.xticks(size=18)
 plt.yticks(size=18)
 plt.ylim([0,1])
 plt.subplots_adjust(left=0.15)
+plt.savefig('GAGIW9_preds.png',dpi=1200)
