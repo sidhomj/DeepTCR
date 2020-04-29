@@ -3234,11 +3234,120 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             return df_alpha,df_beta
 
     def Residue_Sensitivity_Logo(self,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
-                                v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10000,models=None,
+                                v_alpha=None, j_alpha=None, hla=None,p=None, batch_size=10000,models=None,
                                  figsize=(10,8),low_color='red',medium_color='white',high_color='blue',
                                     font_name='Times New Roman',class_sel=None,
                                  cmap=None,min_size=0.0,edgecolor='black',edgewidth=0.25,background_color='white',
                                  Load_Prev_Data=False,norm_to_seq=True):
+        """
+        Create Residue Sensitivity Logos
+
+        This method allows the user to create Residue Sensitivity Logos where a set of provided sequences is perturbed
+        to assess for position of the CDR3 sequence that if altered, would change the predicted specificity or affinity
+        of the sequence (depending on whether training classification or regression task).
+
+        Residue Sensitivity Logos can be created from any supervised model (including sequence and repertoire classifiers).
+        Following the training of one of these models, one can feed into this method an cdr3 sequence defined by all/any
+        of alpha/beta cdr3 sequence, V/D/J gene usage, and HLA context within which the TCR was seen.
+
+        The output is a logo created by LogoMaker where the size of the character denotes how sensitive this position
+        is to perturbation and color denotes the consequences of changes at this site. As default, red coloration means
+        changes at this site would generally decrease the predicted value and blue coloration means changes at this site
+        would increase the predicted value.
+
+        Inputs
+        ---------------------------------------
+
+        alpha_sequences: ndarray of strings
+            A 1d array with the sequences for inference for the alpha chain.
+
+        beta_sequences: ndarray of strings
+            A 1d array with the sequences for inference for the beta chain.
+
+        v_beta: ndarray of strings
+            A 1d array with the v-beta genes for inference.
+
+        d_beta: ndarray of strings
+            A 1d array with the d-beta genes for inference.
+
+        j_beta: ndarray of strings
+            A 1d array with the j-beta genes for inference.
+
+        v_alpha: ndarray of strings
+            A 1d array with the v-alpha genes for inference.
+
+        j_alpha: ndarray of strings
+            A 1d array with the j-alpha genes for inference.
+
+        hla: ndarray of tuples/arrays
+            To input the hla context for each sequence fed into DeepTCR, this will need to formatted
+            as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring
+            to the alleles seen for that sequence.
+                ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+
+        p: multiprocessing pool object
+            a pre-formed pool object can be passed to method for multiprocessing tasks.
+
+        batch_size: int
+            Batch size for inference.
+
+        models: list
+            In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals),
+            one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in
+            Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the
+            distribution of outputs for the user.
+
+        figsize: tuple
+            This specifies the dimensions of the logo.
+
+        low_color: str
+            The color to use when changes at this site would largely result in decreased prediction values.
+
+        medium_color: str
+            The color to use when changes at this site would result in either decreased or inreased prediction values.
+
+        high_color: str
+            The color to use when changes at this site would result in increased prediction values.
+
+        font_name: str
+            The font to use for LogoMaker.
+
+        class_sel: str
+            In the case of a model being trained in a multi-class fashion, one must select which class to make the
+            logo for.
+
+        cmap: matplotlib cmap
+            One can alsp provide custom cmap for logomaker that will be used to denote changes at sites that result
+            in increased of decreased prediction values.
+
+        min_size: float (0.0 - 1.0)
+            Some residues may have such little change with any perturbation that the character would be difficult to
+            read. To set a minimum size for a residue, one can set this parameter to a value between 0 and 1.
+
+        edgecolor: str
+            The color of the edge of the characters of the logo.
+
+        edgewidth: float
+            The thickness of the edge of the characters.
+
+        background_color: str
+            The background color of the logo.
+
+        norm_to_seq: bool
+            When determining the color intensity of the logo, one can choose to normalize the value to just characters
+            in that sequence (True) or one can choose to normalize to all characters in the sequences provdied (False).
+
+        Load_Prev_Data: bool
+            Since the first part of the method runs a time-intensive step to get all the predictions for all perturbations
+            at all residue sites, we've incorporated a paramter which can be set to True following running the method once
+            in order to adjust the visual aspects of the plot. Therefore, one should run this method first setting this parameter
+            to False (it's default setting) but then switch to True and run again with different visualization parameters
+            (i.e. figsize, etc).
+
+        Returns
+        ---------------------------------------
+        (fig,ax) - the matplotlib figure and axis/axes.
+        """
 
         self.model_type, get = load_model_data(self)
         if Load_Prev_Data is False:
@@ -3439,9 +3548,6 @@ class DeepTCR_SS(DeepTCR_S_base):
             In the case one wants to train the single sequence classifer but not to mix the train/test
             sets with sequences from different samples, one can set this parameter to True to do the train/test
             splits by sample.
-
-        Returns
-        ---------------------------------------
 
         """
         Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.sample_id,self.class_id,self.seq_index,
