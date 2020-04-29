@@ -3958,7 +3958,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
         self._train(batch_seed=batch_seed,iteration=0)
 
-    def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,split_by_sample=False,seeds=None,
+    def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,split_by_sample=False,combine_train_valid=False,seeds=None,
                              kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                              num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
                              use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
@@ -3994,6 +3994,15 @@ class DeepTCR_SS(DeepTCR_S_base):
             In the case one wants to train the single sequence classifer but not to mix the train/test
             sets with sequences from different samples, one can set this parameter to True to do the train/test
             splits by sample.
+
+        combine_train_valid: bool
+            To combine the training and validation partitions into one which will be used for training
+            and updating the model parameters, set this to True. This will also set the validation partition
+            to the test partition. In other words, new train set becomes (original train + original valid) and then
+            new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
+            to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
+            to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
+            when to stop training will be based on the test data (which is considered a form of over-fitting).
 
         seeds: nd.array
             In order to set a deterministic train/test split over the Monte-Carlo Simulations, one can provide an array
@@ -4144,7 +4153,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                 print(i)
             if seeds is not None:
                 np.random.seed(seeds[i])
-            self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,split_by_sample=split_by_sample)
+            self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,split_by_sample=split_by_sample,combine_train_valid=combine_train_valid)
             self._train(batch_seed=batch_seed,iteration=i)
 
             y_test.append(self.y_test)
@@ -4171,7 +4180,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
 
-    def K_Fold_CrossVal(self,folds=None,split_by_sample=False,seeds=None,
+    def K_Fold_CrossVal(self,folds=None,split_by_sample=False,combine_train_valid=False,seeds=None,
                         kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                         num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
                         use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
@@ -4199,6 +4208,15 @@ class DeepTCR_SS(DeepTCR_S_base):
             In the case one wants to train the single sequence classifer but not to mix the train/test
             sets with sequences from different samples, one can set this parameter to True to do the train/test
             splits by sample.
+
+        combine_train_valid: bool
+            To combine the training and validation partitions into one which will be used for training
+            and updating the model parameters, set this to True. This will also set the validation partition
+            to the test partition. In other words, new train set becomes (original train + original valid) and then
+            new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
+            to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
+            to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
+            when to stop training will be based on the test data (which is considered a form of over-fitting).
 
         seeds: nd.array
             In order to set a deterministic train/test split over the K-Fold Simulations, one can provide an array
@@ -4407,6 +4425,10 @@ class DeepTCR_SS(DeepTCR_S_base):
                                                                train_idx=train_idx,
                                                                valid_idx = valid_idx,
                                                                test_idx = test_idx[ii],Y=self.Y)
+            if combine_train_valid:
+                for i in range(len(self.train)):
+                    self.train[i] = np.concatenate((self.train[i], self.valid[i]), axis=0)
+                    self.valid[i] = self.test[i]
 
             self.LOO = None
             self._train(batch_seed=batch_seed,iteration=ii)
