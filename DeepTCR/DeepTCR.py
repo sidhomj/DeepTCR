@@ -3526,7 +3526,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         return fig,ax
 
 class DeepTCR_SS(DeepTCR_S_base):
-    def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,split_by_sample=False):
+    def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,split_by_sample=False,combine_train_valid=False):
         """
         Train/Valid/Test Splits.
 
@@ -3548,6 +3548,15 @@ class DeepTCR_SS(DeepTCR_S_base):
             In the case one wants to train the single sequence classifer but not to mix the train/test
             sets with sequences from different samples, one can set this parameter to True to do the train/test
             splits by sample.
+
+        combine_train_valid: bool
+            To combine the training and validation partitions into one which will be used for training
+            and updating the model parameters, set this to True. This will also set the validation partition
+            to the test partition. In other words, new train set becomes (original train + original valid) and then
+            new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
+            to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
+            to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
+            when to stop training will be based on the test data (which is considered a form of over-fitting).
 
         """
         Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.sample_id,self.class_id,self.seq_index,
@@ -3580,6 +3589,11 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         if (self.valid[0].size == 0) or (self.test[0].size == 0):
             raise Exception('Choose different train/valid/test parameters!')
+
+        if combine_train_valid:
+            for i in range(len(self.train)):
+                self.train[i] = np.concatenate((self.train[i],self.valid[i]),axis=0)
+                self.valid[i] = self.test[i]
 
     def _reset_models(self):
         self.models_dir = os.path.join(self.Name,'models')
