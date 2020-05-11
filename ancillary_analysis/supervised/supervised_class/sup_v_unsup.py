@@ -77,7 +77,8 @@ df_comp.to_csv(os.path.join(dir_results,'df_comp.csv'))
 
 df_comp = pd.read_csv(os.path.join(dir_results,'df_comp.csv'))
 
-sns.violinplot(data=df_comp,x='Class',y='AUC',hue='Method',cut=0)
+fig,ax = plt.subplots(figsize=(15,10))
+sns.violinplot(data=df_comp,x='Class',y='AUC',hue='Method',cut=0,ax=ax)
 plt.xticks(rotation=45)
 plt.xlabel('')
 plt.ylabel('AUC',fontsize=32)
@@ -90,6 +91,7 @@ ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 ax.tick_params(axis="x", labelsize=20)
 ax.tick_params(axis='y', labelsize=20)
+plt.savefig('sup_v_unsup.eps')
 
 
 names = ['VAE-Seq','VAE-VDJ','VAE-Seq-VDJ','Sup-Seq','Sup-VDJ','Sup-Seq-VDJ']

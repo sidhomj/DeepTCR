@@ -64,3 +64,5 @@ def sensitivity_logo(sequences,matrices,masks,ax=None,low_color='red',medium_col
             ceiling = ii + m
             logomaker.Glyph(p=xticks[jj], c=c, floor=ii, ceiling=ceiling, ax=ax, color=color, vpad=0.1,
                             font_name=font_name,edgecolor=edgecolor,edgewidth=edgewidth)
+
+    return dir, mag

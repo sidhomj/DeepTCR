@@ -3498,11 +3498,11 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         if self.use_alpha & self.use_beta:
             fig, ax = plt.subplots(1, 2, figsize=figsize,facecolor=background_color)
-            sensitivity_logo(alpha_sequences,alpha_matrices,alpha_masks,ax=ax[0],
+            dir_alpha, mag_alpha = sensitivity_logo(alpha_sequences,alpha_matrices,alpha_masks,ax=ax[0],
                              low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
                              cmap=cmap,max_max_diff=max_max_diff,max_mean_diff=max_mean_diff,
                              min_size=min_size,edgecolor=edgecolor,edgewidth=edgewidth,background_color=background_color)
-            sensitivity_logo(beta_sequences,beta_matrices,beta_masks,ax=ax[1],
+            dir_beta, mag_beta = sensitivity_logo(beta_sequences,beta_matrices,beta_masks,ax=ax[1],
                              low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
                              cmap=cmap,max_max_diff=max_max_diff,max_mean_diff=max_mean_diff,
                              min_size=min_size,edgecolor=edgecolor,edgewidth=edgewidth,background_color=background_color)
@@ -3510,12 +3510,12 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         else:
             fig, ax = plt.subplots(figsize=figsize,facecolor=background_color)
             if self.use_alpha:
-                sensitivity_logo(alpha_sequences, alpha_matrices, alpha_masks, ax=ax,
+                dir_alpha, mag_alpha = sensitivity_logo(alpha_sequences, alpha_matrices, alpha_masks, ax=ax,
                                  low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
                                  cmap=cmap, max_max_diff=max_max_diff, max_mean_diff=max_mean_diff,
                                  min_size=min_size, edgecolor=edgecolor, edgewidth=edgewidth,background_color=background_color)
             if self.use_beta:
-                sensitivity_logo(beta_sequences, beta_matrices, beta_masks, ax=ax,
+                dir_beta, mag_beta = sensitivity_logo(beta_sequences, beta_matrices, beta_masks, ax=ax,
                                  low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
                                  cmap=cmap, max_max_diff=max_max_diff, max_mean_diff=max_mean_diff,
                                  min_size=min_size, edgecolor=edgecolor, edgewidth=edgewidth,background_color=background_color)
@@ -3523,6 +3523,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         self.df_alpha_list = df_alpha_list
         self.df_beta_list = df_beta_list
+        self.dir_beta,self.mag_beta,self.dir_alpha,self.mag_alpha = dir_beta,mag_beta,dir_alpha,mag_alpha
         return fig,ax
 
 class DeepTCR_SS(DeepTCR_S_base):

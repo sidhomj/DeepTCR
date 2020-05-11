@@ -6,7 +6,7 @@ from sklearn.metrics import roc_auc_score
 from multiprocessing import Pool
 import pandas as pd
 
-gpu = 2
+gpu = 3
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 folds=100
