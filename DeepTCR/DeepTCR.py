@@ -4572,7 +4572,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12,
                drop_out_rate=0.0,multisample_dropout=False, multisample_dropout_rate = 0.50,multisample_dropout_num_masks = 64,
                batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,
-              accuracy_min = None,train_loss_min=None,hinge_loss_t=0.0,convergence='validation',learning_rate=0.001, suppress_output=False):
+              accuracy_min = None,train_loss_min=None,hinge_loss_t=0.0,convergence='validation',learning_rate=0.001, suppress_output=False,
+               loss_criteria='mean'):
 
         graph_model = tf.Graph()
         GO = graph_object()
@@ -4639,20 +4640,27 @@ class DeepTCR_WF(DeepTCR_S_base):
                 per_sample_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits)
                 per_sample_loss = per_sample_loss - hinge_loss_t
                 per_sample_loss = tf.cast((per_sample_loss > 0),tf.float32) * per_sample_loss
+                if loss_criteria == 'mean':
+                    loss_func = tf.reduce_mean
+                elif loss_criteria == 'max':
+                    loss_func = tf.reduce_max
+                elif loss_criteria == 'min':
+                    loss_func = tf.reduce_min
+
                 if weight_by_class is True:
                     #class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
                     weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
-                    GO.loss = tf.reduce_mean(weights * per_sample_loss)
+                    GO.loss = loss_func(weights * per_sample_loss)
                 elif class_weights is not None:
                     weights = np.zeros([1,len(self.lb.classes_)]).astype(np.float32)
                     for key in class_weights:
                         weights[:,self.lb.transform([key])[0]]=class_weights[key]
                     class_weights = tf.constant(weights)
                     weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
-                    GO.loss = tf.reduce_mean(weights * per_sample_loss)
+                    GO.loss = loss_func(weights * per_sample_loss)
                 else:
-                    GO.loss = tf.reduce_mean(per_sample_loss)
+                    GO.loss = loss_func(per_sample_loss)
 
                 var_train = tf.trainable_variables()
                 GO.reg_losses = tf.losses.get_regularization_loss()
@@ -4810,6 +4818,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                drop_out_rate=0.0,multisample_dropout=False, multisample_dropout_rate = 0.50,multisample_dropout_num_masks = 64,
                batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,
               accuracy_min = None,train_loss_min=None,hinge_loss_t=0.0,convergence='validation',learning_rate=0.001, suppress_output=False,
+              loss_criteria='mean',
               batch_seed = None):
 
         """
@@ -4991,7 +5000,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                qualitative_agg, quantitative_agg, num_agg_layers, units_agg,
                drop_out_rate,multisample_dropout, multisample_dropout_rate,multisample_dropout_num_masks,
                batch_size,batch_size_update, epochs_min,stop_criterion,stop_criterion_window,
-              accuracy_min,train_loss_min,hinge_loss_t,convergence,learning_rate, suppress_output)
+              accuracy_min,train_loss_min,hinge_loss_t,convergence,learning_rate, suppress_output,
+                    loss_criteria)
         self._train(write=True,batch_seed=batch_seed,iteration=0)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,combine_train_valid=False,random_perm=False,seeds=None,
@@ -5002,6 +5012,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                              drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50,multisample_dropout_num_masks=64,
                              batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
                              accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation',learning_rate=0.001, suppress_output=False,
+                             loss_criteria='mean',
                              batch_seed=None):
 
         """
@@ -5222,7 +5233,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                     qualitative_agg, quantitative_agg, num_agg_layers, units_agg,
                     drop_out_rate, multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                     batch_size, batch_size_update, epochs_min, stop_criterion, stop_criterion_window,
-                    accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
+                    accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output,
+                    loss_criteria)
 
         for i in range(0, folds):
             if suppress_output is False:
@@ -5277,6 +5289,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                         drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50, multisample_dropout_num_masks=64,
                         batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
                         accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
+                        loss_criteria='mean',
                         batch_seed=None):
 
         """
@@ -5506,7 +5519,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                     qualitative_agg, quantitative_agg, num_agg_layers, units_agg,
                     drop_out_rate, multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                     batch_size, batch_size_update, epochs_min, stop_criterion, stop_criterion_window,
-                    accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
+                    accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output,
+                    loss_criteria)
 
         y_test = []
         y_pred = []
