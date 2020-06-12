@@ -98,7 +98,10 @@ def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None)
                     train_idx,test_idx,Y_train,_ = custom_train_test_split(idx,Y,test_size=LOO,stratify=np.argmax(Y,1))
 
                 if LOO == 1:
-                    valid_idx = np.random.choice(train_idx[np.argmax(Y[train_idx],1)==l_t],LOO, replace=False)[0]
+                    try:
+                        valid_idx = np.random.choice(train_idx[np.argmax(Y[train_idx],1)==l_t],LOO, replace=False)[0]
+                    except:
+                        valid_idx = np.random.choice(train_idx,LOO,replace=False)[0]
                     train_idx = np.setdiff1d(train_idx, valid_idx)
                 elif LOO < Y.shape[1]:
                     valid_idx = np.random.choice(train_idx, LOO, replace=False)
