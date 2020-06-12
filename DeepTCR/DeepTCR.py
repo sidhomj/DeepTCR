@@ -3588,13 +3588,14 @@ class DeepTCR_SS(DeepTCR_S_base):
             self.valid = [x[self.valid_idx] for x in Vars]
             self.test = [x[self.test_idx] for x in Vars]
 
-        if (self.valid[0].size == 0) or (self.test[0].size == 0):
-            raise Exception('Choose different train/valid/test parameters!')
-
         if combine_train_valid:
             for i in range(len(self.train)):
                 self.train[i] = np.concatenate((self.train[i],self.valid[i]),axis=0)
                 self.valid[i] = self.test[i]
+
+        if (self.valid[0].size == 0) or (self.test[0].size == 0):
+            raise Exception('Choose different train/valid/test parameters!')
+
 
     def _reset_models(self):
         self.models_dir = os.path.join(self.Name,'models')
