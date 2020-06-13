@@ -3523,7 +3523,12 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         self.df_alpha_list = df_alpha_list
         self.df_beta_list = df_beta_list
-        self.dir_beta,self.mag_beta,self.dir_alpha,self.mag_alpha = dir_beta,mag_beta,dir_alpha,mag_alpha
+
+        if self.use_alpha:
+            self.dir_alpha, self.mag_alpha = dir_alpha, mag_alpha
+        if self.use_beta:
+            self.dir_beta,self.mag_beta = dir_beta, mag_beta
+
         return fig,ax
 
 class DeepTCR_SS(DeepTCR_S_base):
