@@ -596,9 +596,11 @@ class DeepTCR_base(object):
             A 1d array with the frequencies for each sequence, in the case they come from samples.
 
         Y: ndarray of float values
-            In the case one wants to regress TCR sequences against a numerical label, one can provide
-            these numerical values for this input. As of latest release, regression is only available
-            for sequence classifier.
+            In the case one wants to regress TCR sequences or repertoires against a numerical label, one can provide
+            these numerical values for this input. For the TCR sequence regressor, each sequence will be regressed to
+            the value denoted for each sequence. For the TCR repertoire regressor, the average of all instance level values
+            will be used to regress the sample. Therefore, if there is one sample level value for regression, one would just
+            repeat that same value for all the instances/sequences of the sample.
 
         hla: ndarray of tuples/arrays
             To input the hla context for each sequence fed into DeepTCR, this will need to formatted
@@ -2947,6 +2949,53 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         df_out.to_csv(os.path.join(self.directory_results,'AUC.csv'),index=False)
         self.AUC_DF = df_out
 
+    def SRCC(self, s=10, kde=False, title=None):
+        """
+        Spearman's Rank Correlation Coefficient Plot
+
+        In the case one is doing a regression-based model for the sequence classiifer,
+        one can plot the predicted vs actual labeled value with this method. The method
+        returns a plot for the regression and a value of the correlation coefficient.
+
+        Inputs
+        ---------------------------------------
+        s: int
+            size of points for scatterplot
+
+        kde: bool
+            To do a kernel density estimation per point and plot this as a color-scheme,
+            set to True. Warning: this option will take longer to run.
+
+        title: str
+            Title for the plot.
+
+        Returns
+        ---------------------------------------
+        corr: float
+            Spearman's Rank Correlation Coefficient
+
+        ax: matplotlib axis
+            axis on which plot is drawn
+        """
+        x, y = np.squeeze(self.y_pred, -1), np.squeeze(self.y_test, -1)
+        corr, _ = spearmanr(x, y)
+
+        fig, ax = plt.subplots()
+        if kde:
+            xy = np.vstack([x, y])
+            z = gaussian_kde(xy)(xy)
+            r = np.argsort(z)
+            x, y, z = x[r], y[r], z[r]
+            ax.scatter(x, y, s=s, c=z, cmap=plt.cm.jet)
+        else:
+            ax.scatter(x, y, s=s)
+
+        ax.set_xlabel('Predicted')
+        ax.set_ylabel('Actual')
+        if title is not None:
+            plt.title(title)
+        return corr, ax
+
     def Representative_Sequences(self,top_seq=10,motif_seq=5,make_seq_logos=True,
                                  color_scheme='weblogo_protein',logo_file_format='.eps'):
         """
@@ -4463,52 +4512,6 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         print('K-fold Cross Validation Completed')
 
-    def SRCC(self,s=10,kde=False,title=None):
-        """
-        Spearman's Rank Correlation Coefficient Plot
-
-        In the case one is doing a regression-based model for the sequence classiifer,
-        one can plot the predicted vs actual labeled value with this method. The method
-        returns a plot for the regression and a value of the correlation coefficient.
-
-        Inputs
-        ---------------------------------------
-        s: int
-            size of points for scatterplot
-        
-        kde: bool
-            To do a kernel density estimation per point and plot this as a color-scheme,
-            set to True. Warning: this option will take longer to run.
-
-        title: str
-            Title for the plot.
-
-        Returns
-        ---------------------------------------
-        corr: float
-            Spearman's Rank Correlation Coefficient
-
-        ax: matplotlib axis
-            axis on which plot is drawn
-        """
-        x,y = np.squeeze(self.y_pred,-1), np.squeeze(self.y_test,-1)
-        corr, _ = spearmanr(x,y)
-
-        fig,ax = plt.subplots()
-        if kde:
-            xy = np.vstack([x, y])
-            z = gaussian_kde(xy)(xy)
-            r = np.argsort(z)
-            x, y, z = x[r], y[r], z[r]
-            ax.scatter(x, y, s=s, c=z, cmap=plt.cm.jet)
-        else:
-            ax.scatter(x,y,s=s)
-
-        ax.set_xlabel('Predicted')
-        ax.set_ylabel('Actual')
-        if title is not None:
-            plt.title(title)
-        return corr, ax
 
 class DeepTCR_WF(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,combine_train_valid=False,random_perm=False):
@@ -4547,7 +4550,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         """
         Y = []
         for s in self.sample_list:
-            Y.append(self.Y[np.where(self.sample_id==s)[0][0]])
+            Y.append(np.array([np.mean(self.Y[np.where(self.sample_id == s)[0]])]))
         Y = np.vstack(Y)
         if random_perm:
             np.random.shuffle(Y)
@@ -4634,60 +4637,74 @@ class DeepTCR_WF(DeepTCR_S_base):
                         GO.Features_Agg = tf.layers.dropout(GO.Features_Agg, GO.prob)
                         GO.Features_Agg = tf.layers.dense(GO.Features_Agg, units_agg, tf.nn.relu)
 
-                if multisample_dropout:
-                    GO.logits = MultiSample_Dropout(GO.Features_Agg,
-                                                    num_masks=multisample_dropout_num_masks,
-                                                    units=self.Y.shape[1],
-                                                    activation=None,
-                                                    rate=GO.prob_multisample)
-                else:
-                    GO.logits = tf.layers.dense(GO.Features_Agg, self.Y.shape[1])
+                if self.regression is False:
+                    if multisample_dropout:
+                        GO.logits = MultiSample_Dropout(GO.Features_Agg,
+                                                        num_masks=multisample_dropout_num_masks,
+                                                        units=self.Y.shape[1],
+                                                        activation=None,
+                                                        rate=GO.prob_multisample)
+                    else:
+                        GO.logits = tf.layers.dense(GO.Features_Agg, self.Y.shape[1])
 
-                per_sample_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits)
-                per_sample_loss = per_sample_loss - hinge_loss_t
-                per_sample_loss = tf.cast((per_sample_loss > 0),tf.float32) * per_sample_loss
-                if loss_criteria == 'mean':
-                    loss_func = tf.reduce_mean
-                elif loss_criteria == 'max':
-                    loss_func = tf.reduce_max
-                elif loss_criteria == 'min':
-                    loss_func = tf.reduce_min
+                    per_sample_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits)
+                    per_sample_loss = per_sample_loss - hinge_loss_t
+                    per_sample_loss = tf.cast((per_sample_loss > 0),tf.float32) * per_sample_loss
+                    if loss_criteria == 'mean':
+                        loss_func = tf.reduce_mean
+                    elif loss_criteria == 'max':
+                        loss_func = tf.reduce_max
+                    elif loss_criteria == 'min':
+                        loss_func = tf.reduce_min
 
-                if weight_by_class is True:
-                    #class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
-                    class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
-                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
-                    GO.loss = loss_func(weights * per_sample_loss)
-                elif class_weights is not None:
-                    weights = np.zeros([1,len(self.lb.classes_)]).astype(np.float32)
-                    for key in class_weights:
-                        weights[:,self.lb.transform([key])[0]]=class_weights[key]
-                    class_weights = tf.constant(weights)
-                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
-                    GO.loss = loss_func(weights * per_sample_loss)
+                    if weight_by_class is True:
+                        #class_weights = tf.constant([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
+                        class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
+                        weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
+                        GO.loss = loss_func(weights * per_sample_loss)
+                    elif class_weights is not None:
+                        weights = np.zeros([1,len(self.lb.classes_)]).astype(np.float32)
+                        for key in class_weights:
+                            weights[:,self.lb.transform([key])[0]]=class_weights[key]
+                        class_weights = tf.constant(weights)
+                        weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
+                        GO.loss = loss_func(weights * per_sample_loss)
+                    else:
+                        GO.loss = loss_func(per_sample_loss)
                 else:
-                    GO.loss = loss_func(per_sample_loss)
+                    if multisample_dropout:
+                        GO.logits = MultiSample_Dropout(GO.Features_Agg,
+                                                        num_masks=multisample_dropout_num_masks,
+                                                        units=1,
+                                                        activation=None,
+                                                        rate=GO.prob_multisample)
+                    else:
+                        GO.logits = tf.layers.dense(GO.Features_Agg, 1)
+
+                    GO.loss = tf.reduce_mean(tf.square(GO.Y-GO.logits))
 
                 var_train = tf.trainable_variables()
-                GO.reg_losses = tf.losses.get_regularization_loss()
-                loss = GO.loss
-
                 if batch_size_update is None:
-                    GO.opt = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss,var_list=var_train)
+                    GO.opt = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(GO.loss,var_list=var_train)
                 else:
                     GO.opt = tf.train.AdamOptimizer(learning_rate=learning_rate)
-                    GO.grads_and_vars = GO.opt.compute_gradients(loss, var_train)
-                    GO.gradients = tf.gradients(loss,var_train)
+                    GO.grads_and_vars = GO.opt.compute_gradients(GO.loss, var_train)
+                    GO.gradients = tf.gradients(GO.loss,var_train)
                     GO.gradients,keep_ii = zip(*[(v,ii) for ii,v in enumerate(GO.gradients) if v is not None])
                     var_train = list(np.asarray(var_train)[list(keep_ii)])
                     GO.grads_accum = [tf.Variable(tf.zeros_like(v)) for v in GO.gradients]
                     GO.grads_and_vars = list(zip(GO.grads_accum,var_train))
                     GO.opt = GO.opt.apply_gradients(GO.grads_and_vars)
 
-                # Operations for validation/test accuracy
-                GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
-                correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
-                GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+
+                if self.regression is False:
+                    # Operations for validation/test accuracy
+                    GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
+                    correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
+                    GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+                else:
+                    GO.predicted = GO.logits
+                    GO.accuracy = GO.loss
 
                 GO.saver = tf.train.Saver(max_to_keep=None)
                 self.GO = GO
@@ -5230,7 +5247,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         y_pred = []
         y_test = []
         files = []
-        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        self.predicted = np.zeros_like(self.predicted)
         counts = np.zeros_like(self.predicted)
         self._reset_models()
         self._build(kernel, num_concepts, trainable_embedding, embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
@@ -5261,28 +5278,30 @@ class DeepTCR_WF(DeepTCR_S_base):
             y_test2 = np.vstack(y_test)
             y_pred2 = np.vstack(y_pred)
 
-            if suppress_output is False:
-                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
+            if self.regression is False:
+                if suppress_output is False:
+                    print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
 
-                if self.y_test.shape[1] == 2:
-                    if i > 0:
-                        y_test2 = np.vstack(y_test)
-                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
-                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+                    if self.y_test.shape[1] == 2:
+                        if i > 0:
+                            y_test2 = np.vstack(y_test)
+                            if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                                print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
 
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
-        files = np.hstack(files)
-        DFs =[]
-        for ii,c in enumerate(self.lb.classes_,0):
-            df_out = pd.DataFrame()
-            df_out['Samples'] = files
-            df_out['y_test'] = self.y_test[:,ii]
-            df_out['y_pred'] = self.y_pred[:,ii]
-            DFs.append(df_out)
+        if self.regression is False:
+            files = np.hstack(files)
+            DFs =[]
+            for ii,c in enumerate(self.lb.classes_,0):
+                df_out = pd.DataFrame()
+                df_out['Samples'] = files
+                df_out['y_test'] = self.y_test[:,ii]
+                df_out['y_pred'] = self.y_pred[:,ii]
+                DFs.append(df_out)
 
-        self.DFs_pred = dict(zip(self.lb.classes_,DFs))
+            self.DFs_pred = dict(zip(self.lb.classes_,DFs))
 
         self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
         print('Monte Carlo Simulation Completed')
@@ -5555,13 +5574,14 @@ class DeepTCR_WF(DeepTCR_S_base):
             y_test2 = np.vstack(y_test)
             y_pred2 = np.vstack(y_pred)
 
-            if suppress_output is False:
-                print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))))
+            if self.regression is False:
+                if suppress_output is False:
+                    print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))))
 
-                if self.y_test.shape[1] == 2:
-                    if ii > 0:
-                        if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
-                            print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+                    if self.y_test.shape[1] == 2:
+                        if ii > 0:
+                            if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                                print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
