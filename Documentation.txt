@@ -406,33 +406,6 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  SRCC(self, s=10, kde=False, title=None)
-     |      Spearman's Rank Correlation Coefficient Plot
-     |      
-     |      In the case one is doing a regression-based model for the sequence classiifer,
-     |      one can plot the predicted vs actual labeled value with this method. The method
-     |      returns a plot for the regression and a value of the correlation coefficient.
-     |      
-     |      Inputs
-     |      ---------------------------------------
-     |      s: int
-     |          size of points for scatterplot
-     |      
-     |      kde: bool
-     |          To do a kernel density estimation per point and plot this as a color-scheme,
-     |          set to True. Warning: this option will take longer to run.
-     |      
-     |      title: str
-     |          Title for the plot.
-     |      
-     |      Returns
-     |      ---------------------------------------
-     |      corr: float
-     |          Spearman's Rank Correlation Coefficient
-     |      
-     |      ax: matplotlib axis
-     |          axis on which plot is drawn
-     |  
      |  Train(self, kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
      |      Train Single-Sequence Classifier
      |      
@@ -800,6 +773,33 @@ CLASSES
      |      ---------------------------------------
      |      (fig,ax) - the matplotlib figure and axis/axes.
      |  
+     |  SRCC(self, s=10, kde=False, title=None)
+     |      Spearman's Rank Correlation Coefficient Plot
+     |      
+     |      In the case one is doing a regression-based model for the sequence classiifer,
+     |      one can plot the predicted vs actual labeled value with this method. The method
+     |      returns a plot for the regression and a value of the correlation coefficient.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      s: int
+     |          size of points for scatterplot
+     |      
+     |      kde: bool
+     |          To do a kernel density estimation per point and plot this as a color-scheme,
+     |          set to True. Warning: this option will take longer to run.
+     |      
+     |      title: str
+     |          Title for the plot.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |      corr: float
+     |          Spearman's Rank Correlation Coefficient
+     |      
+     |      ax: matplotlib axis
+     |          axis on which plot is drawn
+     |  
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
@@ -978,9 +978,11 @@ CLASSES
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
      |      
      |      Y: ndarray of float values
-     |          In the case one wants to regress TCR sequences against a numerical label, one can provide
-     |          these numerical values for this input. As of latest release, regression is only available
-     |          for sequence classifier.
+     |          In the case one wants to regress TCR sequences or repertoires against a numerical label, one can provide
+     |          these numerical values for this input. For the TCR sequence regressor, each sequence will be regressed to
+     |          the value denoted for each sequence. For the TCR repertoire regressor, the average of all instance level values
+     |          will be used to regress the sample. Therefore, if there is one sample level value for regression, one would just
+     |          repeat that same value for all the instances/sequences of the sample.
      |      
      |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
@@ -1789,6 +1791,33 @@ CLASSES
      |      ---------------------------------------
      |      (fig,ax) - the matplotlib figure and axis/axes.
      |  
+     |  SRCC(self, s=10, kde=False, title=None)
+     |      Spearman's Rank Correlation Coefficient Plot
+     |      
+     |      In the case one is doing a regression-based model for the sequence classiifer,
+     |      one can plot the predicted vs actual labeled value with this method. The method
+     |      returns a plot for the regression and a value of the correlation coefficient.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      s: int
+     |          size of points for scatterplot
+     |      
+     |      kde: bool
+     |          To do a kernel density estimation per point and plot this as a color-scheme,
+     |          set to True. Warning: this option will take longer to run.
+     |      
+     |      title: str
+     |          Title for the plot.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |      corr: float
+     |          Spearman's Rank Correlation Coefficient
+     |      
+     |      ax: matplotlib axis
+     |          axis on which plot is drawn
+     |  
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
@@ -1967,9 +1996,11 @@ CLASSES
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
      |      
      |      Y: ndarray of float values
-     |          In the case one wants to regress TCR sequences against a numerical label, one can provide
-     |          these numerical values for this input. As of latest release, regression is only available
-     |          for sequence classifier.
+     |          In the case one wants to regress TCR sequences or repertoires against a numerical label, one can provide
+     |          these numerical values for this input. For the TCR sequence regressor, each sequence will be regressed to
+     |          the value denoted for each sequence. For the TCR repertoire regressor, the average of all instance level values
+     |          will be used to regress the sample. Therefore, if there is one sample level value for regression, one would just
+     |          repeat that same value for all the instances/sequences of the sample.
      |      
      |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
@@ -2937,9 +2968,11 @@ CLASSES
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
      |      
      |      Y: ndarray of float values
-     |          In the case one wants to regress TCR sequences against a numerical label, one can provide
-     |          these numerical values for this input. As of latest release, regression is only available
-     |          for sequence classifier.
+     |          In the case one wants to regress TCR sequences or repertoires against a numerical label, one can provide
+     |          these numerical values for this input. For the TCR sequence regressor, each sequence will be regressed to
+     |          the value denoted for each sequence. For the TCR repertoire regressor, the average of all instance level values
+     |          will be used to regress the sample. Therefore, if there is one sample level value for regression, one would just
+     |          repeat that same value for all the instances/sequences of the sample.
      |      
      |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
@@ -3548,7 +3581,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, combine_train_valid=False, seeds=None, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
+     |  K_Fold_CrossVal(self, folds=None, combine_train_valid=False, seeds=None, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, loss_criteria='mean', batch_seed=None)
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -3739,7 +3772,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, combine_train_valid=False, random_perm=False, seeds=None, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, combine_train_valid=False, random_perm=False, seeds=None, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, loss_criteria='mean', batch_seed=None)
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -4037,7 +4070,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Train(self, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, batch_seed=None)
+     |  Train(self, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, loss_criteria='mean', batch_seed=None)
      |      Train Whole-Sample Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -4443,6 +4476,33 @@ CLASSES
      |      ---------------------------------------
      |      (fig,ax) - the matplotlib figure and axis/axes.
      |  
+     |  SRCC(self, s=10, kde=False, title=None)
+     |      Spearman's Rank Correlation Coefficient Plot
+     |      
+     |      In the case one is doing a regression-based model for the sequence classiifer,
+     |      one can plot the predicted vs actual labeled value with this method. The method
+     |      returns a plot for the regression and a value of the correlation coefficient.
+     |      
+     |      Inputs
+     |      ---------------------------------------
+     |      s: int
+     |          size of points for scatterplot
+     |      
+     |      kde: bool
+     |          To do a kernel density estimation per point and plot this as a color-scheme,
+     |          set to True. Warning: this option will take longer to run.
+     |      
+     |      title: str
+     |          Title for the plot.
+     |      
+     |      Returns
+     |      ---------------------------------------
+     |      corr: float
+     |          Spearman's Rank Correlation Coefficient
+     |      
+     |      ax: matplotlib axis
+     |          axis on which plot is drawn
+     |  
      |  ----------------------------------------------------------------------
      |  Methods inherited from DeepTCR_base:
      |  
@@ -4621,9 +4681,11 @@ CLASSES
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
      |      
      |      Y: ndarray of float values
-     |          In the case one wants to regress TCR sequences against a numerical label, one can provide
-     |          these numerical values for this input. As of latest release, regression is only available
-     |          for sequence classifier.
+     |          In the case one wants to regress TCR sequences or repertoires against a numerical label, one can provide
+     |          these numerical values for this input. For the TCR sequence regressor, each sequence will be regressed to
+     |          the value denoted for each sequence. For the TCR repertoire regressor, the average of all instance level values
+     |          will be used to regress the sample. Therefore, if there is one sample level value for regression, one would just
+     |          repeat that same value for all the instances/sequences of the sample.
      |      
      |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
@@ -5367,9 +5429,11 @@ CLASSES
      |          A 1d array with the frequencies for each sequence, in the case they come from samples.
      |      
      |      Y: ndarray of float values
-     |          In the case one wants to regress TCR sequences against a numerical label, one can provide
-     |          these numerical values for this input. As of latest release, regression is only available
-     |          for sequence classifier.
+     |          In the case one wants to regress TCR sequences or repertoires against a numerical label, one can provide
+     |          these numerical values for this input. For the TCR sequence regressor, each sequence will be regressed to
+     |          the value denoted for each sequence. For the TCR repertoire regressor, the average of all instance level values
+     |          will be used to regress the sample. Therefore, if there is one sample level value for regression, one would just
+     |          repeat that same value for all the instances/sequences of the sample.
      |      
      |      hla: ndarray of tuples/arrays
      |          To input the hla context for each sequence fed into DeepTCR, this will need to formatted
