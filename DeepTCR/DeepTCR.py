@@ -5941,13 +5941,14 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.Inference_Pred_Dist = predicted_dist
         self.Inference_Pred =  np.mean(predicted_dist,0)
 
-        DFs = []
-        for ii,c in enumerate(self.lb.classes_,0):
-            df_temp = pd.DataFrame()
-            df_temp['Samples'] = self.Inference_Sample_List
-            df_temp['Pred'] = self.Inference_Pred[:,ii]
-            DFs.append(df_temp)
-        self.Inference_Pred_Dict = dict(zip(self.lb.classes_,DFs))
+        if self.regression is False:
+            DFs = []
+            for ii,c in enumerate(self.lb.classes_,0):
+                df_temp = pd.DataFrame()
+                df_temp['Samples'] = self.Inference_Sample_List
+                df_temp['Pred'] = self.Inference_Pred[:,ii]
+                DFs.append(df_temp)
+            self.Inference_Pred_Dict = dict(zip(self.lb.classes_,DFs))
 
         if seq_inf:
             df_temp['Samples'] = df_temp['Samples'].astype(int)
