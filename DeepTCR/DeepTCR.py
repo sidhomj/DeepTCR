@@ -4550,13 +4550,17 @@ class DeepTCR_WF(DeepTCR_S_base):
         """
         Y = []
         for s in self.sample_list:
-            Y.append(np.array([np.mean(self.Y[np.where(self.sample_id == s)[0]])]))
+            if self.regression:
+                Y.append(np.array([np.mean(self.Y[np.where(self.sample_id == s)[0]])]))
+            else:
+                Y.append(np.array([np.mean(self.Y[np.where(self.sample_id == s)[0]],axis=0)]))
+
         Y = np.vstack(Y)
         if random_perm:
             np.random.shuffle(Y)
 
         Vars = [np.asarray(self.sample_list)]
-        self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=False,LOO=LOO)
+        self.train, self.valid, self.test = Get_Train_Valid_Test(Vars=Vars, Y=Y, test_size=test_size, regression=self.regression,LOO=LOO)
         self.LOO = LOO
         Vars.append(Y)
         self.all = Vars
