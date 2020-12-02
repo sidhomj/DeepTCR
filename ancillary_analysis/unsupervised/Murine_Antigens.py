@@ -62,7 +62,7 @@ names = ['Global-Seq-Align', 'K-mer', 'Hamming', 'VAE-Seq', 'VAE-VDJ', 'VAE-Seq-
 dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
-
+#
 #Assess Clustering Quality of Various Methods
 df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
 df_cq.to_csv(os.path.join(dir_results,'data_fig1b.csv'))
@@ -80,6 +80,7 @@ plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 #Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results)
 df_metrics.to_csv(os.path.join(dir_results,'data_fig1c.csv'))
+df_metrics = pd.read_csv('data_fig1c.csv')
 Plot_Performance(df_metrics,dir_results)
 
 subdir = 'Performance_Summary'

@@ -14,6 +14,7 @@ import seaborn as sns
 from NN_Assessment_utils import *
 import pickle
 import os
+import pandas as pd
 
 #Instantiate training object
 DTCRU = DeepTCR_U('Human_U')
@@ -77,6 +78,7 @@ plt.savefig(os.path.join(dir_results,'Clutering_Quality.eps'))
 #Assess performance metrtics via K-Nearest Neighbors
 df_metrics = Assess_Performance_KNN(distances_list,names,DTCRU.class_id,dir_results)
 df_metrics.to_csv(os.path.join(dir_results,'data_fig1e.csv'))
+df_metrics = pd.read_csv('data_fig1e.csv')
 Plot_Performance(df_metrics,dir_results)
 
 subdir = 'Performance_Summary'

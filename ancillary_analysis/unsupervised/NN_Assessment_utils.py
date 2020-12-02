@@ -149,7 +149,7 @@ def Plot_Performance(df,dir_results,metrics=None):
             ax[ii].set_title(t,fontsize=24)
             ax[ii].set_ylabel(m)
             ax[ii].set_xticklabels(ax[ii].get_xticklabels(),rotation=90,fontsize=12)
-            ax[ii].set_yticklabels(ax[ii].get_yticklabels(),fontsize=12)
+            # ax[ii].set_yticklabels(ax[ii].get_yticklabels(),fontsize=12)
             ax[ii].set_xlabel('k',fontsize=18)
             ax[ii].set_ylabel(m,fontsize=18)
             ax[ii].get_legend().remove()
