@@ -84,7 +84,7 @@ Third release including improved repertoire classification architecture. Details
 in manuscript.
 
 ### 1.4
-Fourth releasee includes major refactoring of code and adding more features including:
+Fourth release includes major refactoring of code and adding more features including:
 - Multi-Model Inference. When training the supervised sequence or repertoire classifier, in Monte-Carlo or K-Fold 
 Cross Validation, a separate model will be stored for each cross-validation. When using the inference engine, 
 users can choose to do an ensemble inference of some or many of the trained models.
