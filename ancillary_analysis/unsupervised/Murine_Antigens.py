@@ -63,6 +63,7 @@ dir_results = 'Murine_Results'
 if not os.path.exists(dir_results):
     os.makedirs(dir_results)
 
+
 #Assess Clustering Quality of Various Methods
 df_cq = Clustering_Quality(distances_list,names,DTCRU.class_id)
 df_cq.to_csv(os.path.join(dir_results,'data_fig1b.csv'))
