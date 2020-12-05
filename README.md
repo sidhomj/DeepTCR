@@ -30,7 +30,7 @@ https://www.biorxiv.org/content/10.1101/464107v4
 
 See requirements.txt for all DeepTCR dependencies. Installing DeepTCR from Github repository or PyPi will install all required dependencies.
 It is recommended to create a virtualenv and installing DeepTCR within this environment to ensure proper versioning of dependencies.
-Of note, DeepTCR is not compatible with tensorflow 2.0 at this time.
+Of note, DeepTCR is not compatible with tensorflow 2.0 at this time. We also recommend using Python 3.6.
 
 Instructions on how to create a virtual environment can be found here:
 https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
