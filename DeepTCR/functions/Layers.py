@@ -232,6 +232,22 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     return fc
 
 #Layers for VAE
+
+def determine_kr_str(upsample2_beta,GO,self):
+    """ determines the right kernel and stride parameters on the last deconv layer
+    to ensure the output is greater than the input length"""
+    for kr in list(range(4,100)):
+        for str in list(range(2,100)):
+            upsample3_beta = tf.layers.conv2d_transpose(upsample2_beta, GO.embedding_dim_aa, (1, kr), (1, str),
+                                                        activation=tf.nn.relu)
+            if upsample3_beta.shape[2].value >= self.max_length:
+                break
+        else:
+            continue
+        break
+
+    return kr,str
+
 def Recon_Loss(inputs,logits):
     #Calculate Per Sample Reconstruction Loss
     shape_layer_1 = inputs.get_shape().as_list()

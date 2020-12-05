@@ -2275,13 +2275,18 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     if self.use_beta:
                         upsample1_beta = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
                         upsample2_beta = tf.layers.conv2d_transpose(upsample1_beta, 64, (1, 3), (1, 2), activation=tf.nn.relu)
+                        kr, str = determine_kr_str(upsample2_beta, GO, self)
 
                         if trainable_embedding is True:
-                            upsample3_beta = tf.layers.conv2d_transpose(upsample2_beta, GO.embedding_dim_aa, (1, 4),(1, 2), activation=tf.nn.relu)
+                            #upsample3_beta = tf.layers.conv2d_transpose(upsample2_beta, GO.embedding_dim_aa, (1, 4),(1, 2), activation=tf.nn.relu)
+                            upsample3_beta = tf.layers.conv2d_transpose(upsample2_beta, GO.embedding_dim_aa, (1, kr),(1, str), activation=tf.nn.relu)
+                            upsample3_beta = upsample3_beta[:,:,0:self.max_length,:]
+
                             embedding_layer_seq_back = tf.transpose(GO.embedding_layer_seq, perm=(0, 1, 3, 2))
                             logits_AE_beta = tf.squeeze(tf.tensordot(upsample3_beta, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
                         else:
-                            logits_AE_beta = tf.layers.conv2d_transpose(upsample2_beta, 21, (1, 4),(1, 2), activation=tf.nn.relu)
+                            logits_AE_beta = tf.layers.conv2d_transpose(upsample2_beta, 21, (1, kr),(1, str), activation=tf.nn.relu)
+                            logits_AE_beta = logits_AE_beta[:,:,0:self.max_length,:]
 
                         recon_cost_beta = Recon_Loss(GO.X_Seq_beta, logits_AE_beta)
                         seq_losses.append(recon_cost_beta)
@@ -2297,13 +2302,18 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     if self.use_alpha:
                         upsample1_alpha = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
                         upsample2_alpha = tf.layers.conv2d_transpose(upsample1_alpha, 64, (1, 3), (1, 2),activation=tf.nn.relu)
+                        kr, str = determine_kr_str(upsample2_alpha, GO, self)
 
                         if trainable_embedding is True:
-                            upsample3_alpha = tf.layers.conv2d_transpose(upsample2_alpha, GO.embedding_dim_aa, (1, 4), (1, 2),activation=tf.nn.relu)
+                            # upsample3_alpha = tf.layers.conv2d_transpose(upsample2_alpha, GO.embedding_dim_aa, (1, 4), (1, 2),activation=tf.nn.relu)
+                            upsample3_alpha = tf.layers.conv2d_transpose(upsample2_alpha, GO.embedding_dim_aa, (1, kr), (1, str),activation=tf.nn.relu)
+                            upsample3_alpha = upsample3_alpha[:,:,0:self.max_length,:]
+
                             embedding_layer_seq_back = tf.transpose(GO.embedding_layer_seq, perm=(0, 1, 3, 2))
                             logits_AE_alpha = tf.squeeze(tf.tensordot(upsample3_alpha, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
                         else:
-                            logits_AE_alpha = tf.layers.conv2d_transpose(upsample2_alpha, 21, (1, 4), (1, 2),activation=tf.nn.relu)
+                            logits_AE_alpha = tf.layers.conv2d_transpose(upsample2_alpha, 21, (1, kr), (1, str),activation=tf.nn.relu)
+                            logits_AE_alpha = logits_AE_alpha[:,:,0:self.max_length,:]
 
                         recon_cost_alpha = Recon_Loss(GO.X_Seq_alpha, logits_AE_alpha)
                         seq_losses.append(recon_cost_alpha)
