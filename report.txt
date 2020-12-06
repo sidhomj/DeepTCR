@@ -1,0 +1,315 @@
+TensorFlow 2.0 Upgrade Script
+-----------------------------
+Converted 14 files
+Detected 9 issues that require attention
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+File: ../../../../../../../DeepTCR/DeepTCR.py
+--------------------------------------------------------------------------------
+../../../../../../../DeepTCR/DeepTCR.py:2259:26: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+--------------------------------------------------------------------------------
+File: ../../../../../../../DeepTCR/functions/data_processing.py
+--------------------------------------------------------------------------------
+../../../../../../../DeepTCR/functions/data_processing.py:181:4: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+--------------------------------------------------------------------------------
+File: ../../../../../../../DeepTCR/functions/Layers.py
+--------------------------------------------------------------------------------
+../../../../../../../DeepTCR/functions/Layers.py:12:33: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+../../../../../../../DeepTCR/functions/Layers.py:24:33: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+../../../../../../../DeepTCR/functions/Layers.py:36:33: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+../../../../../../../DeepTCR/functions/Layers.py:48:34: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+../../../../../../../DeepTCR/functions/Layers.py:60:34: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+../../../../../../../DeepTCR/functions/Layers.py:81:29: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+../../../../../../../DeepTCR/functions/Layers.py:154:37: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+================================================================================
+Detailed log follows:
+
+================================================================================
+================================================================================
+Input tree: '../../../../../../../DeepTCR/'
+================================================================================
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/DeepTCR.py'
+ outputting to '../../../../../../../DeepTCR2/DeepTCR.py'
+--------------------------------------------------------------------------------
+
+2251:24: INFO: Renamed 'tf.set_random_seed' to 'tf.compat.v1.set_random_seed'
+2255:31: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+2257:25: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+2258:25: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+2259:26: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+2259:26: INFO: Renamed 'tf.get_variable' to 'tf.compat.v1.get_variable'
+2262:32: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+2265:57: INFO: Renamed 'tf.random_normal' to 'tf.random.normal'
+2265:74: INFO: Added keywords to args of function 'tf.shape'
+2268:28: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+2269:28: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+2276:41: INFO: Renamed 'tf.layers.conv2d_transpose' to 'tf.compat.v1.layers.conv2d_transpose'
+2277:41: INFO: Renamed 'tf.layers.conv2d_transpose' to 'tf.compat.v1.layers.conv2d_transpose'
+2282:45: INFO: Renamed 'tf.layers.conv2d_transpose' to 'tf.compat.v1.layers.conv2d_transpose'
+2285:55: INFO: Added keywords to args of function 'tf.transpose'
+2288:45: INFO: Renamed 'tf.layers.conv2d_transpose' to 'tf.compat.v1.layers.conv2d_transpose'
+2294:52: INFO: Added keywords to args of function 'tf.argmax'
+2297:42: INFO: Added keywords to args of function 'tf.reduce_sum'
+2297:132: INFO: Added keywords to args of function 'tf.reduce_sum'
+2299:40: INFO: Added keywords to args of function 'tf.reduce_mean'
+2303:42: INFO: Renamed 'tf.layers.conv2d_transpose' to 'tf.compat.v1.layers.conv2d_transpose'
+2304:42: INFO: Renamed 'tf.layers.conv2d_transpose' to 'tf.compat.v1.layers.conv2d_transpose'
+2309:46: INFO: Renamed 'tf.layers.conv2d_transpose' to 'tf.compat.v1.layers.conv2d_transpose'
+2312:55: INFO: Added keywords to args of function 'tf.transpose'
+2315:46: INFO: Renamed 'tf.layers.conv2d_transpose' to 'tf.compat.v1.layers.conv2d_transpose'
+2321:53: INFO: Added keywords to args of function 'tf.argmax'
+2324:43: INFO: Added keywords to args of function 'tf.reduce_sum'
+2324:136: INFO: Added keywords to args of function 'tf.reduce_sum'
+2325:41: INFO: Added keywords to args of function 'tf.reduce_mean'
+2384:33: INFO: Added keywords to args of function 'tf.reduce_sum'
+2385:33: INFO: Added keywords to args of function 'tf.reduce_mean'
+2392:33: INFO: Added keywords to args of function 'tf.reduce_sum'
+2393:33: INFO: Added keywords to args of function 'tf.reduce_mean'
+2400:34: INFO: Added keywords to args of function 'tf.reduce_mean'
+2402:29: INFO: Renamed 'tf.train.AdamOptimizer' to 'tf.compat.v1.train.AdamOptimizer'
+2407:37: INFO: Renamed 'tf.train.AdamOptimizer' to 'tf.compat.v1.train.AdamOptimizer'
+2413:31: INFO: Renamed 'tf.train.Saver' to 'tf.compat.v1.train.Saver'
+2416:12: INFO: Renamed 'tf.reset_default_graph' to 'tf.compat.v1.reset_default_graph'
+2417:21: INFO: Renamed 'tf.ConfigProto' to 'tf.compat.v1.ConfigProto'
+2420:17: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+2421:25: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+3700:20: INFO: Renamed 'tf.set_random_seed' to 'tf.compat.v1.set_random_seed'
+3706:27: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+3708:27: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+3718:36: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+3720:38: INFO: Renamed 'tf.nn.softmax_cross_entropy_with_logits_v2' to 'tf.nn.softmax_cross_entropy_with_logits'
+3726:34: INFO: Added keywords to args of function 'tf.reduce_mean'
+3733:34: INFO: Added keywords to args of function 'tf.reduce_mean'
+3735:34: INFO: Added keywords to args of function 'tf.reduce_mean'
+3745:36: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+3747:30: INFO: Added keywords to args of function 'tf.reduce_mean'
+3749:25: INFO: Renamed 'tf.train.AdamOptimizer' to 'tf.compat.v1.train.AdamOptimizer'
+3752:25: INFO: `name` passed to `name_scope`. Because you may be re-entering an existing scope, it is not safe to convert automatically,  the v2 name_scope does not support re-entering scopes by name.
+
+3752:25: INFO: Renamed 'tf.name_scope' to 'tf.compat.v1.name_scope'
+3754:48: INFO: Added keywords to args of function 'tf.argmax'
+3754:76: INFO: Added keywords to args of function 'tf.argmax'
+3755:38: INFO: Added keywords to args of function 'tf.reduce_mean'
+3760:27: INFO: Renamed 'tf.train.Saver' to 'tf.compat.v1.train.Saver'
+3786:8: INFO: Renamed 'tf.reset_default_graph' to 'tf.compat.v1.reset_default_graph'
+3787:17: INFO: Renamed 'tf.ConfigProto' to 'tf.compat.v1.ConfigProto'
+3789:13: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+3790:21: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+4622:20: INFO: Renamed 'tf.set_random_seed' to 'tf.compat.v1.set_random_seed'
+4629:27: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+4631:27: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+4633:27: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+4638:38: INFO: Renamed 'tf.sparse.matmul' to 'tf.sparse.sparse_dense_matmul'
+4644:45: INFO: Renamed 'tf.sparse.matmul' to 'tf.sparse.sparse_dense_matmul'
+4651:42: INFO: Renamed 'tf.layers.dropout' to 'tf.compat.v1.layers.dropout'
+4652:42: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+4662:36: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+4664:38: INFO: Renamed 'tf.nn.softmax_cross_entropy_with_logits_v2' to 'tf.nn.softmax_cross_entropy_with_logits'
+4696:36: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+4698:30: INFO: Added keywords to args of function 'tf.reduce_mean'
+4700:28: INFO: Renamed 'tf.trainable_variables' to 'tf.compat.v1.trainable_variables'
+4702:29: INFO: Renamed 'tf.train.AdamOptimizer' to 'tf.compat.v1.train.AdamOptimizer'
+4704:29: INFO: Renamed 'tf.train.AdamOptimizer' to 'tf.compat.v1.train.AdamOptimizer'
+4706:35: INFO: Added keywords to args of function 'tf.gradients'
+4717:44: INFO: Added keywords to args of function 'tf.argmax'
+4717:72: INFO: Added keywords to args of function 'tf.argmax'
+4718:34: INFO: Added keywords to args of function 'tf.reduce_mean'
+4723:27: INFO: Renamed 'tf.train.Saver' to 'tf.compat.v1.train.Saver'
+4746:8: INFO: Renamed 'tf.reset_default_graph' to 'tf.compat.v1.reset_default_graph'
+4747:17: INFO: Renamed 'tf.ConfigProto' to 'tf.compat.v1.ConfigProto'
+4749:13: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+4750:21: INFO: Renamed 'tf.global_variables_initializer' to 'tf.compat.v1.global_variables_initializer'
+5619:8: INFO: Renamed 'tf.reset_default_graph' to 'tf.compat.v1.reset_default_graph'
+5620:17: INFO: Renamed 'tf.ConfigProto' to 'tf.compat.v1.ConfigProto'
+5623:20: INFO: Renamed 'tf.train.import_meta_graph' to 'tf.compat.v1.train.import_meta_graph'
+5624:16: INFO: Renamed 'tf.get_default_graph' to 'tf.compat.v1.get_default_graph'
+5625:13: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/__init__.py'
+ outputting to '../../../../../../../DeepTCR2/__init__.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/phenograph/classify.py'
+ outputting to '../../../../../../../DeepTCR2/phenograph/classify.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/phenograph/__init__.py'
+ outputting to '../../../../../../../DeepTCR2/phenograph/__init__.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/phenograph/bruteforce_nn.py'
+ outputting to '../../../../../../../DeepTCR2/phenograph/bruteforce_nn.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/phenograph/core.py'
+ outputting to '../../../../../../../DeepTCR2/phenograph/core.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/phenograph/cluster.py'
+ outputting to '../../../../../../../DeepTCR2/phenograph/cluster.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/functions/plot_func.py'
+ outputting to '../../../../../../../DeepTCR2/functions/plot_func.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/functions/__init__.py'
+ outputting to '../../../../../../../DeepTCR2/functions/__init__.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/functions/utils_u.py'
+ outputting to '../../../../../../../DeepTCR2/functions/utils_u.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/functions/utils_s.py'
+ outputting to '../../../../../../../DeepTCR2/functions/utils_s.py'
+--------------------------------------------------------------------------------
+
+576:13: INFO: Renamed 'tf.SparseTensorValue' to 'tf.compat.v1.SparseTensorValue'
+660:13: INFO: Renamed 'tf.SparseTensorValue' to 'tf.compat.v1.SparseTensorValue'
+784:13: INFO: Renamed 'tf.SparseTensorValue' to 'tf.compat.v1.SparseTensorValue'
+901:13: INFO: Renamed 'tf.SparseTensorValue' to 'tf.compat.v1.SparseTensorValue'
+1001:4: INFO: Renamed 'tf.reset_default_graph' to 'tf.compat.v1.reset_default_graph'
+1002:13: INFO: Renamed 'tf.ConfigProto' to 'tf.compat.v1.ConfigProto'
+1005:16: INFO: Renamed 'tf.train.import_meta_graph' to 'tf.compat.v1.train.import_meta_graph'
+1006:12: INFO: Renamed 'tf.get_default_graph' to 'tf.compat.v1.get_default_graph'
+1007:9: INFO: Renamed 'tf.Session' to 'tf.compat.v1.Session'
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/functions/data_processing.py'
+ outputting to '../../../../../../../DeepTCR2/functions/data_processing.py'
+--------------------------------------------------------------------------------
+
+181:4: WARNING: *.save requires manual check. (This warning is only applicable if the code saves a tf.Keras model) Keras model.save now saves to the Tensorflow SavedModel format by default, instead of HDF5. To continue saving to HDF5, add the argument save_format='h5' to the save() function.
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/functions/Layers.py'
+ outputting to '../../../../../../../DeepTCR2/functions/Layers.py'
+--------------------------------------------------------------------------------
+
+10:19: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+12:33: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+12:33: INFO: Renamed 'tf.get_variable' to 'tf.compat.v1.get_variable'
+22:19: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+24:33: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+24:33: INFO: Renamed 'tf.get_variable' to 'tf.compat.v1.get_variable'
+34:19: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+36:33: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+36:33: INFO: Renamed 'tf.get_variable' to 'tf.compat.v1.get_variable'
+46:20: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+48:34: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+48:34: INFO: Renamed 'tf.get_variable' to 'tf.compat.v1.get_variable'
+58:20: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+60:34: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+60:34: INFO: Renamed 'tf.get_variable' to 'tf.compat.v1.get_variable'
+80:15: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+81:29: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+81:29: INFO: Renamed 'tf.get_variable' to 'tf.compat.v1.get_variable'
+88:9: INFO: Renamed 'tf.variable_scope' to 'tf.compat.v1.variable_scope'
+98:15: INFO: Renamed 'tf.layers.conv2d' to 'tf.compat.v1.layers.conv2d'
+99:19: INFO: Renamed 'tf.layers.flatten' to 'tf.compat.v1.layers.flatten'
+99:37: INFO: Added keywords to args of function 'tf.reduce_max'
+100:37: INFO: Added keywords to args of function 'tf.argmax'
+102:15: INFO: Renamed 'tf.layers.dropout' to 'tf.compat.v1.layers.dropout'
+105:17: INFO: Renamed 'tf.layers.conv2d' to 'tf.compat.v1.layers.conv2d'
+107:17: INFO: Renamed 'tf.layers.dropout' to 'tf.compat.v1.layers.dropout'
+108:21: INFO: Renamed 'tf.layers.flatten' to 'tf.compat.v1.layers.flatten'
+108:39: INFO: Added keywords to args of function 'tf.reduce_max'
+110:17: INFO: Renamed 'tf.layers.conv2d' to 'tf.compat.v1.layers.conv2d'
+112:17: INFO: Renamed 'tf.layers.dropout' to 'tf.compat.v1.layers.dropout'
+113:21: INFO: Renamed 'tf.layers.flatten' to 'tf.compat.v1.layers.flatten'
+113:39: INFO: Added keywords to args of function 'tf.reduce_max'
+116:19: INFO: Renamed 'tf.layers.flatten' to 'tf.compat.v1.layers.flatten'
+124:25: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+130:24: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+135:14: INFO: Renamed 'tf.placeholder_with_default' to 'tf.compat.v1.placeholder_with_default'
+136:26: INFO: Renamed 'tf.placeholder_with_default' to 'tf.compat.v1.placeholder_with_default'
+137:12: INFO: Renamed 'tf.sparse.placeholder' to 'tf.compat.v1.sparse.placeholder'
+138:16: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+139:18: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+140:11: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+141:11: INFO: Renamed 'tf.placeholder' to 'tf.compat.v1.placeholder'
+153:13: INFO: Renamed 'tf.variable_scope' to 'tf.compat.v1.variable_scope'
+154:37: WARNING: tf.get_variable requires manual check. tf.get_variable returns ResourceVariables by default in 2.0, which have well-defined semantics and are stricter about shapes. You can disable this behavior by passing use_resource=False, or by calling tf.compat.v1.disable_resource_variables().
+154:37: INFO: Renamed 'tf.get_variable' to 'tf.compat.v1.get_variable'
+229:17: INFO: Renamed 'tf.layers.dropout' to 'tf.compat.v1.layers.dropout'
+230:17: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+241:29: INFO: Renamed 'tf.layers.conv2d_transpose' to 'tf.compat.v1.layers.conv2d_transpose'
+254:20: INFO: Added keywords to args of function 'tf.shape'
+258:17: INFO: Added keywords to args of function 'tf.reduce_mean'
+263:26: INFO: Added keywords to args of function 'tf.reduce_sum'
+267:16: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+268:16: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+269:16: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+270:34: INFO: Added keywords to args of function 'tf.transpose'
+271:11: INFO: Renamed 'tf.nn.softmax_cross_entropy_with_logits_v2' to 'tf.nn.softmax_cross_entropy_with_logits'
+273:16: INFO: Added keywords to args of function 'tf.argmax'
+274:13: INFO: Added keywords to args of function 'tf.argmax'
+275:15: INFO: Added keywords to args of function 'tf.reduce_mean'
+280:16: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+281:16: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+282:16: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+283:34: INFO: Added keywords to args of function 'tf.transpose'
+284:11: INFO: Added keywords to args of function 'tf.reduce_mean'
+287:15: INFO: Added keywords to args of function 'tf.reduce_mean'
+292:12: INFO: Added keywords to args of function 'tf.reduce_sum'
+292:30: INFO: Renamed 'tf.log' to 'tf.math.log'
+295:29: INFO: Renamed 'tf.log' to 'tf.math.log'
+295:44: INFO: Added keywords to args of function 'tf.shape'
+298:12: INFO: Added keywords to args of function 'tf.linalg.norm'
+299:25: INFO: Added keywords to args of function 'tf.reduce_sum'
+344:13: INFO: Renamed 'tf.layers.dropout' to 'tf.compat.v1.layers.dropout'
+350:13: INFO: Renamed 'tf.variable_scope' to 'tf.compat.v1.variable_scope'
+351:23: INFO: Renamed 'tf.layers.dense' to 'tf.compat.v1.layers.dense'
+353:11: INFO: Added keywords to args of function 'tf.reduce_mean'
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+Processing file '../../../../../../../DeepTCR/functions/act_fun.py'
+ outputting to '../../../../../../../DeepTCR2/functions/act_fun.py'
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
