@@ -3297,7 +3297,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
     def Residue_Sensitivity_Logo(self,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
                                 v_alpha=None, j_alpha=None, hla=None,p=None, batch_size=10000,models=None,
                                  figsize=(10,8),low_color='red',medium_color='white',high_color='blue',
-                                    font_name='Times New Roman',class_sel=None,
+                                    font_name='serif',class_sel=None,
                                  cmap=None,min_size=0.0,edgecolor='black',edgewidth=0.25,background_color='white',
                                  Load_Prev_Data=False,norm_to_seq=True):
         """
