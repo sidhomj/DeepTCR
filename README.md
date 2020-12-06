@@ -32,6 +32,8 @@ See requirements.txt for all DeepTCR dependencies. Installing DeepTCR from Githu
 It is recommended to create a virtualenv and installing DeepTCR within this environment to ensure proper versioning of dependencies.
 Of note, DeepTCR is not compatible with tensorflow 2.0 at this time. We also recommend using Python 3.6.
 
+This current branch is being updated to utilize Tensorflow 2.0/python3.8. Use the methods here with caution as they are still in development.
+
 Instructions on how to create a virtual environment can be found here:
 https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
 
