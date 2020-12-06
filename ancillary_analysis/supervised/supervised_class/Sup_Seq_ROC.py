@@ -14,7 +14,7 @@ matplotlib.rc('font', family='Arial')
 DTCRS = DeepTCR_SS('Sequence_C',device=2)
 
 
-DTCRS.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
+DTCRS.Get_Data(directory='../../../Data/Murine_Antigens',Load_Prev_Data=False,aggregate_by_aa=True,
                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
 folds = 10
