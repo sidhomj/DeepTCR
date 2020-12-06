@@ -1,2 +1,2 @@
 #!/bin/bash
- ./venv/bin/python3.6 -m pip freeze > requirements.txt
+ ./venv2/bin/python3.8 -m pip freeze > requirements.txt
