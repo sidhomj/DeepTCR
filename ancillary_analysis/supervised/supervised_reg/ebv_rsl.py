@@ -13,7 +13,7 @@ beta = 'CSARDGTGNGYTF'
 input_alpha = np.array([alpha,alpha])
 input_beta = np.array([beta,beta])
 pred = DTCRS.Sequence_Inference(input_alpha,input_beta)
-fig_rsl,ax_rsl = DTCRS.Residue_Sensitivity_Logo(input_alpha,input_beta,background_color='black',Load_Prev_Data=True)
+fig_rsl,ax_rsl = DTCRS.Residue_Sensitivity_Logo(input_alpha,input_beta,background_color='black',Load_Prev_Data=False)
 
 fig_rsl.savefig('ebv_rsl.png',dpi=1200,facecolor='black')
 

@@ -87,6 +87,8 @@ class DeepTCR_base(object):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
+        tf.compat.v1.disable_eager_execution()
+
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
                     v_alpha_column=None,j_alpha_column=None,
