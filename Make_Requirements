@@ -1,2 +1,2 @@
 #!/bin/bash
- ./deeptcr/bin/python3.6 -m pip freeze > requirements.txt
+ ./venv/bin/python3.6 -m pip freeze > requirements.txt

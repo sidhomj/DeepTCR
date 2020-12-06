@@ -573,7 +573,7 @@ def Run_Graph_WF_dep(set,sess,self,GO,batch_size,random=True,train=True,drop_out
         sp = OH.fit_transform(i.reshape(-1, 1)).T
         sp = sp.tocoo()
         indices = np.mat([sp.row, sp.col]).T
-        sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+        sp = tf.compat.v1.SparseTensorValue(indices, sp.data, sp.shape)
 
         # feed_dict = {GO.Y: vars[-1],
         #              GO.X_Freq: self.freq[var_idx],
@@ -657,7 +657,7 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
         sp = OH.fit_transform(i.reshape(-1, 1)).T
         sp = sp.tocoo()
         indices = np.mat([sp.row, sp.col]).T
-        sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+        sp = tf.compat.v1.SparseTensorValue(indices, sp.data, sp.shape)
 
         # feed_dict = {GO.Y: vars[-1],
         #              GO.X_Freq: self.freq[var_idx],
@@ -781,7 +781,7 @@ def Get_Sequence_Pred(self,batch_size,GO,sess):
         sp = OH.fit_transform(i[var_idx].reshape(-1, 1)).T
         sp = sp.tocoo()
         indices = np.mat([sp.row, sp.col]).T
-        sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+        sp = tf.compat.v1.SparseTensorValue(indices, sp.data, sp.shape)
 
         feed_dict = {GO.X_Freq: freq[var_idx],
                      GO.X_Counts: self.counts[var_idx],
@@ -898,7 +898,7 @@ def Get_Sequence_Pred_GCN(self,batch_size,GO,sess):
         sp = OH.fit_transform(i[var_idx].reshape(-1, 1)).T
         sp = sp.tocoo()
         indices = np.mat([sp.row, sp.col]).T
-        sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+        sp = tf.compat.v1.SparseTensorValue(indices, sp.data, sp.shape)
 
         feed_dict = {GO.X_Freq: freq[var_idx],
                      GO.sp: sp,
@@ -998,13 +998,13 @@ def _inf_ss(data,model='model_0'):
     batch_size = data.batch_size
     get = data.get
 
-    tf.reset_default_graph()
-    config = tf.ConfigProto(allow_soft_placement=True)
+    tf.compat.v1.reset_default_graph()
+    config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allow_growth = True
     with tf.device(self.device):
-        saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', model, 'model.ckpt.meta'),clear_devices=True)
-    graph = tf.get_default_graph()
-    with tf.Session(graph=graph,config=config) as sess:
+        saver = tf.compat.v1.train.import_meta_graph(os.path.join(self.Name, 'models', model, 'model.ckpt.meta'),clear_devices=True)
+    graph = tf.compat.v1.get_default_graph()
+    with tf.compat.v1.Session(graph=graph,config=config) as sess:
         saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name, 'models', model)))
 
         if self.use_alpha is True:

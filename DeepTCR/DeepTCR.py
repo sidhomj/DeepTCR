@@ -2248,81 +2248,81 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             with graph_model_AE.device(self.device):
                 with graph_model_AE.as_default():
                     if graph_seed is not None:
-                        tf.set_random_seed(graph_seed)
+                        tf.compat.v1.set_random_seed(graph_seed)
 
                     GO.net = 'ae'
                     if self.use_w:
-                        GO.w = tf.placeholder(tf.float32, shape=[None])
+                        GO.w = tf.compat.v1.placeholder(tf.float32, shape=[None])
                     GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla)
-                    fc = tf.layers.dense(GO.Features, 256)
-                    fc = tf.layers.dense(fc, latent_dim)
-                    z_w = tf.get_variable(name='z_w',shape=[latent_dim,latent_dim])
+                    fc = tf.compat.v1.layers.dense(GO.Features, 256)
+                    fc = tf.compat.v1.layers.dense(fc, latent_dim)
+                    z_w = tf.compat.v1.get_variable(name='z_w',shape=[latent_dim,latent_dim])
                     z_mean = tf.matmul(fc,z_w)
                     z_mean = tf.identity(z_mean,'z_mean')
-                    z_log_var = tf.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
+                    z_log_var = tf.compat.v1.layers.dense(fc, latent_dim, activation=tf.nn.softplus, name='z_log_var')
                     latent_cost = Latent_Loss(z_log_var,z_mean,alpha=latent_alpha)
 
-                    z = z_mean + tf.exp(z_log_var / 2) * tf.random_normal(tf.shape(z_mean), 0.0, 1.0, dtype=tf.float32)
+                    z = z_mean + tf.exp(z_log_var / 2) * tf.random.normal(tf.shape(input=z_mean), 0.0, 1.0, dtype=tf.float32)
                     z = tf.identity(z, name='z')
 
-                    fc_up = tf.layers.dense(z, 128)
-                    fc_up = tf.layers.dense(fc_up, 256)
+                    fc_up = tf.compat.v1.layers.dense(z, 128)
+                    fc_up = tf.compat.v1.layers.dense(fc_up, 256)
                     fc_up_flat = fc_up
                     fc_up = tf.reshape(fc_up, shape=[-1, 1, 4, 64])
 
                     seq_losses = []
                     seq_accuracies = []
                     if self.use_beta:
-                        upsample1_beta = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
-                        upsample2_beta = tf.layers.conv2d_transpose(upsample1_beta, 64, (1, 3), (1, 2), activation=tf.nn.relu)
+                        upsample1_beta = tf.compat.v1.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
+                        upsample2_beta = tf.compat.v1.layers.conv2d_transpose(upsample1_beta, 64, (1, 3), (1, 2), activation=tf.nn.relu)
                         kr, str = determine_kr_str(upsample2_beta, GO, self)
 
                         if trainable_embedding is True:
                             #upsample3_beta = tf.layers.conv2d_transpose(upsample2_beta, GO.embedding_dim_aa, (1, 4),(1, 2), activation=tf.nn.relu)
-                            upsample3_beta = tf.layers.conv2d_transpose(upsample2_beta, GO.embedding_dim_aa, (1, kr),(1, str), activation=tf.nn.relu)
+                            upsample3_beta = tf.compat.v1.layers.conv2d_transpose(upsample2_beta, GO.embedding_dim_aa, (1, kr),(1, str), activation=tf.nn.relu)
                             upsample3_beta = upsample3_beta[:,:,0:self.max_length,:]
 
-                            embedding_layer_seq_back = tf.transpose(GO.embedding_layer_seq, perm=(0, 1, 3, 2))
+                            embedding_layer_seq_back = tf.transpose(a=GO.embedding_layer_seq, perm=(0, 1, 3, 2))
                             logits_AE_beta = tf.squeeze(tf.tensordot(upsample3_beta, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
                         else:
-                            logits_AE_beta = tf.layers.conv2d_transpose(upsample2_beta, 21, (1, kr),(1, str), activation=tf.nn.relu)
+                            logits_AE_beta = tf.compat.v1.layers.conv2d_transpose(upsample2_beta, 21, (1, kr),(1, str), activation=tf.nn.relu)
                             logits_AE_beta = logits_AE_beta[:,:,0:self.max_length,:]
 
                         recon_cost_beta = Recon_Loss(GO.X_Seq_beta, logits_AE_beta)
                         seq_losses.append(recon_cost_beta)
 
-                        predicted_beta = tf.squeeze(tf.argmax(logits_AE_beta, axis=3), axis=1)
+                        predicted_beta = tf.squeeze(tf.argmax(input=logits_AE_beta, axis=3), axis=1)
                         actual_ae_beta = tf.squeeze(GO.X_Seq_beta, axis=1)
                         w = tf.cast(tf.squeeze(tf.greater(GO.X_Seq_beta, 0), 1), tf.float32)
-                        correct_ae_beta = tf.reduce_sum(w * tf.cast(tf.equal(predicted_beta, actual_ae_beta), tf.float32),axis=1) / tf.reduce_sum(w, axis=1)
+                        correct_ae_beta = tf.reduce_sum(input_tensor=w * tf.cast(tf.equal(predicted_beta, actual_ae_beta), tf.float32),axis=1) / tf.reduce_sum(input_tensor=w, axis=1)
 
-                        accuracy_beta = tf.reduce_mean(correct_ae_beta, axis=0)
+                        accuracy_beta = tf.reduce_mean(input_tensor=correct_ae_beta, axis=0)
                         seq_accuracies.append(accuracy_beta)
 
                     if self.use_alpha:
-                        upsample1_alpha = tf.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
-                        upsample2_alpha = tf.layers.conv2d_transpose(upsample1_alpha, 64, (1, 3), (1, 2),activation=tf.nn.relu)
+                        upsample1_alpha = tf.compat.v1.layers.conv2d_transpose(fc_up, 128, (1, 3), (1, 2), activation=tf.nn.relu)
+                        upsample2_alpha = tf.compat.v1.layers.conv2d_transpose(upsample1_alpha, 64, (1, 3), (1, 2),activation=tf.nn.relu)
                         kr, str = determine_kr_str(upsample2_alpha, GO, self)
 
                         if trainable_embedding is True:
                             # upsample3_alpha = tf.layers.conv2d_transpose(upsample2_alpha, GO.embedding_dim_aa, (1, 4), (1, 2),activation=tf.nn.relu)
-                            upsample3_alpha = tf.layers.conv2d_transpose(upsample2_alpha, GO.embedding_dim_aa, (1, kr), (1, str),activation=tf.nn.relu)
+                            upsample3_alpha = tf.compat.v1.layers.conv2d_transpose(upsample2_alpha, GO.embedding_dim_aa, (1, kr), (1, str),activation=tf.nn.relu)
                             upsample3_alpha = upsample3_alpha[:,:,0:self.max_length,:]
 
-                            embedding_layer_seq_back = tf.transpose(GO.embedding_layer_seq, perm=(0, 1, 3, 2))
+                            embedding_layer_seq_back = tf.transpose(a=GO.embedding_layer_seq, perm=(0, 1, 3, 2))
                             logits_AE_alpha = tf.squeeze(tf.tensordot(upsample3_alpha, embedding_layer_seq_back, axes=(3, 2)),axis=(3, 4), name='logits')
                         else:
-                            logits_AE_alpha = tf.layers.conv2d_transpose(upsample2_alpha, 21, (1, kr), (1, str),activation=tf.nn.relu)
+                            logits_AE_alpha = tf.compat.v1.layers.conv2d_transpose(upsample2_alpha, 21, (1, kr), (1, str),activation=tf.nn.relu)
                             logits_AE_alpha = logits_AE_alpha[:,:,0:self.max_length,:]
 
                         recon_cost_alpha = Recon_Loss(GO.X_Seq_alpha, logits_AE_alpha)
                         seq_losses.append(recon_cost_alpha)
 
-                        predicted_alpha = tf.squeeze(tf.argmax(logits_AE_alpha, axis=3), axis=1)
+                        predicted_alpha = tf.squeeze(tf.argmax(input=logits_AE_alpha, axis=3), axis=1)
                         actual_ae_alpha = tf.squeeze(GO.X_Seq_alpha, axis=1)
                         w = tf.cast(tf.squeeze(tf.greater(GO.X_Seq_alpha, 0), 1), tf.float32)
-                        correct_ae_alpha = tf.reduce_sum(w * tf.cast(tf.equal(predicted_alpha, actual_ae_alpha), tf.float32), axis=1) / tf.reduce_sum(w, axis=1)
-                        accuracy_alpha = tf.reduce_mean(correct_ae_alpha, axis=0)
+                        correct_ae_alpha = tf.reduce_sum(input_tensor=w * tf.cast(tf.equal(predicted_alpha, actual_ae_alpha), tf.float32), axis=1) / tf.reduce_sum(input_tensor=w, axis=1)
+                        accuracy_alpha = tf.reduce_mean(input_tensor=correct_ae_alpha, axis=0)
                         seq_accuracies.append(accuracy_alpha)
 
                     hla_accuracies = []
@@ -2381,44 +2381,44 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     if self.use_w:
                         recon_losses = GO.w[:,tf.newaxis]*recon_losses
 
-                    recon_cost = tf.reduce_sum(recon_losses,1)
-                    recon_cost = tf.reduce_mean(recon_cost)
+                    recon_cost = tf.reduce_sum(input_tensor=recon_losses,axis=1)
+                    recon_cost = tf.reduce_mean(input_tensor=recon_cost)
 
                     if self.use_w:
                         latent_cost = GO.w*latent_cost
 
                     total_cost = [recon_losses,latent_cost[:,tf.newaxis]]
                     total_cost = tf.concat(total_cost,1)
-                    total_cost = tf.reduce_sum(total_cost,1)
-                    total_cost = tf.reduce_mean(total_cost)
+                    total_cost = tf.reduce_sum(input_tensor=total_cost,axis=1)
+                    total_cost = tf.reduce_mean(input_tensor=total_cost)
 
                     num_acc = len(accuracies)
                     accuracy = 0
                     for a in accuracies:
                         accuracy += a
                     accuracy = accuracy/num_acc
-                    latent_cost = tf.reduce_mean(latent_cost)
+                    latent_cost = tf.reduce_mean(input_tensor=latent_cost)
 
-                    opt_ae = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(total_cost)
+                    opt_ae = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate).minimize(total_cost)
 
                     if sparsity_alpha is not None:
                         sparsity_cost = sparsity_loss(z_w,sparsity_alpha)
                         total_cost += sparsity_cost
-                        opt_sparse = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(sparsity_cost,var_list=z_w)
+                        opt_sparse = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate).minimize(sparsity_cost,var_list=z_w)
                         opt_ae = tf.group(opt_ae,opt_sparse)
                         self.use_sparsity = True
                     else:
                         sparsity_cost = tf.Variable(0.0)
 
-                    GO.saver = tf.train.Saver(max_to_keep=None)
+                    GO.saver = tf.compat.v1.train.Saver(max_to_keep=None)
 
             self._reset_models()
-            tf.reset_default_graph()
-            config = tf.ConfigProto(allow_soft_placement=True)
+            tf.compat.v1.reset_default_graph()
+            config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
             config.gpu_options.allow_growth = True
 
-            with tf.Session(graph=graph_model_AE,config=config) as sess:
-                sess.run(tf.global_variables_initializer())
+            with tf.compat.v1.Session(graph=graph_model_AE,config=config) as sess:
+                sess.run(tf.compat.v1.global_variables_initializer())
                 stop_check_list = []
                 accuracy_list = []
                 recon_loss = []
@@ -3697,15 +3697,15 @@ class DeepTCR_SS(DeepTCR_S_base):
         with graph_model.device(self.device):
             with graph_model.as_default():
                 if graph_seed is not None:
-                    tf.set_random_seed(graph_seed)
+                    tf.compat.v1.set_random_seed(graph_seed)
 
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,use_only_hla,
                                          num_fc_layers,units_fc)
                 if self.regression is False:
-                    GO.Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
+                    GO.Y = tf.compat.v1.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
                 else:
-                    GO.Y = tf.placeholder(tf.float32, shape=[None, 1])
+                    GO.Y = tf.compat.v1.placeholder(tf.float32, shape=[None, 1])
 
                 if self.regression is False:
                     if multisample_dropout:
@@ -3715,24 +3715,24 @@ class DeepTCR_SS(DeepTCR_S_base):
                                                         activation=None,
                                                         rate=GO.prob_multisample)
                     else:
-                        GO.logits = tf.layers.dense(GO.Features, self.Y.shape[1])
+                        GO.logits = tf.compat.v1.layers.dense(GO.Features, self.Y.shape[1])
 
-                    per_sample_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits)
+                    per_sample_loss = tf.nn.softmax_cross_entropy_with_logits(labels=GO.Y, logits=GO.logits)
                     per_sample_loss = per_sample_loss - hinge_loss_t
                     per_sample_loss = tf.cast((per_sample_loss > 0), tf.float32) * per_sample_loss
                     if weight_by_class is True:
                         class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
                         weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
-                        GO.loss = tf.reduce_mean(weights * per_sample_loss)
+                        GO.loss = tf.reduce_mean(input_tensor=weights * per_sample_loss)
                     elif class_weights is not None:
                         weights = np.zeros([1, len(self.lb.classes_)]).astype(np.float32)
                         for key in class_weights:
                             weights[:, self.lb.transform([key])[0]] = class_weights[key]
                         class_weights = tf.constant(weights)
                         weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True),axis=1)
-                        GO.loss = tf.reduce_mean(weights * per_sample_loss)
+                        GO.loss = tf.reduce_mean(input_tensor=weights * per_sample_loss)
                     else:
-                        GO.loss = tf.reduce_mean(per_sample_loss)
+                        GO.loss = tf.reduce_mean(input_tensor=per_sample_loss)
 
                 else:
                     if multisample_dropout:
@@ -3742,22 +3742,22 @@ class DeepTCR_SS(DeepTCR_S_base):
                                                         activation=None,
                                                         rate=GO.prob_multisample)
                     else:
-                        GO.logits = tf.layers.dense(GO.Features, 1)
+                        GO.logits = tf.compat.v1.layers.dense(GO.Features, 1)
 
-                    GO.loss = tf.reduce_mean(tf.square(GO.Y-GO.logits))
+                    GO.loss = tf.reduce_mean(input_tensor=tf.square(GO.Y-GO.logits))
 
-                GO.opt = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(GO.loss)
+                GO.opt = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate).minimize(GO.loss)
 
                 if self.regression is False:
-                    with tf.name_scope('Accuracy_Measurements'):
+                    with tf.compat.v1.name_scope('Accuracy_Measurements'):
                         GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
-                        correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
-                        GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+                        correct_pred = tf.equal(tf.argmax(input=GO.predicted, axis=1), tf.argmax(input=GO.Y, axis=1))
+                        GO.accuracy = tf.reduce_mean(input_tensor=tf.cast(correct_pred, tf.float32), name='accuracy')
                 else:
                     GO.predicted = GO.logits
                     GO.accuracy = GO.loss
 
-                GO.saver = tf.train.Saver(max_to_keep=None)
+                GO.saver = tf.compat.v1.train.Saver(max_to_keep=None)
 
                 self.GO = GO
                 self.train_params = train_params
@@ -3783,11 +3783,11 @@ class DeepTCR_SS(DeepTCR_S_base):
 
 
         #Initialize Training
-        tf.reset_default_graph()
-        config = tf.ConfigProto(allow_soft_placement=True)
+        tf.compat.v1.reset_default_graph()
+        config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
-        with tf.Session(graph=graph_model,config=config) as sess:
-            sess.run(tf.global_variables_initializer())
+        with tf.compat.v1.Session(graph=graph_model,config=config) as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
 
             val_loss_total = []
             train_accuracy_total = []
@@ -4619,37 +4619,37 @@ class DeepTCR_WF(DeepTCR_S_base):
         with graph_model.device(self.device):
             with graph_model.as_default():
                 if graph_seed is not None:
-                    tf.set_random_seed(graph_seed)
+                    tf.compat.v1.set_random_seed(graph_seed)
 
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,
                                          use_only_seq,use_only_gene,use_only_hla,
                                          num_fc_layers,units_fc)
                 if self.regression is False:
-                    GO.Y = tf.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
+                    GO.Y = tf.compat.v1.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
                 else:
-                    GO.Y = tf.placeholder(tf.float32, shape=[None, 1])
+                    GO.Y = tf.compat.v1.placeholder(tf.float32, shape=[None, 1])
 
-                Features = tf.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
+                Features = tf.compat.v1.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
                 agg_list = []
                 if qualitative_agg:
                     #qualitative agg
                     GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
-                    GO.Features_Agg = tf.sparse.matmul(GO.sp, GO.Features_W)
+                    GO.Features_Agg = tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W)
                     agg_list.append(GO.Features_Agg)
                 if quantitative_agg:
                     #quantitative agg
                     GO.Features_W_c = Features * GO.X_Counts[:, tf.newaxis]
                     c_b = tf.Variable(name='c_b',initial_value=np.zeros(num_concepts), trainable=True,dtype=tf.float32)
-                    GO.Features_Agg_c = isru(tf.sparse.matmul(GO.sp, GO.Features_W_c)+c_b,l=0,h=1,a=0,b=0)
+                    GO.Features_Agg_c = isru(tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W_c)+c_b,l=0,h=1,a=0,b=0)
                     agg_list.append(GO.Features_Agg_c)
 
                 GO.Features_Agg = tf.concat(agg_list,axis=1)
 
                 if num_agg_layers != 0:
                     for lyr in range(num_agg_layers):
-                        GO.Features_Agg = tf.layers.dropout(GO.Features_Agg, GO.prob)
-                        GO.Features_Agg = tf.layers.dense(GO.Features_Agg, units_agg, tf.nn.relu)
+                        GO.Features_Agg = tf.compat.v1.layers.dropout(GO.Features_Agg, GO.prob)
+                        GO.Features_Agg = tf.compat.v1.layers.dense(GO.Features_Agg, units_agg, tf.nn.relu)
 
                 if self.regression is False:
                     if multisample_dropout:
@@ -4659,9 +4659,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                                                         activation=None,
                                                         rate=GO.prob_multisample)
                     else:
-                        GO.logits = tf.layers.dense(GO.Features_Agg, self.Y.shape[1])
+                        GO.logits = tf.compat.v1.layers.dense(GO.Features_Agg, self.Y.shape[1])
 
-                    per_sample_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=GO.Y, logits=GO.logits)
+                    per_sample_loss = tf.nn.softmax_cross_entropy_with_logits(labels=GO.Y, logits=GO.logits)
                     per_sample_loss = per_sample_loss - hinge_loss_t
                     per_sample_loss = tf.cast((per_sample_loss > 0),tf.float32) * per_sample_loss
                     if loss_criteria == 'mean':
@@ -4693,17 +4693,17 @@ class DeepTCR_WF(DeepTCR_S_base):
                                                         activation=None,
                                                         rate=GO.prob_multisample)
                     else:
-                        GO.logits = tf.layers.dense(GO.Features_Agg, 1)
+                        GO.logits = tf.compat.v1.layers.dense(GO.Features_Agg, 1)
 
-                    GO.loss = tf.reduce_mean(tf.square(GO.Y-GO.logits))
+                    GO.loss = tf.reduce_mean(input_tensor=tf.square(GO.Y-GO.logits))
 
-                var_train = tf.trainable_variables()
+                var_train = tf.compat.v1.trainable_variables()
                 if batch_size_update is None:
-                    GO.opt = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(GO.loss,var_list=var_train)
+                    GO.opt = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate).minimize(GO.loss,var_list=var_train)
                 else:
-                    GO.opt = tf.train.AdamOptimizer(learning_rate=learning_rate)
+                    GO.opt = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate)
                     GO.grads_and_vars = GO.opt.compute_gradients(GO.loss, var_train)
-                    GO.gradients = tf.gradients(GO.loss,var_train)
+                    GO.gradients = tf.gradients(ys=GO.loss,xs=var_train)
                     GO.gradients,keep_ii = zip(*[(v,ii) for ii,v in enumerate(GO.gradients) if v is not None])
                     var_train = list(np.asarray(var_train)[list(keep_ii)])
                     GO.grads_accum = [tf.Variable(tf.zeros_like(v)) for v in GO.gradients]
@@ -4714,13 +4714,13 @@ class DeepTCR_WF(DeepTCR_S_base):
                 if self.regression is False:
                     # Operations for validation/test accuracy
                     GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
-                    correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
-                    GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+                    correct_pred = tf.equal(tf.argmax(input=GO.predicted, axis=1), tf.argmax(input=GO.Y, axis=1))
+                    GO.accuracy = tf.reduce_mean(input_tensor=tf.cast(correct_pred, tf.float32), name='accuracy')
                 else:
                     GO.predicted = GO.logits
                     GO.accuracy = GO.loss
 
-                GO.saver = tf.train.Saver(max_to_keep=None)
+                GO.saver = tf.compat.v1.train.Saver(max_to_keep=None)
                 self.GO = GO
                 self.train_params = train_params
                 self.graph_model = graph_model
@@ -4743,11 +4743,11 @@ class DeepTCR_WF(DeepTCR_S_base):
         drop_out_rate = train_params.drop_out_rate
         multisample_dropout_rate = train_params.multisample_dropout_rate
 
-        tf.reset_default_graph()
-        config = tf.ConfigProto(allow_soft_placement=True)
+        tf.compat.v1.reset_default_graph()
+        config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
-        with tf.Session(graph=graph_model,config=config) as sess:
-            sess.run(tf.global_variables_initializer())
+        with tf.compat.v1.Session(graph=graph_model,config=config) as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
 
             val_loss_total = []
             train_accuracy_total = []
@@ -5616,13 +5616,13 @@ class DeepTCR_WF(DeepTCR_S_base):
         sample_labels = data.sample_labels
         get = data.get
 
-        tf.reset_default_graph()
-        config = tf.ConfigProto(allow_soft_placement=True)
+        tf.compat.v1.reset_default_graph()
+        config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
         with tf.device(self.device):
-            saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models', model, 'model.ckpt.meta'),clear_devices=True)
-        graph = tf.get_default_graph()
-        with tf.Session(graph=graph,config=config) as sess:
+            saver = tf.compat.v1.train.import_meta_graph(os.path.join(self.Name, 'models', model, 'model.ckpt.meta'),clear_devices=True)
+        graph = tf.compat.v1.get_default_graph()
+        with tf.compat.v1.Session(graph=graph,config=config) as sess:
             saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name,'models', model)))
 
             X_Freq = graph.get_tensor_by_name('Freq:0')
