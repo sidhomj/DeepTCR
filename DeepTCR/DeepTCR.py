@@ -4632,18 +4632,31 @@ class DeepTCR_WF(DeepTCR_S_base):
                 else:
                     GO.Y = tf.compat.v1.placeholder(tf.float32, shape=[None, 1])
 
-                Features = tf.compat.v1.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
+                hf  = True
+                if hf is True:
+                    K = tf.compat.v1.layers.dense(GO.Features,32,tf.nn.relu)
+                    K = tf.compat.v1.layers.dense(K,32,tf.nn.relu)
+                    Q = tf.compat.v1.get_variable(name='Q',shape=[32,1])
+                    GO.w = tf.squeeze(tf.matmul(K,Q)/np.sqrt(32),-1)
+                    GO.w = GO.sp*GO.w
+                    # GO.w = tf.sparse.softmax(GO.w)
+                    Features = GO.Features
+
+                else:
+                    Features = tf.compat.v1.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
+                    GO.w = GO.sp
+
                 agg_list = []
                 if qualitative_agg:
                     #qualitative agg
                     GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
-                    GO.Features_Agg = tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W)
+                    GO.Features_Agg = tf.sparse.sparse_dense_matmul(GO.w, GO.Features_W)
                     agg_list.append(GO.Features_Agg)
                 if quantitative_agg:
                     #quantitative agg
                     GO.Features_W_c = Features * GO.X_Counts[:, tf.newaxis]
                     c_b = tf.Variable(name='c_b',initial_value=np.zeros(num_concepts), trainable=True,dtype=tf.float32)
-                    GO.Features_Agg_c = isru(tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W_c)+c_b,l=0,h=1,a=0,b=0)
+                    GO.Features_Agg_c = isru(tf.sparse.sparse_dense_matmul(GO.w, GO.Features_W_c)+c_b,l=0,h=1,a=0,b=0)
                     agg_list.append(GO.Features_Agg_c)
 
                 GO.Features_Agg = tf.concat(agg_list,axis=1)

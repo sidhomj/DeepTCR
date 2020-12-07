@@ -719,6 +719,8 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
         elif train:
             loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted],
                                                           feed_dict=feed_dict)
+            # w_check = sess.run(tf.sparse.to_dense(tf.sparse.reorder(GO.w_out)),feed_dict=feed_dict)
+            # w_check = sess.run(GO.w_out,feed_dict=feed_dict)
         else:
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)
