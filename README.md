@@ -103,6 +103,10 @@ seq logos are made and saved directly in the results folder under Motifs.
 linear model to identify which motifs are associated to predicted probabilites from neural network.
 - Supervised Repertoire Model now able to do regression. By providing per-instance label with regression value with Load_Data method, this will automatically use the average of all instance level labels as the sample level value to regress the model against.
 
+### 2.0
+Fifth release 
+- ss
+- tf2/py3.8
 
 
 
