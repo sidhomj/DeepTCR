@@ -4728,7 +4728,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 self.graph_model = graph_model
                 self.kernel = kernel
 
-    def _train(self,write=True,batch_seed=None,iteration=0):
+    def _train(self,write=True,batch_seed=None,iteration=0,subsample=None,subsample_by_freq=False,subsample_valid_test=False):
         GO = self.GO
         graph_model = self.graph_model
         train_params = self.train_params
@@ -4762,18 +4762,27 @@ class DeepTCR_WF(DeepTCR_S_base):
                     np.random.seed(batch_seed)
                 train_loss, train_accuracy, train_predicted,train_auc = \
                     Run_Graph_WF(self.train,sess,self,GO,batch_size,batch_size_update,random=True,train=True,
-                                 drop_out_rate=drop_out_rate,multisample_dropout_rate=multisample_dropout_rate)
+                                 drop_out_rate=drop_out_rate,multisample_dropout_rate=multisample_dropout_rate,
+                                 subsample=subsample,subsample_by_freq=subsample_by_freq)
 
                 train_accuracy_total.append(train_accuracy)
                 train_loss_total.append(train_loss)
 
+
+                if subsample_valid_test is False:
+                    subsample_vt = None
+                else:
+                    subsample_vt = subsample
+
                 valid_loss, valid_accuracy, valid_predicted, valid_auc = \
-                    Run_Graph_WF(self.valid, sess, self, GO, batch_size,batch_size_update, random=False, train=False)
+                    Run_Graph_WF(self.valid, sess, self, GO, batch_size,batch_size_update, random=False, train=False,
+                                 subsample=subsample_vt,subsample_by_freq=subsample_by_freq)
 
                 val_loss_total.append(valid_loss)
 
                 test_loss, test_accuracy, test_predicted, test_auc = \
-                    Run_Graph_WF(self.test, sess, self, GO, batch_size,batch_size_update, random=False, train=False)
+                    Run_Graph_WF(self.test, sess, self, GO, batch_size,batch_size_update, random=False, train=False,
+                                 subsample=subsample_vt,subsample_by_freq=subsample_by_freq)
 
                 self.y_pred = test_predicted
                 self.y_test = self.test[-1]
@@ -4858,7 +4867,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,
               accuracy_min = None,train_loss_min=None,hinge_loss_t=0.0,convergence='validation',learning_rate=0.001, suppress_output=False,
               loss_criteria='mean',
-              batch_seed = None):
+              batch_seed = None,
+              subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
         """
         Train Whole-Sample Classifier
@@ -5027,6 +5037,17 @@ class DeepTCR_WF(DeepTCR_S_base):
         batch_seed: int
             For deterministic batching during training, set this value to an integer of choice.
 
+        subsample: int
+            Number of sequences to sub-sample from repertoire during training to improve speed of convergence
+            as well as being a form of regularization.
+
+        subsample_by_freq: bool
+            Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
+
+        subsample_valid_test: bool
+            Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed
+            to convergence and generalizability.
+
         Returns
         ---------------------------------------
 
@@ -5041,7 +5062,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                batch_size,batch_size_update, epochs_min,stop_criterion,stop_criterion_window,
               accuracy_min,train_loss_min,hinge_loss_t,convergence,learning_rate, suppress_output,
                     loss_criteria)
-        self._train(write=True,batch_seed=batch_seed,iteration=0)
+        self._train(write=True,batch_seed=batch_seed,iteration=0,
+                    subsample=subsample,subsample_by_freq=subsample_by_freq,subsample_valid_test=subsample_valid_test)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,combine_train_valid=False,random_perm=False,seeds=None,
                              kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
@@ -5052,7 +5074,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                              batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
                              accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation',learning_rate=0.001, suppress_output=False,
                              loss_criteria='mean',
-                             batch_seed=None):
+                             batch_seed=None,
+                             subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
         """
         Monte Carlo Cross-Validation for Whole Sample Classifier
@@ -5251,6 +5274,17 @@ class DeepTCR_WF(DeepTCR_S_base):
         batch_seed: int
             For deterministic batching during training, set this value to an integer of choice.
 
+        subsample: int
+            Number of sequences to sub-sample from repertoire during training to improve speed of convergence
+            as well as being a form of regularization.
+
+        subsample_by_freq: bool
+            Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
+
+        subsample_valid_test: bool
+            Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed
+            to convergence and generalizability.
+
         Returns
 
         self.DFs_pred: dict of dataframes
@@ -5283,7 +5317,8 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,combine_train_valid=combine_train_valid,
                                       random_perm=random_perm)
-            self._train(write=True,batch_seed=batch_seed,iteration=i)
+            self._train(write=True,batch_seed=batch_seed,iteration=i,
+                        subsample=subsample,subsample_by_freq=subsample_by_freq,subsample_valid_test=subsample_valid_test)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -5331,7 +5366,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                         batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
                         accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
                         loss_criteria='mean',
-                        batch_seed=None):
+                        batch_seed=None,
+                        subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
         """
         K_Fold Cross-Validation for Whole Sample Classifier
@@ -5521,6 +5557,17 @@ class DeepTCR_WF(DeepTCR_S_base):
         batch_seed: int
             For deterministic batching during training, set this value to an integer of choice.
 
+        subsample: int
+            Number of sequences to sub-sample from repertoire during training to improve speed of convergence
+            as well as being a form of regularization.
+
+        subsample_by_freq: bool
+            Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
+
+        subsample_valid_test: bool
+            Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed
+            to convergence and generalizability.
+
         Returns
         ---------------------------------------
 
@@ -5582,7 +5629,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                     self.valid[i] = self.test[i]
 
             self.LOO = None
-            self._train(write=True, batch_seed=batch_seed, iteration=ii)
+            self._train(write=True, batch_seed=batch_seed, iteration=ii,
+                        subsample=subsample,subsample_by_freq=subsample_by_freq,subsample_valid_test=subsample_valid_test)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)

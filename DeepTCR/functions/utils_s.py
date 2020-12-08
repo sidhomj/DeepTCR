@@ -635,7 +635,8 @@ def Run_Graph_WF_dep(set,sess,self,GO,batch_size,random=True,train=True,drop_out
         auc = 0.0
     return loss,accuracy,predicted_out,auc
 
-def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train=True,drop_out_rate=None,multisample_dropout_rate=None):
+def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train=True,drop_out_rate=None,multisample_dropout_rate=None,
+                 subsample=None,subsample_by_freq=False):
     loss = []
     accuracy = []
     predicted_list = []
@@ -646,7 +647,20 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
     grads = []
     w = []
     for vars in get_batches(set, batch_size=batch_size, random=random):
-        var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
+        if subsample is None:
+            var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
+        else:
+            var_idx = []
+            for p in np.unique(vars[0]):
+                vidx = np.where(np.isin(self.sample_id,p))[0]
+                if len(vidx)>subsample:
+                    if subsample_by_freq is False:
+                        vidx = np.random.choice(vidx,subsample,replace=False)
+                    else:
+                        vidx = np.random.choice(vidx,subsample,replace=False,p=self.freq[vidx]/np.sum(self.freq[vidx]))
+                var_idx.append(vidx)
+            var_idx = np.hstack(var_idx)
+
         lb = LabelEncoder()
         lb.fit(vars[0])
         _,_,sample_idx = np.intersect1d(lb.classes_,vars[0],return_indices=True)
