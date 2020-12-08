@@ -4821,6 +4821,12 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 e +=  1
 
+            test_loss, test_accuracy, test_predicted, test_auc = \
+                Run_Graph_WF(self.test, sess, self, GO, batch_size, batch_size_update, random=False, train=False)
+
+            self.y_pred = test_predicted
+            self.y_test = self.test[-1]
+
             if write:
                 batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
                 Get_Seq_Features_Indices(self,batch_size_seq,GO,sess)
