@@ -800,8 +800,10 @@ def Get_Sequence_Pred(self,batch_size,GO,sess):
         sp = tf.compat.v1.SparseTensorValue(indices, sp.data, sp.shape)
 
         feed_dict = {GO.X_Freq: freq[var_idx],
-                     GO.X_Counts: self.counts[var_idx],
                      GO.sp: sp}
+
+        if hasattr(self,'counts'):
+            feed_dict[GO.X_Counts] = self.counts[var_idx]
 
         if self.use_alpha is True:
             feed_dict[GO.X_Seq_alpha] = self.X_Seq_alpha[var_idx]
