@@ -95,21 +95,20 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
         else:
             units = size_of_net
 
-        conv = tf.compat.v1.layers.conv2d(inputs, units[0], (1, kernel), 1, padding='same')
-        conv_out = tf.compat.v1.layers.flatten(tf.reduce_max(input_tensor=conv,axis=2))
-        indices = tf.squeeze(tf.cast(tf.argmax(input=conv, axis=2), tf.float32),1)
-        conv = tf.nn.leaky_relu(conv)
-        conv = tf.compat.v1.layers.dropout(conv,prob)
+        for ii,_ in enumerate(units,0):
+            if ii == 0:
+                conv = tf.compat.v1.layers.conv2d(inputs, units[ii], (1, kernel), 1, padding='same')
+                conv_out = tf.compat.v1.layers.flatten(tf.reduce_max(input_tensor=conv, axis=2))
+                indices = tf.squeeze(tf.cast(tf.argmax(input=conv, axis=2), tf.float32), 1)
+                conv = tf.nn.leaky_relu(conv)
+                conv = tf.compat.v1.layers.dropout(conv, prob)
+            else:
+                kernel = 3
+                conv = tf.compat.v1.layers.conv2d(conv, units[ii], (1, kernel), (1, kernel), padding='same')
+                conv = tf.nn.leaky_relu(conv)
+                conv = tf.compat.v1.layers.dropout(conv, prob)
 
-        kernel = 3
-        conv_2 = tf.compat.v1.layers.conv2d(conv, units[1], (1, kernel), (1, kernel), padding='same')
-        conv_2 = tf.nn.leaky_relu(conv_2)
-        conv_2 = tf.compat.v1.layers.dropout(conv_2, prob)
-        conv_2_out = tf.compat.v1.layers.flatten(tf.reduce_max(input_tensor=conv_2,axis=2))
-
-        conv_3 = tf.compat.v1.layers.conv2d(conv_2, units[2], (1, kernel), (1, kernel), padding='same')
-        conv_3 = tf.nn.leaky_relu(conv_3)
-        conv_3 = tf.compat.v1.layers.dropout(conv_3, prob)
+        conv_3 = conv
         conv_3_out = tf.compat.v1.layers.flatten(tf.reduce_max(input_tensor=conv_3,axis=2))
 
         if net == 'ae':
