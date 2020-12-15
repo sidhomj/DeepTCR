@@ -2172,6 +2172,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 - large == [64,128,256] neurons for the 3 respective layers
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
+                    One can also adjust the number of layers for the convolutional stack by changing the length of
+                    this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
         latent_alpha: float
             Penalty coefficient for latent loss. This value changes the degree of latent regularization on
@@ -3946,6 +3948,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                 - large == [64,128,256] neurons for the 3 respective layers
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
+                    One can also adjust the number of layers for the convolutional stack by changing the length of
+                    this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
         graph_seed: int
             For deterministic initialization of weights of the graph, set this to value of choice.
@@ -4131,6 +4135,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                 - large == [64,128,256] neurons for the 3 respective layers
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
+                    One can also adjust the number of layers for the convolutional stack by changing the length of
+                    this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
         graph_seed: int
             For deterministic initialization of weights of the graph, set this to value of choice.
@@ -4344,6 +4350,8 @@ class DeepTCR_SS(DeepTCR_S_base):
                 - large == [64,128,256] neurons for the 3 respective layers
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
+                    One can also adjust the number of layers for the convolutional stack by changing the length of
+                    this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
         graph_seed: int
             For deterministic initialization of weights of the graph, set this to value of choice.
@@ -4942,6 +4950,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                 - large == [64,128,256] neurons for the 3 respective layers
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
+                    One can also adjust the number of layers for the convolutional stack by changing the length of
+                    this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
         graph_seed: int
             For deterministic initialization of weights of the graph, set this to value of choice.
@@ -5462,6 +5472,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                 - large == [64,128,256] neurons for the 3 respective layers
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
+                    One can also adjust the number of layers for the convolutional stack by changing the length of
+                    this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
         graph_seed: int
             For deterministic initialization of weights of the graph, set this to value of choice.
