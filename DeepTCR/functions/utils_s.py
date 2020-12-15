@@ -681,8 +681,10 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
 
         feed_dict = {GO.Y: vars[-1],
                      GO.X_Freq: self.freq[var_idx],
-                     GO.X_Counts: self.counts[var_idx],
                      GO.sp: sp}
+
+        if hasattr(self,'counts'):
+            feed_dict[GO.X_Counts] = self.counts[var_idx]
 
         if drop_out_rate is not None:
             feed_dict[GO.prob] = drop_out_rate
