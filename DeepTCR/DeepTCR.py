@@ -4606,7 +4606,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                drop_out_rate=0.0,multisample_dropout=False, multisample_dropout_rate = 0.50,multisample_dropout_num_masks = 64,
                batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,
               accuracy_min = None,train_loss_min=None,hinge_loss_t=0.0,convergence='validation',learning_rate=0.001, suppress_output=False,
-               loss_criteria='mean'):
+               loss_criteria='mean',l2_reg=0.0):
 
         graph_model = tf.Graph()
         GO = graph_object()
@@ -4626,6 +4626,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         GO.embedding_dim_genes = embedding_dim_genes
         GO.embedding_dim_aa = embedding_dim_aa
         GO.embedding_dim_hla = embedding_dim_hla
+        GO.l2_reg = l2_reg
         with graph_model.device(self.device):
             with graph_model.as_default():
                 if graph_seed is not None:
@@ -4641,6 +4642,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.Y = tf.compat.v1.placeholder(tf.float32, shape=[None, 1])
 
                 Features = tf.compat.v1.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
+                GO.Features = Features
                 agg_list = []
                 if qualitative_agg:
                     #qualitative agg
@@ -4708,6 +4710,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.loss = tf.reduce_mean(input_tensor=tf.square(GO.Y-GO.logits))
 
                 var_train = tf.compat.v1.trainable_variables()
+                GO.loss = GO.loss + tf.compat.v1.losses.get_regularization_loss()
                 if batch_size_update is None:
                     GO.opt = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate).minimize(GO.loss,var_list=var_train)
                 else:
@@ -4763,6 +4766,8 @@ class DeepTCR_WF(DeepTCR_S_base):
             train_accuracy_total = []
             train_loss_total = []
             stop_check_list = []
+            kernel_weights = []
+            var_train = tf.compat.v1.trainable_variables()
             e = 0
 
             while True:
@@ -4775,7 +4780,8 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 train_accuracy_total.append(train_accuracy)
                 train_loss_total.append(train_loss)
-
+                #kernel_weights.append(tf.compat.v1.trainable_variables()[0].eval())
+                kernel_weights.append(np.hstack([np.ndarray.flatten(x.eval()) for x in var_train]))
 
                 if subsample_valid_test is False:
                     subsample_vt = None
@@ -4829,6 +4835,9 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 e +=  1
 
+            self.train_loss = train_loss_total
+            self.kernel_weights = kernel_weights
+
             test_loss, test_accuracy, test_predicted, test_auc = \
                 Run_Graph_WF(self.test, sess, self, GO, batch_size, batch_size_update, random=False, train=False)
 
@@ -4880,7 +4889,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                drop_out_rate=0.0,multisample_dropout=False, multisample_dropout_rate = 0.50,multisample_dropout_num_masks = 64,
                batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,
               accuracy_min = None,train_loss_min=None,hinge_loss_t=0.0,convergence='validation',learning_rate=0.001, suppress_output=False,
-              loss_criteria='mean',
+              loss_criteria='mean',l2_reg=0.0,
               batch_seed = None,
               subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
@@ -5077,7 +5086,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                drop_out_rate,multisample_dropout, multisample_dropout_rate,multisample_dropout_num_masks,
                batch_size,batch_size_update, epochs_min,stop_criterion,stop_criterion_window,
               accuracy_min,train_loss_min,hinge_loss_t,convergence,learning_rate, suppress_output,
-                    loss_criteria)
+                    loss_criteria,l2_reg)
         self._train(write=True,batch_seed=batch_seed,iteration=0,
                     subsample=subsample,subsample_by_freq=subsample_by_freq,subsample_valid_test=subsample_valid_test)
 
@@ -5089,7 +5098,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                              drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50,multisample_dropout_num_masks=64,
                              batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
                              accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation',learning_rate=0.001, suppress_output=False,
-                             loss_criteria='mean',
+                             loss_criteria='mean',l2_reg = 0.0,
                              batch_seed=None,
                              subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
@@ -5287,6 +5296,11 @@ class DeepTCR_WF(DeepTCR_S_base):
         suppress_output: bool
             To suppress command line output with training statisitcs, set to True.
 
+        l2_reg: float
+            When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific
+            overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization
+            through TCR featurization layers of the network.
+
         batch_seed: int
             For deterministic batching during training, set this value to an integer of choice.
 
@@ -5323,7 +5337,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                     drop_out_rate, multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                     batch_size, batch_size_update, epochs_min, stop_criterion, stop_criterion_window,
                     accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output,
-                    loss_criteria)
+                    loss_criteria,l2_reg)
 
         for i in range(0, folds):
             if suppress_output is False:
@@ -5381,7 +5395,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                         drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50, multisample_dropout_num_masks=64,
                         batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
                         accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
-                        loss_criteria='mean',
+                        loss_criteria='mean',l2_reg=0.0,
                         batch_seed=None,
                         subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
@@ -5572,6 +5586,16 @@ class DeepTCR_WF(DeepTCR_S_base):
         suppress_output: bool
             To suppress command line output with training statisitcs, set to True.
 
+        l2_reg: float
+            When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific
+            overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization
+            through TCR featurization layers of the network.
+
+        l2_reg: float
+            When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific
+            overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization
+            through TCR featurization layers of the network.
+
         batch_seed: int
             For deterministic batching during training, set this value to an integer of choice.
 
@@ -5626,7 +5650,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                     drop_out_rate, multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                     batch_size, batch_size_update, epochs_min, stop_criterion, stop_criterion_window,
                     accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output,
-                    loss_criteria)
+                    loss_criteria,l2_reg)
 
         y_test = []
         y_pred = []

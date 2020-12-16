@@ -84,7 +84,7 @@ def Get_HLA_Features(self,GO,embedding_dim):
     return GO.HLA_Features
 
 def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Features',kernel=3,net='ae',
-                           size_of_net = 'medium'):
+                           size_of_net = 'medium',l2_reg=0.0):
     with tf.compat.v1.variable_scope(name,reuse=reuse):
         if size_of_net == 'small':
             units = [12,32,64]
@@ -97,14 +97,16 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
 
         for ii,_ in enumerate(units,0):
             if ii == 0:
-                conv = tf.compat.v1.layers.conv2d(inputs, units[ii], (1, kernel), 1, padding='same')
+                conv = tf.compat.v1.layers.conv2d(inputs, units[ii], (1, kernel), 1, padding='same',
+                                                  kernel_regularizer=tf.keras.regularizers.l2(l2_reg))
                 conv_out = tf.compat.v1.layers.flatten(tf.reduce_max(input_tensor=conv, axis=2))
                 indices = tf.squeeze(tf.cast(tf.argmax(input=conv, axis=2), tf.float32), 1)
                 conv = tf.nn.leaky_relu(conv)
                 conv = tf.compat.v1.layers.dropout(conv, prob)
             else:
                 kernel = 3
-                conv = tf.compat.v1.layers.conv2d(conv, units[ii], (1, kernel), (1, kernel), padding='same')
+                conv = tf.compat.v1.layers.conv2d(conv, units[ii], (1, kernel), (1, kernel), padding='same',
+                                                  kernel_regularizer=tf.keras.regularizers.l2(l2_reg))
                 conv = tf.nn.leaky_relu(conv)
                 conv = tf.compat.v1.layers.dropout(conv, prob)
 
@@ -171,13 +173,15 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
         GO.Seq_Features_alpha, GO.alpha_out, GO.indices_alpha = Convolutional_Features(inputs_seq_embed_alpha,
                                                                                        kernel=kernel,
                                                                                        name='alpha_conv', prob=GO.prob,
-                                                                                       net=GO.net,size_of_net=GO.size_of_net)
+                                                                                       net=GO.net,size_of_net=GO.size_of_net,
+                                                                                       l2_reg=GO.l2_reg)
 
     if self.use_beta is True:
         GO.Seq_Features_beta, GO.beta_out, GO.indices_beta = Convolutional_Features(inputs_seq_embed_beta,
                                                                                     kernel=kernel,
                                                                                     name='beta_conv', prob=GO.prob,
-                                                                                    net=GO.net,size_of_net=GO.size_of_net)
+                                                                                    net=GO.net,size_of_net=GO.size_of_net,
+                                                                                    l2_reg = GO.l2_reg)
 
     Seq_Features = []
     if self.use_alpha is True:
@@ -226,7 +230,8 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     if num_fc_layers != 0:
         for lyr in range(num_fc_layers):
             fc = tf.compat.v1.layers.dropout(fc, GO.prob)
-            fc = tf.compat.v1.layers.dense(fc, units_fc, tf.nn.relu)
+            fc = tf.compat.v1.layers.dense(fc, units_fc, tf.nn.relu,
+                                           kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
 
     return fc
 
