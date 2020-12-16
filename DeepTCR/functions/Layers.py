@@ -371,4 +371,5 @@ def Apply_Attention(Features,attn_sample_perc=0.10):
     s = tf.cast(tf.math.round(tf.cast(n_seq, tf.float32) * attn_sample_perc), tf.int32)
     mask = tf.py_function(make_mask, [attn_idx, s, attn], tf.int64)
     mask.set_shape((None,))
-    return Features * tf.cast(mask[:, tf.newaxis], tf.float32), mask
+    mask = tf.cast(mask[:, tf.newaxis], tf.float32)
+    return Features * mask, mask

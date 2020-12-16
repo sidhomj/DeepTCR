@@ -4643,10 +4643,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.Y = tf.compat.v1.placeholder(tf.float32, shape=[None, 1])
 
                 Features = tf.compat.v1.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
-                apply_attention = True
                 GO.attn_sample_perc = tf.compat.v1.placeholder_with_default(1.0, shape=(), name='sample_perc')
-                if apply_attention:
-                    Features,GO.attn = Apply_Attention(Features,GO.attn_sample_perc)
+                Features,GO.attn = Apply_Attention(Features,GO.attn_sample_perc)
 
                 GO.Features = Features
                 agg_list = []
