@@ -1,4 +1,5 @@
 import tensorflow as tf
+from DeepTCR.functions.act_fun import *
 
 class graph_object(object):
     def __init__(self):
@@ -355,3 +356,19 @@ def MultiSample_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
             out.append(tf.compat.v1.layers.dense(fc,units=units,activation=activation,use_bias=use_bias,
                                        kernel_regularizer=tf.keras.regularizers.l1(reg)))
     return tf.reduce_mean(input_tensor=tf.stack(out),axis=0)
+
+def make_mask(x, s, p):
+    sel_idx = np.random.choice(x, s, replace=False, p=p)
+    mask = np.zeros_like(p)
+    mask[sel_idx] = 1.0
+    return mask
+
+def Apply_Attention(Features,attn_sample_perc=0.10):
+    attn = tf.cast(tf.squeeze(tf.compat.v1.layers.dense(Features, 1, lambda x: isru(x, l=0, h=1, a=0, b=0)), 1),tf.float64)
+    attn = attn / tf.reduce_sum(attn)
+    n_seq = tf.shape(attn)[0]
+    attn_idx = tf.range(0, n_seq)
+    s = tf.cast(tf.math.round(tf.cast(n_seq, tf.float32) * attn_sample_perc), tf.int32)
+    mask = tf.py_function(make_mask, [attn_idx, s, attn], tf.int64)
+    mask.set_shape((None,))
+    return Features * tf.cast(mask[:, tf.newaxis], tf.float32), mask

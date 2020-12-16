@@ -4606,7 +4606,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                drop_out_rate=0.0,multisample_dropout=False, multisample_dropout_rate = 0.50,multisample_dropout_num_masks = 64,
                batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,
               accuracy_min = None,train_loss_min=None,hinge_loss_t=0.0,convergence='validation',learning_rate=0.001, suppress_output=False,
-               loss_criteria='mean',l2_reg=0.0):
+               loss_criteria='mean',l2_reg=0.0,attn_sample_perc=1.0):
 
         graph_model = tf.Graph()
         GO = graph_object()
@@ -4622,6 +4622,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         train_params.suppress_output = suppress_output
         train_params.drop_out_rate = drop_out_rate
         train_params.multisample_dropout_rate = multisample_dropout_rate
+        train_params.attn_sample_perc = attn_sample_perc
         GO.size_of_net = size_of_net
         GO.embedding_dim_genes = embedding_dim_genes
         GO.embedding_dim_aa = embedding_dim_aa
@@ -4642,6 +4643,11 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.Y = tf.compat.v1.placeholder(tf.float32, shape=[None, 1])
 
                 Features = tf.compat.v1.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
+                apply_attention = True
+                GO.attn_sample_perc = tf.compat.v1.placeholder_with_default(1.0, shape=(), name='sample_perc')
+                if apply_attention:
+                    Features,GO.attn = Apply_Attention(Features,GO.attn_sample_perc)
+
                 GO.Features = Features
                 agg_list = []
                 if qualitative_agg:
@@ -4755,6 +4761,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         suppress_output = train_params.suppress_output
         drop_out_rate = train_params.drop_out_rate
         multisample_dropout_rate = train_params.multisample_dropout_rate
+        attn_sample_perc = train_params.attn_sample_perc
 
         tf.compat.v1.reset_default_graph()
         config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
@@ -4776,7 +4783,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 train_loss, train_accuracy, train_predicted,train_auc = \
                     Run_Graph_WF(self.train,sess,self,GO,batch_size,batch_size_update,random=True,train=True,
                                  drop_out_rate=drop_out_rate,multisample_dropout_rate=multisample_dropout_rate,
-                                 subsample=subsample,subsample_by_freq=subsample_by_freq)
+                                 subsample=subsample,subsample_by_freq=subsample_by_freq,attn_sample_perc=attn_sample_perc)
 
                 train_accuracy_total.append(train_accuracy)
                 train_loss_total.append(train_loss)
@@ -4889,7 +4896,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                drop_out_rate=0.0,multisample_dropout=False, multisample_dropout_rate = 0.50,multisample_dropout_num_masks = 64,
                batch_size = 25,batch_size_update = None, epochs_min = 25,stop_criterion=0.25,stop_criterion_window=10,
               accuracy_min = None,train_loss_min=None,hinge_loss_t=0.0,convergence='validation',learning_rate=0.001, suppress_output=False,
-              loss_criteria='mean',l2_reg=0.0,
+              loss_criteria='mean',l2_reg=0.0,attn_sample_perc=1.0,
               batch_seed = None,
               subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
@@ -5086,7 +5093,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                drop_out_rate,multisample_dropout, multisample_dropout_rate,multisample_dropout_num_masks,
                batch_size,batch_size_update, epochs_min,stop_criterion,stop_criterion_window,
               accuracy_min,train_loss_min,hinge_loss_t,convergence,learning_rate, suppress_output,
-                    loss_criteria,l2_reg)
+                    loss_criteria,l2_reg,attn_sample_perc)
         self._train(write=True,batch_seed=batch_seed,iteration=0,
                     subsample=subsample,subsample_by_freq=subsample_by_freq,subsample_valid_test=subsample_valid_test)
 
@@ -5098,7 +5105,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                              drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50,multisample_dropout_num_masks=64,
                              batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
                              accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation',learning_rate=0.001, suppress_output=False,
-                             loss_criteria='mean',l2_reg = 0.0,
+                             loss_criteria='mean',l2_reg = 0.0,attn_sample_perc=1.0,
                              batch_seed=None,
                              subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
@@ -5337,7 +5344,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                     drop_out_rate, multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                     batch_size, batch_size_update, epochs_min, stop_criterion, stop_criterion_window,
                     accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output,
-                    loss_criteria,l2_reg)
+                    loss_criteria,l2_reg,attn_sample_perc)
 
         for i in range(0, folds):
             if suppress_output is False:
@@ -5395,7 +5402,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                         drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50, multisample_dropout_num_masks=64,
                         batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10,
                         accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
-                        loss_criteria='mean',l2_reg=0.0,
+                        loss_criteria='mean',l2_reg=0.0,attn_sample_perc=1.0,
                         batch_seed=None,
                         subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
@@ -5650,7 +5657,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                     drop_out_rate, multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                     batch_size, batch_size_update, epochs_min, stop_criterion, stop_criterion_window,
                     accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output,
-                    loss_criteria,l2_reg)
+                    loss_criteria,l2_reg,attn_sample_perc)
 
         y_test = []
         y_pred = []

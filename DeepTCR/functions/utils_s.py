@@ -636,7 +636,7 @@ def Run_Graph_WF_dep(set,sess,self,GO,batch_size,random=True,train=True,drop_out
     return loss,accuracy,predicted_out,auc
 
 def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train=True,drop_out_rate=None,multisample_dropout_rate=None,
-                 subsample=None,subsample_by_freq=False):
+                 subsample=None,subsample_by_freq=False,attn_sample_perc=None):
     loss = []
     accuracy = []
     predicted_list = []
@@ -689,6 +689,9 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
         if drop_out_rate is not None:
             feed_dict[GO.prob] = drop_out_rate
 
+        if attn_sample_perc is not None:
+            feed_dict[GO.attn_sample_perc] = attn_sample_perc
+
         if multisample_dropout_rate is not None:
             feed_dict[GO.prob_multisample] = multisample_dropout_rate
 
@@ -735,6 +738,11 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
         elif train:
             loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted],
                                                           feed_dict=feed_dict)
+            # out = sess.run(GO.st,feed_dict)
+            # out = sess.run(tf.sparse.to_dense(GO.st),feed_dict)
+            # out = sess.run(GO.Features,feed_dict)
+            # out = sess.run(GO.out,feed_dict)
+
         else:
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)
@@ -838,6 +846,7 @@ def Get_Latent_Features(self,batch_size,GO,sess):
             self.v_alpha_num,self.v_alpha_num,self.hla_data_seq_num]
     Features = []
     Features_Base = []
+    Attn = []
     for vars in get_batches(Vars, batch_size=batch_size, random=False):
         feed_dict = {}
         if self.use_alpha is True:
@@ -865,9 +874,11 @@ def Get_Latent_Features(self,batch_size,GO,sess):
 
         Features.append(sess.run(GO.Features,feed_dict=feed_dict))
         Features_Base.append(sess.run(GO.Features_Base,feed_dict=feed_dict))
+        Attn.append(sess.run(GO.attn,feed_dict=feed_dict))
 
     Features = np.vstack(Features)
     self.features_base = np.vstack(Features_Base)
+    self.attn = np.hstack(Attn)
     return Features
 
 def Get_Weights(self,batch_size,GO,sess):
