@@ -4644,7 +4644,8 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 Features = tf.compat.v1.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
                 GO.attn_sample_perc = tf.compat.v1.placeholder_with_default(1.0, shape=(), name='sample_perc')
-                Features,GO.attn = Apply_Attention(Features,GO.attn_sample_perc)
+                if attn_sample_perc != 1.0:
+                    Features,GO.attn = Apply_Attention(Features,GO.attn_sample_perc)
 
                 GO.Features = Features
                 agg_list = []
@@ -4770,10 +4771,10 @@ class DeepTCR_WF(DeepTCR_S_base):
             val_loss_total = []
             train_accuracy_total = []
             train_loss_total = []
+            test_loss_total = []
             stop_check_list = []
-            kernel_weights = []
-            var_train = tf.compat.v1.trainable_variables()
             e = 0
+            # fig,ax = plt.subplots()
 
             while True:
                 if batch_seed is not None:
@@ -4783,10 +4784,14 @@ class DeepTCR_WF(DeepTCR_S_base):
                                  drop_out_rate=drop_out_rate,multisample_dropout_rate=multisample_dropout_rate,
                                  subsample=subsample,subsample_by_freq=subsample_by_freq,attn_sample_perc=attn_sample_perc)
 
+                if (subsample is not None) or (attn_sample_perc is not None):
+                    train_loss, train_accuracy, train_predicted,train_auc = \
+                        Run_Graph_WF(self.train,sess,self,GO,batch_size,batch_size_update,random=False,train=False,
+                                     drop_out_rate=drop_out_rate,multisample_dropout_rate=multisample_dropout_rate,
+                                     subsample=subsample,subsample_by_freq=subsample_by_freq)
+
                 train_accuracy_total.append(train_accuracy)
                 train_loss_total.append(train_loss)
-                #kernel_weights.append(tf.compat.v1.trainable_variables()[0].eval())
-                kernel_weights.append(np.hstack([np.ndarray.flatten(x.eval()) for x in var_train]))
 
                 if subsample_valid_test is False:
                     subsample_vt = None
@@ -4803,6 +4808,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                     Run_Graph_WF(self.test, sess, self, GO, batch_size,batch_size_update, random=False, train=False,
                                  subsample=subsample_vt,subsample_by_freq=subsample_by_freq)
 
+                test_loss_total.append(test_loss)
                 self.y_pred = test_predicted
                 self.y_test = self.test[-1]
 
@@ -4838,10 +4844,50 @@ class DeepTCR_WF(DeepTCR_S_base):
                                 if np.sum(stop_check_list[-3:]) >= 3:
                                     break
 
+                # batch_size_seq = round(len(self.sample_id)/(len(self.sample_list)/batch_size))
+                # self.features = Get_Latent_Features(self, batch_size_seq, GO, sess)
+                # pred, idx = Get_Sequence_Pred(self, batch_size, GO, sess)
+                # if len(idx.shape) == 0:
+                #     idx = idx.reshape(-1, 1)
+                # self.predicted = np.zeros_like(self.predicted)
+                # self.predicted[idx] += pred
+                # seq_dope = np.array(['AAAAAAAAAAAAAA'] * 10)
+                # ax.clear()
+                #
+                # df_seq_pred = pd.DataFrame()
+                # df_seq_pred['seq'] = self.beta_sequences
+                # df_seq_pred['dope'] = 'neg'
+                # df_seq_pred['dope'][df_seq_pred['seq'].isin(seq_dope)] = 'pos'
+                # df_seq_pred['pred'] = self.predicted[:, 1]
+                # df_seq_pred['keep'] = np.sum(self.predicted, 1)
+                # df_seq_pred['freq'] = self.freq
+                # df_seq_pred['w_pred'] = df_seq_pred['pred'] * df_seq_pred['freq']
+                # df_seq_pred['sample'] = self.sample_id
+                # df_seq_pred['class'] = self.class_id
+                # df_seq_pred = df_seq_pred[df_seq_pred['keep'] != 0.0]
+                # sns.violinplot(data=df_seq_pred, x='dope', y='pred', cut=0,ax=ax)
+
+                # df_seq_pred = pd.DataFrame()
+                # df_seq_pred['seq'] = self.beta_sequences
+                # df_seq_pred['dope'] = 'neg'
+                # df_seq_pred['dope'][df_seq_pred['seq'].isin(seq_dope)] = 'pos'
+                # df_seq_pred['pred'] = self.attn
+                # df_seq_pred['freq'] = self.freq
+                # df_seq_pred['w_pred'] = df_seq_pred['pred'] * df_seq_pred['freq']
+                # df_seq_pred['sample'] = self.sample_id
+                # df_seq_pred['class'] = self.class_id
+                # sns.violinplot(data=df_seq_pred, x='dope', y='pred', cut=0,ax=ax)
+
+                # ax.set_ylim([-0.2, 1.2])
+                # plt.pause(0.05)
+                # plt.show(block=False)
+
                 e +=  1
 
-            self.train_loss = train_loss_total
-            self.kernel_weights = kernel_weights
+            self.losses = {}
+            self.losses['train_loss'] = train_loss_total
+            self.losses['valid_loss'] = val_loss_total
+            self.losses['test_loss'] = test_loss_total
 
             test_loss, test_accuracy, test_predicted, test_auc = \
                 Run_Graph_WF(self.test, sess, self, GO, batch_size, batch_size_update, random=False, train=False)

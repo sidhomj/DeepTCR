@@ -27,3 +27,12 @@ def isru(x, l=-1, h=1, a=None, b=None, name='isru', axis=-1):
 #     lower_sqrt = (_a + x_2) ** (1 / 2)
 #     upper_sqrt = (_b + x_2) ** (1 / 2)
 #     return l + ((h - l) * ((x + lower_sqrt) / (lower_sqrt + upper_sqrt)))
+
+# import numpy as np
+# import matplotlib.pyplot as plt
+# def isru_func(x, l=0, h=1, a=10, b=10):
+#     return l + (((h - l) / 2) * (1 + (x * ((np.exp(a) + ((x ** 2) ** np.exp(b))) ** -(1 / (2 * np.exp(b)))))))
+#
+# x = np.arange(-10,10,0.1)
+# plt.plot(x,isru_func(x,a=0,b=0))
+# plt.plot(x,isru_func(x,a=10,b=0))

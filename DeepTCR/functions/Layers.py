@@ -363,13 +363,14 @@ def make_mask(x, s, p):
     mask[sel_idx] = 1.0
     return mask
 
-def Apply_Attention(Features,attn_sample_perc=0.10):
+def Apply_Attention(Features,attn_sample_perc=1.0):
     attn = tf.cast(tf.squeeze(tf.compat.v1.layers.dense(Features, 1, lambda x: isru(x, l=0, h=1, a=0, b=0)), 1),tf.float64)
-    attn = attn / tf.reduce_sum(attn)
+    prob = attn / tf.reduce_sum(attn)
     n_seq = tf.shape(attn)[0]
     attn_idx = tf.range(0, n_seq)
     s = tf.cast(tf.math.round(tf.cast(n_seq, tf.float32) * attn_sample_perc), tf.int32)
-    mask = tf.py_function(make_mask, [attn_idx, s, attn], tf.int64)
+    mask = tf.py_function(make_mask, [attn_idx, s, prob], tf.int64)
     mask.set_shape((None,))
     mask = tf.cast(mask[:, tf.newaxis], tf.float32)
-    return Features * mask, mask
+    Features = Features * mask #* tf.cast(attn[:,tf.newaxis],tf.float32)
+    return Features, attn
