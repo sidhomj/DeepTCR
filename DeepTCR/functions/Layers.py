@@ -363,7 +363,7 @@ def make_mask(x, s, p):
     mask[sel_idx] = 1.0
     return mask
 
-def Apply_Attention(Features,attn_sample_perc=1.0,num_layers=2):
+def Apply_Attention(Features,attn_sample_perc=1.0,num_layers=1):
     attn = Features
     for _ in range(num_layers):
         if _ != num_layers-1:
