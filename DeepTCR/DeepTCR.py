@@ -4784,7 +4784,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                                  drop_out_rate=drop_out_rate,multisample_dropout_rate=multisample_dropout_rate,
                                  subsample=subsample,subsample_by_freq=subsample_by_freq,attn_sample_perc=attn_sample_perc)
 
-                if (subsample is not None) or (attn_sample_perc is not None):
+                if (subsample is not None) or (attn_sample_perc != 1.0):
                     train_loss, train_accuracy, train_predicted,train_auc = \
                         Run_Graph_WF(self.train,sess,self,GO,batch_size,batch_size_update,random=False,train=False,
                                      drop_out_rate=drop_out_rate,multisample_dropout_rate=multisample_dropout_rate,
