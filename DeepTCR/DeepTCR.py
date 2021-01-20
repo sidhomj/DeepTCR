@@ -5593,11 +5593,6 @@ class DeepTCR_WF(DeepTCR_S_base):
             overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization
             through TCR featurization layers of the network.
 
-        l2_reg: float
-            When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific
-            overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization
-            through TCR featurization layers of the network.
-
         batch_seed: int
             For deterministic batching during training, set this value to an integer of choice.
 
