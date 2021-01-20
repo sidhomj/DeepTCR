@@ -2248,6 +2248,8 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             GO.embedding_dim_genes = embedding_dim_genes
             GO.embedding_dim_aa = embedding_dim_aa
             GO.embedding_dim_hla = embedding_dim_hla
+            GO.l2_reg = 0.0
+
             graph_model_AE = tf.Graph()
             with graph_model_AE.device(self.device):
                 with graph_model_AE.as_default():
