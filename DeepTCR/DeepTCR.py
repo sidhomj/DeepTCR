@@ -5813,6 +5813,10 @@ class DeepTCR_WF(DeepTCR_S_base):
         To load data from directories, one can use the Get_Data method from the base class to automatically
         format the data into the proper format to be then input into this method.
 
+        One can also use this method to get per-sequence predictions from the sample/repertoire classifier. To do this,
+        provide all inputs except for sample_labels. The method will then return an array of dimensionality [N,n_classes] where
+        N is the number of sequences provided.
+
         Inputs
         ---------------------------------------
 
@@ -5868,7 +5872,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             in that directory.
 
         return_dist: bool
-            If the user wants to also return teh distribution of sequence predicionts over all models use dfor inference,
+            If the user wants to also return teh distribution of sample/sequence predictions over all models used for inference,
             one should set this value to True.
 
         Returns
@@ -5887,6 +5891,10 @@ class DeepTCR_WF(DeepTCR_S_base):
         self.Inference_Pred_Dist: ndarray
             An array with the predicted probabilites for all classes on a per model basis.
             shape = [Number of Models, Number of Samples, Number of Classes]
+
+        If sample_labels is not provided, the method will perform per-sequence predictions and will return the an array
+        of [N,n_classes]. If return_dist is set to True, the method will return two outputs. One containing the mean predictions
+        and the other containing the full distribution over all models.
 
         ---------------------------------------
 

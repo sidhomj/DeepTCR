@@ -42,6 +42,8 @@ CLASSES
         vis_class
     
     class DeepTCR_SS(DeepTCR_S_base)
+     |  DeepTCR_SS(Name, max_length=40, device=0)
+     |  
      |  Method resolution order:
      |      DeepTCR_SS
      |      DeepTCR_S_base
@@ -170,6 +172,8 @@ CLASSES
      |              - large == [64,128,256] neurons for the 3 respective layers
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |                  One can also adjust the number of layers for the convolutional stack by changing the length of
+     |                  this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
      |      
      |      graph_seed: int
      |          For deterministic initialization of weights of the graph, set this to value of choice.
@@ -336,6 +340,8 @@ CLASSES
      |              - large == [64,128,256] neurons for the 3 respective layers
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |                  One can also adjust the number of layers for the convolutional stack by changing the length of
+     |                  this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
      |      
      |      graph_seed: int
      |          For deterministic initialization of weights of the graph, set this to value of choice.
@@ -467,6 +473,8 @@ CLASSES
      |              - large == [64,128,256] neurons for the 3 respective layers
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |                  One can also adjust the number of layers for the convolutional stack by changing the length of
+     |                  this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
      |      
      |      graph_seed: int
      |          For deterministic initialization of weights of the graph, set this to value of choice.
@@ -664,7 +672,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Residue_Sensitivity_Logo(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, hla=None, p=None, batch_size=10000, models=None, figsize=(10, 8), low_color='red', medium_color='white', high_color='blue', font_name='Times New Roman', class_sel=None, cmap=None, min_size=0.0, edgecolor='black', edgewidth=0.25, background_color='white', Load_Prev_Data=False, norm_to_seq=True)
+     |  Residue_Sensitivity_Logo(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, hla=None, p=None, batch_size=10000, models=None, figsize=(10, 8), low_color='red', medium_color='white', high_color='blue', font_name='serif', class_sel=None, cmap=None, min_size=0.0, edgecolor='black', edgewidth=0.25, background_color='white', Load_Prev_Data=False, norm_to_seq=True)
      |      Create Residue Sensitivity Logos
      |      
      |      This method allows the user to create Residue Sensitivity Logos where a set of provided sequences is perturbed
@@ -1549,6 +1557,8 @@ CLASSES
      |      ---------------------------------------
     
     class DeepTCR_S_base(DeepTCR_base, feature_analytics_class, vis_class)
+     |  DeepTCR_S_base(Name, max_length=40, device=0)
+     |  
      |  Method resolution order:
      |      DeepTCR_S_base
      |      DeepTCR_base
@@ -1682,7 +1692,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Residue_Sensitivity_Logo(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, hla=None, p=None, batch_size=10000, models=None, figsize=(10, 8), low_color='red', medium_color='white', high_color='blue', font_name='Times New Roman', class_sel=None, cmap=None, min_size=0.0, edgecolor='black', edgewidth=0.25, background_color='white', Load_Prev_Data=False, norm_to_seq=True)
+     |  Residue_Sensitivity_Logo(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, hla=None, p=None, batch_size=10000, models=None, figsize=(10, 8), low_color='red', medium_color='white', high_color='blue', font_name='serif', class_sel=None, cmap=None, min_size=0.0, edgecolor='black', edgewidth=0.25, background_color='white', Load_Prev_Data=False, norm_to_seq=True)
      |      Create Residue Sensitivity Logos
      |      
      |      This method allows the user to create Residue Sensitivity Logos where a set of provided sequences is perturbed
@@ -2567,6 +2577,8 @@ CLASSES
      |      ---------------------------------------
     
     class DeepTCR_U(DeepTCR_base, feature_analytics_class, vis_class)
+     |  DeepTCR_U(Name, max_length=40, device=0)
+     |  
      |  Method resolution order:
      |      DeepTCR_U
      |      DeepTCR_base
@@ -2724,6 +2736,8 @@ CLASSES
      |              - large == [64,128,256] neurons for the 3 respective layers
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |                  One can also adjust the number of layers for the convolutional stack by changing the length of
+     |                  this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
      |      
      |      latent_alpha: float
      |          Penalty coefficient for latent loss. This value changes the degree of latent regularization on
@@ -3539,6 +3553,8 @@ CLASSES
      |      ---------------------------------------
     
     class DeepTCR_WF(DeepTCR_S_base)
+     |  DeepTCR_WF(Name, max_length=40, device=0)
+     |  
      |  Method resolution order:
      |      DeepTCR_WF
      |      DeepTCR_S_base
@@ -3581,7 +3597,7 @@ CLASSES
      |      Returns
      |      ---------------------------------------
      |  
-     |  K_Fold_CrossVal(self, folds=None, combine_train_valid=False, seeds=None, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, loss_criteria='mean', batch_seed=None)
+     |  K_Fold_CrossVal(self, folds=None, combine_train_valid=False, seeds=None, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, loss_criteria='mean', l2_reg=0.0, batch_seed=None, subsample=None, subsample_by_freq=False, subsample_valid_test=False)
      |      K_Fold Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -3668,6 +3684,8 @@ CLASSES
      |              - large == [64,128,256] neurons for the 3 respective layers
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |                  One can also adjust the number of layers for the convolutional stack by changing the length of
+     |                  this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
      |      
      |      graph_seed: int
      |          For deterministic initialization of weights of the graph, set this to value of choice.
@@ -3766,13 +3784,29 @@ CLASSES
      |      suppress_output: bool
      |          To suppress command line output with training statisitcs, set to True.
      |      
+     |      l2_reg: float
+     |          When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific
+     |          overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization
+     |          through TCR featurization layers of the network.
+     |      
      |      batch_seed: int
      |          For deterministic batching during training, set this value to an integer of choice.
+     |      
+     |      subsample: int
+     |          Number of sequences to sub-sample from repertoire during training to improve speed of convergence
+     |          as well as being a form of regularization.
+     |      
+     |      subsample_by_freq: bool
+     |          Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
+     |      
+     |      subsample_valid_test: bool
+     |          Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed
+     |          to convergence and generalizability.
      |      
      |      Returns
      |      ---------------------------------------
      |  
-     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, combine_train_valid=False, random_perm=False, seeds=None, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, loss_criteria='mean', batch_seed=None)
+     |  Monte_Carlo_CrossVal(self, folds=5, test_size=0.25, LOO=None, combine_train_valid=False, random_perm=False, seeds=None, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, loss_criteria='mean', l2_reg=0.0, batch_seed=None, subsample=None, subsample_by_freq=False, subsample_valid_test=False)
      |      Monte Carlo Cross-Validation for Whole Sample Classifier
      |      
      |      If the number of samples is small but training the whole sample classifier, one
@@ -3966,8 +4000,24 @@ CLASSES
      |      suppress_output: bool
      |          To suppress command line output with training statisitcs, set to True.
      |      
+     |      l2_reg: float
+     |          When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific
+     |          overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization
+     |          through TCR featurization layers of the network.
+     |      
      |      batch_seed: int
      |          For deterministic batching during training, set this value to an integer of choice.
+     |      
+     |      subsample: int
+     |          Number of sequences to sub-sample from repertoire during training to improve speed of convergence
+     |          as well as being a form of regularization.
+     |      
+     |      subsample_by_freq: bool
+     |          Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
+     |      
+     |      subsample_valid_test: bool
+     |          Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed
+     |          to convergence and generalizability.
      |      
      |      Returns
      |      
@@ -3992,6 +4042,10 @@ CLASSES
      |      
      |      To load data from directories, one can use the Get_Data method from the base class to automatically
      |      format the data into the proper format to be then input into this method.
+     |      
+     |      One can also use this method to get per-sequence predictions from the sample/repertoire classifier. To do this,
+     |      provide all inputs except for sample_labels. The method will then return an array of dimensionality [N,n_classes] where
+     |      N is the number of sequences provided.
      |      
      |      Inputs
      |      ---------------------------------------
@@ -4048,7 +4102,7 @@ CLASSES
      |          in that directory.
      |      
      |      return_dist: bool
-     |          If the user wants to also return teh distribution of sequence predicionts over all models use dfor inference,
+     |          If the user wants to also return teh distribution of sample/sequence predictions over all models used for inference,
      |          one should set this value to True.
      |      
      |      Returns
@@ -4068,9 +4122,13 @@ CLASSES
      |          An array with the predicted probabilites for all classes on a per model basis.
      |          shape = [Number of Models, Number of Samples, Number of Classes]
      |      
+     |      If sample_labels is not provided, the method will perform per-sequence predictions and will return the an array
+     |      of [N,n_classes]. If return_dist is set to True, the method will return two outputs. One containing the mean predictions
+     |      and the other containing the full distribution over all models.
+     |      
      |      ---------------------------------------
      |  
-     |  Train(self, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, loss_criteria='mean', batch_seed=None)
+     |  Train(self, kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12, num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None, use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None, qualitative_agg=True, quantitative_agg=False, num_agg_layers=0, units_agg=12, drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.5, multisample_dropout_num_masks=64, batch_size=25, batch_size_update=None, epochs_min=25, stop_criterion=0.25, stop_criterion_window=10, accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False, loss_criteria='mean', l2_reg=0.0, batch_seed=None, subsample=None, subsample_by_freq=False, subsample_valid_test=False)
      |      Train Whole-Sample Classifier
      |      
      |      This method trains the network and saves features values at the
@@ -4136,6 +4194,8 @@ CLASSES
      |              - large == [64,128,256] neurons for the 3 respective layers
      |              - custom, where the user supplies a list with the number of nuerons for the respective layers
      |                  i.e. [3,3,3] would have 3 neurons for all 3 layers.
+     |                  One can also adjust the number of layers for the convolutional stack by changing the length of
+     |                  this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
      |      
      |      graph_seed: int
      |          For deterministic initialization of weights of the graph, set this to value of choice.
@@ -4236,6 +4296,17 @@ CLASSES
      |      
      |      batch_seed: int
      |          For deterministic batching during training, set this value to an integer of choice.
+     |      
+     |      subsample: int
+     |          Number of sequences to sub-sample from repertoire during training to improve speed of convergence
+     |          as well as being a form of regularization.
+     |      
+     |      subsample_by_freq: bool
+     |          Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
+     |      
+     |      subsample_valid_test: bool
+     |          Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed
+     |          to convergence and generalizability.
      |      
      |      Returns
      |      ---------------------------------------
@@ -4367,7 +4438,7 @@ CLASSES
      |      
      |      ---------------------------------------
      |  
-     |  Residue_Sensitivity_Logo(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, hla=None, p=None, batch_size=10000, models=None, figsize=(10, 8), low_color='red', medium_color='white', high_color='blue', font_name='Times New Roman', class_sel=None, cmap=None, min_size=0.0, edgecolor='black', edgewidth=0.25, background_color='white', Load_Prev_Data=False, norm_to_seq=True)
+     |  Residue_Sensitivity_Logo(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None, v_alpha=None, j_alpha=None, hla=None, p=None, batch_size=10000, models=None, figsize=(10, 8), low_color='red', medium_color='white', high_color='blue', font_name='serif', class_sel=None, cmap=None, min_size=0.0, edgecolor='black', edgewidth=0.25, background_color='white', Load_Prev_Data=False, norm_to_seq=True)
      |      Create Residue Sensitivity Logos
      |      
      |      This method allows the user to create Residue Sensitivity Logos where a set of provided sequences is perturbed
@@ -5252,6 +5323,8 @@ CLASSES
      |      ---------------------------------------
     
     class DeepTCR_base(builtins.object)
+     |  DeepTCR_base(Name, max_length=40, device=0)
+     |  
      |  Methods defined here:
      |  
      |  Get_Data(self, directory, Load_Prev_Data=False, classes=None, type_of_data_cut='Fraction_Response', data_cut=1.0, n_jobs=40, aa_column_alpha=None, aa_column_beta=None, count_column=None, sep='\t', aggregate_by_aa=True, v_alpha_column=None, j_alpha_column=None, v_beta_column=None, j_beta_column=None, d_beta_column=None, p=None, hla=None, use_hla_supertype=False, keep_non_supertype_alleles=False)
@@ -6018,6 +6091,6 @@ CLASSES
      |      list of weak references to the object (if defined)
 
 FILE
-    /home/jsidhom1/DeepTCR_master/DeepTCR/DeepTCR.py
+    /home/jsidhom1/DeepTCR_master_v2/DeepTCR/DeepTCR.py
 
 
