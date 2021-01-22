@@ -5815,7 +5815,8 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         One can also use this method to get per-sequence predictions from the sample/repertoire classifier. To do this,
         provide all inputs except for sample_labels. The method will then return an array of dimensionality [N,n_classes] where
-        N is the number of sequences provided.
+        N is the number of sequences provided. When using the method in this way, be sure to change the batch_size is adjusted to a larger
+        value as 10 sequences per batch will be rather slow. We recommend changing into the order of thousands (i.e. 10 - 100k).
 
         Inputs
         ---------------------------------------
