@@ -105,7 +105,7 @@ linear model to identify which motifs are associated to predicted probabilites f
 
 ### 2.0
 Fifth release 
-- ss
+- sub-sampling of repertoire classifier
 - tf2/py3.8
 
 
