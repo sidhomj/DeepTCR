@@ -103,7 +103,7 @@ linear model to identify which motifs are associated to predicted probabilites f
 - Supervised Repertoire Model now able to do regression. By providing per-instance label with regression value with Load_Data method, this will automatically use the average of all instance level labels as the sample level value to regress the model against.
 
 ### 2.0
-Fifth release 
+Fifth release: 
 - Upgrading to use python 3.8 & Tensorflow 2.0
 - For large repertoires, we have incorporated the ability to randomly subsample the repertoire over the course of training. Two methods of sub-sampling exist. 1) Completely randomly sampled from across the entire repertoire vs 2) randomly sampled as a probability function of the frequency of the TCR (at the amino acid level), meaning that a TCR with a 25% frequency will be sample at that probability.
 
