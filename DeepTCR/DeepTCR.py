@@ -3688,6 +3688,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         GO.embedding_dim_genes = embedding_dim_genes
         GO.embedding_dim_aa = embedding_dim_aa
         GO.embedding_dim_hla = embedding_dim_hla
+        GO.l2_reg = 0.0
         train_params = graph_object()
         train_params.batch_size = batch_size
         train_params.epochs_min = epochs_min
