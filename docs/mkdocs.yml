@@ -1,0 +1,5 @@
+site_name: DeepTCR
+nav:
+    - Home: index.md
+    - Release History: releasehx.md
+theme: readthedocs
