@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Release History - DeepTCR</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Release History";
+    var mkdocs_page_input_path = "releasehx.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> DeepTCR</a>
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../api/">API reference</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Release History</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#11">1.1</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#12">1.2</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#127">1.2.7</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#1213">1.2.13</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#1224">1.2.24</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#13">1.3</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#14">1.4</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#20">2.0</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">DeepTCR</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Release History</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="release-history">Release History</h2>
+<h3 id="11">1.1</h3>
+<p>Initial release including two methods for unsupervised learning (VAE &amp; GAN). Also included
+ability to handle paired alpha/beta data.</p>
+<h3 id="12">1.2</h3>
+<p>Second release included major refactoring in code to streamline and share methods across 
+classes. Included ability for algorithm to accept v/d/j gene usage. Added more analytical fetures and
+visualization methods. Removed GAN from unsupervised learning techniques. </p>
+<h4 id="127">1.2.7</h4>
+<p>On-graph clustering method introduced for repertoire classifier to improve classification performance.</p>
+<h4 id="1213">1.2.13</h4>
+<p>Ability for HLA information to be incorporated in the analysis of TCR-Seq. </p>
+<h4 id="1224">1.2.24</h4>
+<p>Added ability to do regression for sequence-based model.</p>
+<h3 id="13">1.3</h3>
+<p>Third release including improved repertoire classification architecture. Details in method will follow 
+in manuscript.</p>
+<h3 id="14">1.4</h3>
+<p>Fourth release includes major refactoring of code and adding more features including:</p>
+<ul>
+<li>Multi-Model Inference. When training the supervised sequence or repertoire classifier, in Monte-Carlo or K-Fold 
+Cross Validation, a separate model will be stored for each cross-validation. When using the inference engine, 
+users can choose to do an ensemble inference of some or many of the trained models.</li>
+<li>HLA Supertype Integration. Previous versions allowed users to provide HLA alleles for additional dimension of featurization
+for the TCR. In this version, when providing HLA (either via the Get_Data or Load_Data methods), one now has the option of 
+assigning the HLA-A and B genes to known supertypes for a more biologically functional representation of HLA.</li>
+<li>VAE now has an optional method by which to find a minimal number of latent features to model the underlying distribution
+by incorporating a sparsity regularization on the latent layer. When using this feature, the VAE will provide a more 
+compact latent space even if the initial latent_dim is unnecessarily high to model the distribution of data.</li>
+<li>Supervised models now have an additional option to use Multi-Sample Dropout to improve training and generalization.</li>
+<li>Incorporation of LogoMaker so now when Representative Sequences are generated along with enriched motifs,
+seq logos are made and saved directly in the results folder under Motifs.</li>
+<li>Improved Motif Identification algorithm behind supervised method Representative_Sequences that uses a multinomial
+linear model to identify which motifs are associated to predicted probabilites from neural network.</li>
+<li>Supervised Repertoire Model now able to do regression. By providing per-instance label with regression value with Load_Data method, this will automatically use the average of all instance level labels as the sample level value to regress the model against.</li>
+</ul>
+<h3 id="20">2.0</h3>
+<p>Fifth release: </p>
+<ul>
+<li>Upgrading to use python 3.8 &amp; Tensorflow 2.0</li>
+<li>For large repertoires, we have incorporated the ability to randomly subsample the repertoire over the course of training. Two methods of sub-sampling exist. 1) Completely randomly sampled from across the entire repertoire vs 2) randomly sampled as a probability function of the frequency of the TCR (at the amino acid level), meaning that a TCR with a 25% frequency will be sample at that probability.</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../api/" class="btn btn-neutral" title="API reference"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../api/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
