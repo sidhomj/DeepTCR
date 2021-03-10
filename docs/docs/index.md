@@ -49,4 +49,3 @@ In the most recent release (DeepTCR 2.0, fifth release), the package now uses py
 Instructions on how to create a virtual environment can be found [here.](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
 
 
-

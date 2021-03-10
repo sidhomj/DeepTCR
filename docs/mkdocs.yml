@@ -1,5 +1,15 @@
 site_name: DeepTCR
 nav:
     - Home: index.md
+    - API reference: api.md
     - Release History: releasehx.md
 theme: readthedocs
+plugins:
+    - mkdocstrings:
+        handlers:
+            python:
+                setup_commands:
+                    - import sys
+                    - sys.path.append('../')
+                selection:
+                    new_path_syntax: true
