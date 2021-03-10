@@ -153,13 +153,13 @@
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_U.KNN_Repertoire_Classifier">KNN_Repertoire_Classifier()</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_U.KNN_Repertoire_Classifier--inputs">Inputs</a>
+    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_U.KNN_Repertoire_Classifier--k-nearest-neighbor-repertoire-classifier">K-Nearest Neighbor Repertoire Classifier</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_U.KNN_Sequence_Classifier">KNN_Sequence_Classifier()</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_U.KNN_Sequence_Classifier--inputs">Inputs</a>
+    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_U.KNN_Sequence_Classifier--k-nearest-neighbor-sequence-classifier">K-Nearest Neighbor Sequence Classifier</a>
     </li>
         </ul>
     </li>
@@ -1486,41 +1486,54 @@ This method has been shown to improve generalization of deep neural networks as 
 
     <div class="doc doc-contents ">
 
-      <p>K-Nearest Neighbor Repertoire Classifier</p>
-<p>This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a repertoire
-label given the structural distribution of the repertoire.The method returns AUC,Precision,Recall, and
-F1 Scores for all classes.</p>
-<h6 id="DeepTCR.DeepTCR.DeepTCR_U.KNN_Repertoire_Classifier--inputs">Inputs</h6>
-<p>!!! folds "int"
-    Number of folds to train/test K-Nearest Classifier.</p>
-<p>distance_metric = str
-    Provided distance metric to determine repertoire-level distance from cluster proportions.
-    Options include = (KL,correlation,euclidean,wasserstein,JS).</p>
-<p>!!! sample "int"
-    For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
-    a number of sequences and then use k-nearest neighbors to assign other sequences.</p>
-<p>n_jobs:int
-    Number of processes to use for parallel operations.</p>
-<p>!!! plot_metrics "bool"
-    Toggle to show the performance metrics</p>
-<p>!!! plot_type "str"
-    Type of plot as taken by seaborn.catplot for kind parameter:
-    options include (strip,swarm,box,violin,boxen,point,bar,count)</p>
-<p>!!! by_class "bool"
-    Toggle to show the performance metrics by class.</p>
-<p>!!! load_prev_data "bool"
-    If method has been run before, one can load previous data from clustering step to move to KNN
-    step faster. Can be useful when trying different distance methods to find optimizal distance metric
-    for a given dataset.</p>
-<p>!!! metrics "list"
-    List of performance measures one wants to compute.
-    options include AUC, Precision, Recall, F1_Score</p>
-<p>Returns</p>
-<p>self.KNN_Repertoire_DF: Pandas dataframe
-    Dataframe with all metrics of performance organized by the class label,
-    metric (i.e. AUC), k-value (from k-nearest neighbors), and the value of the
-    performance metric.</p>
-<hr />
+      <h5 id="DeepTCR.DeepTCR.DeepTCR_U.KNN_Repertoire_Classifier--k-nearest-neighbor-repertoire-classifier">K-Nearest Neighbor Repertoire Classifier</h5>
+<p>This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a repertoire label given the structural distribution of the repertoire.The method returns AUC,Precision,Recall, and F1 Scores for all classes.</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>folds</strong> (<code>int</code>) – Number of folds to train/test K-Nearest Classifier.</p></li>
+            <li><p><strong>distance_metric</strong> (<code>str</code>) – Provided distance metric to determine repertoire-level distance from cluster proportions. Options include = (KL,correlation,euclidean,wasserstein,JS).</p></li>
+            <li><p><strong>sample</strong> (<code>int</code>) – For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample a number of sequences and then use k-nearest neighbors to assign other sequences.</p></li>
+            <li><p><strong>n_jobs</strong> (<code>int</code>) – Number of processes to use for parallel operations.</p></li>
+            <li><p><strong>plot_metrics</strong> (<code>bool</code>) – Toggle to show the performance metrics</p></li>
+            <li><p><strong>plot_type</strong> (<code>str</code>) – Type of plot as taken by seaborn.catplot for kind parameter: options include (strip,swarm,box,violin,boxen,point,bar,count)</p></li>
+            <li><p><strong>by_class</strong> (<code>bool</code>) – Toggle to show the performance metrics by class.</p></li>
+            <li><p><strong>Load_Prev_Data</strong> (<code>bool</code>) – If method has been run before, one can load previous data from clustering step to move to KNN step faster. Can be useful when trying different distance methods to find optimizal distance metric for a given dataset.</p></li>
+            <li><p><strong>metrics</strong> (<code>list</code>) – List of performance measures one wants to compute. options include AUC, Precision, Recall, F1_Score</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p>`Performance Metrics</p>
+<ul>
+<li>self.KNN_Repertoire_DF (Pandas dataframe)` – Dataframe with all metrics of performance organized by the class label,
+metric (i.e. AUC), k-value (from k-nearest neighbors), and the value of the
+performance metric.</li>
+</ul></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>      <hr />
 
     </div>
 
@@ -1540,39 +1553,54 @@ F1 Scores for all classes.</p>
 
     <div class="doc doc-contents ">
 
-      <p>K-Nearest Neighbor Sequence Classifier</p>
-<p>This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a sequence
-label given its sequence features.The method returns AUC,Precision,Recall, and
-F1 Scores for all classes.</p>
-<h6 id="DeepTCR.DeepTCR.DeepTCR_U.KNN_Sequence_Classifier--inputs">Inputs</h6>
-<p>!!! folds "int"
-    Number of folds to train/test K-Nearest Classifier.</p>
-<p>!!! k_values "list"
-    List of k for KNN algorithm to assess performance metrics across.</p>
-<p>rep:int
-    Number of iterations to train KNN classifier for each k-value.</p>
-<p>!!! plot_metrics "bool"
-    Toggle to show the performance metrics</p>
-<p>!!! plot_type "str"
-    Type of plot as taken by seaborn.catplot for kind parameter:
-    options include (strip,swarm,box,violin,boxen,point,bar,count)</p>
-<p>!!! by_class "bool"
-    Toggle to show the performance metrics by class.</p>
-<p>!!! metrics "list"
-    List of performance measures one wants to compute.
-    options include AUC, Precision, Recall, F1_Score</p>
-<p>!!! n_jobs "int"
-    Number of workers to set for KNeighborsClassifier.</p>
-<p>!!! load_prev_data "bool"
-    To make new figures from old previously run analysis, set this value to True
-    after running the method for the first time. This will load previous performance
-    metrics from previous run.</p>
-<p>Returns</p>
-<p>self.KNN_Sequence_DF: Pandas dataframe
-    Dataframe with all metrics of performance organized by the class label,
-    metric (i.e. AUC), k-value (from k-nearest neighbors), and the value of the
-    performance metric.</p>
-<hr />
+      <h5 id="DeepTCR.DeepTCR.DeepTCR_U.KNN_Sequence_Classifier--k-nearest-neighbor-sequence-classifier">K-Nearest Neighbor Sequence Classifier</h5>
+<p>This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a sequence label given its sequence features.The method returns AUC,Precision,Recall, and F1 Scores for all classes.</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>folds</strong> (<code>int</code>) – Number of folds to train/test K-Nearest Classifier.</p></li>
+            <li><p><strong>k_values</strong> (<code>list</code>) – List of k for KNN algorithm to assess performance metrics across.</p></li>
+            <li><p><strong>rep</strong> (<code>int</code>) – Number of iterations to train KNN classifier for each k-value.</p></li>
+            <li><p><strong>plot_metrics</strong> (<code>bool</code>) – Toggle to show the performance metrics</p></li>
+            <li><p><strong>plot_type</strong> (<code>str</code>) – Type of plot as taken by seaborn.catplot for kind parameter: options include (strip,swarm,box,violin,boxen,point,bar,count)</p></li>
+            <li><p><strong>by_class</strong> (<code>bool</code>) – Toggle to show the performance metrics by class.</p></li>
+            <li><p><strong>metrics</strong> (<code>list</code>) – List of performance measures one wants to compute. Options include AUC, Precision, Recall, F1_Score</p></li>
+            <li><p><strong>n_jobs</strong> (<code>int</code>) – Number of workers to set for KNeighborsClassifier.</p></li>
+            <li><p><strong>Load_Prev_Data</strong> (<code>bool</code>) – To make new figures from old previously run analysis, set this value to True after running the method for the first time. This will load previous performance metrics from previous run.</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p>`Performance Metrics</p>
+<ul>
+<li>self.KNN_Sequence_DF (Pandas dataframe)` – Dataframe with all metrics of performance organized by the class label,
+metric (i.e. AUC), k-value (from k-nearest neighbors), and the value of the
+performance metric.</li>
+</ul></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>      <hr />
 
     </div>
 
