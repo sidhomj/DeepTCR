@@ -115,31 +115,25 @@
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.Get_Train_Valid_Test">Get_Train_Valid_Test()</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.Get_Train_Valid_Test--inputs">Inputs</a>
+    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.Get_Train_Valid_Test--trainvalidtest-splits">Train/Valid/Test Splits.</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.K_Fold_CrossVal">K_Fold_CrossVal()</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.K_Fold_CrossVal--inputs">Inputs</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.K_Fold_CrossVal--returns">Returns</a>
+    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.K_Fold_CrossVal--k_fold-cross-validation-for-single-sequence-classifier">K_Fold Cross-Validation for Single-Sequence Classifier</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.Monte_Carlo_CrossVal">Monte_Carlo_CrossVal()</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.Monte_Carlo_CrossVal--inputs">Inputs</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.Monte_Carlo_CrossVal--returns">Returns</a>
+    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.Monte_Carlo_CrossVal--monte-carlo-cross-validation-for-single-sequence-classifier">Monte Carlo Cross-Validation for Single-Sequence Classifier</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.Train">Train()</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.Train--inputs">Inputs</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.Train--returns">Returns</a>
+    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.DeepTCR_SS.Train--train-single-sequence-classifier">Train Single-Sequence Classifier</a>
     </li>
         </ul>
     </li>
@@ -1049,30 +1043,28 @@ This dataframe holds information for which features were associated by a multino
 
     <div class="doc doc-contents ">
 
-      <p>Train/Valid/Test Splits.</p>
-<p>Divide data for train, valid, test set. Training is used to
-train model parameters, validation is used to set early stopping,
-and test acts as blackbox independent test set.</p>
-<h6 id="DeepTCR.DeepTCR.DeepTCR_SS.Get_Train_Valid_Test--inputs">Inputs</h6>
-<p>!!! test_size "float"
-    Fraction of sample to be used for valid and test set.</p>
-<p>!!! loo "int"
-    Number of sequences to leave-out in Leave-One-Out Cross-Validation. For example,
-    when set to 20, 20 sequences will be left out for the validation set and 20 samples will be left
-    out for the test set.</p>
-<p>!!! split_by_sample "int"
-    In the case one wants to train the single sequence classifer but not to mix the train/test
-    sets with sequences from different samples, one can set this parameter to True to do the train/test
-    splits by sample.</p>
-<p>!!! combine_train_valid "bool"
-    To combine the training and validation partitions into one which will be used for training
-    and updating the model parameters, set this to True. This will also set the validation partition
-    to the test partition. In other words, new train set becomes (original train + original valid) and then
-    new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
-    to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
-    to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
-    when to stop training will be based on the test data (which is considered a form of over-fitting).</p>
+      <h5 id="DeepTCR.DeepTCR.DeepTCR_SS.Get_Train_Valid_Test--trainvalidtest-splits">Train/Valid/Test Splits.</h5>
+<p>Divide data for train, valid, test set. Training is used to train model parameters, validation is used to set early stopping, and test acts as blackbox independent test set.</p>
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>test_size</strong> (<code>float</code>) – Fraction of sample to be used for valid and test set.</p></li>
+            <li><p><strong>LOO</strong> (<code>int</code>) – Number of sequences to leave-out in Leave-One-Out Cross-Validation. For example, when set to 20, 20 sequences will be left out for the validation set and 20 samples will be left out for the test set.</p></li>
+            <li><p><strong>split_by_sample</strong> (<code>int</code>) – In the case one wants to train the single sequence classifer but not to mix the train/test sets with sequences from different samples, one can set this parameter to True to do the train/test splits by sample.</p></li>
+            <li><p><strong>combine_train_valid</strong> (<code>bool</code>) – To combine the training and validation partitions into one which will be used for training and updating the model parameters, set this to True. This will also set the validation partition to the test partition. In other words, new train set becomes (original train + original valid) and then new valid = original test partition, new test = original test partition. Therefore, if setting this parameter to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set. If one does not chanage the stop training criterion, the decision of when to stop training will be based on the test data (which is considered a form of over-fitting).</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
     </div>
 
   </div>
@@ -1091,122 +1083,71 @@ and test acts as blackbox independent test set.</p>
 
     <div class="doc doc-contents ">
 
-      <p>K_Fold Cross-Validation for Single-Sequence Classifier</p>
+      <h5 id="DeepTCR.DeepTCR.DeepTCR_SS.K_Fold_CrossVal--k_fold-cross-validation-for-single-sequence-classifier">K_Fold Cross-Validation for Single-Sequence Classifier</h5>
 <p>If the number of sequences is small but training the single-sequence classifier, one
 can use K_Fold Cross Validation to train on all but one before assessing
 predictive performance.After this method is run, the AUC_Curve method can be run to
 assess the overall performance.</p>
-<h6 id="DeepTCR.DeepTCR.DeepTCR_SS.K_Fold_CrossVal--inputs">Inputs</h6>
-<p>K-Fold Parameters</p>
-<p>!!! folds "int"
-    Number of Folds</p>
-<p>!!! split_by_sample "int"
-    In the case one wants to train the single sequence classifer but not to mix the train/test
-    sets with sequences from different samples, one can set this parameter to True to do the train/test
-    splits by sample.</p>
-<p>!!! combine_train_valid "bool"
-    To combine the training and validation partitions into one which will be used for training
-    and updating the model parameters, set this to True. This will also set the validation partition
-    to the test partition. In other words, new train set becomes (original train + original valid) and then
-    new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
-    to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
-    to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
-    when to stop training will be based on the test data (which is considered a form of over-fitting).</p>
-<p>!!! seeds "nd.array"
-    In order to set a deterministic train/test split over the K-Fold Simulations, one can provide an array
-    of seeds for each K-fold simulation. This will result in the same train/test split over the N Fold simulations.
-    This parameter, if provided, should have the same size of the value of folds.</p>
-<p>Model Parameters</p>
-<p>!!! kernel "int"
-    Size of convolutional kernel for first layer of convolutions.</p>
-<p>trainable_embedding; bool
-    Toggle to control whether a trainable embedding layer is used or native
-    one-hot representation for convolutional layers.</p>
-<p>!!! embedding_dim_aa "int"
-    Learned latent dimensionality of amino-acids.</p>
-<p>!!! embedding_dim_genes "int"
-    Learned latent dimensionality of VDJ genes</p>
-<p>!!! embedding_dim_hla "int"
-    Learned latent dimensionality of HLA</p>
-<p>!!! num_fc_layers "int"
-    Number of fully connected layers following convolutional layer.</p>
-<p>!!! units_fc "int"
-    Number of nodes per fully-connected layers following convolutional layer.</p>
-<p>!!! weight_by_class "bool"
-    Option to weight loss by the inverse of the class frequency. Useful for
-    unbalanced classes.</p>
-<p>!!! class_weights "dict"
-    In order to specify custom weights for each class during training, one
-    can provide a dictionary with these weights.
-        i.e. {'A':1.0,'B':2.0'}</p>
-<p>!!! use_only_seq "bool"
-    To only use sequence feaures, set to True. This will turn off features learned
-    from gene usage.</p>
-<p>!!! use_only_gene "bool"
-    To only use gene-usage features, set to True. This will turn off features from
-    the sequences.</p>
-<p>!!! use_only_hla "bool"
-    To only use hla feaures, set to True.</p>
-<p>!!! size_of_net "list or str"
-    The convolutional layers of this network have 3 layers for which the use can
-    modify the number of neurons per layer. The user can either specify the size of the network
-    with the following options:
-        - small == [12,32,64] neurons for the 3 respective layers
-        - medium == [32,64,128] neurons for the 3 respective layers
-        - large == [64,128,256] neurons for the 3 respective layers
-        - custom, where the user supplies a list with the number of nuerons for the respective layers
-            i.e. [3,3,3] would have 3 neurons for all 3 layers.
-            One can also adjust the number of layers for the convolutional stack by changing the length of
-            this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.</p>
-<p>!!! graph_seed "int"
-    For deterministic initialization of weights of the graph, set this to value of choice.</p>
-<p>!!! drop_out_rate "float"
-    drop out rate for fully connected layers</p>
-<p>The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
-"Multi-Sample Dropout for Accelerated Training and Better Generalization"
-https://arxiv.org/abs/1905.09788
-This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.</p>
-<p>!!! multisample_dropout "bool"
-    Set this parameter to True to implement this method.</p>
-<p>multisample_dropout_rate: float
-    The dropout rate for this multi-sample dropout layer.</p>
-<p>multisample_dropout_num_masks: int
-    The number of masks to sample from for the Multi-Sample Dropout layer.</p>
-<p>Training Parameters</p>
-<p>!!! batch_size "int"
-    Size of batch to be used for each training iteration of the net.</p>
-<p>!!! epochs_min "int"
-    Minimum number of epochs for training neural network.</p>
-<p>!!! stop_criterion "float"
-    Minimum percent decrease in determined interval (below) to continue
-    training. Used as early stopping criterion.</p>
-<p>!!! stop_criterion_window "int"
-    The window of data to apply the stopping criterion.</p>
-<p>!!! accuracy_min "float"
-    Optional parameter to allow alternative training strategy until minimum
-    training accuracy is achieved, at which point, training ceases.</p>
-<p>!!! train_loss_min "float"
-    Optional parameter to allow alternative training strategy until minimum
-    training loss is achieved, at which point, training ceases.</p>
-<p>!!! hinge_loss_t "float"
-    The per sequence loss minimum at which the loss of that sequence is not used
-    to penalize the model anymore. In other words, once a per sequence loss has hit
-    this value, it gets set to 0.0.</p>
-<p>!!! convergence "str"
-    This parameter determines which loss to assess the convergence criteria on.
-    Options are 'validation' or 'training'. This is useful in the case one wants
-    to change the convergence criteria on the training data when the training and validation
-    partitions have been combined and used to training the model.</p>
-<p>!!! learning_rate "float"
-    The learning rate for training the neural network. Making this value larger will
-    increase the rate of convergence but can introduce instability into training. For most,
-    altering this value will not be necessary.</p>
-<p>!!! suppress_output "bool"
-    To suppress command line output with training statisitcs, set to True.</p>
-<p>!!! batch_seed "int"
-    For deterministic batching during training, set this value to an integer of choice.</p>
-<h6 id="DeepTCR.DeepTCR.DeepTCR_SS.K_Fold_CrossVal--returns">Returns</h6>
+<p>The method also saves the per sequence predictions at the end of training in the variable self.predicted. These per sequenes predictions are only assessed when the sequences are in the test set.</p>
+<p>The multisample parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in "Multi-Sample Dropout for Accelerated Training and Better Generalization" https://arxiv.org/abs/1905.09788. This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.</p>
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>folds</strong> (<code>int</code>) – Number of Folds</p></li>
+            <li><p><strong>split_by_sample</strong> (<code>int</code>) – In the case one wants to train the single sequence classifer but not to mix the train/test sets with sequences from different samples, one can set this parameter to True to do the train/test splits by sample.</p></li>
+            <li><p><strong>combine_train_valid</strong> (<code>bool</code>) – To combine the training and validation partitions into one which will be used for training and updating the model parameters, set this to True. This will also set the validation partition to the test partition. In other words, new train set becomes (original train + original valid) and then new valid = original test partition, new test = original test partition. Therefore, if setting this parameter to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set. If one does not chanage the stop training criterion, the decision of when to stop training will be based on the test data (which is considered a form of over-fitting).</p></li>
+            <li><p><strong>seeds</strong> (<code>nd.array</code>) – In order to set a deterministic train/test split over the K-Fold Simulations, one can provide an array of seeds for each K-fold simulation. This will result in the same train/test split over the N Fold simulations. This parameter, if provided, should have the same size of the value of folds.</p></li>
+            <li><p><strong>kernel</strong> (<code>int</code>) – Size of convolutional kernel for first layer of convolutions.</p></li>
+            <li><p><strong>trainable_embedding</strong> (<code>bool</code>) – Toggle to control whether a trainable embedding layer is used or native one-hot representation for convolutional layers.</p></li>
+            <li><p><strong>embedding_dim_aa</strong> (<code>int</code>) – Learned latent dimensionality of amino-acids.</p></li>
+            <li><p><strong>embedding_dim_genes</strong> (<code>int</code>) – Learned latent dimensionality of VDJ genes</p></li>
+            <li><p><strong>embedding_dim_hla</strong> (<code>int</code>) – Learned latent dimensionality of HLA</p></li>
+            <li><p><strong>num_fc_layers</strong> (<code>int</code>) – Number of fully connected layers following convolutional layer.</p></li>
+            <li><p><strong>units_fc</strong> (<code>int</code>) – Number of nodes per fully-connected layers following convolutional layer.</p></li>
+            <li><p><strong>weight_by_class</strong> (<code>bool</code>) – Option to weight loss by the inverse of the class frequency. Useful for unbalanced classes.</p></li>
+            <li><p><strong>class_weights</strong> (<code>dict</code>) – In order to specify custom weights for each class during training, one can provide a dictionary with these weights. i.e. {'A':1.0,'B':2.0'}</p></li>
+            <li><p><strong>use_only_seq</strong> (<code>bool</code>) – To only use sequence feaures, set to True. This will turn off features learned from gene usage.</p></li>
+            <li><p><strong>use_only_gene</strong> (<code>bool</code>) – To only use gene-usage features, set to True. This will turn off features from the sequences.</p></li>
+            <li><p><strong>use_only_hla</strong> (<code>bool</code>) – To only use hla feaures, set to True.</p></li>
+            <li><p><strong>size_of_net</strong> (<code>list or str</code>) – The convolutional layers of this network have 3 layers for which the use can modify the number of neurons per layer. The user can either specify the size of the network with the following options:</p>
+<ul>
+<li>small == [12,32,64] neurons for the 3 respective layers</li>
+<li>medium == [32,64,128] neurons for the 3 respective layers</li>
+<li>large == [64,128,256] neurons for the 3 respective layers</li>
+<li>custom, where the user supplies a list with the number of nuerons for the respective layers
+    i.e. [3,3,3] would have 3 neurons for all 3 layers.
+    One can also adjust the number of layers for the convolutional stack by changing the length of
+    this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.</li>
+</ul></li>
+            <li><p><strong>graph_seed</strong> (<code>int</code>) – For deterministic initialization of weights of the graph, set this to value of choice.</p></li>
+            <li><p><strong>drop_out_rate</strong> (<code>float</code>) – drop out rate for fully connected layers</p></li>
+            <li><p><strong>multisample_dropout</strong> (<code>bool</code>) – Set this parameter to True to implement this method.</p></li>
+            <li><p><strong>multisample_dropout_rate</strong> (<code>float</code>) – The dropout rate for this multi-sample dropout layer.</p></li>
+            <li><p><strong>multisample_dropout_num_masks</strong> (<code>int</code>) – The number of masks to sample from for the Multi-Sample Dropout layer.</p></li>
+            <li><p><strong>batch_size</strong> (<code>int</code>) – Size of batch to be used for each training iteration of the net.</p></li>
+            <li><p><strong>epochs_min</strong> (<code>int</code>) – Minimum number of epochs for training neural network.</p></li>
+            <li><p><strong>stop_criterion</strong> (<code>float</code>) – Minimum percent decrease in determined interval (below) to continue training. Used as early stopping criterion.</p></li>
+            <li><p><strong>stop_criterion_window</strong> (<code>int</code>) – The window of data to apply the stopping criterion.</p></li>
+            <li><p><strong>accuracy_min</strong> (<code>float</code>) – Optional parameter to allow alternative training strategy until minimum training accuracy is achieved, at which point, training ceases.</p></li>
+            <li><p><strong>train_loss_min</strong> (<code>float</code>) – Optional parameter to allow alternative training strategy until minimum training loss is achieved, at which point, training ceases.</p></li>
+            <li><p><strong>hinge_loss_t</strong> (<code>float</code>) – The per sequence loss minimum at which the loss of that sequence is not used to penalize the model anymore. In other words, once a per sequence loss has hit this value, it gets set to 0.0.</p></li>
+            <li><p><strong>convergence</strong> (<code>str</code>) – This parameter determines which loss to assess the convergence criteria on. Options are 'validation' or 'training'. This is useful in the case one wants to change the convergence criteria on the training data when the training and validation partitions have been combined and used to training the model.</p></li>
+            <li><p><strong>learning_rate</strong> (<code>float</code>) – The learning rate for training the neural network. Making this value larger will increase the rate of convergence but can introduce instability into training. For most, altering this value will not be necessary.</p></li>
+            <li><p><strong>suppress_output</strong> (<code>bool</code>) – To suppress command line output with training statisitcs, set to True.</p></li>
+            <li><p><strong>batch_seed</strong> (<code>int</code>) – For deterministic batching during training, set this value to an integer of choice.</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
     </div>
 
   </div>
@@ -1225,128 +1166,70 @@ This method has been shown to improve generalization of deep neural networks as 
 
     <div class="doc doc-contents ">
 
-      <p>Monte Carlo Cross-Validation for Single-Sequence Classifier</p>
-<p>If the number of sequences is small but training the single-sequence classifier, one
-can use Monte Carlo Cross Validation to train a number of iterations before assessing
-predictive performance.After this method is run, the AUC_Curve method can be run to
-assess the overall performance.</p>
-<h6 id="DeepTCR.DeepTCR.DeepTCR_SS.Monte_Carlo_CrossVal--inputs">Inputs</h6>
-<p>Monte-Carlo Parameters</p>
-<p>!!! folds "int"
-    Number of iterations for Cross-Validation</p>
-<p>!!! test_size "float"
-    Fraction of sample to be used for valid and test set.</p>
-<p>!!! loo "int"
-    Number of sequences to leave-out in Leave-One-Out Cross-Validation. For example,
-    when set to 20, 20 sequences will be left out for the validation set and 20 samples will be left
-    out for the test set.</p>
-<p>!!! split_by_sample "int"
-    In the case one wants to train the single sequence classifer but not to mix the train/test
-    sets with sequences from different samples, one can set this parameter to True to do the train/test
-    splits by sample.</p>
-<p>!!! combine_train_valid "bool"
-    To combine the training and validation partitions into one which will be used for training
-    and updating the model parameters, set this to True. This will also set the validation partition
-    to the test partition. In other words, new train set becomes (original train + original valid) and then
-    new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
-    to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
-    to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
-    when to stop training will be based on the test data (which is considered a form of over-fitting).</p>
-<p>!!! seeds "nd.array"
-    In order to set a deterministic train/test split over the Monte-Carlo Simulations, one can provide an array
-    of seeds for each MC simulation. This will result in the same train/test split over the N MC simulations.
-    This parameter, if provided, should have the same size of the value of folds.</p>
-<p>Model Parameters</p>
-<p>!!! kernel "int"
-    Size of convolutional kernel for first layer of convolutions.</p>
-<p>trainable_embedding; bool
-    Toggle to control whether a trainable embedding layer is used or native
-    one-hot representation for convolutional layers.</p>
-<p>!!! embedding_dim_aa "int"
-    Learned latent dimensionality of amino-acids.</p>
-<p>!!! embedding_dim_genes "int"
-    Learned latent dimensionality of VDJ genes</p>
-<p>!!! embedding_dim_hla "int"
-    Learned latent dimensionality of HLA</p>
-<p>!!! num_fc_layers "int"
-    Number of fully connected layers following convolutional layer.</p>
-<p>!!! units_fc "int"
-    Number of nodes per fully-connected layers following convolutional layer.</p>
-<p>!!! weight_by_class "bool"
-    Option to weight loss by the inverse of the class frequency. Useful for
-    unbalanced classes.</p>
-<p>!!! class_weights "dict"
-    In order to specify custom weights for each class during training, one
-    can provide a dictionary with these weights.
-        i.e. {'A':1.0,'B':2.0'}</p>
-<p>!!! use_only_seq "bool"
-    To only use sequence feaures, set to True. This will turn off features learned
-    from gene usage.</p>
-<p>!!! use_only_gene "bool"
-    To only use gene-usage features, set to True. This will turn off features from
-    the sequences.</p>
-<p>!!! use_only_hla "bool"
-    To only use hla feaures, set to True.</p>
-<p>!!! size_of_net "list or str"
-    The convolutional layers of this network have 3 layers for which the use can
-    modify the number of neurons per layer. The user can either specify the size of the network
-    with the following options:
-        - small == [12,32,64] neurons for the 3 respective layers
-        - medium == [32,64,128] neurons for the 3 respective layers
-        - large == [64,128,256] neurons for the 3 respective layers
-        - custom, where the user supplies a list with the number of nuerons for the respective layers
-            i.e. [3,3,3] would have 3 neurons for all 3 layers.
-            One can also adjust the number of layers for the convolutional stack by changing the length of
-            this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.</p>
-<p>!!! graph_seed "int"
-    For deterministic initialization of weights of the graph, set this to value of choice.</p>
-<p>!!! drop_out_rate "float"
-    drop out rate for fully connected layers</p>
-<p>The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
-"Multi-Sample Dropout for Accelerated Training and Better Generalization"
-https://arxiv.org/abs/1905.09788
-This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.</p>
-<p>!!! multisample_dropout "bool"
-    Set this parameter to True to implement this method.</p>
-<p>multisample_dropout_rate: float
-    The dropout rate for this multi-sample dropout layer.</p>
-<p>multisample_dropout_num_masks: int
-    The number of masks to sample from for the Multi-Sample Dropout layer.</p>
-<p>Training Parameters</p>
-<p>!!! batch_size "int"
-    Size of batch to be used for each training iteration of the net.</p>
-<p>!!! epochs_min "int"
-    Minimum number of epochs for training neural network.</p>
-<p>!!! stop_criterion "float"
-    Minimum percent decrease in determined interval (below) to continue
-    training. Used as early stopping criterion.</p>
-<p>!!! stop_criterion_window "int"
-    The window of data to apply the stopping criterion.</p>
-<p>!!! accuracy_min "float"
-    Optional parameter to allow alternative training strategy until minimum
-    training accuracy is achieved, at which point, training ceases.</p>
-<p>!!! train_loss_min "float"
-    Optional parameter to allow alternative training strategy until minimum
-    training loss is achieved, at which point, training ceases.</p>
-<p>!!! hinge_loss_t "float"
-    The per sequence loss minimum at which the loss of that sequence is not used
-    to penalize the model anymore. In other words, once a per sequence loss has hit
-    this value, it gets set to 0.0.</p>
-<p>!!! convergence "str"
-    This parameter determines which loss to assess the convergence criteria on.
-    Options are 'validation' or 'training'. This is useful in the case one wants
-    to change the convergence criteria on the training data when the training and validation
-    partitions have been combined and used to training the model.</p>
-<p>!!! learning_rate "float"
-    The learning rate for training the neural network. Making this value larger will
-    increase the rate of convergence but can introduce instability into training. For most,
-    altering this value will not be necessary.</p>
-<p>!!! suppress_output "bool"
-    To suppress command line output with training statisitcs, set to True.</p>
-<p>!!! batch_seed "int"
-    For deterministic batching during training, set this value to an integer of choice.</p>
-<h6 id="DeepTCR.DeepTCR.DeepTCR_SS.Monte_Carlo_CrossVal--returns">Returns</h6>
+      <h5 id="DeepTCR.DeepTCR.DeepTCR_SS.Monte_Carlo_CrossVal--monte-carlo-cross-validation-for-single-sequence-classifier">Monte Carlo Cross-Validation for Single-Sequence Classifier</h5>
+<p>If the number of sequences is small but training the single-sequence classifier, one can use Monte Carlo Cross Validation to train a number of iterations before assessing predictive performance.After this method is run, the AUC_Curve method can be run to assess the overall performance.</p>
+<p>The method also saves the per sequence predictions at the end of training in the variable self.predicted. These per sequenes predictions are only assessed when the sequences are in the test set. Ideally, after running the classifier with multiple folds, each sequencce will have multiple predicttions that were collected when they were in the test set.</p>
+<p>The multisample parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in "Multi-Sample Dropout for Accelerated Training and Better Generalization" https://arxiv.org/abs/1905.09788. This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.</p>
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>folds</strong> (<code>int</code>) – Number of iterations for Cross-Validation</p></li>
+            <li><p><strong>test_size</strong> (<code>float</code>) – Fraction of sample to be used for valid and test set.</p></li>
+            <li><p><strong>LOO</strong> (<code>int</code>) – Number of sequences to leave-out in Leave-One-Out Cross-Validation. For example, when set to 20, 20 sequences will be left out for the validation set and 20 samples will be left out for the test set.</p></li>
+            <li><p><strong>split_by_sample</strong> (<code>int</code>) – In the case one wants to train the single sequence classifer but not to mix the train/test sets with sequences from different samples, one can set this parameter to True to do the train/test splits by sample.</p></li>
+            <li><p><strong>combine_train_valid</strong> (<code>bool</code>) – To combine the training and validation partitions into one which will be used for training and updating the model parameters, set this to True. This will also set the validation partition to the test partition. In other words, new train set becomes (original train + original valid) and then new valid = original test partition, new test = original test partition. Therefore, if setting this parameter to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set. If one does not change the stop training criterion, the decision of when to stop training will be based on the test data (which is considered a form of over-fitting).</p></li>
+            <li><p><strong>seeds</strong> (<code>nd.array</code>) – In order to set a deterministic train/test split over the Monte-Carlo Simulations, one can provide an array of seeds for each MC simulation. This will result in the same train/test split over the N MC simulations. This parameter, if provided, should have the same size of the value of folds.</p></li>
+            <li><p><strong>kernel</strong> (<code>int</code>) – Size of convolutional kernel for first layer of convolutions.</p></li>
+            <li><p><strong>trainable_embedding</strong> (<code>bool</code>) – Toggle to control whether a trainable embedding layer is used or native one-hot representation for convolutional layers.</p></li>
+            <li><p><strong>embedding_dim_aa</strong> (<code>int</code>) – Learned latent dimensionality of amino-acids.</p></li>
+            <li><p><strong>embedding_dim_genes</strong> (<code>int</code>) – Learned latent dimensionality of VDJ genes</p></li>
+            <li><p><strong>embedding_dim_hla</strong> (<code>int</code>) – Learned latent dimensionality of HLA</p></li>
+            <li><p><strong>num_fc_layers</strong> (<code>int</code>) – Number of fully connected layers following convolutional layer.</p></li>
+            <li><p><strong>units_fc</strong> (<code>int</code>) – Number of nodes per fully-connected layers following convolutional layer.</p></li>
+            <li><p><strong>weight_by_class</strong> (<code>bool</code>) – Option to weight loss by the inverse of the class frequency. Useful for unbalanced classes.</p></li>
+            <li><p><strong>class_weights</strong> (<code>dict</code>) – In order to specify custom weights for each class during training, one can provide a dictionary with these weights. i.e. {'A':1.0,'B':2.0'}</p></li>
+            <li><p><strong>use_only_seq</strong> (<code>bool</code>) – To only use sequence feaures, set to True. This will turn off features learned from gene usage.</p></li>
+            <li><p><strong>use_only_gene</strong> (<code>bool</code>) – To only use gene-usage features, set to True. This will turn off features from the sequences.</p></li>
+            <li><p><strong>use_only_hla</strong> (<code>bool</code>) – To only use hla feaures, set to True.</p></li>
+            <li><p><strong>size_of_net</strong> (<code>list or str</code>) – The convolutional layers of this network have 3 layers for which the use can modify the number of neurons per layer. The user can either specify the size of the network with the following options:</p>
+<ul>
+<li>small == [12,32,64] neurons for the 3 respective layers</li>
+<li>medium == [32,64,128] neurons for the 3 respective layers</li>
+<li>large == [64,128,256] neurons for the 3 respective layers</li>
+<li>custom, where the user supplies a list with the number of nuerons for the respective layers
+    i.e. [3,3,3] would have 3 neurons for all 3 layers.
+    One can also adjust the number of layers for the convolutional stack by changing the length of
+    this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.</li>
+</ul></li>
+            <li><p><strong>graph_seed</strong> (<code>int</code>) – For deterministic initialization of weights of the graph, set this to value of choice.</p></li>
+            <li><p><strong>drop_out_rate</strong> (<code>float</code>) – drop out rate for fully connected layers</p></li>
+            <li><p><strong>multisample_dropout</strong> (<code>bool</code>) – Set this parameter to True to implement this method.</p></li>
+            <li><p><strong>multisample_dropout_rate</strong> (<code>float</code>) – The dropout rate for this multi-sample dropout layer.</p></li>
+            <li><p><strong>multisample_dropout_num_masks</strong> (<code>int</code>) – The number of masks to sample from for the Multi-Sample Dropout layer.</p></li>
+            <li><p><strong>batch_size</strong> (<code>int</code>) – Size of batch to be used for each training iteration of the net.</p></li>
+            <li><p><strong>epochs_min</strong> (<code>int</code>) – Minimum number of epochs for training neural network.</p></li>
+            <li><p><strong>stop_criterion</strong> (<code>float</code>) – Minimum percent decrease in determined interval (below) to continue training. Used as early stopping criterion.</p></li>
+            <li><p><strong>stop_criterion_window</strong> (<code>int</code>) – The window of data to apply the stopping criterion.</p></li>
+            <li><p><strong>accuracy_min</strong> (<code>float</code>) – Optional parameter to allow alternative training strategy until minimum training accuracy is achieved, at which point, training ceases.</p></li>
+            <li><p><strong>train_loss_min</strong> (<code>float</code>) – Optional parameter to allow alternative training strategy until minimum training loss is achieved, at which point, training ceases.</p></li>
+            <li><p><strong>hinge_loss_t</strong> (<code>float</code>) – The per sequence loss minimum at which the loss of that sequence is not used to penalize the model anymore. In other words, once a per sequence loss has hit this value, it gets set to 0.0.</p></li>
+            <li><p><strong>convergence</strong> (<code>str</code>) – This parameter determines which loss to assess the convergence criteria on. Options are 'validation' or 'training'. This is useful in the case one wants to change the convergence criteria on the training data when the training and validation partitions have been combined and used to training the model.</p></li>
+            <li><p><strong>learning_rate</strong> (<code>float</code>) – The learning rate for training the neural network. Making this value larger will increase the rate of convergence but can introduce instability into training. For most, altering this value will not be necessary.</p></li>
+            <li><p><strong>suppress_output</strong> (<code>bool</code>) – To suppress command line output with training statisitcs, set to True.</p></li>
+            <li><p><strong>batch_seed</strong> (<code>int</code>) – For deterministic batching during training, set this value to an integer of choice.</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
     </div>
 
   </div>
@@ -1365,101 +1248,64 @@ This method has been shown to improve generalization of deep neural networks as 
 
     <div class="doc doc-contents ">
 
-      <p>Train Single-Sequence Classifier</p>
-<p>This method trains the network and saves features values at the
-end of training for motif analysis.</p>
-<h6 id="DeepTCR.DeepTCR.DeepTCR_SS.Train--inputs">Inputs</h6>
-<p>Model Parameters</p>
-<p>!!! kernel "int"
-    Size of convolutional kernel for first layer of convolutions.</p>
-<p>trainable_embedding; bool
-    Toggle to control whether a trainable embedding layer is used or native
-    one-hot representation for convolutional layers.</p>
-<p>!!! embedding_dim_aa "int"
-    Learned latent dimensionality of amino-acids.</p>
-<p>!!! embedding_dim_genes "int"
-    Learned latent dimensionality of VDJ genes</p>
-<p>!!! embedding_dim_hla "int"
-    Learned latent dimensionality of HLA</p>
-<p>!!! num_fc_layers "int"
-    Number of fully connected layers following convolutional layer.</p>
-<p>!!! units_fc "int"
-    Number of nodes per fully-connected layers following convolutional layer.</p>
-<p>!!! weight_by_class "bool"
-    Option to weight loss by the inverse of the class frequency. Useful for
-    unbalanced classes.</p>
-<p>!!! class_weights "dict"
-    In order to specify custom weights for each class during training, one
-    can provide a dictionary with these weights.
-        i.e. {'A':1.0,'B':2.0'}</p>
-<p>!!! use_only_seq "bool"
-    To only use sequence feaures, set to True. This will turn off features learned
-    from gene usage.</p>
-<p>!!! use_only_gene "bool"
-    To only use gene-usage features, set to True. This will turn off features from
-    the sequences.</p>
-<p>!!! use_only_hla "bool"
-    To only use hla feaures, set to True.</p>
-<p>!!! size_of_net "list or str"
-    The convolutional layers of this network have 3 layers for which the use can
-    modify the number of neurons per layer. The user can either specify the size of the network
-    with the following options:
-        - small == [12,32,64] neurons for the 3 respective layers
-        - medium == [32,64,128] neurons for the 3 respective layers
-        - large == [64,128,256] neurons for the 3 respective layers
-        - custom, where the user supplies a list with the number of nuerons for the respective layers
-            i.e. [3,3,3] would have 3 neurons for all 3 layers.
-            One can also adjust the number of layers for the convolutional stack by changing the length of
-            this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.</p>
-<p>!!! graph_seed "int"
-    For deterministic initialization of weights of the graph, set this to value of choice.</p>
-<p>!!! drop_out_rate "float"
-    drop out rate for fully connected layers</p>
-<p>The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
-"Multi-Sample Dropout for Accelerated Training and Better Generalization"
-https://arxiv.org/abs/1905.09788
-This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.</p>
-<p>!!! multisample_dropout "bool"
-    Set this parameter to True to implement this method.</p>
-<p>multisample_dropout_rate: float
-    The dropout rate for this multi-sample dropout layer.</p>
-<p>multisample_dropout_num_masks: int
-    The number of masks to sample from for the Multi-Sample Dropout layer.</p>
-<p>Training Parameters</p>
-<p>!!! batch_size "int"
-    Size of batch to be used for each training iteration of the net.</p>
-<p>!!! epochs_min "int"
-    Minimum number of epochs for training neural network.</p>
-<p>!!! stop_criterion "float"
-    Minimum percent decrease in determined interval (below) to continue
-    training. Used as early stopping criterion.</p>
-<p>!!! stop_criterion_window "int"
-    The window of data to apply the stopping criterion.</p>
-<p>!!! accuracy_min "float"
-    Optional parameter to allow alternative training strategy until minimum
-    training accuracy is achieved, at which point, training ceases.</p>
-<p>!!! train_loss_min "float"
-    Optional parameter to allow alternative training strategy until minimum
-    training loss is achieved, at which point, training ceases.</p>
-<p>!!! hinge_loss_t "float"
-    The per sequence loss minimum at which the loss of that sequence is not used
-    to penalize the model anymore. In other words, once a per sequence loss has hit
-    this value, it gets set to 0.0.</p>
-<p>!!! convergence "str"
-    This parameter determines which loss to assess the convergence criteria on.
-    Options are 'validation' or 'training'. This is useful in the case one wants
-    to change the convergence criteria on the training data when the training and validation
-    partitions have been combined and used to training the model.</p>
-<p>!!! learning_rate "float"
-    The learning rate for training the neural network. Making this value larger will
-    increase the rate of convergence but can introduce instability into training. For most,
-    altering this value will not be necessary.</p>
-<p>!!! suppress_output "bool"
-    To suppress command line output with training statisitcs, set to True.</p>
-<p>!!! batch_seed "int"
-    For deterministic batching during training, set this value to an integer of choice.</p>
-<h6 id="DeepTCR.DeepTCR.DeepTCR_SS.Train--returns">Returns</h6>
+      <h5 id="DeepTCR.DeepTCR.DeepTCR_SS.Train--train-single-sequence-classifier">Train Single-Sequence Classifier</h5>
+<p>This method trains the network and saves features values at the end of training for motif analysis.</p>
+<p>The method also saves the per sequence predictions at the end of training in the variable self.predicted</p>
+<p>The multiesample parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in "Multi-Sample Dropout for Accelerated Training and Better Generalization" https://arxiv.org/abs/1905.09788. This method has been shown to improve generalization of deep neural networks as well as improve convergence.</p>
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>kernel</strong> (<code>int</code>) – Size of convolutional kernel for first layer of convolutions.</p></li>
+            <li><p><strong>trainable_embedding</strong> (<code>bool</code>) – Toggle to control whether a trainable embedding layer is used or native one-hot representation for convolutional layers.</p></li>
+            <li><p><strong>embedding_dim_aa</strong> (<code>int</code>) – Learned latent dimensionality of amino-acids.</p></li>
+            <li><p><strong>embedding_dim_genes</strong> (<code>int</code>) – Learned latent dimensionality of VDJ genes</p></li>
+            <li><p><strong>embedding_dim_hla</strong> (<code>int</code>) – Learned latent dimensionality of HLA</p></li>
+            <li><p><strong>num_fc_layers</strong> (<code>int</code>) – Number of fully connected layers following convolutional layer.</p></li>
+            <li><p><strong>units_fc</strong> (<code>int</code>) – Number of nodes per fully-connected layers following convolutional layer.</p></li>
+            <li><p><strong>weight_by_class</strong> (<code>bool</code>) – Option to weight loss by the inverse of the class frequency. Useful for unbalanced classes.</p></li>
+            <li><p><strong>class_weights</strong> (<code>dict</code>) – In order to specify custom weights for each class during training, one can provide a dictionary with these weights. i.e. {'A':1.0,'B':2.0'}</p></li>
+            <li><p><strong>use_only_seq</strong> (<code>bool</code>) – To only use sequence feaures, set to True. This will turn off features learned from gene usage.</p></li>
+            <li><p><strong>use_only_gene</strong> (<code>bool</code>) – To only use gene-usage features, set to True. This will turn off features from the sequences.</p></li>
+            <li><p><strong>use_only_hla</strong> (<code>bool</code>) – To only use hla feaures, set to True.</p></li>
+            <li><p><strong>size_of_net</strong> (<code>list or str</code>) – The convolutional layers of this network have 3 layers for which the use can modify the number of neurons per layer. The user can either specify the size of the network with the following options:</p>
+<ul>
+<li>small == [12,32,64] neurons for the 3 respective layers</li>
+<li>medium == [32,64,128] neurons for the 3 respective layers</li>
+<li>large == [64,128,256] neurons for the 3 respective layers</li>
+<li>custom, where the user supplies a list with the number of nuerons for the respective layers
+    i.e. [3,3,3] would have 3 neurons for all 3 layers.
+    One can also adjust the number of layers for the convolutional stack by changing the length of
+    this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.</li>
+</ul></li>
+            <li><p><strong>graph_seed</strong> (<code>int</code>) – For deterministic initialization of weights of the graph, set this to value of choice.</p></li>
+            <li><p><strong>drop_out_rate</strong> (<code>float</code>) – drop out rate for fully connected layers</p></li>
+            <li><p><strong>multisample_dropout</strong> (<code>bool</code>) – Set this parameter to True to implement this method.</p></li>
+            <li><p><strong>multisample_dropout_rate</strong> (<code>float</code>) – The dropout rate for this multi-sample dropout layer.</p></li>
+            <li><p><strong>multisample_dropout_num_masks</strong> (<code>int</code>) – The number of masks to sample from for the Multi-Sample Dropout layer.</p></li>
+            <li><p><strong>batch_size</strong> (<code>int</code>) – Size of batch to be used for each training iteration of the net.</p></li>
+            <li><p><strong>epochs_min</strong> (<code>int</code>) – Minimum number of epochs for training neural network.</p></li>
+            <li><p><strong>stop_criterion</strong> (<code>float</code>) – Minimum percent decrease in determined interval (below) to continue training. Used as early stopping criterion.</p></li>
+            <li><p><strong>stop_criterion_window</strong> (<code>int</code>) – The window of data to apply the stopping criterion.</p></li>
+            <li><p><strong>accuracy_min</strong> (<code>loat</code>) – Optional parameter to allow alternative training strategy until minimum training accuracy is achieved, at which point, training ceases.</p></li>
+            <li><p><strong>train_loss_min</strong> (<code>float</code>) – Optional parameter to allow alternative training strategy until minimum training loss is achieved, at which point, training ceases.</p></li>
+            <li><p><strong>hinge_loss_t</strong> (<code>float</code>) – The per sequence loss minimum at which the loss of that sequence is not used to penalize the model anymore. In other words, once a per sequence loss has hit this value, it gets set to 0.0.</p></li>
+            <li><p><strong>convergence</strong> (<code>str</code>) – This parameter determines which loss to assess the convergence criteria on. Options are 'validation' or 'training'. This is useful in the case one wants to change the convergence criteria on the training data when the training and validation partitions have been combined and used to training the model.</p></li>
+            <li><p><strong>learning_rate</strong> (<code>float</code>) – The learning rate for training the neural network. Making this value larger will increase the rate of convergence but can introduce instability into training. For most, altering this value will not be necessary.</p></li>
+            <li><p><strong>suppress_output</strong> (<code>bool</code>) – To suppress command line output with training statisitcs, set to True.</p></li>
+            <li><p><strong>batch_seed</strong> (<code>int</code>) – For deterministic batching during training, set this value to an integer of choice.</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
     </div>
 
   </div>
