@@ -6,7 +6,7 @@ DeepTCR is a python package that has a collection of unsupervised and supervised
 deep learning methods to parse TCRSeq data. To see examples of how the algorithms can 
 be used on an example datasets, see the subdirectory 'tutorials' for a collection of tutorial 
 use cases across multiple datasets. For complete documentation for all available methods,
-see 'Documentation.txt'.
+ click [here](https://sidhomj.github.io/DeepTCR/).
 
 While DeepTCR will run with Tensorflow-CPU versions, for optimal training times, 
 we suggest training these algorithms on GPU's (requiring CUDA, cuDNN, and tensorflow-GPU). 

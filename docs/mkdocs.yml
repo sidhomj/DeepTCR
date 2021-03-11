@@ -5,6 +5,8 @@ nav:
     - Release History: releasehx.md
 theme: readthedocs
 plugins:
+    - search
+    - mkdocs-jupyter
     - mkdocstrings:
         handlers:
             python:

@@ -29,29 +29,17 @@ class DeepTCR_base(object):
 
     def __init__(self,Name,max_length=40,device=0):
         """
-        Initialize Training Object.
-
+        # Initialize Training Object.
         Initializes object and sets initial parameters.
 
-        Inputs
-        ---------------------------------------
-        Name: str
-            Name of the object.
+        Args:
+            Name (str): Name of the object.
 
-        max_length: int
-            maximum length of CDR3 sequence
+            max_length (int): maximum length of CDR3 sequence.
 
-        device: int
-            In the case user is using tensorflow-gpu, one can
-            specify the particular device to build the graphs on.
-            This selects which GPU the user wants to put the graph
-            and train on.
-
-        Returns
-        ---------------------------------------
-
-
+            device (int): In the case user is using tensorflow-gpu, one can specify the particular device to build the graphs on. This selects which GPU the user wants to put the graph and train on.
         """
+
         #Assign parameters
         self.Name = Name
         self.max_length = max_length
@@ -95,136 +83,77 @@ class DeepTCR_base(object):
                     v_beta_column=None,j_beta_column=None,d_beta_column=None,
                  p=None,hla=None,use_hla_supertype=False,keep_non_supertype_alleles=False):
         """
-        Get Data for DeepTCR
-
+        # Get Data for DeepTCR
         Parse Data into appropriate inputs for neural network from directories where data is stored.
 
-        Inputs
-        ---------------------------------------
-        directory: str
-            Path to directory with folders with tsv files are present
-            for analysis. Folders names become labels for files within them. If the directory contains
-            the TCRSeq files not organized into classes/labels, DeepTCR will load all files within that directory.
+        Args:
+            directory (str): Path to directory with folders with tsv files are present for analysis. Folders names become           labels for files within them. If the directory contains the TCRSeq files not organized into classes/labels,             DeepTCR will load all files within that directory.
 
-        Load_Prev_Data: bool
-            Loads Previous Data.
+            Load_Prev_Data (bool): Loads Previous Data.
 
-        classes: list
-            Optional selection of input of which sub-directories to use for analysis.
+            classes (list): Optional selection of input of which sub-directories to use for analysis.
 
+            type_of_data_cut (str): Method by which one wants to sample from the TCRSeq File.
 
-        type_of_data_cut: str
-            Method by which one wants to sample from the TCRSeq File.
+                ###
+                Options are:
 
-            Options are:
-                Fraction_Response: A fraction (0 - 1) that samples the top fraction of the file by reads. For example,
-                if one wants to sample the top 25% of reads, one would use this threshold with a data_cut = 0.25. The idea
-                of this sampling is akin to sampling a fraction of cells from the file.
+                - Fraction_Response: A fraction (0 - 1) that samples the top fraction of the file by reads. For example, if one wants to sample the top 25% of reads, one would use this threshold with a data_cut = 0.25. The idea of this sampling is akin to sampling a fraction of cells from the file.
 
-                Frequency_Cut: If one wants to select clones above a given frequency threshold, one would use this threshold.
-                For example, if one wanted to only use clones about 1%, one would enter a data_cut value of 0.01.
+                - Frequency_Cut: If one wants to select clones above a given frequency threshold, one would use this threshold. For example, if one wanted to only use clones about 1%, one would enter a data_cut value of 0.01.
 
-                Num_Seq: If one wants to take the top N number of clones, one would use this threshold. For example,
-                if one wanted to select the top 10 amino acid clones from each file, they would enter a data_cut value of 10.
+                - Num_Seq: If one wants to take the top N number of clones, one would use this threshold. For example, if one wanted to select the top 10 amino acid clones from each file, they would enter a data_cut value of 10.
 
-                Read_Cut: If one wants to take amino acid clones with at least a certain number of reads, one would use
-                this threshold. For example, if one wanted to only use clones with at least 10 reads,they would enter a data_cut value of 10.
+                - Read_Cut: If one wants to take amino acid clones with at least a certain number of reads, one would use this threshold. For example, if one wanted to only use clones with at least 10 reads,they would enter a data_cut value of 10.
 
-                Read_Sum: IF one wants to take a given number of reads from each file, one would use this threshold. For example,
-                if one wants to use the sequences comprising the top 100 reads of hte file, they would enter a data_cut value of 100.
+                - Read_Sum: IF one wants to take a given number of reads from each file, one would use this threshold. For example, if one wants to use the sequences comprising the top 100 reads of hte file, they would enter a data_cut value of 100.
 
-        data_cut: float or int
-            Value  associated with type_of_data_cut parameter.
+            data_cut (float or int): Value  associated with type_of_data_cut parameter.
 
-        n_jobs: int
-            Number of processes to use for parallelized operations.
+            n_jobs (int): Number of processes to use for parallelized operations.
 
-        aa_column_alpha: int
-            Column where alpha chain amino acid data is stored. (0-indexed)
+            aa_column_alpha (int): Column where alpha chain amino acid data is stored. (0-indexed)
 
-        aa_column_beta: int
-            Column where beta chain amino acid data is stored.(0-indexed)
+            aa_column_beta (int): Column where beta chain amino acid data is stored.(0-indexed)
 
-        count_column: int
-            Column where counts are stored.
+            count_column (int): Column where counts are stored.
 
-        sep: str
-            Type of delimiter used in file with TCRSeq data.
+            sep (str): Type of delimiter used in file with TCRSeq data.
 
-        aggregate_by_aa: bool
-            Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates
-            of the same amino acid sequence given it comes from different nucleotide clones.
+            aggregate_by_aa (bool): Choose to aggregate sequences by unique amino-acid. Defaults to True. If set to False, will allow duplicates of the same amino acid sequence given it comes from different nucleotide clones.
 
-        v_alpha_column: int
-            Column where v_alpha gene information is stored.
+            v_alpha_column (int): Column where v_alpha gene information is stored.
 
-        j_alpha_column: int
-            Column where j_alpha gene information is stored.
+            j_alpha_column (int): Column where j_alpha gene information is stored.
 
-        v_beta_column: int
-            Column where v_beta gene information is stored.
+            v_beta_column (int): Column where v_beta gene information is stored.
 
-        d_beta_column: int
-            Column where d_beta gene information is stored.
+            d_beta_column (int): Column where d_beta gene information is stored.
 
-        j_beta_column: int
-            Column where j_beta gene information is stored.
+            j_beta_column (int): Column where j_beta gene information is stored.
 
-        p: multiprocessing pool object
-            For parellelized operations, one can pass a multiprocessing pool object
-            to this method.
+            p (multiprocessing pool object): For parellelized operations, one can pass a multiprocessing pool object to this method.
 
-        hla: str
-            In order to use HLA information as part of the TCR-seq representation, one can provide
-            a csv file where the first column is the file name and the remaining columns hold HLA alleles
-            for each file. By including HLA information for each repertoire being analyzed, one is able to
-            find a representation of TCR-Seq that is more meaningful across repertoires with different HLA
-            backgrounds.
+            hla (str): In order to use HLA information as part of the TCR-seq representation, one can provide a csv file where the first column is the file name and the remaining columns hold HLA alleles for each file. By including HLA information for each repertoire being analyzed, one is able to find a representation of TCR-Seq that is more meaningful across repertoires with different HLA backgrounds.
 
-        use_hla_supertype: bool
-            Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
-            may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
-            This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
-            6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
-            representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
-            the reference below, it will be assigned to a known supertype.
+            use_hla_supertype (bool): Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals may have different HLA alleles, these different allelees may bind peptide in a functionality similar way. This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and 6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in the reference below, it will be assigned to a known supertype.
 
-            For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
-            designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
-            HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+                - For this method to work, alleles must be provided in the following format: A0101 where the first letter of the designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for HLA-A and HLA-B. All other alleles will be dropped from the analysis.
 
-            Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
-            HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
+                - Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008). HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
 
-        keep_non_supertype_alleles: bool
-            If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
-            (i.e. HLA-C alleles or certain HLA-A or HLA-B alleles) or discard them for the analysis. In order to keep these alleles,
-            one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
+            keep_non_supertype_alleles (bool): If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype (i.e. HLA-C alleles or certain HLA-A or HLA-B alleles) or discard them for the analysis. In order to keep these alleles, one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
 
-        Returns
+        Returns:
+            variables into training object
 
-        self.alpha_sequences: ndarray
-            array with alpha sequences (if provided)
-
-        self.beta_sequences: ndarray
-            array with beta sequences (if provided)
-
-        self.class_id: ndarray
-            array with sequence class labels
-
-        self.sample_id: ndarray
-            array with sequence file labels
-
-        self.freq: ndarray
-            array with sequence frequencies from samples
-
-        self.counts: ndarray
-            array with sequence counts from samples
-
-        self.(v/d/j)_(alpha/beta): ndarray
-            array with sequence (v/d/j)-(alpha/beta) usage
-
-        ---------------------------------------
+            - self.alpha_sequences (ndarray): array with alpha sequences (if provided)
+            - self.beta_sequences (ndarray): array with beta sequences (if provided)
+            - self.class_id (ndarray): array with sequence class labels
+            - self.sample_id (ndarray): array with sequence file labels
+            - self.freq (ndarray): array with sequence frequencies from samples
+            - self.counts (ndarray): array with sequence counts from samples
+            - self.(v/d/j)_(alpha/beta) (ndarray): array with sequence (v/d/j)-(alpha/beta) usage
 
         """
 
@@ -556,108 +485,61 @@ class DeepTCR_base(object):
                   v_alpha=None,j_alpha=None,class_labels=None,sample_labels=None,freq=None,counts=None,Y=None,
                   p=None,hla=None,use_hla_supertype=False,keep_non_supertype_alleles=False,w=None):
         """
-        Load Data programatically into DeepTCR.
+        # Load Data programatically into DeepTCR.
 
         DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
         a user can load numpy arrays with relevant TCRSeq data for analysis.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        alpha_sequences: ndarray of strings
-            A 1d array with the sequences for inference for the alpha chain.
+            alpha_sequences (ndarray of strings): A 1d array with the sequences for inference for the alpha chain.
 
-        beta_sequences: ndarray of strings
-            A 1d array with the sequences for inference for the beta chain.
+            beta_sequences (ndarray of strings): A 1d array with the sequences for inference for the beta chain.
 
-        v_beta: ndarray of strings
-            A 1d array with the v-beta genes for inference.
+            v_beta (ndarray of strings): A 1d array with the v-beta genes for inference.
 
-        d_beta: ndarray of strings
-            A 1d array with the d-beta genes for inference.
+            d_beta (ndarray of strings): A 1d array with the d-beta genes for inference.
 
-        j_beta: ndarray of strings
-            A 1d array with the j-beta genes for inference.
+            j_beta (ndarray of strings): A 1d array with the j-beta genes for inference.
 
-        v_alpha: ndarray of strings
-            A 1d array with the v-alpha genes for inference.
+            v_alpha (ndarray of strings): A 1d array with the v-alpha genes for inference.
 
-        j_alpha: ndarray of strings
-            A 1d array with the j-alpha genes for inference.
+            j_alpha (ndarray of strings): A 1d array with the j-alpha genes for inference.
 
-        class_labels: ndarray of strings
-            A 1d array with class labels for the sequence (i.e. antigen-specificities)
+            class_labels (ndarray of strings): A 1d array with class labels for the sequence (i.e. antigen-specificities)
 
-        sample_labels: ndarray of strings
-            A 1d array with sample labels for the sequence. (i.e. when loading data from different samples)
+            sample_labels (ndarray of strings): A 1d array with sample labels for the sequence. (i.e. when loading data from different samples)
 
-        counts: ndarray of ints
-            A 1d array with the counts for each sequence, in the case they come from samples.
+            counts (ndarray of ints): A 1d array with the counts for each sequence, in the case they come from samples.
 
-        freq: ndarray of float values
-            A 1d array with the frequencies for each sequence, in the case they come from samples.
+            freq (ndarray of float values): A 1d array with the frequencies for each sequence, in the case they come from samples.
 
-        Y: ndarray of float values
-            In the case one wants to regress TCR sequences or repertoires against a numerical label, one can provide
-            these numerical values for this input. For the TCR sequence regressor, each sequence will be regressed to
-            the value denoted for each sequence. For the TCR repertoire regressor, the average of all instance level values
-            will be used to regress the sample. Therefore, if there is one sample level value for regression, one would just
-            repeat that same value for all the instances/sequences of the sample.
+            Y (ndarray of float values): In the case one wants to regress TCR sequences or repertoires against a numerical label, one can provide these numerical values for this input. For the TCR sequence regressor, each sequence will be regressed to the value denoted for each sequence. For the TCR repertoire regressor, the average of all instance level values will be used to regress the sample. Therefore, if there is one sample level value for regression, one would just repeat that same value for all the instances/sequences of the sample.
 
-        hla: ndarray of tuples/arrays
-            To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-            as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring
-            to the alleles seen for that sequence.
-                ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+            hla (ndarray of tuples/arrays): To input the hla context for each sequence fed into DeepTCR, this will need to formatted as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring to the alleles seen for that sequence. ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
 
-        use_hla_supertype: bool
-            Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals
-            may have different HLA alleles, these different allelees may bind peptide in a functionality similar way.
-            This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and
-            6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional
-            representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in
-            the reference below, it will be assigned to a known supertype.
+            use_hla_supertype (bool): Given the diversity of the HLA-loci, training with a full allele may cause over-fitting. And while individuals may have different HLA alleles, these different allelees may bind peptide in a functionality similar way. This idea of supertypes of HLA is a method by which assignments of HLA genes can be aggregated to 6 HLA-A and 6 HLA-B supertypes. In roder to convert input of HLA-allele genes to supertypes, a more biologically functional representation, one can se this parameter to True and if the alleles provided are of one of 945 alleles found in the reference below, it will be assigned to a known supertype.
 
-            For this method to work, alleles must be provided in the following format: A0101 where the first letter of the
-            designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for
-            HLA-A and HLA-B. All other alleles will be dropped from the analysis.
+                - For this method to work, alleles must be provided in the following format: A0101 where the first letter of the designation is the HLA loci (A or B) and then the 4 digit gene designation. HLA supertypes only exist for HLA-A and HLA-B. All other alleles will be dropped from the analysis.
 
-            Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008).
-            HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
+                - Sidney, J., Peters, B., Frahm, N., Brander, C., & Sette, A. (2008). HLA class I supertypes: a revised and updated classification. BMC immunology, 9(1), 1.
 
-        keep_non_supertype_alleles: bool
-            If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype
-            (i.e. HLA-C alleles or certain HLA-A or HLA-B alleles) or discard them for the analysis. In order to keep these alleles,
-            one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
+            keep_non_supertype_alleles (bool): If assigning supertypes to HLA alleles, one can choose to keep HLA-alleles that do not have a known supertype (i.e. HLA-C alleles or certain HLA-A or HLA-B alleles) or discard them for the analysis. In order to keep these alleles, one should set this parameter to True. Default is False and non HLA-A or B alleles will be discarded.
 
-        p: multiprocessing pool object
-            a pre-formed pool object can be passed to method for multiprocessing tasks.
+            p (multiprocessing pool object): a pre-formed pool object can be passed to method for multiprocessing tasks.
 
-        w: ndarray
-            optional set of weights for training of autoencoder
+            w (ndarray): optional set of weights for training of autoencoder
 
-        Returns
+        Returns:
+            variables into training object
 
-        self.alpha_sequences: ndarray
-            array with alpha sequences (if provided)
-
-        self.beta_sequences: ndarray
-            array with beta sequences (if provided)
-
-        self.label_id: ndarray
-            array with sequence class labels
-
-        self.file_id: ndarray
-            array with sequence file labels
-
-        self.freq: ndarray
-            array with sequence frequencies from samples
-
-        self.counts: ndarray
-            array with sequence counts from samples
-
-        self.(v/d/j)_(alpha/beta): ndarray
-            array with sequence (v/d/j)-(alpha/beta) usage
+            - self.alpha_sequences (ndarray): array with alpha sequences (if provided)
+            - self.beta_sequences (ndarray): array with beta sequences (if provided)
+            - self.label_id (ndarray): array with sequence class labels
+            - self.file_id (ndarray): array with sequence file labels
+            - self.freq (ndarray): array with sequence frequencies from samples
+            - self.counts (ndarray): array with sequence counts from samples
+            - self.(v/d/j)_(alpha/beta) (ndarray):array with sequence (v/d/j)-(alpha/beta) usage
 
         ---------------------------------------
 
@@ -843,87 +725,46 @@ class DeepTCR_base(object):
     def Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
                   v_alpha=None, j_alpha=None, p=None,hla=None, batch_size=10000,models=None,return_dist=False):
         """
-        Predicting outputs of sequence models on new data
+        # Predicting outputs of sequence models on new data
 
-        This method allows a user to take a pre-trained autoencoder/sequence classifier
-        and generate outputs from the model on new data. For the autoencoder, this returns
-        the features from the latent space. For the sequence classifier, it is the probability
-        of belonging to each class.
+        This method allows a user to take a pre-trained autoencoder/sequence classifier and generate outputs from the model on new data. For the autoencoder, this returns the features from the latent space. For the sequence classifier, it is the probability of belonging to each class.
 
-        In the case that multiple models have been trained via MC or K-fold Cross-Validation strategy for the
-        sequence classifier, this method can use some or all trained models in an ensemble fashion to provide the
-        average prediction per sequence as well as the distribution of predictions from all trained models.
+        In the case that multiple models have been trained via MC or K-fold Cross-Validation strategy for the sequence classifier, this method can use some or all trained models in an ensemble fashion to provide the average prediction per sequence as well as the distribution of predictions from all trained models.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        alpha_sequences: ndarray of strings
-            A 1d array with the sequences for inference for the alpha chain.
+            alpha_sequences (ndarray of strings): A 1d array with the sequences for inference for the alpha chain.
 
-        beta_sequences: ndarray of strings
-            A 1d array with the sequences for inference for the beta chain.
+            beta_sequences (ndarray of strings): A 1d array with the sequences for inference for the beta chain.
 
-        v_beta: ndarray of strings
-            A 1d array with the v-beta genes for inference.
+            v_beta (ndarray of strings): A 1d array with the v-beta genes for inference.
 
-        d_beta: ndarray of strings
-            A 1d array with the d-beta genes for inference.
+            d_beta (ndarray of strings): A 1d array with the d-beta genes for inference.
 
-        j_beta: ndarray of strings
-            A 1d array with the j-beta genes for inference.
+            j_beta (ndarray of strings): A 1d array with the j-beta genes for inference.
 
-        v_alpha: ndarray of strings
-            A 1d array with the v-alpha genes for inference.
+            v_alpha (ndarray of strings): A 1d array with the v-alpha genes for inference.
 
-        j_alpha: ndarray of strings
-            A 1d array with the j-alpha genes for inference.
+            j_alpha (ndarray of strings): A 1d array with the j-alpha genes for inference.
 
-        hla: ndarray of tuples/arrays
-            To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-            as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring
-            to the alleles seen for that sequence.
-                ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+            hla (ndarray of tuples/arrays): To input the hla context for each sequence fed into DeepTCR, this will need to formatted as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring to the alleles seen for that sequence. ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
 
-            If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA
-            in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those
-            HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to
-            this method in the supertype designation.
+                - If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to this method in the supertype designation.
 
-        p: multiprocessing pool object
-            a pre-formed pool object can be passed to method for multiprocessing tasks.
+            p (multiprocessing pool object): a pre-formed pool object can be passed to method for multiprocessing tasks.
 
-        batch_size: int
-            Batch size for inference.
+            batch_size (int): Batch size for inference.
 
-        models: list
-            In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals),
-            one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in
-            Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the
-            distribution of outputs for the user.
+            models (list): In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals), one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the distribution of outputs for the user.
 
-        return_dist: bool
-            If the user wants to also return teh distribution of sequence predicionts over all models use dfor inference,
-            one should set this value to True.
+            return_dist (bool): If the user wants to also return teh distribution of sequence predicionts over all models use dfor inference, one should set this value to True.
 
-        Returns
-        [features, features_dist]
+        Returns:
+            features, features_dist
 
-        features: array
-            shape = [N, latent_dim]
+            - features (array), shape = [N, latent_dim]: An array that contains n x latent_dim containing features for all sequences. For the VAE, this represents the features from the latent space. For the sequence classifier, this represents the probabilities for every class or the regressed value from the sequence regressor. In the case of multiple models being used for inference in ensemble, this becomes the average prediction over all models.
 
-            An array that contains n x latent_dim containing features for all sequences. For the VAE, this represents
-            the features from the latent space. For the sequence classifier, this represents the probabilities for every
-            class or the regressed value from the sequence regressor. In the case of multiple models being used for infernece
-            in ensemble, this becomes the average prediction over all models.
-
-        features_dist: array
-            shape = [n_models,N,latent_dim]
-
-            An array that contains the output of all models separately for each input sequence. This output is useful
-            if using multiple models in ensemble to predict on a new sequence. This output describes the distribution
-            of the predictions over all models.
-
-        ---------------------------------------
+            - features_dist (array), shape = [n_models,N,latent_dim]: An array that contains the output of all models separately for each input sequence. This output is useful if using multiple models in ensemble to predict on a new sequence. This output describes the distribution of the predictions over all models.
 
         """
         model_type,get = load_model_data(self)
@@ -939,28 +780,23 @@ class DeepTCR_base(object):
 class feature_analytics_class(object):
     def Structural_Diversity(self, sample=None, n_jobs=1):
         """
-        Structural Diversity Measurements
+        # Structural Diversity Measurements
 
         This method first clusters sequences via the phenograph algorithm before computing
         the number of clusters and entropy of the data over these clusters to obtain a measurement
         of the structural diversity within a repertoire.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        sample: int
-            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
+            sample (int): For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
             a number of sequences and then use k-nearest neighbors to assign other sequences.
 
-        n_jobs:int
-            Number of processes to use for parallel operations.
+            n_jobs (int): Number of processes to use for parallel operations.
 
-        Returns
+        Returns:
+            Diversity dataframe
 
-        self.Structural_Diversity_DF: Pandas dataframe
-            A dataframe containing the number of clusters and entropy in each sample
-
-        ---------------------------------------
+            - self.Structural_Diversity_DF (Pandas dataframe): A dataframe containing the number of clusters and entropy in each sample
 
         """
 
@@ -1028,70 +864,37 @@ class feature_analytics_class(object):
                 linkage_method='ward', write_to_sheets=False, sample=None, n_jobs=1,order_by_linkage=False):
 
         """
-        Clustering Sequences by Latent Features
+        # Clustering Sequences by Latent Features
 
-        This method clusters all sequences by learned latent features from
-        either the variational autoencoder Several clustering algorithms are included including
-        Phenograph, DBSCAN, or hierarchical clustering. DBSCAN is implemented from the
-        sklearn package. Hierarchical clustering is implemented from the scipy package.
+        This method clusters all sequences by learned latent features from either the variational autoencoder or by the supervised methods. Several clustering algorithms are included including Phenograph, DBSCAN, or hierarchical clustering. DBSCAN is implemented from the sklearn package. Hierarchical clustering is implemented from the scipy package.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        set: str
-            To choose which set of sequences to analye, enter either
-            'all','train', 'valid',or 'test'. Since the sequences in the train set
-            may be overfit, it preferable to generally examine the test set on its own.
+            set (str): To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.
 
-        clustering_method: str
-            Clustering algorithm to use to cluster TCR sequences. Options include
-            phenograph, dbscan, or hierarchical. When using dbscan or hierarchical clustering,
-            a variety of thresholds are used to find an optimimum silhoutte score before using a final
-            clustering threshold when t value is not provided.
+            clustering_method (str): Clustering algorithm to use to cluster TCR sequences. Options include phenograph, dbscan, or hierarchical. When using dbscan or hierarchical clustering, a variety of thresholds are used to find an optimimum silhoutte score before using a final clustering threshold when t value is not provided.
 
-        t: float
-            If t is provided, this is used as a distance threshold for hierarchical clustering or the eps
-            value for dbscan.
+            t (float): If t is provided, this is used as a distance threshold for hierarchical clustering or the eps value for dbscan.
 
-        criterion: str
-            Clustering criterion as allowed by fcluster function
-            in scipy.cluster.hierarchy module. (Used in hierarchical clustering).
+            criterion (str): Clustering criterion as allowed by fcluster function in scipy.cluster.hierarchy module. (Used in hierarchical clustering).
 
-        linkage_method: str
-            method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
+            linkage_method (str): method parameter for linkage as allowed by scipy.cluster.hierarchy.linkage
 
-        write_to_sheets: bool
-            To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True.
-            Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution
-            of each cluster to each sample.
+            write_to_sheets (bool): To write clusters to separate csv files in folder named 'Clusters' under results folder, set to True. Additionally, if set to True, a csv file will be written in results directory that contains the frequency contribution of each cluster to each sample.
 
-        sample: int
-            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
-            a number of sequences and then use k-nearest neighbors to assign other sequences.
+            sample (int): For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample a number of sequences and then use k-nearest neighbors to assign other sequences.
 
-        n_jobs:int
-            Number of processes to use for parallel operations.
+            n_jobs (int): Number of processes to use for parallel operations.
 
-        order_by_linkage: bool
-            To list sequences in the cluster dataframes by how they are related via ward's linakge,
-            set this value to True. Otherwise, each cluster dataframe will list the sequences by the order they
-            were loaded into DeepTCR.
+            order_by_linkage (bool): To list sequences in the cluster dataframes by how they are related via ward's linakge, set this value to True. Otherwise, each cluster dataframe will list the sequences by the order they were loaded into DeepTCR.
 
-        Returns
+        Returns:
+            Cluster Results
 
-        self.Cluster_DFs: list of Pandas dataframes
-            Clusters by sequences/label
-
-        self.var: list
-            Variance of lengths in each cluster
-
-        self.Cluster_Frequencies: Pandas dataframe
-            A dataframe containing the frequency contribution of each cluster to each sample.
-
-        self.Cluster_Assignments: ndarray
-            Array with cluster assignments by number.
-
-        ---------------------------------------
+            - self.Cluster_DFs (list of Pandas dataframes): Clusters by sequences/label
+            - self.var (list): Variance of lengths in each cluster
+            - self.Cluster_Frequencies (Pandas dataframe): A dataframe containing the frequency contribution of each cluster to each sample.
+            - self.Cluster_Assignments (ndarray): Array with cluster assignments by number.
 
         """
         if set == 'all':
@@ -1280,11 +1083,9 @@ class feature_analytics_class(object):
 
     def Motif_Identification(self,group,p_val_threshold=0.05,by_samples=False,top_seq=10):
         """
-        Motif Identification Supervised Classifiers
+        # Motif Identification Supervised Classifiers
 
-        This method looks for enriched features in the predetermined group
-        and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi"
-        to produce seqlogos.
+        This method looks for enriched features in the predetermined group and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi" to produce seqlogos.
 
         Inputs
         ---------------------------------------
@@ -1346,26 +1147,20 @@ class feature_analytics_class(object):
 
     def Sample_Features(self, set='all',Weight_by_Freq=True):
         """
-        Sample-Level Feature Values
+        # Sample-Level Feature Values
 
         This method returns a dataframe with the aggregate sample level features.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        set: str
-            To choose which set of sequences to analye, enter either
-            'all','train', 'valid',or 'test'. Since the sequences in the train set
-            may be overfit, it preferable to generally examine the test set on its own.
+            set (str): To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.
 
-        Weight_by_Freq: bool
-            Option to weight each sequence used in aggregate measure
-            of feature across sample by its frequency.
+            Weight_by_Freq (bool): Option to weight each sequence used in aggregate measure of feature across sample by its frequency.
 
-        Returns
-        self.sample_featres: pandas dataframe
-            This function returns the average feature vector for each sample analyzed. This can be used to make further
-            downstream comparisons such as inter-repertoire distances.
+        Returns:
+            Sample Level Features
+
+            - self.sample_featres (pandas dataframe): This function returns the average feature vector for each sample analyzed. This can be used to make further downstream comparisons such as inter-repertoire distances.
         ---------------------------------------
 
         """
@@ -1417,33 +1212,21 @@ class vis_class(object):
                           sample_num_per_class=None,color_dict=None):
 
         """
-        HeatMap of Sequences
+        # HeatMap of Sequences
 
-        This method creates a heatmap/clustermap for sequences by latent features
-        for the unsupervised deep lerning methods.
+        This method creates a heatmap/clustermap for sequences by latent features for the unsupervised deep lerning methods.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        set: str
-            To choose which set of sequences to analye, enter either
-            'all','train', 'valid',or 'test'. Since the sequences in the train set
-            may be overfit, it preferable to generally examine the test set on its own.
+            set (str): To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.
 
-        filename: str
-            Name of file to save heatmap.
+            filename (str): Name of file to save heatmap.
 
-        sample_num: int
-            Number of events to randomly sample for heatmap.
+            sample_num (int): Number of events to randomly sample for heatmap.
 
-        sample_num_per_class: int
-            Number of events to randomly sample per class for heatmap.
+            sample_num_per_class (int): Number of events to randomly sample per class for heatmap.
 
-        color_dict: dict
-            Optional dictionary to provide specified colors for classes.
-
-        Returns
-        ---------------------------------------
+            color_dict (dict): Optional dictionary to provide specified colors for classes.
 
         """
 
@@ -1517,41 +1300,29 @@ class vis_class(object):
     def HeatMap_Samples(self, set='all',filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True,
                         font_scale=1.0):
         """
-        HeatMap of Samples
+        # HeatMap of Samples
 
-        This method creates a heatmap/clustermap for samples by latent features
-        for the unsupervised deep learning methods.
+        This method creates a heatmap/clustermap for samples by latent features for the unsupervised deep learning methods.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        set: str
-            To choose which set of sequences to analye, enter either
-            'all','train', 'valid',or 'test'. Since the sequences in the train set
-            may be overfit, it preferable to generally examine the test set on its own.
+            set (str): To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.
 
-        filename: str
-            Name of file to save heatmap.
+            filename (str): Name of file to save heatmap.
 
-        Weight_by_Freq: bool
-            Option to weight each sequence used in aggregate measure
-            of feature across sample by its frequency.
+            Weight_by_Freq (bool): Option to weight each sequence used in aggregate measure of feature across sample by its frequency.
 
-        color_dict: dict
-            Optional dictionary to provide specified colors for classes.
+            color_dict (dict): Optional dictionary to provide specified colors for classes.
 
-        labels: bool
-            Option to show names of samples on y-axis of heatmap.
+            labels (bool): Option to show names of samples on y-axis of heatmap.
 
-        font_scale: float
-            This parameter controls the font size of the row labels. If there are many rows, one can make this value
-            smaller to get better labeling of the rows.
+            font_scale (float): This parameter controls the font size of the row labels. If there are many rows, one can make this value smaller to get better labeling of the rows.
 
-        Returns
-        self.sample_featres: pandas dataframe
-            This function returns the average feature vector for each sample analyzed. This can be used to make further
-            downstream comparisons such as inter-repertoire distances.
-        ---------------------------------------
+        Returns:
+            Sample Features
+
+            - self.sample_featres (pandas dataframe):
+            This function returns the average feature vector for each sample analyzed. This can be used to make further downstream comparisons such as inter-repertoire distances.
 
         """
 
@@ -1628,80 +1399,48 @@ class vis_class(object):
                              gridsize=24, Load_Prev_Data=False,filename=None,sample_labels=False,
                               gaussian_sigma=0.5, vmax=0.01,n_pad=5,lw=None,log_scale=False):
         """
-        Repertoire Dendrogram
+        # Repertoire Dendrogram
 
-        This method creates a visualization that shows and compares the distribution
-        of the sample repertoires via UMAP and provided distance metric. The underlying
-        algorithm first applied phenograph clustering to determine the proportions of the sample
-        within a given cluster. Then a distance metric is used to compare how far two samples are
-        based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
-        Correlation, and Euclidean.
+        This method creates a visualization that shows and compares the distribution of the sample repertoires via UMAP and provided distance metric. The underlying algorithm first applied phenograph clustering to determine the proportions of the sample within a given cluster. Then a distance metric is used to compare how far two samples are based on their cluster proportions. Various metrics can be provided here such as KL-divergence, Correlation, and Euclidean.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        set: str
-            To choose which set of sequences to analye, enter either
-            'all','train', 'valid',or 'test'. Since the sequences in the train set
-            may be overfit, it preferable to generally examine the test set on its own.
+            set (str): To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.
 
-        distance_metric = str
-            Provided distance metric to determine repertoire-level distance from cluster proportions.
-            Options include = (KL,correlation,euclidean,wasserstein,JS).
+            distance_metric (str): Provided distance metric to determine repertoire-level distance from cluster proportions. Options include = (KL,correlation,euclidean,wasserstein,JS).
 
-        sample: int
-            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
-            a number of sequences and then use k-nearest neighbors to assign other sequences.
+            sample (int): For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample a number of sequences and then use k-nearest neighbors to assign other sequences.
 
-        n_jobs:int
-            Number of processes to use for parallel operations.
+            n_jobs (int): Number of processes to use for parallel operations.
 
-        color_dict: dict
-            Optional dictionary to provide specified colors for classes.
+            color_dict (dict): Optional dictionary to provide specified colors for classes.
 
-        dendrogram_radius: float
-            The radius of the dendrogram in the figure. This will usually require some adjustment
-            given the number of samples.
+            dendrogram_radius (float): The radius of the dendrogram in the figure. This will usually require some adjustment given the number of samples.
 
-        repertoire_radius: float
-            The radius of the repertoire plots in the figure. This will usually require some adjustment
-            given the number of samples.
+            repertoire_radius (float): The radius of the repertoire plots in the figure. This will usually require some adjustment given the number of samples.
 
-        linkage_method: str
-            linkage method used by scipy's linkage function
+            linkage_method (str): linkage method used by scipy's linkage function
 
-        gridsize: int
-            This parameter modifies the granularity of the hexbins for the repertoire density plots.
+            gridsize (int): This parameter modifies the granularity of the hexbins for the repertoire density plots.
 
-        Load_Prev_Data: bool
-            If method has been run before, one can load previous data used to construct the figure for
-            faster figure creation. This is helpful when trying to format the figure correctly and will require
-            the user to run the method multiple times.
+            Load_Prev_Data (bool): If method has been run before, one can load previous data used to construct the figure for faster figure creation. This is helpful when trying to format the figure correctly and will require the user to run the method multiple times.
 
-        filename: str
-            To save dendrogram plot to results folder, enter a name for the file and the dendrogram
-            will be saved to the results directory.
-            i.e. dendrogram.png
+            filename (str): To save dendrogram plot to results folder, enter a name for the file and the dendrogram will be saved to the results directory. i.e. dendrogram.png
 
-        sample_labels: bool
-            To show the sample labels on the dendrogram, set to True.
+            sample_labels (bool): To show the sample labels on the dendrogram, set to True.
 
-        gaussian_sigma: float
-            The amount of blur to introduce in the plots.
+            gaussian_sigma (float): The amount of blur to introduce in the plots.
 
-        vmax: float
-            Highest color density value. Color scales from 0 to vmax (i.e. larger vmax == dimmer plot)
+            vmax (float): Highest color density value. Color scales from 0 to vmax (i.e. larger vmax == dimmer plot)
 
-        lw: float
-            The width of the circle edge around each sample.
+            lw (float): The width of the circle edge around each sample.
 
-        log_scale: bool
-            To plot the log of the counts for the UMAP density plot, set this value to True. This can be
-            particularly helpful for visualization if the populations are very clonal.
+            log_scale (bool): To plot the log of the counts for the UMAP density plot, set this value to True. This can be particularly helpful for visualization if the populations are very clonal.
 
-        Returns
+        Returns:
+            Output
 
-        self.pairwise_distances: Pandas dataframe
+            - self.pairwise_distances (Pandas dataframe):
             Pairwise distances of all samples
         ---------------------------------------
 
@@ -1798,69 +1537,37 @@ class vis_class(object):
                   prob_plot=None,plot_by_class=False):
 
         """
-        UMAP vizualisation of TCR Sequences
+        # UMAP visualization of TCR Sequences
 
-        This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
-        class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional
-        to frequency of sequence within sample.
+        This method displays the sequences in a 2-dimensional UMAP where the user can color code points by class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional to frequency of sequence within sample.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        set: str
-            To choose which set of sequences to analye, enter either
-            'all','train', 'valid',or 'test'. Since the sequences in the train set
-            may be overfit, it preferable to generally examine the test set on its own.
+            set (str): To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.
 
-        by_class: bool
-            To color the points by their class label, set to True.
+            by_class (bool): To color the points by their class label, set to True.
 
-        by_sample: bool
-            To color the points by their sample lebel, set to True.
+            by_sample (bool): To color the points by their sample lebel, set to True.
 
-        by_cluster:bool
-            To color the points by the prior computed clustering solution, set to True.
+            by_cluster (bool): To color the points by the prior computed clustering solution, set to True.
 
-        freq_weight: bool
-            To scale size of points proportionally to their frequency, set to True.
+            freq_weight (bool): To scale size of points proportionally to their frequency, set to True.
 
-        show_legend: bool
-            To display legend, set to True.
+            show_legend (bool): To display legend, set to True.
 
-        scale: float
-            To change size of points, change scale parameter. Is particularly useful
-            when finding good display size when points are scaled by frequency.
+            scale (float): To change size of points, change scale parameter. Is particularly useful when finding good display size when points are scaled by frequency.
 
-        Load_Prev_Data: bool
-            If method was run before, one can rerun this method with this parameter set
-            to True to bypass recomputing the UMAP projection. Useful for generating
-            different versions of the plot on the same UMAP representation.
+            Load_Prev_Data (bool): If method was run before, one can rerun this method with this parameter set to True to bypass recomputing the UMAP projection. Useful for generating different versions of the plot on the same UMAP representation.
 
-        alpha: float
-            Value between 0-1 that controls transparency of points.
+            alpha (float): Value between 0-1 that controls transparency of points.
 
-        sample: int
-            Number of events to sub-sample for visualization.
+            sample (int): Number of events to sub-sample for visualization.
 
-        sample_per_class: int
-             Number of events to randomly sample per class for UMAP.
+            sample_per_class (int): Number of events to randomly sample per class for UMAP.
 
-        filename: str
-            To save umap plot to results folder, enter a name for the file and the umap
-            will be saved to the results directory.
-            i.e. umap.png
+            filename (str): To save umap plot to results folder, enter a name for the file and the umap will be saved to the results directory. i.e. umap.png
 
-        prob_plot: str
-            To plot the predicted probabilities for the sequences as an additional heatmap, specify
-            the class probability one wants to visualize (i.e. if the class of interest is class A, input
-            'A' as a string). Of note, only probabilities determined from the sequences in the test set are
-            displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
-            when the set parameter is turned to 'test'.
-
-
-        Returns
-
-        ---------------------------------------
+            prob_plot (str): To plot the predicted probabilities for the sequences as an additional heatmap, specify the class probability one wants to visualize (i.e. if the class of interest is class A, input 'A' as a string). Of note, only probabilities determined from the sequences in the test set are displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter when the set parameter is turned to 'test'.
 
         """
         idx = None
@@ -2015,36 +1722,21 @@ class vis_class(object):
     
     def UMAP_Plot_Samples(self,set='all',filename='UMAP_Samples.tif', Weight_by_Freq=True,scale=5,alpha=1.0):
         """
-        UMAP vizualisation of TCR Samples
+        # UMAP visualization of TCR Samples
 
         This method displays the samples in a 2-dimensional UMAP
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        set: str
-            To choose which set of sequences to analye, enter either
-            'all','train', 'valid',or 'test'. Since the sequences in the train set
-            may be overfit, it preferable to generally examine the test set on its own.
+            set (str): To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.
 
-        Weight_by_Freq: bool
-            Option to weight each sequence used in aggregate measure
-            of feature across sample by its frequency.
+            Weight_by_Freq (bool): Option to weight each sequence used in aggregate measure of feature across sample by its frequency.
 
-        scale: float
-            To change size of points, change scale parameter.
+            scale (float): To change size of points, change scale parameter.
 
-        alpha: float
-            Value between 0-1 that controls transparency of points.
+            alpha (float): Value between 0-1 that controls transparency of points.
 
-        filename: str
-            To save umap plot to results folder, enter a name for the file and the umap
-            will be saved to the results directory.
-            i.e. umap.png
-
-        Returns
-
-        ---------------------------------------
+            filename (str): To save umap plot to results folder, enter a name for the file and the umap will be saved to the results directory. i.e. umap.png
 
         """
 
@@ -2125,48 +1817,32 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                   suppress_output = False,learning_rate=0.001,split_seed=None,Load_Prev_Data=False):
 
         """
-        Train Variational Autoencoder (VAE)
+        # Train Variational Autoencoder (VAE)
 
-        This method trains the network and saves features values for sequences
-        to create heatmaps.
+        This method trains the network and saves features values for sequences to create heatmaps.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        Model Parameters
+            latent_dim (int): Number of latent dimensions for VAE.
 
-        latent_dim: int
-            Number of latent dimensions for VAE.
+            kernel (int): The motif k-mer of the first convolutional layer of the graph.
 
-        kernel: int
-            The motif k-mer of the first convolutional layer of the graph.
+            trainable_embedding (bool): Toggle to control whether a trainable embedding layer is used or native one-hot representation for convolutional layers.
 
-        trainable_embedding: bool
-            Toggle to control whether a trainable embedding layer is used or native
-            one-hot representation for convolutional layers.
+            embedding_dim_aa (int): Learned latent dimensionality of amino-acids.
 
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
+            embedding_dim_genes (int): Learned latent dimensionality of VDJ genes
 
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
+            embedding_dim_hla (int): Learned latent dimensionality of HLA
 
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
+            use_only_seq (bool): To only use sequence feaures, set to True.
 
-        use_only_seq: bool
-            To only use sequence feaures, set to True.
+            use_only_gene (bool): To only use gene-usage features, set to True.
 
-        use_only_gene: bool
-            To only use gene-usage features, set to True.
+            use_only_hla (bool): To only use hla feaures, set to True.
 
-        use_only_hla: bool
-            To only use hla feaures, set to True.
+            size_of_net (list or str): The convolutional layers of this network have 3 layers for which the use can modify the number of neurons per layer. The user can either specify the size of the network with the following options:
 
-        size_of_net: list or str
-            The convolutional layers of this network have 3 layers for which the use can
-            modify the number of neurons per layer. The user can either specify the size of the network
-            with the following options:
                 - small == [12,32,64] neurons for the 3 respective layers
                 - medium == [32,64,128] neurons for the 3 respective layers
                 - large == [64,128,256] neurons for the 3 respective layers
@@ -2175,67 +1851,40 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     One can also adjust the number of layers for the convolutional stack by changing the length of
                     this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
-        latent_alpha: float
-            Penalty coefficient for latent loss. This value changes the degree of latent regularization on
-            the VAE.
+            latent_alpha (float): Penalty coefficient for latent loss. This value changes the degree of latent regularization on the VAE.
 
-        sparsity_alpha: float
-            When training an autoencoder, the number of latent nodes required to model the underlying distribution
-            of the data is often arrived to by trial and error and tuning this hyperparameter. In many cases, by using
-            too many latent nodes, one my fit the distribution but downstream analysis tasks may be computationally
-            burdensome with i.e. 256 latent features. Additionally, there can be a high level of colinearlity among
-            these latent features. In our implemnetation of VAE, we introduce this concept of a sparsity constraint which
-            turns off latent nodes in a soft fashion throughout straining and acts as another mode of regularization to
-            find the minimal number of latent features to model the underlying distribution. Following training, one can
-            set the var_explained parameter to select the number of latent nodes required  to cover X percent variation
-            explained akin to PCA analysis. This results in a lower dimensional space and more linearly indepeendent
-            latent space. Good starting value is 1.0.
+            sparsity_alpha (float): When training an autoencoder, the number of latent nodes required to model the underlying distribution of the data is often arrived to by trial and error and tuning this hyperparameter. In many cases, by using too many latent nodes, one my fit the distribution but downstream analysis tasks may be computationally burdensome with i.e. 256 latent features. Additionally, there can be a high level of colinearlity among these latent features. In our implemnetation of VAE, we introduce this concept of a sparsity constraint which turns off latent nodes in a soft fashion throughout straining and acts as another mode of regularization to find the minimal number of latent features to model the underlying distribution. Following training, one can set the var_explained parameter to select the number of latent nodes required  to cover X percent variation explained akin to PCA analysis. This results in a lower dimensional space and more linearly indepeendent latent space. Good starting value is 1.0.
 
-        var_explained: float (0-1.0)
-            Following training, one can select the number of latent features that explain N% of the variance in the
-            data. The output of the method will be the features in order of the explained variance.
+            var_explained (float (0-1.0)): Following training, one can select the number of latent features that explain N% of the variance in the data. The output of the method will be the features in order of the explained variance.
 
-        graph_seed: int
-            For deterministic initialization of weights of the graph, set this to value of choice.
+            graph_seed (int): For deterministic initialization of weights of the graph, set this to value of choice.
 
+            batch_size (int): Size of batch to be used for each training iteration of the net.
 
-        Training Parameters
+            epochs_min (int): The minimum number of epochs to train the autoencoder.
 
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
+            stop_criterion (float): Minimum percent decrease in determined interval (below) to continue training. Used as early stopping criterion.
 
-        epochs_min: int
-            The minimum number of epochs to train the autoencoder.
+            stop_criterion_window (int): The window of data to apply the stopping criterion.
 
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
+            accuracy_min (float): Minimum reconstruction accuracy before terminating training.
 
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
+            suppress_output (bool): To suppress command line output with training statisitcs, set to True.
 
-        accuracy_min: float
-            Minimum reconstruction accuracy before terminating training.
+            split_seed (int): For deterministic batching of data during training, one can set this parameter to value of choice.
 
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
+            Load_Prev_Data (bool): Load previous feature data from prior training.
 
-        split_seed: int
-            For deterministic batching of data during training, one can set this parameter to value of choice.
+        Returns:
+            VAE Features
 
-        Load_Prev_Data: bool
-            Load previous feature data from prior training.
-
-
-        Returns
-
-        self.features: array
+            - self.features (array):
             An array that contains n x latent_dim containing features for all sequences
 
-        self.explained_variance_ : array
+            - self.explained_variance_ (array):
             The explained variance for the N number of latent features in order of descending value.
 
-        self.explained_variance_ratio_ : array
+            - self.explained_variance_ratio_ (array):
             The explained variance ratio for the N number of latent features in order of descending value.
 
         ---------------------------------------
@@ -2622,49 +2271,34 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                                 plot_type='violin', metrics=['Recall', 'Precision', 'F1_Score', 'AUC'],
                                 n_jobs=1,Load_Prev_Data=False):
         """
-        K-Nearest Neighbor Sequence Classifier
+        # K-Nearest Neighbor Sequence Classifier
 
-        This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a sequence
-        label given its sequence features.The method returns AUC,Precision,Recall, and
-        F1 Scores for all classes.
+        This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a sequence label given its sequence features.The method returns AUC,Precision,Recall, and F1 Scores for all classes.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        folds: int
-            Number of folds to train/test K-Nearest Classifier.
+            folds (int): Number of folds to train/test K-Nearest Classifier.
 
-        k_values: list
-            List of k for KNN algorithm to assess performance metrics across.
+            k_values (list): List of k for KNN algorithm to assess performance metrics across.
 
-        rep:int
-            Number of iterations to train KNN classifier for each k-value.
+            rep (int): Number of iterations to train KNN classifier for each k-value.
 
-        plot_metrics: bool
-            Toggle to show the performance metrics
+            plot_metrics (bool): Toggle to show the performance metrics
 
-        plot_type: str
-            Type of plot as taken by seaborn.catplot for kind parameter:
-            options include (strip,swarm,box,violin,boxen,point,bar,count)
+            plot_type (str): Type of plot as taken by seaborn.catplot for kind parameter: options include (strip,swarm,box,violin,boxen,point,bar,count)
 
-        by_class: bool
-            Toggle to show the performance metrics by class.
+            by_class (bool): Toggle to show the performance metrics by class.
 
-        metrics: list
-            List of performance measures one wants to compute.
-            options include AUC, Precision, Recall, F1_Score
+            metrics (list): List of performance measures one wants to compute. Options include AUC, Precision, Recall, F1_Score
 
-        n_jobs: int
-            Number of workers to set for KNeighborsClassifier.
+            n_jobs (int): Number of workers to set for KNeighborsClassifier.
 
-        Load_Prev_Data: bool
-            To make new figures from old previously run analysis, set this value to True
-            after running the method for the first time. This will load previous performance
-            metrics from previous run.
+            Load_Prev_Data (bool): To make new figures from old previously run analysis, set this value to True after running the method for the first time. This will load previous performance metrics from previous run.
 
-        Returns
+        Returns:
+            Performance Metrics
 
-        self.KNN_Sequence_DF: Pandas dataframe
+            - self.KNN_Sequence_DF (Pandas dataframe):
             Dataframe with all metrics of performance organized by the class label,
             metric (i.e. AUC), k-value (from k-nearest neighbors), and the value of the
             performance metric.
@@ -2719,51 +2353,34 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                                   plot_type='violin', by_class=False, Load_Prev_Data=False,
                                   metrics=['Recall', 'Precision', 'F1_Score', 'AUC']):
         """
-        K-Nearest Neighbor Repertoire Classifier
+        # K-Nearest Neighbor Repertoire Classifier
 
-        This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a repertoire
-        label given the structural distribution of the repertoire.The method returns AUC,Precision,Recall, and
-        F1 Scores for all classes.
+        This method uses a K-Nearest Neighbor Classifier to assess the ability to predict a repertoire label given the structural distribution of the repertoire.The method returns AUC,Precision,Recall, and F1 Scores for all classes.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        folds: int
-            Number of folds to train/test K-Nearest Classifier.
+            folds (int): Number of folds to train/test K-Nearest Classifier.
 
-        distance_metric = str
-            Provided distance metric to determine repertoire-level distance from cluster proportions.
-            Options include = (KL,correlation,euclidean,wasserstein,JS).
+            distance_metric (str): Provided distance metric to determine repertoire-level distance from cluster proportions. Options include = (KL,correlation,euclidean,wasserstein,JS).
 
-        sample: int
-            For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
-            a number of sequences and then use k-nearest neighbors to assign other sequences.
+            sample (int): For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample a number of sequences and then use k-nearest neighbors to assign other sequences.
 
-        n_jobs:int
-            Number of processes to use for parallel operations.
+            n_jobs (int): Number of processes to use for parallel operations.
 
-        plot_metrics: bool
-            Toggle to show the performance metrics
+            plot_metrics (bool): Toggle to show the performance metrics
 
-        plot_type: str
-            Type of plot as taken by seaborn.catplot for kind parameter:
-            options include (strip,swarm,box,violin,boxen,point,bar,count)
+            plot_type (str): Type of plot as taken by seaborn.catplot for kind parameter: options include (strip,swarm,box,violin,boxen,point,bar,count)
 
-        by_class: bool
-            Toggle to show the performance metrics by class.
+            by_class (bool): Toggle to show the performance metrics by class.
 
-        Load_Prev_Data: bool
-            If method has been run before, one can load previous data from clustering step to move to KNN
-            step faster. Can be useful when trying different distance methods to find optimizal distance metric
-            for a given dataset.
+            Load_Prev_Data (bool): If method has been run before, one can load previous data from clustering step to move to KNN step faster. Can be useful when trying different distance methods to find optimizal distance metric for a given dataset.
 
-        metrics: list
-            List of performance measures one wants to compute.
-            options include AUC, Precision, Recall, F1_Score
+            metrics (list): List of performance measures one wants to compute. options include AUC, Precision, Recall, F1_Score
 
-        Returns
+        Returns:
+            Performance Metrics
 
-        self.KNN_Repertoire_DF: Pandas dataframe
+            - self.KNN_Repertoire_DF (Pandas dataframe):
             Dataframe with all metrics of performance organized by the class label,
             metric (i.e. AUC), k-value (from k-nearest neighbors), and the value of the
             performance metric.
@@ -2838,60 +2455,43 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                   legend_font_size=None,frameon=True,legend_loc = 'lower right',
                   figsize=None):
         """
-        AUC Curve for both Sequence and Repertoire/Sample Classifiers
+        # AUC Curve for both Sequence and Repertoire/Sample Classifiers
 
-        Inputs
-        ---------------------------------------
-        by: str
-            To show AUC curve for only one class, set this parameter
-            to the name of the class label one wants to plot.
+        Args:
 
-        filename: str
-            Filename to save tif file of AUC curve.
+            by (str): To show AUC curve for only one class, set this parameter to the name of the class label one wants to plot.
 
-        title: str
-            Optional Title to put on ROC Curve.
+            filename (str): Filename to save tif file of AUC curve.
 
-        title_font: int
-            Optional font size for title
+            title (str): Optional Title to put on ROC Curve.
 
-        plot: bool
-            To suppress plotting and just save the data/figure, set to False.
+            title_font (int): Optional font size for title
 
-        diag_line: bool
-            To plot the line/diagonal of y=x defining no predictive power, set to True.
-            To remove from plot, set to False.
+            plot (bool): To suppress plotting and just save the data/figure, set to False.
 
-        xtick_size: float
-            Size of xticks
+            diag_line (bool): To plot the line/diagonal of y=x defining no predictive power, set to True. To remove from plot, set to False.
 
-        ytick_size: float
-            Size of yticks
+            xtick_size (float): Size of xticks
 
-        xlabel_size: float
-            Size of xlabel
+            ytick_size (float): Size of yticks
 
-        ylabel_size: float
-            Size of ylabel
+            xlabel_size (float): Size of xlabel
 
-        legend_font_size: float
-            Size of legend
+            ylabel_size (float): Size of ylabel
 
-        frameon: bool
-            Whether to show frame around legend.
+            legend_font_size (float): Size of legend
 
-        figsize: tuple
-            To change the default size of the figure, set this to size of figure (i.e. - (10,10) )
+            frameon (bool): Whether to show frame around legend.
 
-        Returns
+            figsize (tuple): To change the default size of the figure, set this to size of figure (i.e. - (10,10) )
 
-        self.AUC_DF: Pandas Dataframe
+        Returns:
+            AUC Data
+
+            - self.AUC_DF (Pandas Dataframe):
             AUC scores are returned for each class.
 
-        In addition to plotting the ROC Curve, the AUC's are saved
-        to a csv file in the results directory called 'AUC.csv'
-
-        ---------------------------------------
+            In addition to plotting the ROC Curve, the AUC's are saved to a csv file in the results directory called 'AUC.csv'
 
         """
         y_test = self.y_test
@@ -2967,31 +2567,26 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
     def SRCC(self, s=10, kde=False, title=None):
         """
-        Spearman's Rank Correlation Coefficient Plot
+        # Spearman's Rank Correlation Coefficient Plot
 
-        In the case one is doing a regression-based model for the sequence classiifer,
-        one can plot the predicted vs actual labeled value with this method. The method
-        returns a plot for the regression and a value of the correlation coefficient.
+        In the case one is doing a regression-based model for the sequence classiifer, one can plot the predicted vs actual labeled value with this method. The method returns a plot for the regression and a value of the correlation coefficient.
 
-        Inputs
-        ---------------------------------------
-        s: int
-            size of points for scatterplot
+        Args:
 
-        kde: bool
-            To do a kernel density estimation per point and plot this as a color-scheme,
-            set to True. Warning: this option will take longer to run.
+            s (int): size of points for scatterplot
 
-        title: str
-            Title for the plot.
+            kde (bool): To do a kernel density estimation per point and plot this as a color-scheme, set to True. Warning: this option will take longer to run.
 
-        Returns
-        ---------------------------------------
-        corr: float
+            title (str): Title for the plot.
+
+        Returns:
+            SRCC Output
+
+            - corr (float):
             Spearman's Rank Correlation Coefficient
 
-        ax: matplotlib axis
-            axis on which plot is drawn
+            - ax (matplotlib axis):
+                axis on which plot is drawn
         """
         x, y = np.squeeze(self.y_pred, -1), np.squeeze(self.y_test, -1)
         corr, _ = spearmanr(x, y)
@@ -3015,72 +2610,47 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
     def Representative_Sequences(self,top_seq=10,motif_seq=5,make_seq_logos=True,
                                  color_scheme='weblogo_protein',logo_file_format='.eps'):
         """
-        Identify most highly predicted sequences for each class and corresponding motifs.
+        # Identify most highly predicted sequences for each class and corresponding motifs.
 
-        This method allows the user to query which sequences were most predicted to belong to a given class along
-        with the motifs that were learned for these representative sequences.
-        Of note, this method only reports sequences that were in the test set so as not to return highly predicted
-        sequences that were over-fit in the training set. To obtain the highest predicted sequences in all the data,
-        run a K-fold cross-validation or Monte-Carlo cross-validation before running this method. In this way,
-        the predicted probability will have been assigned to a sequence only when it was in the independent test set.
+        This method allows the user to query which sequences were most predicted to belong to a given class along with the motifs that were learned for these representative sequences. Of note, this method only reports sequences that were in the test set so as not to return highly predicted sequences that were over-fit in the training set. To obtain the highest predicted sequences in all the data, run a K-fold cross-validation or Monte-Carlo cross-validation before running this method. In this way, the predicted probability will have been assigned to a sequence only when it was in the independent test set.
 
-        In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regression
-        model are returned in the Rep_Seq Dict.
+        In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regression model are returned in the Rep_Seq Dict.
 
-        This method will also determine motifs the network has learned that are highly associated with the label through
-        multi-nomial linear regression and creates seq logos and fasta files in the results folder. Within a folder
-        for a given class, the motifs are sorted by their linear coefficient. The coefficient is in the file name
-        (i.e. 0_0.125_feature_2.eps reflects the the 0th highest feature with a coefficient of 0.125.
+        This method will also determine motifs the network has learned that are highly associated with the label through multi-nomial linear regression and creates seq logos and fasta files in the results folder. Within a folder for a given class, the motifs are sorted by their linear coefficient. The coefficient is in the file name (i.e. 0_0.125_feature_2.eps reflects the the 0th highest feature with a coefficient of 0.125.
 
+        Args:
 
-        Inputs
-        ---------------------------------------
+            top_seq (int): The number of top sequences to show for each class.
 
-        top_seq: int
-            The number of top sequences to show for each class.
+            motif_seq (int): The number of sequences to use to generate each motif. The more sequences, the possibly more noisy the seq_logo will be.
 
-        motif_seq: int
-            The number of sequences to use to generate each motif. The more sequences, the possibly more noisy
-            the seq_logo will be.
+            make_seq_logos (bool): In order to make seq logos for visualization of enriched motifs, set this to True. Whether this is set to True or not, the fast files that define enriched motifs will still be saved.
 
-        make_seq_logos: bool
-            In order to make seq logos for visualization of enriched motifs, set this to True. Whether this is set to
-            True or not, the fast files that define enriched motifs will still be saved.
-
-        color_scheme: str
-            color scheme to use for LogoMaker.
+            color_scheme (str): color scheme to use for LogoMaker.
+            ###
             options are:
-                weblogo_protein
-                skylign_protein
-                dmslogo_charge
-                dmslogo_funcgroup
-                hydrophobicity
-                chemistry
-                charge
-                NajafabadiEtAl2017
+                - weblogo_protein
+                - skylign_protein
+                - dmslogo_charge
+                - dmslogo_funcgroup
+                - hydrophobicity
+                - chemistry
+                - charge
+                - NajafabadiEtAl2017
 
-        logo_file_format: str
-            The type of image file one wants to save the seqlogo as. Default is vector-based format (.eps)
+            logo_file_format (str):
+                The type of image file one wants to save the seqlogo as. Default is vector-based format (.eps)
 
-        Returns
+        Returns:
+            Outputs
 
-        self.Rep_Seq: dictionary of dataframes
-            This dictionary of dataframes holds for each class the top sequences and their respective
-            probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
+            - self.Rep_Seq (dictionary of dataframes):
+            This dictionary of dataframes holds for each class the top sequences and their respective probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
 
-        self.Rep_Seq_Features_(alpha/beta): dataframe
-            This dataframe holds information for which features were associated by a multinomial linear model
-            to the predicted probabilities of the neural network. The values in this dataframe are the linear model
-            coefficients. This allows one to see which features were associated with the output of the trained
-            neural network. These are also the same values that are on the motif seqlogo files in the results folder.
+            - self.Rep_Seq_Features_(alpha/beta) (dataframe):
+            This dataframe holds information for which features were associated by a multinomial linear model to the predicted probabilities of the neural network. The values in this dataframe are the linear model coefficients. This allows one to see which features were associated with the output of the trained neural network. These are also the same values that are on the motif seqlogo files in the results folder.
 
-        Furthermore, the motifs are written in the results directory underneath the Motifs folder. To find the beta
-        motifs for a given class, look under Motifs/beta/class_name/. These fasta/logo files are labeled by the linear
-        coefficient of that given feature for that given class followed by the number name of the feature. These fasta files
-        can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi" or are present
-        in the folder for direct visualization.
-
-        ---------------------------------------
+        Furthermore, the motifs are written in the results directory underneath the Motifs folder. To find the beta motifs for a given class, look under Motifs/beta/class_name/. These fasta/logo files are labeled by the linear coefficient of that given feature for that given class followed by the number name of the feature. These fasta files can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi" or are present in the folder for direct visualization.
 
 
         """
@@ -3305,113 +2875,70 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                                  cmap=None,min_size=0.0,edgecolor='black',edgewidth=0.25,background_color='white',
                                  Load_Prev_Data=False,norm_to_seq=True):
         """
-        Create Residue Sensitivity Logos
+        # Create Residue Sensitivity Logos
 
-        This method allows the user to create Residue Sensitivity Logos where a set of provided sequences is perturbed
-        to assess for position of the CDR3 sequence that if altered, would change the predicted specificity or affinity
-        of the sequence (depending on whether training classification or regression task).
+        This method allows the user to create Residue Sensitivity Logos where a set of provided sequences is perturbed to assess for position of the CDR3 sequence that if altered, would change the predicted specificity or affinity of the sequence (depending on whether training classification or regression task).
 
-        Residue Sensitivity Logos can be created from any supervised model (including sequence and repertoire classifiers).
-        Following the training of one of these models, one can feed into this method an cdr3 sequence defined by all/any
-        of alpha/beta cdr3 sequence, V/D/J gene usage, and HLA context within which the TCR was seen.
+        Residue Sensitivity Logos can be created from any supervised model (including sequence and repertoire classifiers). Following the training of one of these models, one can feed into this method an cdr3 sequence defined by all/any of alpha/beta cdr3 sequence, V/D/J gene usage, and HLA context within which the TCR was seen.
 
-        The output is a logo created by LogoMaker where the size of the character denotes how sensitive this position
-        is to perturbation and color denotes the consequences of changes at this site. As default, red coloration means
-        changes at this site would generally decrease the predicted value and blue coloration means changes at this site
-        would increase the predicted value.
+        The output is a logo created by LogoMaker where the size of the character denotes how sensitive this position is to perturbation and color denotes the consequences of changes at this site. As default, red coloration means changes at this site would generally decrease the predicted value and blue coloration means changes at this site would increase the predicted value.
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        alpha_sequences: ndarray of strings
-            A 1d array with the sequences for inference for the alpha chain.
+            alpha_sequences (ndarray of strings): A 1d array with the sequences for inference for the alpha chain.
 
-        beta_sequences: ndarray of strings
-            A 1d array with the sequences for inference for the beta chain.
+            beta_sequences (ndarray of strings): A 1d array with the sequences for inference for the beta chain.
 
-        v_beta: ndarray of strings
-            A 1d array with the v-beta genes for inference.
+            v_beta (ndarray of strings): A 1d array with the v-beta genes for inference.
 
-        d_beta: ndarray of strings
-            A 1d array with the d-beta genes for inference.
+            d_beta (ndarray of strings): A 1d array with the d-beta genes for inference.
 
-        j_beta: ndarray of strings
-            A 1d array with the j-beta genes for inference.
+            j_beta (ndarray of strings): A 1d array with the j-beta genes for inference.
 
-        v_alpha: ndarray of strings
-            A 1d array with the v-alpha genes for inference.
+            v_alpha (ndarray of strings): A 1d array with the v-alpha genes for inference.
 
-        j_alpha: ndarray of strings
-            A 1d array with the j-alpha genes for inference.
+            j_alpha (ndarray of strings): A 1d array with the j-alpha genes for inference.
 
-        hla: ndarray of tuples/arrays
-            To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-            as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring
-            to the alleles seen for that sequence.
-                ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+            hla (ndarray of tuples/arrays): To input the hla context for each sequence fed into DeepTCR, this will need to formatted as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring to the alleles seen for that sequence. ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
 
-        p: multiprocessing pool object
-            a pre-formed pool object can be passed to method for multiprocessing tasks.
+            p (multiprocessing pool object): a pre-formed pool object can be passed to method for multiprocessing tasks.
 
-        batch_size: int
-            Batch size for inference.
+            batch_size (int): Batch size for inference.
 
-        models: list
-            In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals),
-            one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in
-            Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the
-            distribution of outputs for the user.
+            models (list): In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals), one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the distribution of outputs for the user.
 
-        figsize: tuple
-            This specifies the dimensions of the logo.
+            figsize (tuple): This specifies the dimensions of the logo.
 
-        low_color: str
-            The color to use when changes at this site would largely result in decreased prediction values.
+            low_color (str): The color to use when changes at this site would largely result in decreased prediction values.
 
-        medium_color: str
-            The color to use when changes at this site would result in either decreased or inreased prediction values.
+            medium_color (str): The color to use when changes at this site would result in either decreased or inreased prediction values.
 
-        high_color: str
-            The color to use when changes at this site would result in increased prediction values.
+            high_color (str): The color to use when changes at this site would result in increased prediction values.
 
-        font_name: str
-            The font to use for LogoMaker.
+            font_name (str): The font to use for LogoMaker.
 
-        class_sel: str
-            In the case of a model being trained in a multi-class fashion, one must select which class to make the
-            logo for.
+            class_sel (str): In the case of a model being trained in a multi-class fashion, one must select which class to make the logo for.
 
-        cmap: matplotlib cmap
-            One can alsp provide custom cmap for logomaker that will be used to denote changes at sites that result
-            in increased of decreased prediction values.
+            cmap (matplotlib cmap): One can alsp provide custom cmap for logomaker that will be used to denote changes at sites that result in increased of decreased prediction values.
 
-        min_size: float (0.0 - 1.0)
-            Some residues may have such little change with any perturbation that the character would be difficult to
-            read. To set a minimum size for a residue, one can set this parameter to a value between 0 and 1.
+            min_size (float (0.0 - 1.0)):
+            Some residues may have such little change with any perturbation that the character would be difficult to read. To set a minimum size for a residue, one can set this parameter to a value between 0 and 1.
 
-        edgecolor: str
-            The color of the edge of the characters of the logo.
+            edgecolor (str): The color of the edge of the characters of the logo.
 
-        edgewidth: float
-            The thickness of the edge of the characters.
+            edgewidth (float): The thickness of the edge of the characters.
 
-        background_color: str
-            The background color of the logo.
+            background_color (str): The background color of the logo.
 
-        norm_to_seq: bool
-            When determining the color intensity of the logo, one can choose to normalize the value to just characters
-            in that sequence (True) or one can choose to normalize to all characters in the sequences provdied (False).
+            norm_to_seq (bool): When determining the color intensity of the logo, one can choose to normalize the value to just characters in that sequence (True) or one can choose to normalize to all characters in the sequences provdied (False).
 
-        Load_Prev_Data: bool
-            Since the first part of the method runs a time-intensive step to get all the predictions for all perturbations
-            at all residue sites, we've incorporated a paramter which can be set to True following running the method once
-            in order to adjust the visual aspects of the plot. Therefore, one should run this method first setting this parameter
-            to False (it's default setting) but then switch to True and run again with different visualization parameters
-            (i.e. figsize, etc).
+            Load_Prev_Data (bool): Since the first part of the method runs a time-intensive step to get all the predictions for all perturbations at all residue sites, we've incorporated a paramter which can be set to True following running the method once in order to adjust the visual aspects of the plot. Therefore, one should run this method first setting this parameter to False (it's default setting) but then switch to True and run again with different visualization parameters (i.e. figsize, etc).
 
-        Returns
-        ---------------------------------------
-        (fig,ax) - the matplotlib figure and axis/axes.
+        Returns:
+            Residue Sensitivity Logo
+
+            - (fig,ax) - the matplotlib figure and axis/axes.
+
         """
 
         self.model_type, get = load_model_data(self)
@@ -3599,35 +3126,19 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 class DeepTCR_SS(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,split_by_sample=False,combine_train_valid=False):
         """
-        Train/Valid/Test Splits.
+        # Train/Valid/Test Splits.
 
-        Divide data for train, valid, test set. Training is used to
-        train model parameters, validation is used to set early stopping,
-        and test acts as blackbox independent test set.
+        Divide data for train, valid, test set. Training is used to train model parameters, validation is used to set early stopping, and test acts as blackbox independent test set.
 
-        Inputs
-        ---------------------------------------
-        test_size: float
-            Fraction of sample to be used for valid and test set.
+        Args:
 
-        LOO: int
-            Number of sequences to leave-out in Leave-One-Out Cross-Validation. For example,
-            when set to 20, 20 sequences will be left out for the validation set and 20 samples will be left
-            out for the test set.
+            test_size (float): Fraction of sample to be used for valid and test set.
 
-        split_by_sample: int
-            In the case one wants to train the single sequence classifer but not to mix the train/test
-            sets with sequences from different samples, one can set this parameter to True to do the train/test
-            splits by sample.
+            LOO (int): Number of sequences to leave-out in Leave-One-Out Cross-Validation. For example, when set to 20, 20 sequences will be left out for the validation set and 20 samples will be left out for the test set.
 
-        combine_train_valid: bool
-            To combine the training and validation partitions into one which will be used for training
-            and updating the model parameters, set this to True. This will also set the validation partition
-            to the test partition. In other words, new train set becomes (original train + original valid) and then
-            new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
-            to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
-            to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
-            when to stop training will be based on the test data (which is considered a form of over-fitting).
+            split_by_sample (int): In the case one wants to train the single sequence classifer but not to mix the train/test sets with sequences from different samples, one can set this parameter to True to do the train/test splits by sample.
+
+            combine_train_valid (bool): To combine the training and validation partitions into one which will be used for training and updating the model parameters, set this to True. This will also set the validation partition to the test partition. In other words, new train set becomes (original train + original valid) and then new valid = original test partition, new test = original test partition. Therefore, if setting this parameter to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set. If one does not chanage the stop training criterion, the decision of when to stop training will be based on the test data (which is considered a form of over-fitting).
 
         """
         Vars = [self.X_Seq_alpha,self.X_Seq_beta,self.alpha_sequences,self.beta_sequences,self.sample_id,self.class_id,self.seq_index,
@@ -3891,61 +3402,42 @@ class DeepTCR_SS(DeepTCR_S_base):
                accuracy_min = None, train_loss_min = None, hinge_loss_t = 0.0, convergence = 'validation', learning_rate = 0.001, suppress_output = False,
                 batch_seed = None):
         """
-        Train Single-Sequence Classifier
+        # Train Single-Sequence Classifier
 
-        This method trains the network and saves features values at the
-        end of training for motif analysis.
+        This method trains the network and saves features values at the end of training for motif analysis.
 
-        Inputs
-        ---------------------------------------
-        Model Parameters
+        The method also saves the per sequence predictions at the end of training in the variable self.predicted
 
-        kernel: int
-            Size of convolutional kernel for first layer of convolutions.
+        The multiesample parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in "Multi-Sample Dropout for Accelerated Training and Better Generalization" https://arxiv.org/abs/1905.09788. This method has been shown to improve generalization of deep neural networks as well as improve convergence.
 
-        trainable_embedding; bool
-            Toggle to control whether a trainable embedding layer is used or native
-            one-hot representation for convolutional layers.
+        Args:
 
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
+            kernel (int): Size of convolutional kernel for first layer of convolutions.
 
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
+            trainable_embedding (bool): Toggle to control whether a trainable embedding layer is used or native one-hot representation for convolutional layers.
 
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
+            embedding_dim_aa (int): Learned latent dimensionality of amino-acids.
 
-        num_fc_layers: int
-            Number of fully connected layers following convolutional layer.
+            embedding_dim_genes (int): Learned latent dimensionality of VDJ genes
 
-        units_fc: int
-            Number of nodes per fully-connected layers following convolutional layer.
+            embedding_dim_hla (int): Learned latent dimensionality of HLA
 
-        weight_by_class: bool
-            Option to weight loss by the inverse of the class frequency. Useful for
-            unbalanced classes.
+            num_fc_layers (int): Number of fully connected layers following convolutional layer.
 
-        class_weights: dict
-            In order to specify custom weights for each class during training, one
-            can provide a dictionary with these weights.
-                i.e. {'A':1.0,'B':2.0'}
+            units_fc (int): Number of nodes per fully-connected layers following convolutional layer.
 
-        use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
+            weight_by_class (bool): Option to weight loss by the inverse of the class frequency. Useful for unbalanced classes.
 
-        use_only_gene: bool
-            To only use gene-usage features, set to True. This will turn off features from
-            the sequences.
+            class_weights (dict): In order to specify custom weights for each class during training, one can provide a dictionary with these weights. i.e. {'A':1.0,'B':2.0'}
 
-        use_only_hla: bool
-            To only use hla feaures, set to True.
+            use_only_seq (bool): To only use sequence feaures, set to True. This will turn off features learned from gene usage.
 
-        size_of_net: list or str
-            The convolutional layers of this network have 3 layers for which the use can
-            modify the number of neurons per layer. The user can either specify the size of the network
-            with the following options:
+            use_only_gene (bool): To only use gene-usage features, set to True. This will turn off features from the sequences.
+
+            use_only_hla (bool): To only use hla feaures, set to True.
+
+            size_of_net (list or str): The convolutional layers of this network have 3 layers for which the use can modify the number of neurons per layer. The user can either specify the size of the network with the following options:
+
                 - small == [12,32,64] neurons for the 3 respective layers
                 - medium == [32,64,128] neurons for the 3 respective layers
                 - large == [64,128,256] neurons for the 3 respective layers
@@ -3954,74 +3446,37 @@ class DeepTCR_SS(DeepTCR_S_base):
                     One can also adjust the number of layers for the convolutional stack by changing the length of
                     this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
-        graph_seed: int
-            For deterministic initialization of weights of the graph, set this to value of choice.
+            graph_seed (int): For deterministic initialization of weights of the graph, set this to value of choice.
 
-        drop_out_rate: float
-            drop out rate for fully connected layers
+            drop_out_rate (float): drop out rate for fully connected layers
 
-        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
-        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
-        https://arxiv.org/abs/1905.09788
-        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
+            multisample_dropout (bool): Set this parameter to True to implement this method.
 
-        multisample_dropout: bool
-            Set this parameter to True to implement this method.
+            multisample_dropout_rate (float): The dropout rate for this multi-sample dropout layer.
 
-         multisample_dropout_rate: float
-            The dropout rate for this multi-sample dropout layer.
+            multisample_dropout_num_masks (int): The number of masks to sample from for the Multi-Sample Dropout layer.
 
-         multisample_dropout_num_masks: int
-            The number of masks to sample from for the Multi-Sample Dropout layer.
+            batch_size (int): Size of batch to be used for each training iteration of the net.
 
+            epochs_min (int): Minimum number of epochs for training neural network.
 
-        Training Parameters
+            stop_criterion (float): Minimum percent decrease in determined interval (below) to continue training. Used as early stopping criterion.
 
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
+            stop_criterion_window (int): The window of data to apply the stopping criterion.
 
-        epochs_min: int
-            Minimum number of epochs for training neural network.
+            accuracy_min (loat): Optional parameter to allow alternative training strategy until minimum training accuracy is achieved, at which point, training ceases.
 
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
+            train_loss_min (float): Optional parameter to allow alternative training strategy until minimum training loss is achieved, at which point, training ceases.
 
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
+            hinge_loss_t (float): The per sequence loss minimum at which the loss of that sequence is not used to penalize the model anymore. In other words, once a per sequence loss has hit this value, it gets set to 0.0.
 
-        accuracy_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training accuracy is achieved, at which point, training ceases.
+            convergence (str): This parameter determines which loss to assess the convergence criteria on. Options are 'validation' or 'training'. This is useful in the case one wants to change the convergence criteria on the training data when the training and validation partitions have been combined and used to training the model.
 
-        train_loss_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training loss is achieved, at which point, training ceases.
+            learning_rate (float): The learning rate for training the neural network. Making this value larger will increase the rate of convergence but can introduce instability into training. For most, altering this value will not be necessary.
 
-        hinge_loss_t: float
-            The per sequence loss minimum at which the loss of that sequence is not used
-            to penalize the model anymore. In other words, once a per sequence loss has hit
-            this value, it gets set to 0.0.
+            suppress_output (bool): To suppress command line output with training statisitcs, set to True.
 
-        convergence: str
-            This parameter determines which loss to assess the convergence criteria on.
-            Options are 'validation' or 'training'. This is useful in the case one wants
-            to change the convergence criteria on the training data when the training and validation
-            partitions have been combined and used to training the model.
-
-        learning_rate: float
-            The learning rate for training the neural network. Making this value larger will
-            increase the rate of convergence but can introduce instability into training. For most,
-            altering this value will not be necessary.
-
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
-
-        batch_seed: int
-            For deterministic batching during training, set this value to an integer of choice.
-
-        Returns
-        ---------------------------------------
+            batch_seed (int): For deterministic batching during training, set this value to an integer of choice.
 
         """
         self._reset_models()
@@ -4043,96 +3498,54 @@ class DeepTCR_SS(DeepTCR_S_base):
                              batch_seed=None):
 
         '''
-        Monte Carlo Cross-Validation for Single-Sequence Classifier
+        # Monte Carlo Cross-Validation for Single-Sequence Classifier
 
-        If the number of sequences is small but training the single-sequence classifier, one
-        can use Monte Carlo Cross Validation to train a number of iterations before assessing
-        predictive performance.After this method is run, the AUC_Curve method can be run to
-        assess the overall performance.
+        If the number of sequences is small but training the single-sequence classifier, one can use Monte Carlo Cross Validation to train a number of iterations before assessing predictive performance.After this method is run, the AUC_Curve method can be run to assess the overall performance.
 
-        Inputs
-        ---------------------------------------
-        Monte-Carlo Parameters
+        The method also saves the per sequence predictions at the end of training in the variable self.predicted. These per sequenes predictions are only assessed when the sequences are in the test set. Ideally, after running the classifier with multiple folds, each sequencce will have multiple predicttions that were collected when they were in the test set.
 
-        folds: int
-            Number of iterations for Cross-Validation
+        The multisample parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in "Multi-Sample Dropout for Accelerated Training and Better Generalization" https://arxiv.org/abs/1905.09788. This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
 
-        test_size: float
-            Fraction of sample to be used for valid and test set.
+        Args:
 
-        LOO: int
-            Number of sequences to leave-out in Leave-One-Out Cross-Validation. For example,
-            when set to 20, 20 sequences will be left out for the validation set and 20 samples will be left
-            out for the test set.
+            folds (int): Number of iterations for Cross-Validation
 
-        split_by_sample: int
-            In the case one wants to train the single sequence classifer but not to mix the train/test
-            sets with sequences from different samples, one can set this parameter to True to do the train/test
-            splits by sample.
+            test_size (float): Fraction of sample to be used for valid and test set.
 
-        combine_train_valid: bool
-            To combine the training and validation partitions into one which will be used for training
-            and updating the model parameters, set this to True. This will also set the validation partition
-            to the test partition. In other words, new train set becomes (original train + original valid) and then
-            new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
-            to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
-            to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
-            when to stop training will be based on the test data (which is considered a form of over-fitting).
+            LOO (int): Number of sequences to leave-out in Leave-One-Out Cross-Validation. For example, when set to 20, 20 sequences will be left out for the validation set and 20 samples will be left out for the test set.
 
-        seeds: nd.array
-            In order to set a deterministic train/test split over the Monte-Carlo Simulations, one can provide an array
-            of seeds for each MC simulation. This will result in the same train/test split over the N MC simulations.
-            This parameter, if provided, should have the same size of the value of folds.
+            split_by_sample (int): In the case one wants to train the single sequence classifer but not to mix the train/test sets with sequences from different samples, one can set this parameter to True to do the train/test splits by sample.
 
+            combine_train_valid (bool): To combine the training and validation partitions into one which will be used for training and updating the model parameters, set this to True. This will also set the validation partition to the test partition. In other words, new train set becomes (original train + original valid) and then new valid = original test partition, new test = original test partition. Therefore, if setting this parameter to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set. If one does not change the stop training criterion, the decision of when to stop training will be based on the test data (which is considered a form of over-fitting).
 
-        Model Parameters
+            seeds (nd.array): In order to set a deterministic train/test split over the Monte-Carlo Simulations, one can provide an array of seeds for each MC simulation. This will result in the same train/test split over the N MC simulations. This parameter, if provided, should have the same size of the value of folds.
 
-        kernel: int
-            Size of convolutional kernel for first layer of convolutions.
+            kernel (int): Size of convolutional kernel for first layer of convolutions.
 
-        trainable_embedding; bool
-            Toggle to control whether a trainable embedding layer is used or native
-            one-hot representation for convolutional layers.
+            trainable_embedding (bool): Toggle to control whether a trainable embedding layer is used or native one-hot representation for convolutional layers.
 
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
+            embedding_dim_aa (int): Learned latent dimensionality of amino-acids.
 
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
+            embedding_dim_genes (int): Learned latent dimensionality of VDJ genes
 
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
+            embedding_dim_hla (int): Learned latent dimensionality of HLA
 
-        num_fc_layers: int
-            Number of fully connected layers following convolutional layer.
+            num_fc_layers (int): Number of fully connected layers following convolutional layer.
 
-        units_fc: int
-            Number of nodes per fully-connected layers following convolutional layer.
+            units_fc (int): Number of nodes per fully-connected layers following convolutional layer.
 
-        weight_by_class: bool
-            Option to weight loss by the inverse of the class frequency. Useful for
-            unbalanced classes.
+            weight_by_class (bool): Option to weight loss by the inverse of the class frequency. Useful for unbalanced classes.
 
-        class_weights: dict
-            In order to specify custom weights for each class during training, one
-            can provide a dictionary with these weights.
-                i.e. {'A':1.0,'B':2.0'}
+            class_weights (dict): In order to specify custom weights for each class during training, one can provide a dictionary with these weights. i.e. {'A':1.0,'B':2.0'}
 
-        use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
+            use_only_seq (bool): To only use sequence feaures, set to True. This will turn off features learned from gene usage.
 
-        use_only_gene: bool
-            To only use gene-usage features, set to True. This will turn off features from
-            the sequences.
+            use_only_gene (bool): To only use gene-usage features, set to True. This will turn off features from the sequences.
 
-        use_only_hla: bool
-            To only use hla feaures, set to True.
+            use_only_hla (bool): To only use hla feaures, set to True.
 
-        size_of_net: list or str
-            The convolutional layers of this network have 3 layers for which the use can
-            modify the number of neurons per layer. The user can either specify the size of the network
-            with the following options:
+            size_of_net (list or str): The convolutional layers of this network have 3 layers for which the use can modify the number of neurons per layer. The user can either specify the size of the network with the following options:
+
                 - small == [12,32,64] neurons for the 3 respective layers
                 - medium == [32,64,128] neurons for the 3 respective layers
                 - large == [64,128,256] neurons for the 3 respective layers
@@ -4141,75 +3554,37 @@ class DeepTCR_SS(DeepTCR_S_base):
                     One can also adjust the number of layers for the convolutional stack by changing the length of
                     this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
-        graph_seed: int
-            For deterministic initialization of weights of the graph, set this to value of choice.
+            graph_seed (int): For deterministic initialization of weights of the graph, set this to value of choice.
 
-        drop_out_rate: float
-            drop out rate for fully connected layers
+            drop_out_rate (float): drop out rate for fully connected layers
 
-        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
-        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
-        https://arxiv.org/abs/1905.09788
-        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
+            multisample_dropout (bool): Set this parameter to True to implement this method.
 
-        multisample_dropout: bool
-            Set this parameter to True to implement this method.
+            multisample_dropout_rate (float): The dropout rate for this multi-sample dropout layer.
 
-         multisample_dropout_rate: float
-            The dropout rate for this multi-sample dropout layer.
+            multisample_dropout_num_masks (int): The number of masks to sample from for the Multi-Sample Dropout layer.
 
-         multisample_dropout_num_masks: int
-            The number of masks to sample from for the Multi-Sample Dropout layer.
+            batch_size (int): Size of batch to be used for each training iteration of the net.
 
+            epochs_min (int): Minimum number of epochs for training neural network.
 
-        Training Parameters
+            stop_criterion (float): Minimum percent decrease in determined interval (below) to continue training. Used as early stopping criterion.
 
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
+            stop_criterion_window (int): The window of data to apply the stopping criterion.
 
-        epochs_min: int
-            Minimum number of epochs for training neural network.
+            accuracy_min (float): Optional parameter to allow alternative training strategy until minimum training accuracy is achieved, at which point, training ceases.
 
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
+            train_loss_min (float): Optional parameter to allow alternative training strategy until minimum training loss is achieved, at which point, training ceases.
 
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
+            hinge_loss_t (float): The per sequence loss minimum at which the loss of that sequence is not used to penalize the model anymore. In other words, once a per sequence loss has hit this value, it gets set to 0.0.
 
-        accuracy_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training accuracy is achieved, at which point, training ceases.
+            convergence (str): This parameter determines which loss to assess the convergence criteria on. Options are 'validation' or 'training'. This is useful in the case one wants to change the convergence criteria on the training data when the training and validation partitions have been combined and used to training the model.
 
-        train_loss_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training loss is achieved, at which point, training ceases.
+            learning_rate (float): The learning rate for training the neural network. Making this value larger will increase the rate of convergence but can introduce instability into training. For most, altering this value will not be necessary.
 
-        hinge_loss_t: float
-            The per sequence loss minimum at which the loss of that sequence is not used
-            to penalize the model anymore. In other words, once a per sequence loss has hit
-            this value, it gets set to 0.0.
+            suppress_output (bool): To suppress command line output with training statisitcs, set to True.
 
-        convergence: str
-            This parameter determines which loss to assess the convergence criteria on.
-            Options are 'validation' or 'training'. This is useful in the case one wants
-            to change the convergence criteria on the training data when the training and validation
-            partitions have been combined and used to training the model.
-
-        learning_rate: float
-            The learning rate for training the neural network. Making this value larger will
-            increase the rate of convergence but can introduce instability into training. For most,
-            altering this value will not be necessary.
-
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
-
-        batch_seed: int
-            For deterministic batching during training, set this value to an integer of choice.
-
-        Returns
-        ---------------------------------------
-
+            batch_seed (int): For deterministic batching during training, set this value to an integer of choice.
 
         '''
 
@@ -4267,87 +3642,53 @@ class DeepTCR_SS(DeepTCR_S_base):
                         batch_seed=None):
 
         '''
-        K_Fold Cross-Validation for Single-Sequence Classifier
+        # K_Fold Cross-Validation for Single-Sequence Classifier
 
         If the number of sequences is small but training the single-sequence classifier, one
         can use K_Fold Cross Validation to train on all but one before assessing
         predictive performance.After this method is run, the AUC_Curve method can be run to
         assess the overall performance.
 
-        Inputs
-        ---------------------------------------
-        K-Fold Parameters
+        The method also saves the per sequence predictions at the end of training in the variable self.predicted. These per sequenes predictions are only assessed when the sequences are in the test set.
 
-        folds: int
-            Number of Folds
+        The multisample parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in "Multi-Sample Dropout for Accelerated Training and Better Generalization" https://arxiv.org/abs/1905.09788. This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
 
-        split_by_sample: int
-            In the case one wants to train the single sequence classifer but not to mix the train/test
-            sets with sequences from different samples, one can set this parameter to True to do the train/test
-            splits by sample.
+        Args:
 
-        combine_train_valid: bool
-            To combine the training and validation partitions into one which will be used for training
-            and updating the model parameters, set this to True. This will also set the validation partition
-            to the test partition. In other words, new train set becomes (original train + original valid) and then
-            new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
-            to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
-            to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
-            when to stop training will be based on the test data (which is considered a form of over-fitting).
+            folds (int): Number of Folds
 
-        seeds: nd.array
-            In order to set a deterministic train/test split over the K-Fold Simulations, one can provide an array
-            of seeds for each K-fold simulation. This will result in the same train/test split over the N Fold simulations.
-            This parameter, if provided, should have the same size of the value of folds.
+            split_by_sample (int): In the case one wants to train the single sequence classifer but not to mix the train/test sets with sequences from different samples, one can set this parameter to True to do the train/test splits by sample.
 
-        Model Parameters
+            combine_train_valid (bool): To combine the training and validation partitions into one which will be used for training and updating the model parameters, set this to True. This will also set the validation partition to the test partition. In other words, new train set becomes (original train + original valid) and then new valid = original test partition, new test = original test partition. Therefore, if setting this parameter to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set. If one does not chanage the stop training criterion, the decision of when to stop training will be based on the test data (which is considered a form of over-fitting).
 
-        kernel: int
-            Size of convolutional kernel for first layer of convolutions.
+            seeds (nd.array): In order to set a deterministic train/test split over the K-Fold Simulations, one can provide an array of seeds for each K-fold simulation. This will result in the same train/test split over the N Fold simulations. This parameter, if provided, should have the same size of the value of folds.
 
-        trainable_embedding; bool
-            Toggle to control whether a trainable embedding layer is used or native
-            one-hot representation for convolutional layers.
+            kernel (int): Size of convolutional kernel for first layer of convolutions.
 
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
+            trainable_embedding (bool): Toggle to control whether a trainable embedding layer is used or native one-hot representation for convolutional layers.
 
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
+            embedding_dim_aa (int): Learned latent dimensionality of amino-acids.
 
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
+            embedding_dim_genes (int): Learned latent dimensionality of VDJ genes
 
-        num_fc_layers: int
-            Number of fully connected layers following convolutional layer.
+            embedding_dim_hla (int): Learned latent dimensionality of HLA
 
-        units_fc: int
-            Number of nodes per fully-connected layers following convolutional layer.
+            num_fc_layers (int): Number of fully connected layers following convolutional layer.
 
-        weight_by_class: bool
-            Option to weight loss by the inverse of the class frequency. Useful for
-            unbalanced classes.
+            units_fc (int): Number of nodes per fully-connected layers following convolutional layer.
 
-        class_weights: dict
-            In order to specify custom weights for each class during training, one
-            can provide a dictionary with these weights.
-                i.e. {'A':1.0,'B':2.0'}
+            weight_by_class (bool): Option to weight loss by the inverse of the class frequency. Useful for unbalanced classes.
 
-        use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
+            class_weights (dict): In order to specify custom weights for each class during training, one can provide a dictionary with these weights. i.e. {'A':1.0,'B':2.0'}
 
-        use_only_gene: bool
-            To only use gene-usage features, set to True. This will turn off features from
-            the sequences.
+            use_only_seq (bool): To only use sequence feaures, set to True. This will turn off features learned from gene usage.
 
-        use_only_hla: bool
-            To only use hla feaures, set to True.
+            use_only_gene (bool): To only use gene-usage features, set to True. This will turn off features from the sequences.
 
-        size_of_net: list or str
-            The convolutional layers of this network have 3 layers for which the use can
-            modify the number of neurons per layer. The user can either specify the size of the network
-            with the following options:
+            use_only_hla (bool): To only use hla feaures, set to True.
+
+            size_of_net (list or str): The convolutional layers of this network have 3 layers for which the use can modify the number of neurons per layer. The user can either specify the size of the network with the following options:
+
                 - small == [12,32,64] neurons for the 3 respective layers
                 - medium == [32,64,128] neurons for the 3 respective layers
                 - large == [64,128,256] neurons for the 3 respective layers
@@ -4356,74 +3697,38 @@ class DeepTCR_SS(DeepTCR_S_base):
                     One can also adjust the number of layers for the convolutional stack by changing the length of
                     this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
-        graph_seed: int
-            For deterministic initialization of weights of the graph, set this to value of choice.
+            graph_seed (int): For deterministic initialization of weights of the graph, set this to value of choice.
 
-        drop_out_rate: float
-            drop out rate for fully connected layers
+            drop_out_rate (float): drop out rate for fully connected layers
 
-        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
-        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
-        https://arxiv.org/abs/1905.09788
-        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
+            multisample_dropout (bool):
+                Set this parameter to True to implement this method.
 
-        multisample_dropout: bool
-            Set this parameter to True to implement this method.
+            multisample_dropout_rate (float): The dropout rate for this multi-sample dropout layer.
 
-         multisample_dropout_rate: float
-            The dropout rate for this multi-sample dropout layer.
+            multisample_dropout_num_masks (int): The number of masks to sample from for the Multi-Sample Dropout layer.
 
-         multisample_dropout_num_masks: int
-            The number of masks to sample from for the Multi-Sample Dropout layer.
+            batch_size (int): Size of batch to be used for each training iteration of the net.
 
+            epochs_min (int): Minimum number of epochs for training neural network.
 
-        Training Parameters
+            stop_criterion (float): Minimum percent decrease in determined interval (below) to continue training. Used as early stopping criterion.
 
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
+            stop_criterion_window (int): The window of data to apply the stopping criterion.
 
-        epochs_min: int
-            Minimum number of epochs for training neural network.
+            accuracy_min (float): Optional parameter to allow alternative training strategy until minimum training accuracy is achieved, at which point, training ceases.
 
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
+            train_loss_min (float): Optional parameter to allow alternative training strategy until minimum training loss is achieved, at which point, training ceases.
 
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
+            hinge_loss_t (float): The per sequence loss minimum at which the loss of that sequence is not used to penalize the model anymore. In other words, once a per sequence loss has hit this value, it gets set to 0.0.
 
-        accuracy_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training accuracy is achieved, at which point, training ceases.
+            convergence (str): This parameter determines which loss to assess the convergence criteria on. Options are 'validation' or 'training'. This is useful in the case one wants to change the convergence criteria on the training data when the training and validation partitions have been combined and used to training the model.
 
-        train_loss_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training loss is achieved, at which point, training ceases.
+            learning_rate (float): The learning rate for training the neural network. Making this value larger will increase the rate of convergence but can introduce instability into training. For most, altering this value will not be necessary.
 
-        hinge_loss_t: float
-            The per sequence loss minimum at which the loss of that sequence is not used
-            to penalize the model anymore. In other words, once a per sequence loss has hit
-            this value, it gets set to 0.0.
+            suppress_output (bool): To suppress command line output with training statisitcs, set to True.
 
-        convergence: str
-            This parameter determines which loss to assess the convergence criteria on.
-            Options are 'validation' or 'training'. This is useful in the case one wants
-            to change the convergence criteria on the training data when the training and validation
-            partitions have been combined and used to training the model.
-
-        learning_rate: float
-            The learning rate for training the neural network. Making this value larger will
-            increase the rate of convergence but can introduce instability into training. For most,
-            altering this value will not be necessary.
-
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
-
-        batch_seed: int
-            For deterministic batching during training, set this value to an integer of choice.
-
-        Returns
-        ---------------------------------------
+            batch_seed (int): For deterministic batching during training, set this value to an integer of choice.
 
         '''
 
