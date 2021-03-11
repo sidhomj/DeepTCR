@@ -11,6 +11,12 @@ While DeepTCR will run with Tensorflow-CPU versions, for optimal training times,
 
 For questions or help, email: jsidhom1@jhmi.edu
 
+## Publication
+
+For full description of algorithm and methods behind DeepTCR, refer to the following manuscript:
+
+[Sidhom, J. W., Larman, H. B., Pardoll, D. M., & Baras, A. S. (2018). DeepTCR: a deep learning framework for revealing structural concepts within TCR Repertoire. bioRxiv, 464107.](https://www.biorxiv.org/content/10.1101/464107v4)
+
 ### Installation
 In order to install DeepTCR:
 
@@ -33,12 +39,6 @@ Or use:
 pip3 install git+https://github.com/sidhomj/DeepTCR.git
 
 ```
-
-## Publication
-
-For full description of algorithm and methods behind DeepTCR, refer to the following manuscript:
-
-[Sidhom, J. W., Larman, H. B., Pardoll, D. M., & Baras, A. S. (2018). DeepTCR: a deep learning framework for revealing structural concepts within TCR Repertoire. bioRxiv, 464107.](https://www.biorxiv.org/content/10.1101/464107v4)
 
 ## Dependencies
 
