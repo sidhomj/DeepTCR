@@ -1087,28 +1087,20 @@ class feature_analytics_class(object):
 
         This method looks for enriched features in the predetermined group and returns fasta files in directory to be used with "https://weblogo.berkeley.edu/logo.cgi" to produce seqlogos.
 
-        Inputs
-        ---------------------------------------
-        group: string
-            Class for analyzing enriched motifs.
+        Args:
 
-        p_val_threshold: float
-            Significance threshold for enriched features/motifs for
-            Mann-Whitney UTest.
+            group (string): Class for analyzing enriched motifs.
 
-        by_samples: bool
-            To run a motif identification that looks for enriched motifs at the sample
-            instead of the seuence level, set this parameter to True. Otherwise, the enrichment
-            analysis will be done at the sequence level.
+            p_val_threshold (float): Significance threshold for enriched features/motifs for Mann-Whitney UTest.
 
-        top_seq: int
-            The number of sequences from which to derive the learned motifs. The larger the number,
-            the more noisy the motif logo may be.
+            by_samples (bool): To run a motif identification that looks for enriched motifs at the sample instead of the seuence level, set this parameter to True. Otherwise, the enrichment analysis will be done at the sequence level.
 
-        Returns
-        ---------------------------------------
+            top_seq (int): The number of sequences from which to derive the learned motifs. The larger the number, the more noisy the motif logo may be.
 
-        self.(alpha/beta)_group_features: Pandas Dataframe
+        Returns:
+            Output
+
+            - self.(alpha/beta)_group_features (Pandas Dataframe):
             Sequences used to determine motifs in fasta files
             are stored in this dataframe where column names represent
             the feature number.
@@ -3404,7 +3396,7 @@ class DeepTCR_SS(DeepTCR_S_base):
         """
         # Train Single-Sequence Classifier
 
-        This method trains the network and saves features values at the end of training for motif analysis.
+        This method trains the network and saves features values at the end of training for downstream analysis.
 
         The method also saves the per sequence predictions at the end of training in the variable self.predicted
 
@@ -3844,36 +3836,19 @@ class DeepTCR_SS(DeepTCR_S_base):
 class DeepTCR_WF(DeepTCR_S_base):
     def Get_Train_Valid_Test(self,test_size=0.25,LOO=None,combine_train_valid=False,random_perm=False):
         """
-        Train/Valid/Test Splits.
+        # Train/Valid/Test Splits.
 
-        Divide data for train, valid, test set. In general, training is used to train model parameters, validation is
-        used to set early stopping, and test acts as blackbox independent test set.
+        Divide data for train, valid, test set. In general, training is used to train model parameters, validation is used to set early stopping, and test acts as blackbox independent test set.
 
-        Inputs
-        ---------------------------------------
-        test_size: float
-            Fraction of sample to be used for valid and test set. For example, if set to 0.25, 25% of the data will
-            be set aside for validation and testing sets. In other words, 75% of the data is used for training.
+        Args:
 
-        LOO: int
-            Number of samples to leave-out in Leave-One-Out Cross-Validation. For example,
-            when set to 2, 2 samples will be left out for the validation set and 2 samples will be left
-            out for the test set.
+            test_size (float): Fraction of sample to be used for valid and test set. For example, if set to 0.25, 25% of the data will be set aside for validation and testing sets. In other words, 75% of the data is used for training.
 
-        combine_train_valid: bool
-            To combine the training and validation partitions into one which will be used for training
-            and updating the model parameters, set this to True. This will also set the validation partition
-            to the test partition. In other words, new train set becomes (original train + original valid) and then
-            new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
-            to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
-            to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
-            when to stop training will be based on the test data (which is considered a form of over-fitting).
+            LOO (int): Number of samples to leave-out in Leave-One-Out Cross-Validation. For example, when set to 2, 2 samples will be left out for the validation set and 2 samples will be left out for the test set.
 
-        random_perm: bool
-            To do random permutation testing, one can set this parameter to True and this will shuffle the labels.
+            combine_train_valid (bool): To combine the training and validation partitions into one which will be used for training and updating the model parameters, set this to True. This will also set the validation partition to the test partition. In other words, new train set becomes (original train + original valid) and then new valid = original test partition, new test = original test partition. Therefore, if setting this parameter to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set. If one does not chanage the stop training criterion, the decision of when to stop training will be based on the test data (which is considered a form of over-fitting).
 
-        Returns
-        ---------------------------------------
+            random_perm (bool): To do random permutation testing, one can set this parameter to True and this will shuffle the labels.
 
         """
         Y = []
@@ -4202,66 +4177,46 @@ class DeepTCR_WF(DeepTCR_S_base):
               subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
         """
-        Train Whole-Sample Classifier
+        # Train Whole-Sample Classifier
 
-        This method trains the network and saves features values at the
-        end of training for motif analysis.
+        This method trains the network and saves features values at the end of training for downstream analysis.
 
-        Inputs
-        ---------------------------------------
+        The method also saves the per sequence predictions at the end of training in the variable self.predicted
 
-        Model Parameters
+        The two MIL options alter how the predictive signatures in the neural network are aggregated to make a prediction about the repertoire. If qualitative_agg or quantitative_agg are set to True, this will include these different types of aggregation in the predcitions. One can set either to True or both to True and this will allow a user to incorporate features from multiple modes of aggregation. See below for further details on these methods of aggregation across the sequences of a repertoire.
 
-        kernel: int
-            Size of convolutional kernel for first layer of convolutions.
+        The multiesample parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in "Multi-Sample Dropout for Accelerated Training and Better Generalization" https://arxiv.org/abs/1905.09788. This method has been shown to improve generalization of deep neural networks as well as improve convergence.
 
-        num_concepts: int
-            Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the
-            repertoires being analyed, one can adjust this hyperparameter.
+        Args:
 
-        trainable_embedding; bool
-            Toggle to control whether a trainable embedding layer is used or native
-            one-hot representation for convolutional layers.
+            kernel (int): Size of convolutional kernel for first layer of convolutions.
 
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
+            num_concepts (int): Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the repertoires being analyed, one can adjust this hyperparameter.
 
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
+            trainable_embedding (bool): Toggle to control whether a trainable embedding layer is used or native one-hot representation for convolutional layers.
 
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
+            embedding_dim_aa (int): Learned latent dimensionality of amino-acids.
 
-        num_fc_layers: int
-            Number of fully connected layers following convolutional layer.
+            embedding_dim_genes (int): Learned latent dimensionality of VDJ genes
 
-        units_fc: int
-            Number of nodes per fully-connected layers following convolutional layer.
+            embedding_dim_hla (int): Learned latent dimensionality of HLA
 
-        weight_by_class: bool
-            Option to weight loss by the inverse of the class frequency. Useful for
-            unbalanced classes.
+            num_fc_layers (int): Number of fully connected layers following convolutional layer.
 
-        class_weights: dict
-            In order to specify custom weights for each class during training, one
-            can provide a dictionary with these weights.
-                i.e. {'A':1.0,'B':2.0'}
+            units_fc (int): Number of nodes per fully-connected layers following convolutional layer.
 
-        use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
+            weight_by_class (bool): Option to weight loss by the inverse of the class frequency. Useful for unbalanced classes.
 
-        use_only_gene: bool
-            To only use gene-usage features, set to True. This will turn off features from
-            the sequences.
+            class_weights (dict): In order to specify custom weights for each class during training, one can provide a dictionary with these weights. i.e. {'A':1.0,'B':2.0'}
 
-        use_only_hla: bool
-            To only use hla feaures, set to True.
+            use_only_seq (bool): To only use sequence feaures, set to True. This will turn off features learned from gene usage.
 
-        size_of_net: list or str
-            The convolutional layers of this network have 3 layers for which the use can
-            modify the number of neurons per layer. The user can either specify the size of the network
-            with the following options:
+            use_only_gene (bool): To only use gene-usage features, set to True. This will turn off features from the sequences.
+
+            use_only_hla (bool): To only use hla feaures, set to True.
+
+            size_of_net (list or str): The convolutional layers of this network have 3 layers for which the use can modify the number of neurons per layer. The user can either specify the size of the network with the following options:
+
                 - small == [12,32,64] neurons for the 3 respective layers
                 - medium == [32,64,128] neurons for the 3 respective layers
                 - large == [64,128,256] neurons for the 3 respective layers
@@ -4270,119 +4225,55 @@ class DeepTCR_WF(DeepTCR_S_base):
                     One can also adjust the number of layers for the convolutional stack by changing the length of
                     this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
-        graph_seed: int
-            For deterministic initialization of weights of the graph, set this to value of choice.
+            graph_seed (int): For deterministic initialization of weights of the graph, set this to value of choice.
 
-        The following two options alter how the predictive signatures in the neural network are aggregated
-        to make a prediction about the repertoire. If qualitative_agg or quantitative_agg are set to True,
-        this will include these different types of aggregation in the predcitions. One can set either to True or
-        both to True and this will allow a user to incorporate features from multiple modes of aggregation.
+            qualitative_agg (bool): If set to True, the model will aggregate the feature values per repertoire weighted by frequency of each TCR. This is considered a 'qualitative' aggregation as the prediction of the repertoire is based on the relative distribution of the repertoire. In other words, this type of aggregation is a count-independent measure of aggregation. This is the mode of aggregation that has been more thoroughly tested across multiple scientific examples.
 
-        qualitative_agg: bool
-            If set to True, the model will aggregate the feature values per repertoire weighted by frequency of each
-            TCR. This is considered a 'qualitative' aggregation as the prediction of the repertoire is based on the relative
-            distribution of the repertoire. In other words, this type of aggregation is a count-independent measure of aggregation.
-            This is the mode of aggregation that has been more thoroughly tested across multiple scientific examples.
+            quantitative_agg (bool): If set to True, the model will aggregate the feature values per repertoire weighted by counts of each TCR. This is considered a 'quantitative' aggregation as the prediction of the repertoire is based on teh absolute distribution of the repertoire. In other words, this type of aggregation is a count-dependent measure of aggregation. If one believes the counts are important for the predictive value of the model, one can set this parameter to True.
 
-        quantitative_agg: bool
-            If set to True, the model will aggregate the feature values per repertoire weighted by counts of each TCR.
-            This is considered a 'quantitative' aggregation as the prediction of the repertoire is based on teh absolute
-            distribution of the repertoire. In other words, this type of aggregation is a count-dependent measure of aggregation.
-            If one believes the counts are important for the predictive value of the model, one can set this parameter to True.
+            num_agg_layers (int): Following the aggregation layer in the network, one can choose to add more fully-connected layers before the final classification layer. This parameter will set how many layers to add after aggregation. This likely is helpful when using both types of aggregation (as detailed above) to combine those feature values.
 
-        num_agg_layers: int
-            Following the aggregation layer in the network, one can choose to add more fully-connected layers before
-            the final classification layer. This parameter will set how many layers to add after aggregation. This likely
-            is helpful when using both types of aggregation (as detailed above) to combine those feature values.
+            units_agg (int): For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
 
-        units_agg: int
-            For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
+            drop_out_rate (float): drop out rate for fully connected layers
 
-        drop_out_rate: float
-            drop out rate for fully connected layers
+            multisample_dropout (bool). Set this parameter to True to implement this method.
 
-        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
-        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
-        https://arxiv.org/abs/1905.09788
-        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
+            multisample_dropout_rate (float): The dropout rate for this multi-sample dropout layer.
 
-        multisample_dropout: bool
-            Set this parameter to True to implement this method.
+            multisample_dropout_num_masks (int): The number of masks to sample from for the Multi-Sample Dropout layer.
 
-         multisample_dropout_rate: float
-            The dropout rate for this multi-sample dropout layer.
+            batch_size (int): Size of batch to be used for each training iteration of the net.
 
-         multisample_dropout_num_masks: int
-            The number of masks to sample from for the Multi-Sample Dropout layer.
+            batch_size_update (int): In the case that the size of the samples are very large, one may not want to update the weights of the network as often as batches are put onto the gpu. Therefore, if one wants to update the weights less often than how often the batches of data are put onto the gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5 and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using gpu's for training and there are memory constraints from very large samples.
 
+            epochs_min (int): Minimum number of epochs for training neural network.
 
-        Training Parameters
+            stop_criterion (float): Minimum percent decrease in determined interval (below) to continue training. Used as early stopping criterion.
 
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
+            stop_criterion_window (int): The window of data to apply the stopping criterion.
 
-        batch_size_update: int
-            In the case that the size of the samples are very large, one may not want to update
-            the weights of the network as often as batches are put onto the gpu. Therefore, if
-            one wants to update the weights less often than how often the batches of data are put onto the
-            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
-            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
-            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
-            gpu's for training and there are memory constraints from very large samples.
+            accuracy_min (float): Optional parameter to allow alternative training strategy until minimum training accuracy is achieved, at which point, training ceases.
 
-        epochs_min: int
-            Minimum number of epochs for training neural network.
+            train_loss_min (float): Optional parameter to allow alternative training strategy until minimum training loss is achieved, at which point, training ceases.
 
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
+            hinge_loss_t (float): The per sample loss minimum at which the loss of that sample is not used to penalize the model anymore. In other words, once a per sample loss has hit this value, it gets set to 0.0.
 
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
+            convergence (str): This parameter determines which loss to assess the convergence criteria on. Options are 'validation' or 'training'. This is useful in the case one wants to change the convergence criteria on the training data when the training and validation partitions have been combined and used to training the model.
 
-        accuracy_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training accuracy is achieved, at which point, training ceases.
+            learning_rate (float): The learning rate for training the neural network. Making this value larger will increase the rate of convergence but can introduce instability into training. For most, altering this value will not be necessary.
 
-        train_loss_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training loss is achieved, at which point, training ceases.
+            suppress_output (bool): To suppress command line output with training statisitcs, set to True.
 
-        hinge_loss_t: float
-            The per sample loss minimum at which the loss of that sample is not used
-            to penalize the model anymore. In other words, once a per sample loss has hit
-            this value, it gets set to 0.0.
+            l2_reg (float): When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization through TCR featurization layers of the network.
 
-        convergence: str
-            This parameter determines which loss to assess the convergence criteria on.
-            Options are 'validation' or 'training'. This is useful in the case one wants
-            to change the convergence criteria on the training data when the training and validation
-            partitions have been combined and used to training the model.
+            batch_seed (int): For deterministic batching during training, set this value to an integer of choice.
 
-        learning_rate: float
-            The learning rate for training the neural network. Making this value larger will
-            increase the rate of convergence but can introduce instability into training. For most,
-            altering this value will not be necessary.
+            subsample (int): Number of sequences to sub-sample from repertoire during training to improve speed of convergence as well as being a form of regularization.
 
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
+            subsample_by_freq (bool): Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
 
-        batch_seed: int
-            For deterministic batching during training, set this value to an integer of choice.
-
-        subsample: int
-            Number of sequences to sub-sample from repertoire during training to improve speed of convergence
-            as well as being a form of regularization.
-
-        subsample_by_freq: bool
-            Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
-
-        subsample_valid_test: bool
-            Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed
-            to convergence and generalizability.
-
-        Returns
-        ---------------------------------------
+            subsample_valid_test (bool): Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed to convergence and generalizability.
 
         """
         #Create directory for models
@@ -4411,224 +4302,122 @@ class DeepTCR_WF(DeepTCR_S_base):
                              subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
         """
-        Monte Carlo Cross-Validation for Whole Sample Classifier
+        # Monte Carlo Cross-Validation for Whole Sample Classifier
 
         If the number of samples is small but training the whole sample classifier, one
         can use Monte Carlo Cross Validation to train a number of iterations before assessing
         predictive performance.After this method is run, the AUC_Curve method can be run to
         assess the overall performance.
 
-        Inputs
-        ---------------------------------------
-        Monte-Carlo Parameters
+        The two MIL options alter how the predictive signatures in the neural network are aggregated to make a prediction about the repertoire. If qualitative_agg or quantitative_agg are set to True, this will include these different types of aggregation in the predcitions. One can set either to True or both to True and this will allow a user to incorporate features from multiple modes of aggregation. See below for further details on these methods of aggregation across the sequences of a repertoire.
 
-        folds: int
-            Number of iterations for Cross-Validation
+        The multiesample parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in "Multi-Sample Dropout for Accelerated Training and Better Generalization" https://arxiv.org/abs/1905.09788. This method has been shown to improve generalization of deep neural networks as well as improve convergence.
 
-        test_size: float
-            Fraction of sample to be used for valid and test set.
+        Args:
 
-        LOO: int
-            Number of samples to leave-out in Leave-One-Out Cross-Validation
+            folds (int): Number of iterations for Cross-Validation
 
-        combine_train_valid: bool
-            To combine the training and validation partitions into one which will be used for training
-            and updating the model parameters, set this to True. This will also set the validation partition
-            to the test partition. In other words, new train set becomes (original train + original valid) and then
-            new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
-            to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
-            to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
-            when to stop training will be based on the test data (which is considered a form of over-fitting).
+            test_size (float): Fraction of sample to be used for valid and test set.
 
-        random_perm: bool
-            To do random permutation testing, one can set this parameter to True and this will shuffle the labels.
+            LOO (int): Number of samples to leave-out in Leave-One-Out Cross-Validation
 
-        seeds: nd.array
-            In order to set a deterministic train/test split over the Monte-Carlo Simulations, one can provide an array
-            of seeds for each MC simulation. This will result in the same train/test split over the N MC simulations.
-            This parameter, if provided, should have the same size of the value of folds.
+            combine_train_valid (bool): To combine the training and validation partitions into one which will be used for training and updating the model parameters, set this to True. This will also set the validation partition to the test partition. In other words, new train set becomes (original train + original valid) and then new valid = original test partition, new test = original test partition. Therefore, if setting this parameter to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set. If one does not chanage the stop training criterion, the decision of when to stop training will be based on the test data (which is considered a form of over-fitting).
 
+            random_perm (bool): To do random permutation testing, one can set this parameter to True and this will shuffle the labels.
 
-        Model Parameters
+            seeds (nd.array): In order to set a deterministic train/test split over the Monte-Carlo Simulations, one can provide an array of seeds for each MC simulation. This will result in the same train/test split over the N MC simulations. This parameter, if provided, should have the same size of the value of folds.
 
-        kernel: int
-            Size of convolutional kernel for first layer of convolutions.
+            kernel (int): Size of convolutional kernel for first layer of convolutions.
 
-        num_concepts: int
-            Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the
-            repertoires being analyed, one can adjust this hyperparameter.
+            num_concepts (int): Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the repertoires being analyed, one can adjust this hyperparameter.
 
-        trainable_embedding; bool
-            Toggle to control whether a trainable embedding layer is used or native
-            one-hot representation for convolutional layers.
+            trainable_embedding (bool): Toggle to control whether a trainable embedding layer is used or native one-hot representation for convolutional layers.
 
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
+            embedding_dim_aa (int): Learned latent dimensionality of amino-acids.
 
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
+            embedding_dim_genes (int): Learned latent dimensionality of VDJ genes
 
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
+            embedding_dim_hla (int): Learned latent dimensionality of HLA
 
-        num_fc_layers: int
-            Number of fully connected layers following convolutional layer.
+            num_fc_layers (int): Number of fully connected layers following convolutional layer.
 
-        units_fc: int
-            Number of nodes per fully-connected layers following convolutional layer.
+            units_fc (int): Number of nodes per fully-connected layers following convolutional layer.
 
-        weight_by_class: bool
-            Option to weight loss by the inverse of the class frequency. Useful for
-            unbalanced classes.
+            weight_by_class (bool): Option to weight loss by the inverse of the class frequency. Useful for unbalanced classes.
 
-        class_weights: dict
-            In order to specify custom weights for each class during training, one
-            can provide a dictionary with these weights.
-                i.e. {'A':1.0,'B':2.0'}
+            class_weights (dict): In order to specify custom weights for each class during training, one can provide a dictionary with these weights.i.e. {'A':1.0,'B':2.0'}
 
-        use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
+            use_only_seq (bool): To only use sequence feaures, set to True. This will turn off features learned from gene usage.
 
-        use_only_gene: bool
-            To only use gene-usage features, set to True. This will turn off features from
-            the sequences.
+            use_only_gene (bool): To only use gene-usage features, set to True. This will turn off features from the sequences.
 
-        use_only_hla: bool
-            To only use hla feaures, set to True.
+            use_only_hla (bool): To only use hla feaures, set to True.
 
-        size_of_net: list or str
-            The convolutional layers of this network have 3 layers for which the use can
-            modify the number of neurons per layer. The user can either specify the size of the network
-            with the following options:
+            size_of_net (list or str): The convolutional layers of this network have 3 layers for which the use can modify the number of neurons per layer. The user can either specify the size of the network with the following options:
+
                 - small == [12,32,64] neurons for the 3 respective layers
                 - medium == [32,64,128] neurons for the 3 respective layers
                 - large == [64,128,256] neurons for the 3 respective layers
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
 
-        graph_seed: int
-            For deterministic initialization of weights of the graph, set this to value of choice.
+            graph_seed (int): For deterministic initialization of weights of the graph, set this to value of choice.
 
-        The following two options alter how the predictive signatures in the neural network are aggregated
-        to make a prediction about the repertoire. If qualitative_agg or quantitative_agg are set to True,
-        this will include these different types of aggregation in the predcitions. One can set either to True or
-        both to True and this will allow a user to incorporate features from multiple modes of aggregation.
+            qualitative_agg (bool): If set to True, the model will aggregate the feature values per repertoire weighted by frequency of each TCR. This is considered a 'qualitative' aggregation as the prediction of the repertoire is based on the relative distribution of the repertoire. In other words, this type of aggregation is a count-independent measure of aggregation. This is the mode of aggregation that has been more thoroughly tested across multiple scientific examples.
 
-        qualitative_agg: bool
-            If set to True, the model will aggregate the feature values per repertoire weighted by frequency of each
-            TCR. This is considered a 'qualitative' aggregation as the prediction of the repertoire is based on the relative
-            distribution of the repertoire. In other words, this type of aggregation is a count-independent measure of aggregation.
-            This is the mode of aggregation that has been more thoroughly tested across multiple scientific examples.
+            quantitative_agg (bool): If set to True, the model will aggregate the feature values per repertoire weighted by counts of each TCR. This is considered a 'quantitative' aggregation as the prediction of the repertoire is based on teh absolute distribution of the repertoire. In other words, this type of aggregation is a count-dependent measure of aggregation. If one believes the counts are important for the predictive value of the model, one can set this parameter to True.
 
-        quantitative_agg: bool
-            If set to True, the model will aggregate the feature values per repertoire weighted by counts of each TCR.
-            This is considered a 'quantitative' aggregation as the prediction of the repertoire is based on teh absolute
-            distribution of the repertoire. In other words, this type of aggregation is a count-dependent measure of aggregation.
-            If one believes the counts are important for the predictive value of the model, one can set this parameter to True.
+            num_agg_layers (int): Following the aggregation layer in the network, one can choose to add more fully-connected layers before the final classification layer. This parameter will set how many layers to add after aggregation. This likely is helpful when using both types of aggregation (as detailed above) to combine those feature values.
 
-        num_agg_layers: int
-            Following the aggregation layer in the network, one can choose to add more fully-connected layers before
-            the final classification layer. This parameter will set how many layers to add after aggregation. This likely
-            is helpful when using both types of aggregation (as detailed above) to combine those feature values.
+            units_agg (int): For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
 
-        units_agg: int
-            For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
+            drop_out_rate (float): drop out rate for fully connected layers
 
-        drop_out_rate: float
-            drop out rate for fully connected layers
+            multisample_dropout (bool). Set this parameter to True to implement this method.
 
-        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
-        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
-        https://arxiv.org/abs/1905.09788
-        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
+            multisample_dropout_rate (float): The dropout rate for this multi-sample dropout layer.
 
-        multisample_dropout: bool
-            Set this parameter to True to implement this method.
+            multisample_dropout_num_masks (int): The number of masks to sample from for the Multi-Sample Dropout layer.
 
-         multisample_dropout_rate: float
-            The dropout rate for this multi-sample dropout layer.
+            batch_size (int): Size of batch to be used for each training iteration of the net.
 
-         multisample_dropout_num_masks: int
-            The number of masks to sample from for the Multi-Sample Dropout layer.
+            batch_size_update (int): In the case that the size of the samples are very large, one may not want to update the weights of the network as often as batches are put onto the gpu. Therefore, if one wants to update the weights less often than how often the batches of data are put onto the gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5 and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using gpu's for training and there are memory constraints from very large samples.
+
+            epochs_min (int): Minimum number of epochs for training neural network.
+
+            stop_criterion (float): Minimum percent decrease in determined interval (below) to continue training. Used as early stopping criterion.
+
+            stop_criterion_window (int): The window of data to apply the stopping criterion.
+
+            accuracy_min (float): Optional parameter to allow alternative training strategy until minimum training accuracy is achieved, at which point, training ceases.
+
+            train_loss_min (float): Optional parameter to allow alternative training strategy until minimum training loss is achieved, at which point, training ceases.
+
+            hinge_loss_t (float): The per sample loss minimum at which the loss of that sample is not used to penalize the model anymore. In other words, once a per sample loss has hit this value, it gets set to 0.0.
+
+            convergence (str): This parameter determines which loss to assess the convergence criteria on. Options are 'validation' or 'training'. This is useful in the case one wants to change the convergence criteria on the training data when the training and validation partitions have been combined and used to training the model.
+
+            learning_rate (float): The learning rate for training the neural network. Making this value larger will increase the rate of convergence but can introduce instability into training. For most, altering this value will not be necessary.
+
+            suppress_output (bool): To suppress command line output with training statisitcs, set to True.
+
+            l2_reg (float): When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization through TCR featurization layers of the network.
+
+            batch_seed (int): For deterministic batching during training, set this value to an integer of choice.
+
+            subsample (int): Number of sequences to sub-sample from repertoire during training to improve speed of convergence as well as being a form of regularization.
+
+            subsample_by_freq (bool): Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
+
+            subsample_valid_test (bool): Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed to convergence and generalizability.
 
 
-        Training Parameters
+        Returns:
+            MC Predictions
 
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
-
-        batch_size_update: int
-            In the case that the size of the samples are very large, one may not want to update
-            the weights of the network as often as batches are put onto the gpu. Therefore, if
-            one wants to update the weights less often than how often the batches of data are put onto the
-            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
-            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
-            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
-            gpu's for training and there are memory constraints from very large samples.
-
-        epochs_min: int
-            Minimum number of epochs for training neural network.
-
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
-
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
-
-        accuracy_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training accuracy is achieved, at which point, training ceases.
-
-        train_loss_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training loss is achieved, at which point, training ceases.
-
-        hinge_loss_t: float
-            The per sample loss minimum at which the loss of that sample is not used
-            to penalize the model anymore. In other words, once a per sample loss has hit
-            this value, it gets set to 0.0.
-
-        convergence: str
-            This parameter determines which loss to assess the convergence criteria on.
-            Options are 'validation' or 'training'. This is useful in the case one wants
-            to change the convergence criteria on the training data when the training and validation
-            partitions have been combined and used to training the model.
-
-        learning_rate: float
-            The learning rate for training the neural network. Making this value larger will
-            increase the rate of convergence but can introduce instability into training. For most,
-            altering this value will not be necessary.
-
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
-
-        l2_reg: float
-            When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific
-            overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization
-            through TCR featurization layers of the network.
-
-        batch_seed: int
-            For deterministic batching during training, set this value to an integer of choice.
-
-        subsample: int
-            Number of sequences to sub-sample from repertoire during training to improve speed of convergence
-            as well as being a form of regularization.
-
-        subsample_by_freq: bool
-            Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
-
-        subsample_valid_test: bool
-            Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed
-            to convergence and generalizability.
-
-        Returns
-
-        self.DFs_pred: dict of dataframes
+            - self.DFs_pred (dict of dataframes):
             This method returns the samples in the test sets of the Monte-Carlo and their
             predicted probabilities for each class.
-        ---------------------------------------
 
         """
 
@@ -4708,213 +4497,109 @@ class DeepTCR_WF(DeepTCR_S_base):
                         subsample=None,subsample_by_freq=False,subsample_valid_test=False):
 
         """
-        K_Fold Cross-Validation for Whole Sample Classifier
+        # K_Fold Cross-Validation for Whole Sample Classifier
 
         If the number of samples is small but training the whole sample classifier, one
         can use K_Fold Cross Validation to train on all but one before assessing
         predictive performance.After this method is run, the AUC_Curve method can be run to
         assess the overall performance.
 
-        Inputs
-        ---------------------------------------
+        The two MIL options alter how the predictive signatures in the neural network are aggregated to make a prediction about the repertoire. If qualitative_agg or quantitative_agg are set to True, this will include these different types of aggregation in the predcitions. One can set either to True or both to True and this will allow a user to incorporate features from multiple modes of aggregation. See below for further details on these methods of aggregation across the sequences of a repertoire.
 
-        K-Fold Parameters
+        The multiesample parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in "Multi-Sample Dropout for Accelerated Training and Better Generalization" https://arxiv.org/abs/1905.09788. This method has been shown to improve generalization of deep neural networks as well as improve convergence.
 
-        folds: int
-            Number of Folds
+        Args:
 
-        combine_train_valid: bool
-            To combine the training and validation partitions into one which will be used for training
-            and updating the model parameters, set this to True. This will also set the validation partition
-            to the test partition. In other words, new train set becomes (original train + original valid) and then
-            new valid = original test partition, new test = original test partition. Therefore, if setting this parameter
-            to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min)
-            to stop training based on the train set. If one does not chanage the stop training criterion, the decision of
-            when to stop training will be based on the test data (which is considered a form of over-fitting).
+            folds (int): Number of Folds
 
-        seeds: nd.array
-            In order to set a deterministic train/test split over the K-Fold Simulations, one can provide an array
-            of seeds for each K-fold simulation. This will result in the same train/test split over the N Fold simulations.
-            This parameter, if provided, should have the same size of the value of folds.
+            combine_train_valid (bool): To combine the training and validation partitions into one which will be used for training and updating the model parameters, set this to True. This will also set the validation partition to the test partition. In other words, new train set becomes (original train + original valid) and then new valid = original test partition, new test = original test partition. Therefore, if setting this parameter to True, change one of the training parameters to set the stop training criterion (i.e. train_loss_min) to stop training based on the train set. If one does not chanage the stop training criterion, the decision of when to stop training will be based on the test data (which is considered a form of over-fitting).
 
-        Model Parameters
+            seeds (nd.array): In order to set a deterministic train/test split over the K-Fold Simulations, one can provide an array of seeds for each K-fold simulation. This will result in the same train/test split over the N Fold simulations. This parameter, if provided, should have the same size of the value of folds.
 
-        kernel: int
-            Size of convolutional kernel for first layer of convolutions.
+            kernel (int): Size of convolutional kernel for first layer of convolutions.
 
-        num_concepts: int
-            Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the
-            repertoires being analyed, one can adjust this hyperparameter.
+            num_concepts (int): Number of concepts for multi-head attention mechanism. Depending on the expected heterogeneity of the repertoires being analyed, one can adjust this hyperparameter.
 
-        trainable_embedding; bool
-            Toggle to control whether a trainable embedding layer is used or native
-            one-hot representation for convolutional layers.
+            trainable_embedding (bool): Toggle to control whether a trainable embedding layer is used or native one-hot representation for convolutional layers.
 
-        embedding_dim_aa: int
-            Learned latent dimensionality of amino-acids.
+            embedding_dim_aa (int): Learned latent dimensionality of amino-acids.
 
-        embedding_dim_genes: int
-            Learned latent dimensionality of VDJ genes
+            embedding_dim_genes (int): Learned latent dimensionality of VDJ genes
 
-        embedding_dim_hla: int
-            Learned latent dimensionality of HLA
+            embedding_dim_hla (int): Learned latent dimensionality of HLA
 
-        num_fc_layers: int
-            Number of fully connected layers following convolutional layer.
+            num_fc_layers (int): Number of fully connected layers following convolutional layer.
 
-        units_fc: int
-            Number of nodes per fully-connected layers following convolutional layer.
+            units_fc (int): Number of nodes per fully-connected layers following convolutional layer.
 
-        weight_by_class: bool
-            Option to weight loss by the inverse of the class frequency. Useful for
-            unbalanced classes.
+            weight_by_class (bool): Option to weight loss by the inverse of the class frequency. Useful for unbalanced classes.
 
-        class_weights: dict
-            In order to specify custom weights for each class during training, one
-            can provide a dictionary with these weights.
-                i.e. {'A':1.0,'B':2.0'}
+            class_weights (dict): In order to specify custom weights for each class during training, one can provide a dictionary with these weights.i.e. {'A':1.0,'B':2.0'}
 
-        use_only_seq: bool
-            To only use sequence feaures, set to True. This will turn off features learned
-            from gene usage.
+            use_only_seq (bool): To only use sequence feaures, set to True. This will turn off features learned from gene usage.
 
-        use_only_gene: bool
-            To only use gene-usage features, set to True. This will turn off features from
-            the sequences.
+            use_only_gene (bool): To only use gene-usage features, set to True. This will turn off features from the sequences.
 
-        use_only_hla: bool
-            To only use hla feaures, set to True.
+            use_only_hla (bool): To only use hla feaures, set to True.
 
-        size_of_net: list or str
-            The convolutional layers of this network have 3 layers for which the use can
-            modify the number of neurons per layer. The user can either specify the size of the network
-            with the following options:
+            size_of_net (list or str): The convolutional layers of this network have 3 layers for which the use can modify the number of neurons per layer. The user can either specify the size of the network with the following options:
+
                 - small == [12,32,64] neurons for the 3 respective layers
                 - medium == [32,64,128] neurons for the 3 respective layers
                 - large == [64,128,256] neurons for the 3 respective layers
                 - custom, where the user supplies a list with the number of nuerons for the respective layers
                     i.e. [3,3,3] would have 3 neurons for all 3 layers.
-                    One can also adjust the number of layers for the convolutional stack by changing the length of
-                    this list. [3,3,3] = 3 layers, [3,3,3,3] = 4 layers.
 
-        graph_seed: int
-            For deterministic initialization of weights of the graph, set this to value of choice.
+            graph_seed (int): For deterministic initialization of weights of the graph, set this to value of choice.
 
-        The following two options alter how the predictive signatures in the neural network are aggregated
-        to make a prediction about the repertoire. If qualitative_agg or quantitative_agg are set to True,
-        this will include these different types of aggregation in the predcitions. One can set either to True or
-        both to True and this will allow a user to incorporate features from multiple modes of aggregation.
+            qualitative_agg (bool): If set to True, the model will aggregate the feature values per repertoire weighted by frequency of each TCR. This is considered a 'qualitative' aggregation as the prediction of the repertoire is based on the relative distribution of the repertoire. In other words, this type of aggregation is a count-independent measure of aggregation. This is the mode of aggregation that has been more thoroughly tested across multiple scientific examples.
 
-        qualitative_agg: bool
-            If set to True, the model will aggregate the feature values per repertoire weighted by frequency of each
-            TCR. This is considered a 'qualitative' aggregation as the prediction of the repertoire is based on the relative
-            distribution of the repertoire. In other words, this type of aggregation is a count-independent measure of aggregation.
-            This is the mode of aggregation that has been more thoroughly tested across multiple scientific examples.
+            quantitative_agg (bool): If set to True, the model will aggregate the feature values per repertoire weighted by counts of each TCR. This is considered a 'quantitative' aggregation as the prediction of the repertoire is based on teh absolute distribution of the repertoire. In other words, this type of aggregation is a count-dependent measure of aggregation. If one believes the counts are important for the predictive value of the model, one can set this parameter to True.
 
-        quantitative_agg: bool
-            If set to True, the model will aggregate the feature values per repertoire weighted by counts of each TCR.
-            This is considered a 'quantitative' aggregation as the prediction of the repertoire is based on teh absolute
-            distribution of the repertoire. In other words, this type of aggregation is a count-dependent measure of aggregation.
-            If one believes the counts are important for the predictive value of the model, one can set this parameter to True.
+            num_agg_layers (int): Following the aggregation layer in the network, one can choose to add more fully-connected layers before the final classification layer. This parameter will set how many layers to add after aggregation. This likely is helpful when using both types of aggregation (as detailed above) to combine those feature values.
 
-        num_agg_layers: int
-            Following the aggregation layer in the network, one can choose to add more fully-connected layers before
-            the final classification layer. This parameter will set how many layers to add after aggregation. This likely
-            is helpful when using both types of aggregation (as detailed above) to combine those feature values.
+            units_agg (int): For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
 
-        units_agg: int
-            For the fully-connected layers after aggregation, this parameter sets the number of units/nodes per layer.
+            drop_out_rate (float): drop out rate for fully connected layers
 
-        drop_out_rate: float
-            drop out rate for fully connected layers
+            multisample_dropout (bool). Set this parameter to True to implement this method.
 
-        The following parameters are used to implement Multi-Sample Dropout at the final layer of the model as described in
-        "Multi-Sample Dropout for Accelerated Training and Better Generalization"
-        https://arxiv.org/abs/1905.09788
-        This method has been shown to improve generalization of deep neural networks as well as inmprove convergence.
+            multisample_dropout_rate (float): The dropout rate for this multi-sample dropout layer.
 
-        multisample_dropout: bool
-            Set this parameter to True to implement this method.
+            multisample_dropout_num_masks (int): The number of masks to sample from for the Multi-Sample Dropout layer.
 
-         multisample_dropout_rate: float
-            The dropout rate for this multi-sample dropout layer.
+            batch_size (int): Size of batch to be used for each training iteration of the net.
 
-         multisample_dropout_num_masks: int
-            The number of masks to sample from for the Multi-Sample Dropout layer.
+            batch_size_update (int): In the case that the size of the samples are very large, one may not want to update the weights of the network as often as batches are put onto the gpu. Therefore, if one wants to update the weights less often than how often the batches of data are put onto the gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5 and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using gpu's for training and there are memory constraints from very large samples.
 
+            epochs_min (int): Minimum number of epochs for training neural network.
 
-        Training Parameters
+            stop_criterion (float): Minimum percent decrease in determined interval (below) to continue training. Used as early stopping criterion.
 
-        batch_size: int
-            Size of batch to be used for each training iteration of the net.
+            stop_criterion_window (int): The window of data to apply the stopping criterion.
 
-        batch_size_update: int
-            In the case that the size of the samples are very large, one may not want to update
-            the weights of the network as often as batches are put onto the gpu. Therefore, if
-            one wants to update the weights less often than how often the batches of data are put onto the
-            gpu, one can set this parameter to something other than None. An example would be if batch_size is set to 5
-            and batch_size_update is set to 30, while only 5 samples will be put on the gpu at a time, the weights will
-            only be updated after 30 samples have been put on the gpu. This parameter is only relevant when using
-            gpu's for training and there are memory constraints from very large samples.
+            accuracy_min (float): Optional parameter to allow alternative training strategy until minimum training accuracy is achieved, at which point, training ceases.
 
-        epochs_min: int
-            Minimum number of epochs for training neural network.
+            train_loss_min (float): Optional parameter to allow alternative training strategy until minimum training loss is achieved, at which point, training ceases.
 
-        stop_criterion: float
-            Minimum percent decrease in determined interval (below) to continue
-            training. Used as early stopping criterion.
+            hinge_loss_t (float): The per sample loss minimum at which the loss of that sample is not used to penalize the model anymore. In other words, once a per sample loss has hit this value, it gets set to 0.0.
 
-        stop_criterion_window: int
-            The window of data to apply the stopping criterion.
+            convergence (str): This parameter determines which loss to assess the convergence criteria on. Options are 'validation' or 'training'. This is useful in the case one wants to change the convergence criteria on the training data when the training and validation partitions have been combined and used to training the model.
 
-        accuracy_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training accuracy is achieved, at which point, training ceases.
+            learning_rate (float): The learning rate for training the neural network. Making this value larger will increase the rate of convergence but can introduce instability into training. For most, altering this value will not be necessary.
 
-        train_loss_min: float
-            Optional parameter to allow alternative training strategy until minimum
-            training loss is achieved, at which point, training ceases.
+            suppress_output (bool): To suppress command line output with training statisitcs, set to True.
 
-        hinge_loss_t: float
-            The per sample loss minimum at which the loss of that sample is not used
-            to penalize the model anymore. In other words, once a per sample loss has hit
-            this value, it gets set to 0.0.
+            l2_reg (float): When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization through TCR featurization layers of the network.
 
-        convergence: str
-            This parameter determines which loss to assess the convergence criteria on.
-            Options are 'validation' or 'training'. This is useful in the case one wants
-            to change the convergence criteria on the training data when the training and validation
-            partitions have been combined and used to training the model.
+            batch_seed (int): For deterministic batching during training, set this value to an integer of choice.
 
-        learning_rate: float
-            The learning rate for training the neural network. Making this value larger will
-            increase the rate of convergence but can introduce instability into training. For most,
-            altering this value will not be necessary.
+            subsample (int): Number of sequences to sub-sample from repertoire during training to improve speed of convergence as well as being a form of regularization.
 
-        suppress_output: bool
-            To suppress command line output with training statisitcs, set to True.
+            subsample_by_freq (bool): Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
 
-        l2_reg: float
-            When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific
-            overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization
-            through TCR featurization layers of the network.
+            subsample_valid_test (bool): Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed to convergence and generalizability.
 
-        batch_seed: int
-            For deterministic batching during training, set this value to an integer of choice.
-
-        subsample: int
-            Number of sequences to sub-sample from repertoire during training to improve speed of convergence
-            as well as being a form of regularization.
-
-        subsample_by_freq: bool
-            Whether to sub-sample randomly in the repertoire or as a function of the frequency of the TCR.
-
-        subsample_valid_test: bool
-            Whether to sub-sample during valid/test cohorts while training. This is mostly as well to improve speed
-            to convergence and generalizability.
-
-        Returns
-        ---------------------------------------
 
         """
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
@@ -5103,107 +4788,69 @@ class DeepTCR_WF(DeepTCR_S_base):
                   v_alpha=None, j_alpha=None, p=None,hla=None,freq=None,counts=None, batch_size=10,models=None,return_dist=False):
 
         """
-        Predicting outputs of sample/repertoire model on new data
+        # Predicting outputs of sample/repertoire model on new data
 
-        This method allows a user to take a pre-trained sample/repertoire classifier
-        and generate outputs from the model on new data. This will return predicted probabilites
-        for the given classes for the new data. If the model has been trained in Monte-Carlo or K-Fold Cross-Validation,
-        there will be a model created for each iteration of the cross-validation. if the 'models' parameter is left as None,
-        this method will conudct inference for all models trained in cross-validation and output the average predicted value per sample
-        along with the distribution of predictions for futher downstream use. For example, by looking at the distribution of
-        predictions for a given sample over all models trained, one can determine which samples have a high level of certainty
-        in their predictions versus those with lower level of certainty. In essense, by training a multiple models in cross-validation schemes,
-        this can allow the user to generate a distribution of predictions on a per-sample basis which provides a better understanding of the prediction.
-        Alternatively, one can choose to fill in the the models parameter with a list of models the user wants to use for inference.
+        This method allows a user to take a pre-trained sample/repertoire classifier and generate outputs from the model on new data. This will return predicted probabilites for the given classes for the new data. If the model has been trained in Monte-Carlo or K-Fold Cross-Validation, there will be a model created for each iteration of the cross-validation. if the 'models' parameter is left as None, this method will conduct inference for all models trained in cross-validation and output the average predicted value per sample along with the distribution of predictions for futher downstream use. For example, by looking at the distribution of predictions for a given sample over all models trained, one can determine which samples have a high level of certainty in their predictions versus those with lower level of certainty. In essense, by training a multiple models in cross-validation schemes, this can allow the user to generate a distribution of predictions on a per-sample basis which provides a better understanding of the prediction. Alternatively, one can choose to fill in the the models parameter with a list of models the user wants to use for inference.
 
-        To load data from directories, one can use the Get_Data method from the base class to automatically
-        format the data into the proper format to be then input into this method.
+        To load data from directories, one can use the Get_Data method from the base class to automatically format the data into the proper format to be then input into this method.
 
-        One can also use this method to get per-sequence predictions from the sample/repertoire classifier. To do this,
-        provide all inputs except for sample_labels. The method will then return an array of dimensionality [N,n_classes] where
-        N is the number of sequences provided. When using the method in this way, be sure to change the batch_size is adjusted to a larger
-        value as 10 sequences per batch will be rather slow. We recommend changing into the order of thousands (i.e. 10 - 100k).
+        One can also use this method to get per-sequence predictions from the sample/repertoire classifier. To do this, provide all inputs except for sample_labels. The method will then return an array of dimensionality [N,n_classes] where N is the number of sequences provided. When using the method in this way, be sure to change the batch_size is adjusted to a larger value as 10 sequences per batch will be rather slow. We recommend changing into the order of thousands (i.e. 10 - 100k).
 
-        Inputs
-        ---------------------------------------
+        Args:
 
-        sample_labels: ndarray of strings
-            A 1d array with sample labels for the sequence.
+            sample_labels (ndarray of strings): A 1d array with sample labels for the sequence.
 
-        alpha_sequences: ndarray of strings
-            A 1d array with the sequences for inference for the alpha chain.
+            alpha_sequences (ndarray of strings): A 1d array with the sequences for inference for the alpha chain.
 
-        beta_sequences: ndarray of strings
-            A 1d array with the sequences for inference for the beta chain.
+            beta_sequences (ndarray of strings): A 1d array with the sequences for inference for the beta chain.
 
-        v_beta: ndarray of strings
-            A 1d array with the v-beta genes for inference.
+            v_beta (ndarray of strings): A 1d array with the v-beta genes for inference.
 
-        d_beta: ndarray of strings
-            A 1d array with the d-beta genes for inference.
+            d_beta (ndarray of strings): A 1d array with the d-beta genes for inference.
 
-        j_beta: ndarray of strings
-            A 1d array with the j-beta genes for inference.
+            j_beta (ndarray of strings): A 1d array with the j-beta genes for inference.
 
-        v_alpha: ndarray of strings
-            A 1d array with the v-alpha genes for inference.
+            v_alpha (ndarray of strings): A 1d array with the v-alpha genes for inference.
 
-        j_alpha: ndarray of strings
-            A 1d array with the j-alpha genes for inference.
+            j_alpha (ndarray of strings): A 1d array with the j-alpha genes for inference.
 
-        counts: ndarray of ints
-            A 1d array with the counts for each sequence.
+            counts (ndarray of ints): A 1d array with the counts for each sequence.
 
-        freq: ndarray of float values
-            A 1d array with the frequencies for each sequence.
+            freq (ndarray of float values): A 1d array with the frequencies for each sequence.
 
-        hla: ndarray of tuples/arrays
-            To input the hla context for each sequence fed into DeepTCR, this will need to formatted
-            as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring
-            to the alleles seen for that sequence.
-                ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+            hla (ndarray of tuples/arrays): To input the hla context for each sequence fed into DeepTCR, this will need to formatted as an ndarray that is (N,) for each sequence where each entry is a tuple or array of strings referring to the alleles seen for that sequence. ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
 
-            If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA
-            in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those
-            HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to
-            this method in the supertype designation.
+                - If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to this method in the supertype designation.
 
-        p: multiprocessing pool object
-            a pre-formed pool object can be passed to method for multiprocessing tasks.
+            p (multiprocessing pool object): a pre-formed pool object can be passed to method for multiprocessing tasks.
 
-        batch_size: int
-            Batch size for inference.
+            batch_size (int): Batch size for inference.
 
-        models: list
-            List of models in Name_Of_Object/models to use for inference. If left as None, this method will use all models
-            in that directory.
+            models (list): List of models in Name_Of_Object/models to use for inference. If left as None, this method will use all models in that directory.
 
-        return_dist: bool
-            If the user wants to also return teh distribution of sample/sequence predictions over all models used for inference,
-            one should set this value to True.
+            return_dist (bool): If the user wants to also return teh distribution of sample/sequence predictions over all models used for inference, one should set this value to True.
 
-        Returns
+        Returns:
+            Predictions
 
-        self.Inference_Sample_List: ndarray
+            - self.Inference_Sample_List (ndarray):
             An array with the sample list corresponding the predicted probabilities.
 
-        self.Inference_Pred: ndarray
+            - self.Inference_Pred (ndarray):
             An array with the predicted probabilites for all classes. These represent the average probability
             of all models used for inference.
 
-        self.Inference_Pred_Dict: dict
+            - self.Inference_Pred_Dict (dict):
             A dictionary of predicted probabilities for the respective classes. These represent the average probability
             of all models used for inference.
 
-        self.Inference_Pred_Dist: ndarray
+            - self.Inference_Pred_Dist (ndarray):
             An array with the predicted probabilites for all classes on a per model basis.
             shape = [Number of Models, Number of Samples, Number of Classes]
 
         If sample_labels is not provided, the method will perform per-sequence predictions and will return the an array
         of [N,n_classes]. If return_dist is set to True, the method will return two outputs. One containing the mean predictions
         and the other containing the full distribution over all models.
-
-        ---------------------------------------
 
         """
         inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha, hla]
