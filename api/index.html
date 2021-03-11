@@ -239,33 +239,31 @@
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.HeatMap_Samples">HeatMap_Samples()</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.HeatMap_Samples--inputs">Inputs</a>
+    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.HeatMap_Samples--heatmap-of-samples">HeatMap of Samples</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.HeatMap_Sequences">HeatMap_Sequences()</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.HeatMap_Sequences--inputs">Inputs</a>
-    </li>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.HeatMap_Sequences--returns">Returns</a>
+    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.HeatMap_Sequences--heatmap-of-sequences">HeatMap of Sequences</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.Repertoire_Dendrogram">Repertoire_Dendrogram()</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.Repertoire_Dendrogram--inputs">Inputs</a>
+    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.Repertoire_Dendrogram--repertoire-dendrogram">Repertoire Dendrogram</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.UMAP_Plot">UMAP_Plot()</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.UMAP_Plot--inputs">Inputs</a>
+    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.UMAP_Plot--umap-visualization-of-tcr-sequences">UMAP visualization of TCR Sequences</a>
     </li>
         </ul>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.UMAP_Plot_Samples">UMAP_Plot_Samples()</a>
         <ul>
-    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.UMAP_Plot_Samples--inputs">Inputs</a>
+    <li class="toctree-l4"><a class="reference internal" href="#DeepTCR.DeepTCR.vis_class.UMAP_Plot_Samples--umap-visualization-of-tcr-samples">UMAP visualization of TCR Samples</a>
     </li>
         </ul>
     </li>
@@ -2722,32 +2720,49 @@ of the structural diversity within a repertoire.</p>
 
     <div class="doc doc-contents ">
 
-      <p>HeatMap of Samples</p>
-<p>This method creates a heatmap/clustermap for samples by latent features
-for the unsupervised deep learning methods.</p>
-<h6 id="DeepTCR.DeepTCR.vis_class.HeatMap_Samples--inputs">Inputs</h6>
-<p>!!! set "str"
-    To choose which set of sequences to analye, enter either
-    'all','train', 'valid',or 'test'. Since the sequences in the train set
-    may be overfit, it preferable to generally examine the test set on its own.</p>
-<p>!!! filename "str"
-    Name of file to save heatmap.</p>
-<p>!!! weight_by_freq "bool"
-    Option to weight each sequence used in aggregate measure
-    of feature across sample by its frequency.</p>
-<p>!!! color_dict "dict"
-    Optional dictionary to provide specified colors for classes.</p>
-<p>!!! labels "bool"
-    Option to show names of samples on y-axis of heatmap.</p>
-<p>!!! font_scale "float"
-    This parameter controls the font size of the row labels. If there are many rows, one can make this value
-    smaller to get better labeling of the rows.</p>
-<p>Returns
-self.sample_featres: pandas dataframe
-    This function returns the average feature vector for each sample analyzed. This can be used to make further
-    downstream comparisons such as inter-repertoire distances.</p>
-<hr />
+      <h5 id="DeepTCR.DeepTCR.vis_class.HeatMap_Samples--heatmap-of-samples">HeatMap of Samples</h5>
+<p>This method creates a heatmap/clustermap for samples by latent features for the unsupervised deep learning methods.</p>
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>set</strong> (<code>str</code>) – To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.</p></li>
+            <li><p><strong>filename</strong> (<code>str</code>) – Name of file to save heatmap.</p></li>
+            <li><p><strong>Weight_by_Freq</strong> (<code>bool</code>) – Option to weight each sequence used in aggregate measure of feature across sample by its frequency.</p></li>
+            <li><p><strong>color_dict</strong> (<code>dict</code>) – Optional dictionary to provide specified colors for classes.</p></li>
+            <li><p><strong>labels</strong> (<code>bool</code>) – Option to show names of samples on y-axis of heatmap.</p></li>
+            <li><p><strong>font_scale</strong> (<code>float</code>) – This parameter controls the font size of the row labels. If there are many rows, one can make this value smaller to get better labeling of the rows.</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p>`Sample Features</p>
+<ul>
+<li>self.sample_featres (pandas dataframe)` – This function returns the average feature vector for each sample analyzed. This can be used to make further downstream comparisons such as inter-repertoire distances.</li>
+</ul></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>
     </div>
 
   </div>
@@ -2766,24 +2781,29 @@ self.sample_featres: pandas dataframe
 
     <div class="doc doc-contents ">
 
-      <p>HeatMap of Sequences</p>
-<p>This method creates a heatmap/clustermap for sequences by latent features
-for the unsupervised deep lerning methods.</p>
-<h6 id="DeepTCR.DeepTCR.vis_class.HeatMap_Sequences--inputs">Inputs</h6>
-<p>!!! set "str"
-    To choose which set of sequences to analye, enter either
-    'all','train', 'valid',or 'test'. Since the sequences in the train set
-    may be overfit, it preferable to generally examine the test set on its own.</p>
-<p>!!! filename "str"
-    Name of file to save heatmap.</p>
-<p>!!! sample_num "int"
-    Number of events to randomly sample for heatmap.</p>
-<p>!!! sample_num_per_class "int"
-    Number of events to randomly sample per class for heatmap.</p>
-<p>!!! color_dict "dict"
-    Optional dictionary to provide specified colors for classes.</p>
-<h6 id="DeepTCR.DeepTCR.vis_class.HeatMap_Sequences--returns">Returns</h6>
+      <h5 id="DeepTCR.DeepTCR.vis_class.HeatMap_Sequences--heatmap-of-sequences">HeatMap of Sequences</h5>
+<p>This method creates a heatmap/clustermap for sequences by latent features for the unsupervised deep lerning methods.</p>
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>set</strong> (<code>str</code>) – To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.</p></li>
+            <li><p><strong>filename</strong> (<code>str</code>) – Name of file to save heatmap.</p></li>
+            <li><p><strong>sample_num</strong> (<code>int</code>) – Number of events to randomly sample for heatmap.</p></li>
+            <li><p><strong>sample_num_per_class</strong> (<code>int</code>) – Number of events to randomly sample per class for heatmap.</p></li>
+            <li><p><strong>color_dict</strong> (<code>dict</code>) – Optional dictionary to provide specified colors for classes.</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
     </div>
 
   </div>
@@ -2802,61 +2822,59 @@ for the unsupervised deep lerning methods.</p>
 
     <div class="doc doc-contents ">
 
-      <p>Repertoire Dendrogram</p>
-<p>This method creates a visualization that shows and compares the distribution
-of the sample repertoires via UMAP and provided distance metric. The underlying
-algorithm first applied phenograph clustering to determine the proportions of the sample
-within a given cluster. Then a distance metric is used to compare how far two samples are
-based on their cluster proportions. Various metrics can be provided here such as KL-divergence,
-Correlation, and Euclidean.</p>
-<h6 id="DeepTCR.DeepTCR.vis_class.Repertoire_Dendrogram--inputs">Inputs</h6>
-<p>!!! set "str"
-    To choose which set of sequences to analye, enter either
-    'all','train', 'valid',or 'test'. Since the sequences in the train set
-    may be overfit, it preferable to generally examine the test set on its own.</p>
-<p>distance_metric = str
-    Provided distance metric to determine repertoire-level distance from cluster proportions.
-    Options include = (KL,correlation,euclidean,wasserstein,JS).</p>
-<p>!!! sample "int"
-    For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample
-    a number of sequences and then use k-nearest neighbors to assign other sequences.</p>
-<p>n_jobs:int
-    Number of processes to use for parallel operations.</p>
-<p>!!! color_dict "dict"
-    Optional dictionary to provide specified colors for classes.</p>
-<p>!!! dendrogram_radius "float"
-    The radius of the dendrogram in the figure. This will usually require some adjustment
-    given the number of samples.</p>
-<p>!!! repertoire_radius "float"
-    The radius of the repertoire plots in the figure. This will usually require some adjustment
-    given the number of samples.</p>
-<p>!!! linkage_method "str"
-    linkage method used by scipy's linkage function</p>
-<p>!!! gridsize "int"
-    This parameter modifies the granularity of the hexbins for the repertoire density plots.</p>
-<p>!!! load_prev_data "bool"
-    If method has been run before, one can load previous data used to construct the figure for
-    faster figure creation. This is helpful when trying to format the figure correctly and will require
-    the user to run the method multiple times.</p>
-<p>!!! filename "str"
-    To save dendrogram plot to results folder, enter a name for the file and the dendrogram
-    will be saved to the results directory.
-    i.e. dendrogram.png</p>
-<p>!!! sample_labels "bool"
-    To show the sample labels on the dendrogram, set to True.</p>
-<p>!!! gaussian_sigma "float"
-    The amount of blur to introduce in the plots.</p>
-<p>!!! vmax "float"
-    Highest color density value. Color scales from 0 to vmax (i.e. larger vmax == dimmer plot)</p>
-<p>!!! lw "float"
-    The width of the circle edge around each sample.</p>
-<p>!!! log_scale "bool"
-    To plot the log of the counts for the UMAP density plot, set this value to True. This can be
-    particularly helpful for visualization if the populations are very clonal.</p>
-<p>Returns</p>
-<p>self.pairwise_distances: Pandas dataframe
-    Pairwise distances of all samples</p>
-<hr />
+      <h5 id="DeepTCR.DeepTCR.vis_class.Repertoire_Dendrogram--repertoire-dendrogram">Repertoire Dendrogram</h5>
+<p>This method creates a visualization that shows and compares the distribution of the sample repertoires via UMAP and provided distance metric. The underlying algorithm first applied phenograph clustering to determine the proportions of the sample within a given cluster. Then a distance metric is used to compare how far two samples are based on their cluster proportions. Various metrics can be provided here such as KL-divergence, Correlation, and Euclidean.</p>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>set</strong> (<code>str</code>) – To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.</p></li>
+            <li><p><strong>distance_metric</strong> (<code>str</code>) – Provided distance metric to determine repertoire-level distance from cluster proportions. Options include = (KL,correlation,euclidean,wasserstein,JS).</p></li>
+            <li><p><strong>sample</strong> (<code>int</code>) – For large numbers of sequences, to obtain a faster clustering solution, one can sub-sample a number of sequences and then use k-nearest neighbors to assign other sequences.</p></li>
+            <li><p><strong>n_jobs</strong> (<code>int</code>) – Number of processes to use for parallel operations.</p></li>
+            <li><p><strong>color_dict</strong> (<code>dict</code>) – Optional dictionary to provide specified colors for classes.</p></li>
+            <li><p><strong>dendrogram_radius</strong> (<code>float</code>) – The radius of the dendrogram in the figure. This will usually require some adjustment given the number of samples.</p></li>
+            <li><p><strong>repertoire_radius</strong> (<code>float</code>) – The radius of the repertoire plots in the figure. This will usually require some adjustment given the number of samples.</p></li>
+            <li><p><strong>linkage_method</strong> (<code>str</code>) – linkage method used by scipy's linkage function</p></li>
+            <li><p><strong>gridsize</strong> (<code>int</code>) – This parameter modifies the granularity of the hexbins for the repertoire density plots.</p></li>
+            <li><p><strong>Load_Prev_Data</strong> (<code>bool</code>) – If method has been run before, one can load previous data used to construct the figure for faster figure creation. This is helpful when trying to format the figure correctly and will require the user to run the method multiple times.</p></li>
+            <li><p><strong>filename</strong> (<code>str</code>) – To save dendrogram plot to results folder, enter a name for the file and the dendrogram will be saved to the results directory. i.e. dendrogram.png</p></li>
+            <li><p><strong>sample_labels</strong> (<code>bool</code>) – To show the sample labels on the dendrogram, set to True.</p></li>
+            <li><p><strong>gaussian_sigma</strong> (<code>float</code>) – The amount of blur to introduce in the plots.</p></li>
+            <li><p><strong>vmax</strong> (<code>float</code>) – Highest color density value. Color scales from 0 to vmax (i.e. larger vmax == dimmer plot)</p></li>
+            <li><p><strong>lw</strong> (<code>float</code>) – The width of the circle edge around each sample.</p></li>
+            <li><p><strong>log_scale</strong> (<code>bool</code>) – To plot the log of the counts for the UMAP density plot, set this value to True. This can be particularly helpful for visualization if the populations are very clonal.</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+    <th class="field-name">Returns:</th>
+    <td class="field-body">
+        <ul class="first simple">
+          <li><p>`Output</p>
+<ul>
+<li>self.pairwise_distances (Pandas dataframe)` – Pairwise distances of all samples</li>
+</ul></li>
+        </ul>
+    </td>
+    </tr>
+  </tbody>
+</table>      <hr />
 
     </div>
 
@@ -2876,51 +2894,37 @@ Correlation, and Euclidean.</p>
 
     <div class="doc doc-contents ">
 
-      <p>UMAP vizualisation of TCR Sequences</p>
-<p>This method displays the sequences in a 2-dimensional UMAP where the user can color code points by
-class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional
-to frequency of sequence within sample.</p>
-<h6 id="DeepTCR.DeepTCR.vis_class.UMAP_Plot--inputs">Inputs</h6>
-<p>!!! set "str"
-    To choose which set of sequences to analye, enter either
-    'all','train', 'valid',or 'test'. Since the sequences in the train set
-    may be overfit, it preferable to generally examine the test set on its own.</p>
-<p>!!! by_class "bool"
-    To color the points by their class label, set to True.</p>
-<p>!!! by_sample "bool"
-    To color the points by their sample lebel, set to True.</p>
-<p>by_cluster:bool
-    To color the points by the prior computed clustering solution, set to True.</p>
-<p>!!! freq_weight "bool"
-    To scale size of points proportionally to their frequency, set to True.</p>
-<p>!!! show_legend "bool"
-    To display legend, set to True.</p>
-<p>!!! scale "float"
-    To change size of points, change scale parameter. Is particularly useful
-    when finding good display size when points are scaled by frequency.</p>
-<p>!!! load_prev_data "bool"
-    If method was run before, one can rerun this method with this parameter set
-    to True to bypass recomputing the UMAP projection. Useful for generating
-    different versions of the plot on the same UMAP representation.</p>
-<p>!!! alpha "float"
-    Value between 0-1 that controls transparency of points.</p>
-<p>!!! sample "int"
-    Number of events to sub-sample for visualization.</p>
-<p>!!! sample_per_class "int"
-     Number of events to randomly sample per class for UMAP.</p>
-<p>!!! filename "str"
-    To save umap plot to results folder, enter a name for the file and the umap
-    will be saved to the results directory.
-    i.e. umap.png</p>
-<p>!!! prob_plot "str"
-    To plot the predicted probabilities for the sequences as an additional heatmap, specify
-    the class probability one wants to visualize (i.e. if the class of interest is class A, input
-    'A' as a string). Of note, only probabilities determined from the sequences in the test set are
-    displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter
-    when the set parameter is turned to 'test'.</p>
-<p>Returns</p>
-<hr />
+      <h5 id="DeepTCR.DeepTCR.vis_class.UMAP_Plot--umap-visualization-of-tcr-sequences">UMAP visualization of TCR Sequences</h5>
+<p>This method displays the sequences in a 2-dimensional UMAP where the user can color code points by class label, sample label, or prior computing clustering solution. Size of points can also be made to be proportional to frequency of sequence within sample.</p>
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>set</strong> (<code>str</code>) – To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.</p></li>
+            <li><p><strong>by_class</strong> (<code>bool</code>) – To color the points by their class label, set to True.</p></li>
+            <li><p><strong>by_sample</strong> (<code>bool</code>) – To color the points by their sample lebel, set to True.</p></li>
+            <li><p><strong>by_cluster</strong> (<code>bool</code>) – To color the points by the prior computed clustering solution, set to True.</p></li>
+            <li><p><strong>freq_weight</strong> (<code>bool</code>) – To scale size of points proportionally to their frequency, set to True.</p></li>
+            <li><p><strong>show_legend</strong> (<code>bool</code>) – To display legend, set to True.</p></li>
+            <li><p><strong>scale</strong> (<code>float</code>) – To change size of points, change scale parameter. Is particularly useful when finding good display size when points are scaled by frequency.</p></li>
+            <li><p><strong>Load_Prev_Data</strong> (<code>bool</code>) – If method was run before, one can rerun this method with this parameter set to True to bypass recomputing the UMAP projection. Useful for generating different versions of the plot on the same UMAP representation.</p></li>
+            <li><p><strong>alpha</strong> (<code>float</code>) – Value between 0-1 that controls transparency of points.</p></li>
+            <li><p><strong>sample</strong> (<code>int</code>) – Number of events to sub-sample for visualization.</p></li>
+            <li><p><strong>sample_per_class</strong> (<code>int</code>) – Number of events to randomly sample per class for UMAP.</p></li>
+            <li><p><strong>filename</strong> (<code>str</code>) – To save umap plot to results folder, enter a name for the file and the umap will be saved to the results directory. i.e. umap.png</p></li>
+            <li><p><strong>prob_plot</strong> (<code>str</code>) – To plot the predicted probabilities for the sequences as an additional heatmap, specify the class probability one wants to visualize (i.e. if the class of interest is class A, input 'A' as a string). Of note, only probabilities determined from the sequences in the test set are displayed as a means of not showing over-fit probabilities. Therefore, it is best to use this parameter when the set parameter is turned to 'test'.</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
     </div>
 
   </div>
@@ -2939,27 +2943,29 @@ to frequency of sequence within sample.</p>
 
     <div class="doc doc-contents ">
 
-      <p>UMAP vizualisation of TCR Samples</p>
+      <h5 id="DeepTCR.DeepTCR.vis_class.UMAP_Plot_Samples--umap-visualization-of-tcr-samples">UMAP visualization of TCR Samples</h5>
 <p>This method displays the samples in a 2-dimensional UMAP</p>
-<h6 id="DeepTCR.DeepTCR.vis_class.UMAP_Plot_Samples--inputs">Inputs</h6>
-<p>!!! set "str"
-    To choose which set of sequences to analye, enter either
-    'all','train', 'valid',or 'test'. Since the sequences in the train set
-    may be overfit, it preferable to generally examine the test set on its own.</p>
-<p>!!! weight_by_freq "bool"
-    Option to weight each sequence used in aggregate measure
-    of feature across sample by its frequency.</p>
-<p>!!! scale "float"
-    To change size of points, change scale parameter.</p>
-<p>!!! alpha "float"
-    Value between 0-1 that controls transparency of points.</p>
-<p>!!! filename "str"
-    To save umap plot to results folder, enter a name for the file and the umap
-    will be saved to the results directory.
-    i.e. umap.png</p>
-<p>Returns</p>
-<hr />
 
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li><p><strong>set</strong> (<code>str</code>) – To choose which set of sequences to analye, enter either 'all','train', 'valid',or 'test'. Since the sequences in the train set may be overfit, it preferable to generally examine the test set on its own.</p></li>
+            <li><p><strong>Weight_by_Freq</strong> (<code>bool</code>) – Option to weight each sequence used in aggregate measure of feature across sample by its frequency.</p></li>
+            <li><p><strong>scale</strong> (<code>float</code>) – To change size of points, change scale parameter.</p></li>
+            <li><p><strong>alpha</strong> (<code>float</code>) – Value between 0-1 that controls transparency of points.</p></li>
+            <li><p><strong>filename</strong> (<code>str</code>) – To save umap plot to results folder, enter a name for the file and the umap will be saved to the results directory. i.e. umap.png</p></li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
     </div>
 
   </div>
