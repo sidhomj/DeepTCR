@@ -1819,7 +1819,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
         """
         # Train Variational Autoencoder (VAE)
 
-        This method trains the network and saves features values for sequences to create heatmaps.
+        This method trains the network and saves features values for sequences for a variety of downstream analyses that can either be done within the DeepTCR framework or by the user by simplying extracting out the learned representations.
 
         Args:
 
