@@ -53,9 +53,11 @@
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#deep-learning-methods-for-parsing-t-cell-receptor-sequencing-tcrseq-data">Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
-    </li>
     <li class="toctree-l2"><a class="reference internal" href="#publication">Publication</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a>
     </li>
@@ -110,6 +112,9 @@ be used on an example datasets, see the subdirectory 'tutorials' at the <a href=
 use cases across multiple datasets. </p>
 <p>While DeepTCR will run with Tensorflow-CPU versions, for optimal training times, we suggest training these algorithms on GPU's (requiring CUDA, cuDNN, and tensorflow-GPU). </p>
 <p>For questions or help, email: jsidhom1@jhmi.edu</p>
+<h2 id="publication">Publication</h2>
+<p>For full description of algorithm and methods behind DeepTCR, refer to the following manuscript:</p>
+<p><a href="https://www.biorxiv.org/content/10.1101/464107v4">Sidhom, J. W., Larman, H. B., Pardoll, D. M., &amp; Baras, A. S. (2018). DeepTCR: a deep learning framework for revealing structural concepts within TCR Repertoire. bioRxiv, 464107.</a></p>
 <h3 id="installation">Installation</h3>
 <p>In order to install DeepTCR:</p>
 <pre><code class="language-python">pip3 install DeepTCR
@@ -123,9 +128,6 @@ use cases across multiple datasets. </p>
 <pre><code class="language-python">pip3 install git+https://github.com/sidhomj/DeepTCR.git
 
 </code></pre>
-<h2 id="publication">Publication</h2>
-<p>For full description of algorithm and methods behind DeepTCR, refer to the following manuscript:</p>
-<p><a href="https://www.biorxiv.org/content/10.1101/464107v4">Sidhom, J. W., Larman, H. B., Pardoll, D. M., &amp; Baras, A. S. (2018). DeepTCR: a deep learning framework for revealing structural concepts within TCR Repertoire. bioRxiv, 464107.</a></p>
 <h2 id="dependencies">Dependencies</h2>
 <p>See <a href="https://github.com/sidhomj/DeepTCR/blob/master/requirements.txt">requirements.txt</a> for all DeepTCR dependencies. Installing DeepTCR from Github repository or PyPi will install all required dependencies. It is recommended to create a virtualenv and installing DeepTCR within this environment to ensure proper versioning of dependencies.</p>
 <p>In the most recent release (DeepTCR 2.0, fifth release), the package now uses python 3.8 &amp; Tensorflow 2.0. Since this has required an overhaul in a lot of the code, there could be some bugs so we would greatly appreciate if you post any issues to the issues page and I will do my best to fix them as quickly as possible. One can find the latest DeepTCR 1.x version under the v1 branch if you still want to use that version. Or one can specifically pip install the specific version desired.</p>
@@ -183,5 +185,5 @@ use cases across multiple datasets. </p>
 
 <!--
 MkDocs version : 1.1.2
-Build Date UTC : 2021-03-11 03:32:36.119287+00:00
+Build Date UTC : 2021-03-11 04:06:09.293987+00:00
 -->
