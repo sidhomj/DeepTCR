@@ -3993,12 +3993,13 @@ class DeepTCR_WF(DeepTCR_S_base):
                     GO.loss = tf.reduce_mean(input_tensor=tf.square(GO.Y-GO.logits))
 
                 var_train = tf.compat.v1.trainable_variables()
-                GO.loss = GO.loss + tf.compat.v1.losses.get_regularization_loss()
+                GO.loss = GO.loss
                 if batch_size_update is None:
-                    GO.opt = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate).minimize(GO.loss,var_list=var_train)
+                    GO.opt = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate).\
+                        minimize(GO.loss+ tf.compat.v1.losses.get_regularization_loss(),var_list=var_train)
                 else:
                     GO.opt = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate)
-                    GO.grads_and_vars = GO.opt.compute_gradients(GO.loss, var_train)
+                    GO.grads_and_vars = GO.opt.compute_gradients(GO.loss + tf.compat.v1.losses.get_regularization_loss(), var_train)
                     GO.gradients = tf.gradients(ys=GO.loss,xs=var_train)
                     GO.gradients,keep_ii = zip(*[(v,ii) for ii,v in enumerate(GO.gradients) if v is not None])
                     var_train = list(np.asarray(var_train)[list(keep_ii)])
