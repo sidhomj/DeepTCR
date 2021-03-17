@@ -32,8 +32,11 @@ class DeepTCR_base(object):
         # Initialize Training Object.
         Initializes object and sets initial parameters.
 
+        All DeepTCR algorithms begin with initializing a training object. This object will contain all methods, data, and results during the training process. One can extract learned features, per-sequence predictions, among other outputs from DeepTCR and use those in their own analyses as well.
+
+
         Args:
-            Name (str): Name of the object.
+            Name (str): Name of the object. This name will be used to create folders with results as well as a folder with parameters and specifications for any models built/trained.
 
             max_length (int): maximum length of CDR3 sequence.
 
@@ -86,10 +89,17 @@ class DeepTCR_base(object):
         # Get Data for DeepTCR
         Parse Data into appropriate inputs for neural network from directories where data is stored.
 
-        Args:
-            directory (str): Path to directory with folders with tsv files are present for analysis. Folders names become           labels for files within them. If the directory contains the TCRSeq files not organized into classes/labels,             DeepTCR will load all files within that directory.
+        This method can be used when your data is stored in directories and you want to load it from directoreis into DeepTCR. This method takes care of all pre-processing of the data including:
+         - Combining all CDR3 sequences with the same nucleotide sequence (optional).
+         - Removing any sequences with non-IUPAC characters.
+         - Removing any sequences that are longer than the max_length set when initializing the training object.
+         - Determining how much of the data per file to use (type_of_data_cut)
+         - Whether to use HLA/HLA-supertypes during training.
 
-            Load_Prev_Data (bool): Loads Previous Data.
+        Args:
+            directory (str): Path to directory with folders with tsv/csv files are present for analysis. Folders names become           labels for files within them. If the directory contains the TCRSeq files not organized into classes/labels,             DeepTCR will load all files within that directory.
+
+            Load_Prev_Data (bool): Loads Previous Data. This allows the user to run the method once, and then set this parameter to True to reload the data from a local pickle file.
 
             classes (list): Optional selection of input of which sub-directories to use for analysis.
 
@@ -112,7 +122,7 @@ class DeepTCR_base(object):
 
             n_jobs (int): Number of processes to use for parallelized operations.
 
-            aa_column_alpha (int): Column where alpha chain amino acid data is stored. (0-indexed)
+            aa_column_alpha (int): Column where alpha chain amino acid data is stored. (0-indexed).
 
             aa_column_beta (int): Column where beta chain amino acid data is stored.(0-indexed)
 
