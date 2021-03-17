@@ -364,6 +364,7 @@
 
       <h5 id="DeepTCR.DeepTCR.DeepTCR_base.__init__--initialize-training-object">Initialize Training Object.</h5>
 <p>Initializes object and sets initial parameters.</p>
+<p>All DeepTCR algorithms begin with initializing a training object. This object will contain all methods, data, and results during the training process. One can extract learned features, per-sequence predictions, among other outputs from DeepTCR and use those in their own analyses as well.</p>
 
 <table class="field-list">
   <colgroup>
@@ -375,7 +376,7 @@
       <th class="field-name">Parameters:</th>
       <td class="field-body">
         <ul class="first simple">
-            <li><p><strong>Name</strong> (<code>str</code>) – Name of the object.</p></li>
+            <li><p><strong>Name</strong> (<code>str</code>) – Name of the object. This name will be used to create folders with results as well as a folder with parameters and specifications for any models built/trained.</p></li>
             <li><p><strong>max_length</strong> (<code>int</code>) – maximum length of CDR3 sequence.</p></li>
             <li><p><strong>device</strong> (<code>int</code>) – In the case user is using tensorflow-gpu, one can specify the particular device to build the graphs on. This selects which GPU the user wants to put the graph and train on.</p></li>
         </ul>
@@ -403,6 +404,14 @@
 
       <h5 id="DeepTCR.DeepTCR.DeepTCR_base.Get_Data--get-data-for-deeptcr">Get Data for DeepTCR</h5>
 <p>Parse Data into appropriate inputs for neural network from directories where data is stored.</p>
+<p>This method can be used when your data is stored in directories and you want to load it from directoreis into DeepTCR. This method takes care of all pre-processing of the data including:</p>
+<ul>
+<li>Combining all CDR3 sequences with the same nucleotide sequence (optional).</li>
+<li>Removing any sequences with non-IUPAC characters.</li>
+<li>Removing any sequences that are longer than the max_length set when initializing the training object.</li>
+<li>Determining how much of the data per file to use (type_of_data_cut)</li>
+<li>Whether to use HLA/HLA-supertypes during training.</li>
+</ul>
 
 <table class="field-list">
   <colgroup>
@@ -414,8 +423,8 @@
       <th class="field-name">Parameters:</th>
       <td class="field-body">
         <ul class="first simple">
-            <li><p><strong>directory</strong> (<code>str</code>) – Path to directory with folders with tsv files are present for analysis. Folders names become           labels for files within them. If the directory contains the TCRSeq files not organized into classes/labels,             DeepTCR will load all files within that directory.</p></li>
-            <li><p><strong>Load_Prev_Data</strong> (<code>bool</code>) – Loads Previous Data.</p></li>
+            <li><p><strong>directory</strong> (<code>str</code>) – Path to directory with folders with tsv/csv files are present for analysis. Folders names become           labels for files within them. If the directory contains the TCRSeq files not organized into classes/labels,             DeepTCR will load all files within that directory.</p></li>
+            <li><p><strong>Load_Prev_Data</strong> (<code>bool</code>) – Loads Previous Data. This allows the user to run the method once, and then set this parameter to True to reload the data from a local pickle file.</p></li>
             <li><p><strong>classes</strong> (<code>list</code>) – Optional selection of input of which sub-directories to use for analysis.</p></li>
             <li><p><strong>type_of_data_cut</strong> (<code>str</code>) – Method by which one wants to sample from the TCRSeq File.</p>
 <h6 id="DeepTCR.DeepTCR.DeepTCR_base.Get_Data--_1"></h6>
@@ -439,7 +448,7 @@
 </ul></li>
             <li><p><strong>data_cut</strong> (<code>float or int</code>) – Value  associated with type_of_data_cut parameter.</p></li>
             <li><p><strong>n_jobs</strong> (<code>int</code>) – Number of processes to use for parallelized operations.</p></li>
-            <li><p><strong>aa_column_alpha</strong> (<code>int</code>) – Column where alpha chain amino acid data is stored. (0-indexed)</p></li>
+            <li><p><strong>aa_column_alpha</strong> (<code>int</code>) – Column where alpha chain amino acid data is stored. (0-indexed).</p></li>
             <li><p><strong>aa_column_beta</strong> (<code>int</code>) – Column where beta chain amino acid data is stored.(0-indexed)</p></li>
             <li><p><strong>count_column</strong> (<code>int</code>) – Column where counts are stored.</p></li>
             <li><p><strong>sep</strong> (<code>str</code>) – Type of delimiter used in file with TCRSeq data.</p></li>
@@ -512,6 +521,9 @@
       <h5 id="DeepTCR.DeepTCR.DeepTCR_base.Load_Data--load-data-programatically-into-deeptcr">Load Data programatically into DeepTCR.</h5>
 <p>DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
 a user can load numpy arrays with relevant TCRSeq data for analysis.</p>
+<p>Tip: One can load data with the Get_Data command from directories and then reload it into another DeepTCR object with the Load_Data command. This can be useful, for example, if you have different labels you want to train to, and you need to change the label programatically between training each model. In this case, one can load the data first with the Get_Data method and then assign the labels pythonically before feeding them into the DeepTCR object with the Load_Data method.</p>
+<p>Of note, this method DOES NOT combine sequences with the same amino acid sequence. Therefore, if one wants this, one should first do it programatically before feeding the data into DeepTCR with this method.</p>
+<p>Another special use case of this method would be for any type of regression task (sequence or repertoire models). In the case that a per-sequence value is fed into DeepTCR (with Y), this value either becomes the per-sequence regression value or the average of all Y over a sample becomes the per-sample regression value. This is another case where one might want to load data with the Get_Data method and then reload it into DeepTCR with regression values.</p>
 
 <table class="field-list">
   <colgroup>
