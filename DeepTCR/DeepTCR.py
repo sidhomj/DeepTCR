@@ -90,6 +90,7 @@ class DeepTCR_base(object):
         Parse Data into appropriate inputs for neural network from directories where data is stored.
 
         This method can be used when your data is stored in directories and you want to load it from directoreis into DeepTCR. This method takes care of all pre-processing of the data including:
+
          - Combining all CDR3 sequences with the same nucleotide sequence (optional).
          - Removing any sequences with non-IUPAC characters.
          - Removing any sequences that are longer than the max_length set when initializing the training object.
@@ -499,6 +500,12 @@ class DeepTCR_base(object):
 
         DeepTCR allows direct user input of sequence data for DeepTCR analysis. By using this method,
         a user can load numpy arrays with relevant TCRSeq data for analysis.
+
+        Tip: One can load data with the Get_Data command from directories and then reload it into another DeepTCR object with the Load_Data command. This can be useful, for example, if you have different labels you want to train to, and you need to change the label programatically between training each model. In this case, one can load the data first with the Get_Data method and then assign the labels pythonically before feeding them into the DeepTCR object with the Load_Data method.
+
+        Of note, this method DOES NOT combine sequences with the same amino acid sequence. Therefore, if one wants this, one should first do it programatically before feeding the data into DeepTCR with this method.
+
+        Another special use case of this method would be for any type of regression task (sequence or repertoire models). In the case that a per-sequence value is fed into DeepTCR (with Y), this value either becomes the per-sequence regression value or the average of all Y over a sample becomes the per-sample regression value. This is another case where one might want to load data with the Get_Data method and then reload it into DeepTCR with regression values.
 
         Args:
 
