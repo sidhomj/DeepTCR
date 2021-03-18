@@ -34,6 +34,12 @@ class DeepTCR_base(object):
 
         All DeepTCR algorithms begin with initializing a training object. This object will contain all methods, data, and results during the training process. One can extract learned features, per-sequence predictions, among other outputs from DeepTCR and use those in their own analyses as well.
 
+        This method is included in the three main DeepTCR objects:
+
+        - DeepTCR_U (unsupervised)
+        - DeepTCR_SS (supervised sequence classifier/regressor)
+        - DeepTCR_WF (supervised repertoire classifier/regressor)
+
 
         Args:
             Name (str): Name of the object. This name will be used to create folders with results as well as a folder with parameters and specifications for any models built/trained.
@@ -96,6 +102,12 @@ class DeepTCR_base(object):
          - Removing any sequences that are longer than the max_length set when initializing the training object.
          - Determining how much of the data per file to use (type_of_data_cut)
          - Whether to use HLA/HLA-supertypes during training.
+
+        This method is included in the three main DeepTCR objects:
+
+        - DeepTCR_U (unsupervised)
+        - DeepTCR_SS (supervised sequence classifier/regressor)
+        - DeepTCR_WF (supervised repertoire classifier/regressor)
 
         Args:
             directory (str): Path to directory with folders with tsv/csv files are present for analysis. Folders names become           labels for files within them. If the directory contains the TCRSeq files not organized into classes/labels,             DeepTCR will load all files within that directory.
@@ -507,6 +519,12 @@ class DeepTCR_base(object):
 
         Another special use case of this method would be for any type of regression task (sequence or repertoire models). In the case that a per-sequence value is fed into DeepTCR (with Y), this value either becomes the per-sequence regression value or the average of all Y over a sample becomes the per-sample regression value. This is another case where one might want to load data with the Get_Data method and then reload it into DeepTCR with regression values.
 
+        This method is included in the three main DeepTCR objects:
+
+        - DeepTCR_U (unsupervised)
+        - DeepTCR_SS (supervised sequence classifier/regressor)
+        - DeepTCR_WF (supervised repertoire classifier/regressor)
+
         Args:
 
             alpha_sequences (ndarray of strings): A 1d array with the sequences for inference for the alpha chain.
@@ -747,6 +765,11 @@ class DeepTCR_base(object):
         This method allows a user to take a pre-trained autoencoder/sequence classifier and generate outputs from the model on new data. For the autoencoder, this returns the features from the latent space. For the sequence classifier, it is the probability of belonging to each class.
 
         In the case that multiple models have been trained via MC or K-fold Cross-Validation strategy for the sequence classifier, this method can use some or all trained models in an ensemble fashion to provide the average prediction per sequence as well as the distribution of predictions from all trained models.
+
+        This method is included in the two sequence DeepTCR objects:
+
+        - DeepTCR_U (unsupervised)
+        - DeepTCR_SS (supervised sequence classifier/regressor)
 
         Args:
 
