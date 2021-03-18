@@ -365,6 +365,12 @@
       <h5 id="DeepTCR.DeepTCR.DeepTCR_base.__init__--initialize-training-object">Initialize Training Object.</h5>
 <p>Initializes object and sets initial parameters.</p>
 <p>All DeepTCR algorithms begin with initializing a training object. This object will contain all methods, data, and results during the training process. One can extract learned features, per-sequence predictions, among other outputs from DeepTCR and use those in their own analyses as well.</p>
+<p>This method is included in the three main DeepTCR objects:</p>
+<ul>
+<li>DeepTCR_U (unsupervised)</li>
+<li>DeepTCR_SS (supervised sequence classifier/regressor)</li>
+<li>DeepTCR_WF (supervised repertoire classifier/regressor)</li>
+</ul>
 
 <table class="field-list">
   <colgroup>
@@ -411,6 +417,12 @@
 <li>Removing any sequences that are longer than the max_length set when initializing the training object.</li>
 <li>Determining how much of the data per file to use (type_of_data_cut)</li>
 <li>Whether to use HLA/HLA-supertypes during training.</li>
+</ul>
+<p>This method is included in the three main DeepTCR objects:</p>
+<ul>
+<li>DeepTCR_U (unsupervised)</li>
+<li>DeepTCR_SS (supervised sequence classifier/regressor)</li>
+<li>DeepTCR_WF (supervised repertoire classifier/regressor)</li>
 </ul>
 
 <table class="field-list">
@@ -524,6 +536,12 @@ a user can load numpy arrays with relevant TCRSeq data for analysis.</p>
 <p>Tip: One can load data with the Get_Data command from directories and then reload it into another DeepTCR object with the Load_Data command. This can be useful, for example, if you have different labels you want to train to, and you need to change the label programatically between training each model. In this case, one can load the data first with the Get_Data method and then assign the labels pythonically before feeding them into the DeepTCR object with the Load_Data method.</p>
 <p>Of note, this method DOES NOT combine sequences with the same amino acid sequence. Therefore, if one wants this, one should first do it programatically before feeding the data into DeepTCR with this method.</p>
 <p>Another special use case of this method would be for any type of regression task (sequence or repertoire models). In the case that a per-sequence value is fed into DeepTCR (with Y), this value either becomes the per-sequence regression value or the average of all Y over a sample becomes the per-sample regression value. This is another case where one might want to load data with the Get_Data method and then reload it into DeepTCR with regression values.</p>
+<p>This method is included in the three main DeepTCR objects:</p>
+<ul>
+<li>DeepTCR_U (unsupervised)</li>
+<li>DeepTCR_SS (supervised sequence classifier/regressor)</li>
+<li>DeepTCR_WF (supervised repertoire classifier/regressor)</li>
+</ul>
 
 <table class="field-list">
   <colgroup>
@@ -612,6 +630,11 @@ a user can load numpy arrays with relevant TCRSeq data for analysis.</p>
       <h5 id="DeepTCR.DeepTCR.DeepTCR_base.Sequence_Inference--predicting-outputs-of-sequence-models-on-new-data">Predicting outputs of sequence models on new data</h5>
 <p>This method allows a user to take a pre-trained autoencoder/sequence classifier and generate outputs from the model on new data. For the autoencoder, this returns the features from the latent space. For the sequence classifier, it is the probability of belonging to each class.</p>
 <p>In the case that multiple models have been trained via MC or K-fold Cross-Validation strategy for the sequence classifier, this method can use some or all trained models in an ensemble fashion to provide the average prediction per sequence as well as the distribution of predictions from all trained models.</p>
+<p>This method is included in the two sequence DeepTCR objects:</p>
+<ul>
+<li>DeepTCR_U (unsupervised)</li>
+<li>DeepTCR_SS (supervised sequence classifier/regressor)</li>
+</ul>
 
 <table class="field-list">
   <colgroup>
