@@ -21,6 +21,7 @@ except:
 if tf == 'tensorflow':
     sel = [x for x in required if x.startswith('tensorflow-gpu')]
     required.remove(sel[0])
+    required.append(''.join(sel[0].split('-gpu')))
 
 setup(
     name="DeepTCR",
