@@ -5021,16 +5021,20 @@ class DeepTCR_WF(DeepTCR_S_base):
             counts = np.ones(shape=len_input)
 
         if counts is not None:
-            count_dict={}
-            for s in np.unique(sample_labels):
-                idx = sample_labels==s
-                count_dict[s]=np.sum(counts[idx])
+            if not seq_inf:
+                count_dict={}
+                for s in np.unique(sample_labels):
+                    idx = sample_labels==s
+                    count_dict[s]=np.sum(counts[idx])
 
         if freq is None:
-            freq = []
-            for c,n in zip(counts,sample_labels):
-                freq.append(c/count_dict[n])
-            freq = np.asarray(freq)
+            if not seq_inf:
+                freq = []
+                for c,n in zip(counts,sample_labels):
+                    freq.append(c/count_dict[n])
+                freq = np.asarray(freq)
+            else:
+                freq = np.ones_like(counts)
 
         data = graph_object()
         data.X_Seq_alpha = X_Seq_alpha
