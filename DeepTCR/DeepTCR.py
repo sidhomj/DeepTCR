@@ -219,7 +219,9 @@ class DeepTCR_base(object):
             self.classes = self.lb.classes_
 
             if p is None:
-                p = Pool(n_jobs)
+                p_ = Pool(n_jobs)
+            else:
+                p_ = p
 
             if sep == '\t':
                 ext = '*.tsv'
@@ -265,7 +267,7 @@ class DeepTCR_base(object):
                                 [v_alpha_column]*num_ins,
                                 [j_alpha_column]*num_ins))
 
-                DF = p.starmap(Get_DF_Data, args)
+                DF = p_.starmap(Get_DF_Data, args)
 
                 DF_temp = []
                 files_read_temp = []
@@ -326,20 +328,20 @@ class DeepTCR_base(object):
             #transform sequences into numerical space
             if aa_column_alpha is not None:
                 args = list(zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
-                result = p.starmap(Embed_Seq_Num, args)
+                result = p_.starmap(Embed_Seq_Num, args)
                 sequences_num = np.vstack(result)
                 X_Seq_alpha = np.expand_dims(sequences_num, 1)
 
             if aa_column_beta is not None:
                 args = list(zip(beta_sequences, [self.aa_idx] * len(beta_sequences),  [self.max_length] * len(beta_sequences)))
-                result = p.starmap(Embed_Seq_Num, args)
+                result = p_.starmap(Embed_Seq_Num, args)
                 sequences_num = np.vstack(result)
                 X_Seq_beta = np.expand_dims(sequences_num, 1)
 
 
             if p is None:
-                p.close()
-                p.join()
+                p_.close()
+                p_.join()
 
             if self.use_alpha is False:
                 X_Seq_alpha = np.zeros(shape=[len(label_id)])
@@ -594,12 +596,14 @@ class DeepTCR_base(object):
                 break
 
         if p is None:
-            p = Pool(40)
+            p_ = Pool(40)
+        else:
+            p_ = p
 
         if alpha_sequences is not None:
             self.alpha_sequences = alpha_sequences
             args = list(zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
-            result = p.starmap(Embed_Seq_Num, args)
+            result = p_.starmap(Embed_Seq_Num, args)
             sequences_num = np.vstack(result)
             self.X_Seq_alpha = np.expand_dims(sequences_num, 1)
             self.use_alpha = True
@@ -610,7 +614,7 @@ class DeepTCR_base(object):
         if beta_sequences is not None:
             self.beta_sequences = beta_sequences
             args = list(zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length] * len(beta_sequences)))
-            result = p.starmap(Embed_Seq_Num, args)
+            result = p_.starmap(Embed_Seq_Num, args)
             sequences_num = np.vstack(result)
             self.X_Seq_beta = np.expand_dims(sequences_num, 1)
             self.use_beta = True
@@ -669,8 +673,8 @@ class DeepTCR_base(object):
             self.j_alpha = np.asarray([None] * len_input)
 
         if p is None:
-            p.close()
-            p.join()
+            p_.close()
+            p_.join()
 
         if counts is not None:
             if sample_labels is not None:
@@ -2987,7 +2991,9 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
         self.model_type, get = load_model_data(self)
         if Load_Prev_Data is False:
             if p is None:
-                p = Pool(40)
+                p_ = Pool(40)
+            else:
+                p_ = p
 
             inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha, hla]
 
@@ -3035,7 +3041,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                 df_alpha,df_beta = self._residue(alpha_sequences[i],beta_sequences[i],
                               v_beta[i],d_beta[i],j_beta[i],
                               v_alpha[i],j_alpha[i],hla[i],
-                              p,batch_size,models)
+                              p_,batch_size,models)
                 df_alpha_list.append(df_alpha)
                 df_beta_list.append(df_beta)
                 if not df_alpha.empty:
@@ -3098,8 +3104,8 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
 
             if p is None:
-                p.close()
-                p.join()
+                p_.close()
+                p_.join()
 
             with open(os.path.join(self.Name,'sens_data.pkl'),'wb') as f:
                 pickle.dump([alpha_sequences,alpha_matrices,alpha_masks,df_alpha_list,
@@ -4925,12 +4931,14 @@ class DeepTCR_WF(DeepTCR_S_base):
         model_type, get  = load_model_data(self)
 
         if p is None:
-            p = Pool(40)
+            p_ = Pool(40)
+        else:
+            p_ = p
 
         if alpha_sequences is not None:
             args = list(
                 zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
-            result = p.starmap(Embed_Seq_Num, args)
+            result = p_.starmap(Embed_Seq_Num, args)
             sequences_num = np.vstack(result)
             X_Seq_alpha = np.expand_dims(sequences_num, 1)
         else:
@@ -4941,7 +4949,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         if beta_sequences is not None:
             args = list(
                 zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length] * len(beta_sequences)))
-            result = p.starmap(Embed_Seq_Num, args)
+            result = p_.starmap(Embed_Seq_Num, args)
             sequences_num = np.vstack(result)
             X_Seq_beta = np.expand_dims(sequences_num, 1)
         else:
@@ -5006,8 +5014,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                 pass
 
         if p is None:
-            p.close()
-            p.join()
+            p_.close()
+            p_.join()
 
         if (counts is None) & (freq is None):
             counts = np.ones(shape=len_input)
