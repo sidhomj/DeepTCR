@@ -3981,13 +3981,16 @@ class DeepTCR_WF(DeepTCR_S_base):
                 else:
                     GO.Y = tf.compat.v1.placeholder(tf.float32, shape=[None, 1])
 
-                Features = tf.compat.v1.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0))
+                Features = tf.compat.v1.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0),
+                                                     kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
                 GO.Features = Features
                 agg_list = []
                 if qualitative_agg:
                     #qualitative agg
                     GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
                     GO.Features_Agg = tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W)
+                    #normalize
+                    GO.Features_Agg = GO.Features_Agg / tf.sparse.sparse_dense_matmul(GO.sp, GO.X_Freq[:, tf.newaxis])
                     agg_list.append(GO.Features_Agg)
                 if quantitative_agg:
                     #quantitative agg
@@ -4001,7 +4004,8 @@ class DeepTCR_WF(DeepTCR_S_base):
                 if num_agg_layers != 0:
                     for lyr in range(num_agg_layers):
                         GO.Features_Agg = tf.compat.v1.layers.dropout(GO.Features_Agg, GO.prob)
-                        GO.Features_Agg = tf.compat.v1.layers.dense(GO.Features_Agg, units_agg, tf.nn.relu)
+                        GO.Features_Agg = tf.compat.v1.layers.dense(GO.Features_Agg, units_agg, tf.nn.relu,
+                                                                    kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
 
                 if self.regression is False:
                     if multisample_dropout:
@@ -4323,7 +4327,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             suppress_output (bool): To suppress command line output with training statisitcs, set to True.
 
-            l2_reg (float): When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization through TCR featurization layers of the network.
+            l2_reg (float): When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization through all but the last layer of the network.
 
             batch_seed (int): For deterministic batching during training, set this value to an integer of choice.
 
@@ -4459,7 +4463,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             suppress_output (bool): To suppress command line output with training statisitcs, set to True.
 
-            l2_reg (float): When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization through TCR featurization layers of the network.
+            l2_reg (float): When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization through all but the last layer of the network.
 
             batch_seed (int): For deterministic batching during training, set this value to an integer of choice.
 
@@ -4648,7 +4652,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             suppress_output (bool): To suppress command line output with training statisitcs, set to True.
 
-            l2_reg (float): When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization through TCR featurization layers of the network.
+            l2_reg (float): When training the repertoire classifier, it may help to utilize L2 regularization to prevent sample-specific overfitting of the model. By setting the value of this parameter (i.e. 0.01), one will introduce L2 regularization through al but the last layer of the network.
 
             batch_seed (int): For deterministic batching during training, set this value to an integer of choice.
 
