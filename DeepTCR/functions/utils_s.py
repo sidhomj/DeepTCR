@@ -646,20 +646,34 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
     it = 0
     grads = []
     w = []
+    if subsample is not None:
+        df_varidx = pd.DataFrame(self.sample_id)
+        if subsample_by_freq is False:
+            fn = lambda obj: obj.loc[np.random.choice(obj.index, subsample, False), :]
+        else:
+            df_varidx[1] = self.freq
+            fn = lambda obj: obj.loc[np.random.choice(obj.index, subsample, False,p=obj[1]), :]
+
     for vars in get_batches(set, batch_size=batch_size, random=random):
         if subsample is None:
             var_idx = np.where(np.isin(self.sample_id, vars[0]))[0]
         else:
-            var_idx = []
-            for p in np.unique(vars[0]):
-                vidx = np.where(np.isin(self.sample_id,p))[0]
-                if len(vidx)>subsample:
-                    if subsample_by_freq is False:
-                        vidx = np.random.choice(vidx,subsample,replace=False)
-                    else:
-                        vidx = np.random.choice(vidx,subsample,replace=False,p=self.freq[vidx]/np.sum(self.freq[vidx]))
-                var_idx.append(vidx)
-            var_idx = np.hstack(var_idx)
+            # old method
+            # var_idx = []
+            # for p in np.unique(vars[0]):
+            #     vidx = np.where(np.isin(self.sample_id,p))[0]
+            #     if len(vidx)>subsample:
+            #         if subsample_by_freq is False:
+            #             vidx = np.random.choice(vidx,subsample,replace=False)
+            #         else:
+            #             vidx = np.random.choice(vidx,subsample,replace=False,p=self.freq[vidx]/np.sum(self.freq[vidx]))
+            #     var_idx.append(vidx)
+            # var_idx = np.hstack(var_idx)
+
+            # new method
+            df_varidx_ = df_varidx[df_varidx[0].isin(np.unique(vars[0]))]
+            df_varidx_ = df_varidx_.groupby(by=0,as_index=False).apply(fn).reset_index()
+            var_idx = np.array(df_varidx_['level_1'])
 
         lb = LabelEncoder()
         lb.fit(vars[0])
