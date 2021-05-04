@@ -54,15 +54,29 @@ def Cut_DF(df,type_cut,cut):
     elif type_cut == 'Read_Sum':
         return df.iloc[np.where(np.cumsum(df['counts']) <= (cut))[0]]
 
+# def Process_Seq(df,col):
+#     #Drop null values
+#     df = df.dropna(subset=[col])
+#
+#     #strip any white space and remove non-IUPAC characters
+#     df[col] = df[col].str.strip()
+#     searchfor = ['\*', 'X', 'O']
+#     df = df[~df[col].str.contains('|'.join(searchfor))]
+#
+#     return df
+
 def Process_Seq(df,col):
     #Drop null values
     df = df.dropna(subset=[col])
 
     #strip any white space and remove non-IUPAC characters
     df[col] = df[col].str.strip()
-    searchfor = ['\*', 'X', 'O']
-    df = df[~df[col].str.contains('|'.join(searchfor))]
-
+    df = df[~df[col].str.contains(r'[^A-Z]')]
+    iupac_c = set((list(IUPAC.IUPACProtein.letters)))
+    all_c = set(''.join(list(df[col])))
+    searchfor = list(all_c.difference(iupac_c))
+    if len(searchfor) != 0:
+        df = df[~df[col].str.contains('|'.join(searchfor))]
     return df
 
 def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_column_alpha=None,aa_column_beta=None,
