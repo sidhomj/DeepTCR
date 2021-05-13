@@ -3984,17 +3984,19 @@ class DeepTCR_WF(DeepTCR_S_base):
                 Features = tf.compat.v1.layers.dense(GO.Features, num_concepts, lambda x: isru(x, l=0, h=1, a=0, b=0),
                                                      kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
                 GO.Features = Features
+                # GO.attn = attn_layer(GO,Features)
+
                 agg_list = []
                 if qualitative_agg:
                     #qualitative agg
-                    GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
+                    GO.Features_W = Features * GO.X_Freq[:, tf.newaxis] #* GO.attn
                     GO.Features_Agg = tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W)
                     #normalize
                     GO.Features_Agg = GO.Features_Agg / tf.sparse.sparse_dense_matmul(GO.sp, GO.X_Freq[:, tf.newaxis])
                     agg_list.append(GO.Features_Agg)
                 if quantitative_agg:
                     #quantitative agg
-                    GO.Features_W_c = Features * GO.X_Counts[:, tf.newaxis]
+                    GO.Features_W_c = Features * GO.X_Counts[:, tf.newaxis] * GO.attn
                     c_b = tf.Variable(name='c_b',initial_value=np.zeros(num_concepts), trainable=True,dtype=tf.float32)
                     GO.Features_Agg_c = isru(tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W_c)+c_b,l=0,h=1,a=0,b=0)
                     agg_list.append(GO.Features_Agg_c)
@@ -4100,6 +4102,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         suppress_output = train_params.suppress_output
         drop_out_rate = train_params.drop_out_rate
         multisample_dropout_rate = train_params.multisample_dropout_rate
+        self.attn_mem = 0.5*np.ones(len(self.predicted))
 
         tf.compat.v1.reset_default_graph()
         config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
@@ -4123,6 +4126,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                                  drop_out_rate=drop_out_rate,multisample_dropout_rate=multisample_dropout_rate,
                                  subsample=subsample,subsample_by_freq=subsample_by_freq)
 
+                if e == 10000:
+                    plt.hist(self.attn_mem[np.isin(self.sample_id, self.train[0])], 100)
+                    plt.yscale('log')
                 train_accuracy_total.append(train_accuracy)
                 train_loss_total.append(train_loss)
                 #kernel_weights.append(tf.compat.v1.trainable_variables()[0].eval())

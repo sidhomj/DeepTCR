@@ -1,4 +1,5 @@
 import tensorflow as tf
+from DeepTCR.functions.act_fun import *
 
 class graph_object(object):
     def __init__(self):
@@ -235,6 +236,13 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
 
     return fc
 
+def attn_layer(GO,Features,units=[12,12]):
+    l_ = Features
+    for u in units:
+        l_ = tf.compat.v1.layers.dense(l_, u, tf.nn.relu, kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
+
+    return tf.compat.v1.layers.dense(l_, 1, lambda x: isru(x, l=0, h=1, a=0, b=0),
+                                        kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
 #Layers for VAE
 
 def determine_kr_str(upsample2_beta,GO,self):

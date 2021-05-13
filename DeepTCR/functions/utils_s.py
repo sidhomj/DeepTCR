@@ -636,7 +636,7 @@ def Run_Graph_WF_dep(set,sess,self,GO,batch_size,random=True,train=True,drop_out
     return loss,accuracy,predicted_out,auc
 
 def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train=True,drop_out_rate=None,multisample_dropout_rate=None,
-                 subsample=None,subsample_by_freq=False):
+                 subsample=None,subsample_by_freq=False,subsample_by_attn=False):
     loss = []
     accuracy = []
     predicted_list = []
@@ -648,11 +648,18 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
     w = []
     if subsample is not None:
         df_varidx = pd.DataFrame(self.sample_id)
-        if subsample_by_freq is False:
-            fn = lambda obj: obj.loc[np.random.choice(obj.index, subsample, False), :]
-        else:
+        if subsample_by_freq:
             df_varidx[1] = self.freq
-            fn = lambda obj: obj.loc[np.random.choice(obj.index, subsample, False,p=obj[1]), :]
+            fn = lambda obj: obj.loc[np.random.choice(obj.index, subsample, False, p=obj[1]), :]
+        elif subsample_by_attn:
+            df_varidx[1] = self.attn_mem
+            gp = df_varidx.groupby(by=0, as_index=False).agg({1: 'sum'})
+            gp = dict(zip(gp[0],gp[1]))
+            df_varidx[2] = df_varidx[0].map(gp)
+            df_varidx[1] = df_varidx[1]/df_varidx[2]
+            fn = lambda obj: obj.loc[np.random.choice(obj.index, subsample, False, p=obj[1]), :]
+        else:
+            fn = lambda obj: obj.loc[np.random.choice(obj.index, subsample, False), :]
 
     for vars in get_batches(set, batch_size=batch_size, random=random):
         if subsample is None:
@@ -749,6 +756,10 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
         elif train:
             loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted],
                                                           feed_dict=feed_dict)
+            # loss_i, accuracy_i, _, predicted_i,attn_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted,GO.attn],
+            #                                               feed_dict=feed_dict)
+            # self.attn_mem[var_idx] = np.squeeze(attn_i,1)
+
         else:
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)
