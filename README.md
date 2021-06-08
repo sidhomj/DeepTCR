@@ -16,7 +16,7 @@ as also being able to take in v/d/j gene usage and the contextual HLA informatio
 were seen in (i.e. HLA alleles for a repertoire from a given human sample). For detailed instructions on 
 how to upload this type of data, refer to the documentation for loading data into DeepTCR.  
 
-For questions or help, email: jsidhom1@jhmi.edu
+For questions or help, email: johnwilliamsidhom@gmail.com
 
 ## Publication
 
