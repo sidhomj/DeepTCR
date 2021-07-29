@@ -26,7 +26,7 @@ if tf == 'tensorflow':
 setup(
     name="DeepTCR",
     description="Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data",
-    version="2.0.11",
+    version="2.0.12",
     author="John-William Sidhom",
     author_email="jsidhom1@jhmi.edu",
     packages=find_packages(),
