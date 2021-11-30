@@ -20,7 +20,7 @@ DTCRU.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,
 DTCRU.Train_VAE(Load_Prev_Data=False,use_only_seq=True)
 distances_vae = pdist(DTCRU.features, metric='euclidean')
 
-DTCRU.Train_VAE(Load_Prev_Data=False,masked_input=True,mask_rate=0.10,use_only_seq=True)
+DTCRU.Train_VAE(Load_Prev_Data=False,mask_rate=0.15,use_only_seq=True)
 distances_vae_mask = pdist(DTCRU.features, metric='euclidean')
 
 distances_list = [distances_vae,distances_vae_mask]

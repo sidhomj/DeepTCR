@@ -1851,7 +1851,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                   use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',latent_alpha=1e-3,sparsity_alpha=None,var_explained=None,graph_seed=None,
                   batch_size=10000, epochs_min=0,stop_criterion=0.01,stop_criterion_window=30, accuracy_min=None,
                   suppress_output = False,learning_rate=0.001,split_seed=None,Load_Prev_Data=False,
-                  masked_input=False,mask_rate=0.25):
+                  mask_rate=None):
 
         """
         # Train Variational Autoencoder (VAE)
@@ -1945,8 +1945,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     GO.net = 'ae'
                     if self.use_w:
                         GO.w = tf.compat.v1.placeholder(tf.float32, shape=[None])
-                    GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla,
-                                             num_fc_layers=0,units_fc=12,masked_input=masked_input,mask_rate=mask_rate)
+                    GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla)
                     fc = tf.compat.v1.layers.dense(GO.Features, 256)
                     fc = tf.compat.v1.layers.dense(fc, latent_dim)
                     z_w = tf.compat.v1.get_variable(name='z_w',shape=[latent_dim,latent_dim])
@@ -2165,6 +2164,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                         if self.use_w:
                             feed_dict[GO.w] = vars[8]
+
+                        if mask_rate is not None:
+                            feed_dict[GO.prob_mask] = mask_rate
 
                         train_loss_i, recon_loss_i, latent_loss_i, sparsity_loss_i, accuracy_i, _ = sess.run([total_cost, recon_cost, latent_cost, sparsity_cost, accuracy, opt_ae], feed_dict=feed_dict)
                         accuracy_list.append(accuracy_i)
