@@ -118,20 +118,36 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
         else:
             return conv_3_out,conv_out,indices
 
+def return_masked_input(input,mask_rate):
+    p = tf.constant([mask_rate])
+    r = tf.random.uniform(shape=tf.shape(input), maxval=1)
+    b = tf.math.greater(p, r)
+    f = tf.cast(b, dtype=tf.int64)
+    return input*(1-f)
+
 def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
-               use_only_gene,use_only_hla,num_fc_layers=0, units_fc=12):
+               use_only_gene,use_only_hla,num_fc_layers=0, units_fc=12,
+               masked_input=False,mask_rate=0.25):
 
     if self.use_alpha is True:
         GO.X_Seq_alpha = tf.compat.v1.placeholder(tf.int64,
                                         shape=[None, self.X_Seq_alpha.shape[1], self.X_Seq_alpha.shape[2]],
                                         name='Input_Alpha')
-        GO.X_Seq_alpha_OH = tf.one_hot(GO.X_Seq_alpha, depth=21)
+        if masked_input:
+            GO.X_Seq_alpha_mask = return_masked_input(GO.X_Seq_alpha,mask_rate)
+            GO.X_Seq_alpha_OH = tf.one_hot(GO.X_Seq_alpha_mask, depth=21)
+        else:
+            GO.X_Seq_alpha_OH = tf.one_hot(GO.X_Seq_alpha, depth=21)
 
     if self.use_beta is True:
         GO.X_Seq_beta = tf.compat.v1.placeholder(tf.int64,
                                        shape=[None, self.X_Seq_beta.shape[1], self.X_Seq_beta.shape[2]],
                                        name='Input_Beta')
-        GO.X_Seq_beta_OH = tf.one_hot(GO.X_Seq_beta, depth=21)
+        if masked_input:
+            GO.X_Seq_beta_mask = return_masked_input(GO.X_Seq_beta,mask_rate)
+            GO.X_Seq_beta_OH = tf.one_hot(GO.X_Seq_beta_mask, depth=21)
+        else:
+            GO.X_Seq_beta_OH = tf.one_hot(GO.X_Seq_beta, depth=21)
 
     GO.prob = tf.compat.v1.placeholder_with_default(0.0, shape=(), name='prob')
     GO.prob_multisample = tf.compat.v1.placeholder_with_default(0.0, shape=(), name='prob_multisample')
