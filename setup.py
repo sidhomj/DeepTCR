@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys
 import os
-from subprocess import check_output
+# from subprocess import check_output
 
 if sys.version_info.major != 3:
     raise RuntimeError("DeepTCR requires Python 3")
@@ -11,17 +11,17 @@ req_file = os.path.join(dir,'requirements.txt')
 with open(req_file) as f:
     required = f.read().splitlines()
 
-try:
-    num_gpus = len(check_output(['nvidia-smi', '--query-gpu=gpu_name',
-                                 '--format=csv']).decode().strip().split('\n'))
-    tf = 'tensorflow-gpu' if num_gpus > 1 else 'tensorflow'
-except:
-    tf = 'tensorflow'
-
-if tf == 'tensorflow':
-    sel = [x for x in required if x.startswith('tensorflow-gpu')]
-    required.remove(sel[0])
-    required.append(''.join(sel[0].split('-gpu')))
+# try:
+#     num_gpus = len(check_output(['nvidia-smi', '--query-gpu=gpu_name',
+#                                  '--format=csv']).decode().strip().split('\n'))
+#     tf = 'tensorflow-gpu' if num_gpus > 1 else 'tensorflow'
+# except:
+#     tf = 'tensorflow'
+#
+# if tf == 'tensorflow':
+#     sel = [x for x in required if x.startswith('tensorflow-gpu')]
+#     required.remove(sel[0])
+#     required.append(''.join(sel[0].split('-gpu')))
 
 setup(
     name="DeepTCR",
