@@ -107,7 +107,7 @@ Fifth release:
 
 #### 2.1.0
 - Upgrading to Tensorflow 2.7
-
+- improved handling of inference with previously unseen V/D/J gene usage.
 
 
 
