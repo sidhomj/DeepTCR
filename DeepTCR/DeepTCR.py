@@ -463,7 +463,7 @@ class DeepTCR_base(object):
                 hla_data_seq = np.asarray(['None']*len(file_id))
                 hla_data_seq_num = np.asarray(['None']*len(file_id))
 
-            with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'wb') as f:
+            with open(os.path.join(self.Name,'Data.pkl'), 'wb') as f:
                 pickle.dump([X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,seq_index,
                              self.lb,file_list,self.use_alpha,self.use_beta,
                              self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,
@@ -474,7 +474,7 @@ class DeepTCR_base(object):
                              self.use_hla,self.use_hla_sup,self.keep_non_supertype_alleles],f,protocol=4)
 
         else:
-            with open(os.path.join(self.Name,self.Name) + '_Data.pkl', 'rb') as f:
+            with open(os.path.join(self.Name,'Data.pkl'), 'rb') as f:
                 X_Seq_alpha,X_Seq_beta,Y, alpha_sequences,beta_sequences, label_id, file_id, freq,counts,seq_index,\
                 self.lb,file_list,self.use_alpha,self.use_beta,\
                     self.lb_v_beta, self.lb_d_beta, self.lb_j_beta,self.lb_v_alpha,self.lb_j_alpha,\
@@ -1162,15 +1162,15 @@ class feature_analytics_class(object):
 
         """
         #Get Saved Features, Indices, and Sequences
-        with open(os.path.join(self.Name,self.Name) + '_kernel.pkl', 'rb') as f:
+        with open(os.path.join(self.Name,'kernel.pkl'), 'rb') as f:
             self.kernel = pickle.load(f)
 
         if self.use_alpha is True:
-            with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'rb') as f:
+            with open(os.path.join(self.Name, 'alpha_features.pkl'), 'rb') as f:
                 self.alpha_features, self.alpha_indices, self.alpha_sequences = pickle.load(f)
 
         if self.use_beta is True:
-            with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'rb') as f:
+            with open(os.path.join(self.Name, 'beta_features.pkl'), 'rb') as f:
                 self.beta_features, self.beta_indices, self.beta_sequences = pickle.load(f)
 
         group_num = np.where(self.lb.classes_ == group)[0][0]
@@ -2270,15 +2270,15 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 #
                 if self.use_alpha is True:
                     var_save = [self.alpha_features, self.alpha_indices, self.alpha_sequences]
-                    with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
+                    with open(os.path.join(self.Name, 'alpha_features.pkl'), 'wb') as f:
                         pickle.dump(var_save, f)
 
                 if self.use_beta is True:
                     var_save = [self.beta_features, self.beta_indices, self.beta_sequences]
-                    with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
+                    with open(os.path.join(self.Name, 'beta_features.pkl'), 'wb') as f:
                         pickle.dump(var_save, f)
 
-                with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
+                with open(os.path.join(self.Name, 'kernel.pkl'), 'wb') as f:
                     pickle.dump(self.kernel, f)
 
 
@@ -2312,11 +2312,11 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                 #save model data and information for inference engine
                 save_model_data(self,GO.saver,sess,name='VAE',get=z_mean)
 
-            with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'wb') as f:
+            with open(os.path.join(self.Name,'VAE_features.pkl'), 'wb') as f:
                 pickle.dump([features,embed_dict,explained_variance,explained_variance_ratio], f,protocol=4)
 
         else:
-            with open(os.path.join(self.Name,self.Name) + '_VAE_features.pkl', 'rb') as f:
+            with open(os.path.join(self.Name,'VAE_features.pkl'), 'rb') as f:
                 features,embed_dict,explained_variance,explained_variance_ratio = pickle.load(f)
 
         self.features = features
@@ -3439,15 +3439,15 @@ class DeepTCR_SS(DeepTCR_S_base):
             #
             if self.use_alpha is True:
                 var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
-                with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
+                with open(os.path.join(self.Name, 'alpha_features.pkl'), 'wb') as f:
                     pickle.dump(var_save, f)
 
             if self.use_beta is True:
                 var_save = [self.beta_features,self.beta_indices,self.beta_sequences]
-                with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
+                with open(os.path.join(self.Name, 'beta_features.pkl'), 'wb') as f:
                     pickle.dump(var_save, f)
 
-            with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
+            with open(os.path.join(self.Name, 'kernel.pkl'), 'wb') as f:
                 pickle.dump(self.kernel, f)
 
             print('Done Training')
@@ -4219,15 +4219,15 @@ class DeepTCR_WF(DeepTCR_S_base):
             if write:
                 if self.use_alpha is True:
                     var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
-                    with open(os.path.join(self.Name, self.Name) + '_alpha_features.pkl', 'wb') as f:
+                    with open(os.path.join(self.Name, 'alpha_features.pkl'), 'wb') as f:
                         pickle.dump(var_save, f)
 
                 if self.use_beta is True:
                     var_save = [self.beta_features,self.beta_indices,self.beta_sequences]
-                    with open(os.path.join(self.Name, self.Name) + '_beta_features.pkl', 'wb') as f:
+                    with open(os.path.join(self.Name, 'beta_features.pkl'), 'wb') as f:
                         pickle.dump(var_save, f)
 
-                with open(os.path.join(self.Name, self.Name) + '_kernel.pkl', 'wb') as f:
+                with open(os.path.join(self.Name, 'kernel.pkl'), 'wb') as f:
                     pickle.dump(self.kernel, f)
 
                 if self.use_hla:
