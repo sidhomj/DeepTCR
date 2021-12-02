@@ -10,7 +10,8 @@ def Get_Gene_Features(self,embedding_dim_genes,gene_features):
         X_v_beta = tf.compat.v1.placeholder(tf.int64, shape=[None, ], name='Input_V_Beta')
         X_v_beta_OH = tf.one_hot(X_v_beta, depth=len(self.lb_v_beta.classes_))
         embedding_layer_v_beta = tf.compat.v1.get_variable(name='Embedding_V_beta',
-                                                 shape=[len(self.lb_v_beta.classes_), embedding_dim_genes])
+                                                 shape=[len(self.lb_v_beta.classes_)-1, embedding_dim_genes])
+        embedding_layer_v_beta = tf.concat([tf.reduce_mean(embedding_layer_v_beta,0,keepdims=True),embedding_layer_v_beta], axis=0)
         X_v_beta_embed = tf.matmul(X_v_beta_OH, embedding_layer_v_beta)
         gene_features.append(X_v_beta_embed)
     else:
@@ -22,7 +23,8 @@ def Get_Gene_Features(self,embedding_dim_genes,gene_features):
         X_d_beta = tf.compat.v1.placeholder(tf.int64, shape=[None, ], name='Input_D_Beta')
         X_d_beta_OH = tf.one_hot(X_d_beta, depth=len(self.lb_d_beta.classes_))
         embedding_layer_d_beta = tf.compat.v1.get_variable(name='Embedding_D_beta',
-                                                 shape=[len(self.lb_d_beta.classes_), embedding_dim_genes])
+                                                 shape=[len(self.lb_d_beta.classes_)-1, embedding_dim_genes])
+        embedding_layer_d_beta = tf.concat([tf.reduce_mean(embedding_layer_d_beta,0,keepdims=True),embedding_layer_d_beta], axis=0)
         X_d_beta_embed = tf.matmul(X_d_beta_OH, embedding_layer_d_beta)
         gene_features.append(X_d_beta_embed)
     else:
@@ -34,7 +36,8 @@ def Get_Gene_Features(self,embedding_dim_genes,gene_features):
         X_j_beta = tf.compat.v1.placeholder(tf.int64, shape=[None, ], name='Input_J_Beta')
         X_j_beta_OH = tf.one_hot(X_j_beta, depth=len(self.lb_j_beta.classes_))
         embedding_layer_j_beta = tf.compat.v1.get_variable(name='Embedding_J_Beta',
-                                                 shape=[len(self.lb_j_beta.classes_), embedding_dim_genes])
+                                                 shape=[len(self.lb_j_beta.classes_)-1, embedding_dim_genes])
+        embedding_layer_j_beta = tf.concat([tf.reduce_mean(embedding_layer_j_beta,0,keepdims=True),embedding_layer_j_beta], axis=0)
         X_j_beta_embed = tf.matmul(X_j_beta_OH, embedding_layer_j_beta)
         gene_features.append(X_j_beta_embed)
     else:
@@ -46,7 +49,8 @@ def Get_Gene_Features(self,embedding_dim_genes,gene_features):
         X_v_alpha = tf.compat.v1.placeholder(tf.int64, shape=[None, ], name='Input_V_Alpha')
         X_v_alpha_OH = tf.one_hot(X_v_alpha, depth=len(self.lb_v_alpha.classes_))
         embedding_layer_v_alpha = tf.compat.v1.get_variable(name='Embedding_V_Alpha',
-                                                 shape=[len(self.lb_v_alpha.classes_), embedding_dim_genes])
+                                                 shape=[len(self.lb_v_alpha.classes_)-1, embedding_dim_genes])
+        embedding_layer_v_alpha = tf.concat([tf.reduce_mean(embedding_layer_v_alpha,0,keepdims=True),embedding_layer_v_alpha], axis=0)
         X_v_alpha_embed = tf.matmul(X_v_alpha_OH, embedding_layer_v_alpha)
         gene_features.append(X_v_alpha_embed)
     else:
@@ -58,7 +62,8 @@ def Get_Gene_Features(self,embedding_dim_genes,gene_features):
         X_j_alpha = tf.compat.v1.placeholder(tf.int64, shape=[None, ], name='Input_J_Alpha')
         X_j_alpha_OH = tf.one_hot(X_j_alpha, depth=len(self.lb_j_alpha.classes_))
         embedding_layer_j_alpha = tf.compat.v1.get_variable(name='Embedding_J_Alpha',
-                                                 shape=[len(self.lb_j_alpha.classes_), embedding_dim_genes])
+                                                 shape=[len(self.lb_j_alpha.classes_)-1, embedding_dim_genes])
+        embedding_layer_j_alpha = tf.concat([tf.reduce_mean(embedding_layer_j_alpha,0,keepdims=True),embedding_layer_j_alpha], axis=0)
         X_j_alpha_embed = tf.matmul(X_j_alpha_OH, embedding_layer_j_alpha)
         gene_features.append(X_j_alpha_embed)
     else:
