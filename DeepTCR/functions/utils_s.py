@@ -1137,7 +1137,7 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
     if v_beta is not None:
         v_beta = v_beta.astype(self.lb_v_beta.classes_.dtype)
         i_r = np.where(np.invert(np.isin(v_beta, self.lb_v_beta.classes_)))[0]
-        v_beta[i_r] = np.random.choice(self.lb_v_beta.classes_, len(i_r))
+        v_beta[i_r] = self.unknown_str
         v_beta_num = self.lb_v_beta.transform(v_beta)
     else:
         v_beta_num = np.zeros(shape=[len_input])
@@ -1146,7 +1146,7 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
     if d_beta is not None:
         d_beta = d_beta.astype(self.lb_d_beta.classes_.dtype)
         i_r = np.where(np.invert(np.isin(d_beta, self.lb_d_beta.classes_)))[0]
-        d_beta[i_r] = np.random.choice(self.lb_d_beta.classes_, len(i_r))
+        d_beta[i_r] = self.unknown_str
         d_beta_num = self.lb_d_beta.transform(d_beta)
     else:
         d_beta_num = np.zeros(shape=[len_input])
@@ -1155,7 +1155,7 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
     if j_beta is not None:
         j_beta = j_beta.astype(self.lb_j_beta.classes_.dtype)
         i_r = np.where(np.invert(np.isin(j_beta, self.lb_j_beta.classes_)))[0]
-        j_beta[i_r] = np.random.choice(self.lb_j_beta.classes_, len(i_r))
+        j_beta[i_r] = self.unknown_str
         j_beta_num = self.lb_j_beta.transform(j_beta)
     else:
         j_beta_num = np.zeros(shape=[len_input])
@@ -1164,7 +1164,7 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
     if v_alpha is not None:
         v_alpha = v_alpha.astype(self.lb_v_alpha.classes_.dtype)
         i_r = np.where(np.invert(np.isin(v_alpha, self.lb_v_alpha.classes_)))[0]
-        v_alpha[i_r] = np.random.choice(self.lb_v_alpha.classes_, len(i_r))
+        v_alpha[i_r] = self.unknown_str
         v_alpha_num = self.lb_v_alpha.transform(v_alpha)
     else:
         v_alpha_num = np.zeros(shape=[len_input])
@@ -1173,7 +1173,7 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
     if j_alpha is not None:
         j_alpha = j_alpha.astype(self.lb_j_alpha.classes_.dtype)
         i_r = np.where(np.invert(np.isin(j_alpha, self.lb_j_alpha.classes_)))[0]
-        j_alpha[i_r] = np.random.choice(self.lb_j_alpha.classes_, len(i_r))
+        j_alpha[i_r] =self.unknown_str
         j_alpha_num = self.lb_j_alpha.transform(j_alpha)
     else:
         j_alpha_num = np.zeros(shape=[len_input])
