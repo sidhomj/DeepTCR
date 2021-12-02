@@ -17,10 +17,10 @@ DTCRU = DeepTCR_U('Murine_U')
 DTCRU.Get_Data(directory='../../Data/Murine_Antigens',Load_Prev_Data=False,
                aa_column_beta=0,count_column=1,v_beta_column=2,j_beta_column=3)
 
-DTCRU.Train_VAE(Load_Prev_Data=False,use_only_seq=True)
+DTCRU.Train_VAE(Load_Prev_Data=False,use_only_seq=True,attention=False,accuracy_min=0.85)
 distances_vae = pdist(DTCRU.features, metric='euclidean')
 
-DTCRU.Train_VAE(Load_Prev_Data=False,mask_rate=0.15,use_only_seq=True)
+DTCRU.Train_VAE(Load_Prev_Data=False,mask_rate=0.15,use_only_seq=True,attention=True,accuracy_min=0.85)
 distances_vae_mask = pdist(DTCRU.features, metric='euclidean')
 
 distances_list = [distances_vae,distances_vae_mask]
@@ -67,4 +67,6 @@ idx_2 = df_test['Algorithm'] == names[0]
 t,p_val = ttest_rel(df_test[idx_1]['Value'],df_test[idx_2]['Value'])
 print(p_val)
 
-
+method = 'AUC'
+df_test = df_metrics[df_metrics['Metric']==method]
+sns.violinplot(data=df_test,x='Classes',y='Value',hue='Algorithm')

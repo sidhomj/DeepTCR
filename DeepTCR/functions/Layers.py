@@ -83,8 +83,52 @@ def Get_HLA_Features(self,GO,embedding_dim):
     GO.HLA_Features = tf.matmul(GO.X_hla,GO.embedding_layer_hla)
     return GO.HLA_Features
 
+def attention_head(input):
+    q = tf.compat.v1.layers.dense(input, 12, tf.nn.relu)
+    k = tf.compat.v1.layers.dense(input, 12, tf.nn.relu)
+    v = input
+    output, wt = scaled_dot_product_attention(q, k, v)
+    return output
+
+
+def scaled_dot_product_attention(q, k, v, mask=None):
+  """Calculate the attention weights.
+  q, k, v must have matching leading dimensions.
+  k, v must have matching penultimate dimension, i.e.: seq_len_k = seq_len_v.
+  The mask has different shapes depending on its type(padding or look ahead)
+  but it must be broadcastable for addition.
+
+  Args:
+    q: query shape == (..., seq_len_q, depth)
+    k: key shape == (..., seq_len_k, depth)
+    v: value shape == (..., seq_len_v, depth_v)
+    mask: Float tensor with shape broadcastable
+          to (..., seq_len_q, seq_len_k). Defaults to None.
+
+  Returns:
+    output, attention_weights
+  """
+
+  matmul_qk = tf.matmul(q, k, transpose_b=True)  # (..., seq_len_q, seq_len_k)
+
+  # scale matmul_qk
+  dk = tf.cast(tf.shape(k)[-1], tf.float32)
+  scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
+
+  # add the mask to the scaled tensor.
+  if mask is not None:
+    scaled_attention_logits += (mask * -1e9)
+
+  # softmax is normalized on the last axis (seq_len_k) so that the scores
+  # add up to 1.
+  attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)  # (..., seq_len_q, seq_len_k)
+
+  output = tf.matmul(attention_weights, v)  # (..., seq_len_q, depth_v)
+
+  return output, attention_weights
+
 def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Features',kernel=3,net='ae',
-                           size_of_net = 'medium',l2_reg=0.0):
+                           size_of_net = 'medium',l2_reg=0.0,attention=False):
     with tf.compat.v1.variable_scope(name,reuse=reuse):
         if size_of_net == 'small':
             units = [12,32,64]
@@ -111,6 +155,15 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
                 conv = tf.compat.v1.layers.dropout(conv, prob)
 
         conv_3 = conv
+        if attention:
+            num_blocks = 3
+            for jj in range(num_blocks):
+                num_heads = 3
+                att_out = []
+                for ii in range(num_heads):
+                    att_out.append(attention_head(conv_3))
+                conv_3 = tf.concat(att_out,axis=-1)
+
         conv_3_out = tf.compat.v1.layers.flatten(tf.reduce_max(input_tensor=conv_3,axis=2))
 
         if net == 'ae':
@@ -125,7 +178,7 @@ def return_masked_input(input,mask_rate):
     return input*(1-f)
 
 def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
-               use_only_gene,use_only_hla,num_fc_layers=0, units_fc=12):
+               use_only_gene,use_only_hla,num_fc_layers=0, units_fc=12,attention=False):
 
     GO.prob = tf.compat.v1.placeholder_with_default(0.0, shape=(), name='prob')
     GO.prob_multisample = tf.compat.v1.placeholder_with_default(0.0, shape=(), name='prob_multisample')
@@ -183,14 +236,16 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
                                                                                        kernel=kernel,
                                                                                        name='alpha_conv', prob=GO.prob,
                                                                                        net=GO.net,size_of_net=GO.size_of_net,
-                                                                                       l2_reg=GO.l2_reg)
+                                                                                       l2_reg=GO.l2_reg,
+                                                                                       attention=attention)
 
     if self.use_beta is True:
         GO.Seq_Features_beta, GO.beta_out, GO.indices_beta = Convolutional_Features(inputs_seq_embed_beta,
                                                                                     kernel=kernel,
                                                                                     name='beta_conv', prob=GO.prob,
                                                                                     net=GO.net,size_of_net=GO.size_of_net,
-                                                                                    l2_reg = GO.l2_reg)
+                                                                                    l2_reg = GO.l2_reg,
+                                                                                    attention=attention)
 
     Seq_Features = []
     if self.use_alpha is True:

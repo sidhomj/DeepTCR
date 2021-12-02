@@ -1851,7 +1851,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                   use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',latent_alpha=1e-3,sparsity_alpha=None,var_explained=None,graph_seed=None,
                   batch_size=10000, epochs_min=0,stop_criterion=0.01,stop_criterion_window=30, accuracy_min=None,
                   suppress_output = False,learning_rate=0.001,split_seed=None,Load_Prev_Data=False,
-                  mask_rate=None):
+                  mask_rate=None,attention=False):
 
         """
         # Train Variational Autoencoder (VAE)
@@ -1945,7 +1945,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     GO.net = 'ae'
                     if self.use_w:
                         GO.w = tf.compat.v1.placeholder(tf.float32, shape=[None])
-                    GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla)
+                    GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla,attention=attention)
                     fc = tf.compat.v1.layers.dense(GO.Features, 256)
                     fc = tf.compat.v1.layers.dense(fc, latent_dim)
                     z_w = tf.compat.v1.get_variable(name='z_w',shape=[latent_dim,latent_dim])
