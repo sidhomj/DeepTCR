@@ -355,7 +355,8 @@ class DeepTCR_base(object):
             num_seq = X_Seq_alpha.shape[0]
             if self.use_v_beta is True:
                 self.lb_v_beta = LabelEncoder()
-                v_beta_num = self.lb_v_beta.fit_transform(v_beta)
+                self.lb_v_beta.classes_ = np.insert(np.unique(v_beta), 0, 'unknown')
+                v_beta_num = self.lb_v_beta.transform(v_beta)
             else:
                 self.lb_v_beta = LabelEncoder()
                 v_beta_num = np.zeros(shape=[num_seq])
@@ -363,7 +364,8 @@ class DeepTCR_base(object):
 
             if self.use_d_beta is True:
                 self.lb_d_beta = LabelEncoder()
-                d_beta_num = self.lb_d_beta.fit_transform(d_beta)
+                self.lb_d_beta.classes_ = np.insert(np.unique(d_beta), 0, 'unknown')
+                d_beta_num = self.lb_v_beta.transform(d_beta)
             else:
                 self.lb_d_beta = LabelEncoder()
                 d_beta_num = np.zeros(shape=[num_seq])
@@ -371,7 +373,8 @@ class DeepTCR_base(object):
 
             if self.use_j_beta is True:
                 self.lb_j_beta = LabelEncoder()
-                j_beta_num = self.lb_j_beta.fit_transform(j_beta)
+                self.lb_j_beta.classes_ = np.insert(np.unique(j_beta), 0, 'unknown')
+                j_beta_num = self.lb_j_beta.transform(j_beta)
             else:
                 self.lb_j_beta = LabelEncoder()
                 j_beta_num = np.zeros(shape=[num_seq])
@@ -379,7 +382,8 @@ class DeepTCR_base(object):
 
             if self.use_v_alpha is True:
                 self.lb_v_alpha = LabelEncoder()
-                v_alpha_num = self.lb_v_alpha.fit_transform(v_alpha)
+                self.lb_v_alpha.classes_ = np.insert(np.unique(v_alpha), 0, 'unknown')
+                v_alpha_num = self.lb_v_alpha.transform(v_alpha)
             else:
                 self.lb_v_alpha = LabelEncoder()
                 v_alpha_num = np.zeros(shape=[num_seq])
@@ -387,7 +391,8 @@ class DeepTCR_base(object):
 
             if self.use_j_alpha is True:
                 self.lb_j_alpha = LabelEncoder()
-                j_alpha_num = self.lb_j_alpha.fit_transform(j_alpha)
+                self.lb_j_alpha.classes_ = np.insert(np.unique(j_alpha), 0, 'unknown')
+                j_alpha_num = self.lb_j_alpha.transform(j_alpha)
             else:
                 self.lb_j_alpha = LabelEncoder()
                 j_alpha_num = np.zeros(shape=[num_seq])
@@ -625,7 +630,8 @@ class DeepTCR_base(object):
         if v_beta is not None:
             self.v_beta = v_beta
             self.lb_v_beta = LabelEncoder()
-            self.v_beta_num = self.lb_v_beta.fit_transform(v_beta)
+            self.lb_v_beta.classes_ = np.insert(np.unique(v_beta), 0, 'unknown')
+            self.v_beta_num = self.lb_v_beta.transform(v_beta)
             self.use_v_beta = True
         else:
             self.lb_v_beta = LabelEncoder()
@@ -635,7 +641,8 @@ class DeepTCR_base(object):
         if d_beta is not None:
             self.d_beta = d_beta
             self.lb_d_beta = LabelEncoder()
-            self.d_beta_num = self.lb_d_beta.fit_transform(d_beta)
+            self.lb_d_beta.classes_ = np.insert(np.unique(d_beta), 0, 'unknown')
+            self.d_beta_num = self.lb_v_beta.transform(d_beta)
             self.use_d_beta = True
         else:
             self.lb_d_beta = LabelEncoder()
@@ -645,7 +652,8 @@ class DeepTCR_base(object):
         if j_beta is not None:
             self.j_beta = j_beta
             self.lb_j_beta = LabelEncoder()
-            self.j_beta_num = self.lb_j_beta.fit_transform(j_beta)
+            self.lb_j_beta.classes_ = np.insert(np.unique(j_beta), 0, 'unknown')
+            self.j_beta_num = self.lb_j_beta.transform(j_beta)
             self.use_j_beta = True
         else:
             self.lb_j_beta = LabelEncoder()
@@ -655,7 +663,8 @@ class DeepTCR_base(object):
         if v_alpha is not None:
             self.v_alpha = v_alpha
             self.lb_v_alpha = LabelEncoder()
-            self.v_alpha_num = self.lb_v_alpha.fit_transform(v_alpha)
+            self.lb_v_alpha.classes_ = np.insert(np.unique(v_alpha), 0, 'unknown')
+            self.v_alpha_num = self.lb_v_alpha.transform(v_alpha)
             self.use_v_alpha = True
         else:
             self.lb_v_alpha = LabelEncoder()
@@ -665,7 +674,8 @@ class DeepTCR_base(object):
         if j_alpha is not None:
             self.j_alpha = j_alpha
             self.lb_j_alpha = LabelEncoder()
-            self.j_alpha_num = self.lb_j_alpha.fit_transform(j_alpha)
+            self.lb_j_alpha.classes_ = np.insert(np.unique(j_alpha), 0, 'unknown')
+            self.j_alpha_num = self.lb_j_alpha.transform(j_alpha)
             self.use_j_alpha = True
         else:
             self.lb_j_alpha = LabelEncoder()
