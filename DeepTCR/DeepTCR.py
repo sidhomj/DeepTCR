@@ -643,7 +643,7 @@ class DeepTCR_base(object):
             self.d_beta = d_beta
             self.lb_d_beta = LabelEncoder()
             self.lb_d_beta.classes_ = np.insert(np.unique(d_beta), 0, self.unknown_str)
-            self.d_beta_num = self.lb_v_beta.transform(d_beta)
+            self.d_beta_num = self.lb_d_beta.transform(d_beta)
             self.use_d_beta = True
         else:
             self.lb_d_beta = LabelEncoder()
