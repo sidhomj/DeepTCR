@@ -51,12 +51,16 @@ def sensitivity_logo(sequences,matrices,masks,ax=None,low_color='red',medium_col
     ax.set_yticks([])
     ax.set_facecolor(background_color)
     xticks = np.arange(0.5, max_len + .5)
+    dir_list = []
+    mag_list = []
     for ii, sequence in enumerate(sequences, 0):
         obs_val = matrices[ii] * masks[ii]
         obs_val = obs_val[np.nonzero(obs_val)]
         diff = matrices[ii] - obs_val[:, np.newaxis]
         dir = np.mean(diff, 1)/max_mean_diff[ii]
         mag = np.max(np.abs(diff), 1)/max_max_diff[ii]
+        dir_list.append(dir)
+        mag_list.append(mag)
         for jj, (m,d, c) in enumerate(zip(mag,dir, sequence), 0):
             color = cmap(norm(d))[0:3]
             if m < min_size:
@@ -65,4 +69,4 @@ def sensitivity_logo(sequences,matrices,masks,ax=None,low_color='red',medium_col
             logomaker.Glyph(p=xticks[jj], c=c, floor=ii, ceiling=ceiling, ax=ax, color=color, vpad=0.1,
                             font_name=font_name,edgecolor=edgecolor,edgewidth=edgewidth)
 
-    return dir, mag
+    return np.flip(dir_list), np.flip(mag_list)
