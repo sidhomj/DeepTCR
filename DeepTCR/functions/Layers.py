@@ -410,6 +410,24 @@ def context_pooling(x,f,sp,GO,num_iter=3,units=[12,12,12]):
     sig = sig / tf.sparse.sparse_dense_matmul(sp, f)
     return sig
 
+def transformer_attn(x,f,sp,GO,num_iter=3,units=[12,12,12]):
+    x_init = x
+    w = tf.ones(tf.shape(x)[0])[:,tf.newaxis]
+    for it in range(num_iter):
+        #compute bag representation
+        sig = tf.sparse.sparse_dense_matmul(sp, f*x_init*w)
+        #normalize
+        sig = sig / tf.sparse.sparse_dense_matmul(sp, f)
+        #broadcast to instances
+        s_i = tf.transpose(tf.sparse.sparse_dense_matmul(tf.transpose(sig),sp))
+        #concatenate bag representations to instance instances
+        x = tf.concat([x_init,s_i],axis=-1)
+        #multiple dense layers to arrive to attn w
+        for u in units:
+            x = tf.compat.v1.layers.dense(x, u, tf.nn.relu)
+        w = tf.compat.v1.layers.dense(x,1,tf.nn.sigmoid)
+    return w
+
 
 
 
