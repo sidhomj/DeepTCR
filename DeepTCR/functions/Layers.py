@@ -410,7 +410,7 @@ def context_pooling(x,f,sp,GO,num_iter=3,units=[12,12,12]):
     sig = sig / tf.sparse.sparse_dense_matmul(sp, f)
     return sig
 
-def transformer_attn(x,f,sp,num_iter=3,units=[12,12,12]):
+def transformer_attn(x,f,sp,GO,num_iter=3,units=[12,12,12]):
     x_init = x
     w = tf.ones(tf.shape(x)[0])[:,tf.newaxis]
     for it in range(num_iter):
@@ -424,7 +424,8 @@ def transformer_attn(x,f,sp,num_iter=3,units=[12,12,12]):
         x = tf.concat([x_init,s_i],axis=-1)
         #multiple dense layers to arrive to attn w, sigmoid function constraints w between 0 and 1
         for u in units:
-            x = tf.compat.v1.layers.dense(x, u, tf.nn.relu)
+            x = tf.compat.v1.layers.dense(x, u, tf.nn.relu,
+                                          kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
         w = tf.compat.v1.layers.dense(x,1,tf.nn.sigmoid)
     return w
 
