@@ -3998,7 +3998,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 agg_list = []
                 if qualitative_agg:
                     attn=True
-                    attn_heads=3
+                    attn_heads=1
                     if attn is False:
                         #qualitative agg
                         GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
