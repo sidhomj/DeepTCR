@@ -360,3 +360,65 @@ def MultiSample_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
             out.append(tf.compat.v1.layers.dense(fc,units=units,activation=activation,use_bias=use_bias,
                                        kernel_regularizer=tf.keras.regularizers.l1(reg)))
     return tf.reduce_mean(input_tensor=tf.stack(out),axis=0)
+
+def dynamic_pooling(x,f,sp,GO,num_iter=3):
+    b = tf.zeros(tf.shape(x)[0])[:, tf.newaxis]
+    for it in range(num_iter):
+        #compute c (softmax of weights)
+        c1 = tf.exp(b)
+        c2 = tf.sparse.sparse_dense_matmul(sp, c1)
+        c2 = tf.sparse.sparse_dense_matmul(tf.transpose(c2), sp)
+        c = c1/tf.transpose(c2)
+        #aggregate across bags
+        sig = tf.sparse.sparse_dense_matmul(sp, c*f*x)
+        #normalize
+        sig = sig / tf.sparse.sparse_dense_matmul(sp, f)
+        #compute norm
+        sig_norm = tf.norm(sig,axis=-1)[:,tf.newaxis]
+        #squash to get bag representation
+        s = (tf.square(sig_norm)/(1+tf.square(sig_norm)))*(sig/sig_norm)
+        #compute dot product of bag representation against all instance representations
+        s_i = tf.transpose(tf.sparse.sparse_dense_matmul(tf.transpose(s),sp))
+        b += tf.reduce_sum(x*s_i,1)[:,tf.newaxis]
+
+    GO.c, GO.sig, GO.s, GO.s_i = c,sig,s,s_i
+
+    # c1 = tf.exp(b)
+    # c2 = tf.sparse.sparse_dense_matmul(sp, c1)
+    # c2 = tf.sparse.sparse_dense_matmul(tf.transpose(c2), sp)
+    # return c1 / tf.transpose(c2)
+    return s
+
+    # return b
+
+def context_pooling(x,f,sp,GO,num_iter=3,units=[12,12,12]):
+
+    for it in range(num_iter):
+        #compute bag representation
+        sig = tf.sparse.sparse_dense_matmul(sp, f*x)
+        #normalize
+        sig = sig / tf.sparse.sparse_dense_matmul(sp, f)
+        #broadcast to instances
+        s_i = tf.transpose(tf.sparse.sparse_dense_matmul(tf.transpose(sig),sp))
+        #concatenate bag representations to instance instances
+        x = tf.concat([x,s_i],axis=-1)
+        for u in units:
+            x = tf.compat.v1.layers.dense(x, u, tf.nn.relu)
+
+    #compute final bag representation
+    sig = tf.sparse.sparse_dense_matmul(sp, f * x)
+    sig = sig / tf.sparse.sparse_dense_matmul(sp, f)
+    return sig
+
+
+
+
+
+
+
+
+
+
+
+
+

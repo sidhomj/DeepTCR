@@ -3997,12 +3997,19 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.Features = Features
                 agg_list = []
                 if qualitative_agg:
-                    #qualitative agg
-                    GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
-                    GO.Features_Agg = tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W)
-                    #normalize
-                    GO.Features_Agg = GO.Features_Agg / tf.sparse.sparse_dense_matmul(GO.sp, GO.X_Freq[:, tf.newaxis])
-                    agg_list.append(GO.Features_Agg)
+
+                    # #qualitative agg
+                    # GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
+                    # GO.Features_Agg = tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W)
+                    # #normalize
+                    # GO.Features_Agg = GO.Features_Agg / tf.sparse.sparse_dense_matmul(GO.sp, GO.X_Freq[:, tf.newaxis])
+                    # agg_list.append(GO.Features_Agg)
+                    #
+                    for _ in range(1):
+                        # GO.Features_Agg = dynamic_pooling(Features,GO.X_Freq[:, tf.newaxis],GO.sp,GO,num_iter=3)
+                        GO.Features_Agg = context_pooling(Features,GO.X_Freq[:, tf.newaxis],GO.sp,GO,num_iter=3)
+                        agg_list.append(GO.Features_Agg)
+
                 if quantitative_agg:
                     #quantitative agg
                     GO.Features_W_c = Features * GO.X_Counts[:, tf.newaxis]

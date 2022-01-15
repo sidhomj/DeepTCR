@@ -749,6 +749,9 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
         elif train:
             loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted],
                                                           feed_dict=feed_dict)
+            # out = sess.run(GO.dyn_w,feed_dict)
+            # out = sess.run([GO.bag_r,GO.ins_r],feed_dict)
+            # c,sig,s,s_i = sess.run([GO.c,GO.sig,GO.s,GO.s_i],feed_dict)
         else:
             loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
                                                        feed_dict=feed_dict)
