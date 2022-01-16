@@ -107,7 +107,8 @@ Fifth release:
 
 #### 2.1.0
 - Upgrading to Tensorflow 2.7
-- improved handling of inference with previously unseen V/D/J gene usage.
+- Improved handling of inference with previously unseen V/D/J gene usage.
+- Improved computational efficiency for loading data from large files (~2x improvement in speed, 50% or more decrease in peak memory consumption)
 
 
 

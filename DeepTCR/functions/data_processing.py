@@ -86,55 +86,61 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
 
     with pd.option_context('mode.chained_assignment', None):
 
-        df = pd.read_csv(file, sep=sep,dtype=object)
         #First collect columns in dataframe based on user preferences
         cols_to_keep = []
         column_names = []
         sequence_columns = []
+        dtypes = []
         if aa_column_alpha is not None:
             cols_to_keep.append(aa_column_alpha)
             column_names.append('alpha')
             sequence_columns.append('alpha')
+            dtypes.append(str)
         if aa_column_beta is not None:
             cols_to_keep.append(aa_column_beta)
             column_names.append('beta')
             sequence_columns.append('beta')
+            dtypes.append(str)
 
         if count_column is not None:
             cols_to_keep.append(count_column)
             column_names.append('counts')
-        else:
-            df['counts'] = 1
-            cols_to_keep.append(np.where(df.columns=='counts')[0][0])
-            column_names.append('counts')
+            dtypes.append(int)
 
         if v_alpha_column is not None:
             cols_to_keep.append(v_alpha_column)
             column_names.append('v_alpha')
+            dtypes.append(str)
 
         if j_alpha_column is not None:
             cols_to_keep.append(j_alpha_column)
             column_names.append('j_alpha')
+            dtypes.append(str)
 
         if v_beta_column is not None:
             cols_to_keep.append(v_beta_column)
             column_names.append('v_beta')
+            dtypes.append(str)
 
         if d_beta_column is not None:
             cols_to_keep.append(d_beta_column)
             column_names.append('d_beta')
+            dtypes.append(str)
 
         if j_beta_columns is not None:
             cols_to_keep.append(j_beta_columns)
             column_names.append('j_beta')
+            dtypes.append(str)
 
-
-        df = df.iloc[:,cols_to_keep]
+        dtypes = dict(zip(cols_to_keep,dtypes))
+        df = pd.read_csv(file, sep=sep,dtype=dtypes,usecols=cols_to_keep)
+        if count_column is None:
+            df['counts'] = 1
+            column_names.append('counts')
 
         df.columns = column_names
         df.dropna(subset=['counts'],inplace=True)
-        df['counts']=df['counts'].astype(int)
-        df= df[df['counts'] >= 1]
+        df = df[df['counts'] >= 1]
 
         #Process Sequences
         if aa_column_alpha is not None:
