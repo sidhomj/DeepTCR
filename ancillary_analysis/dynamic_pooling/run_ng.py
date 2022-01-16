@@ -9,7 +9,7 @@ meta = meta[meta[meta.columns[4]]!='CMVUnknown']
 label_dict = dict(zip(meta[meta.columns[0]],meta[meta.columns[4]]))
 
 DTCR_l = DeepTCR_WF('load')
-DTCR_l.Get_Data(directory='../../Data/natgen/data/',Load_Prev_Data=False,
+DTCR_l.Get_Data(directory='../../Data/natgen/data/',Load_Prev_Data=True,
                 aa_column_beta=1,v_beta_column=7,d_beta_column=14,j_beta_column=21,
                 type_of_data_cut='Num_Seq',
                 data_cut=500)

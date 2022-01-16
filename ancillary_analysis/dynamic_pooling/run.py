@@ -2,7 +2,7 @@ from DeepTCR.DeepTCR import DeepTCR_WF
 import numpy as np
 
 DTCR = DeepTCR_WF('murine')
-DTCR.Get_Data(directory='../../Data/Rudqvist',Load_Prev_Data=False,
+DTCR.Get_Data(directory='../../Data/Rudqvist',Load_Prev_Data=True,
               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21)
               # type_of_data_cut='Num_Seq',
               # data_cut=100)
