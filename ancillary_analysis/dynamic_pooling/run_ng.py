@@ -8,8 +8,8 @@ meta[meta.columns[4]] = 'CMV'+meta[meta.columns[4]]
 meta = meta[meta[meta.columns[4]]!='CMVUnknown']
 label_dict = dict(zip(meta[meta.columns[0]],meta[meta.columns[4]]))
 
-DTCR_l = DeepTCR_WF('load_500')
-DTCR_l.Get_Data(directory='../../Data/natgen/data/cohort1/',Load_Prev_Data=True,
+DTCR_l = DeepTCR_WF('load_1000')
+DTCR_l.Get_Data(directory='../../Data/natgen/data/cohort1/',Load_Prev_Data=False,
                 aa_column_beta=1,v_beta_column=10,d_beta_column=13,j_beta_column=16,count_column=5,
                 type_of_data_cut='Num_Seq',
                 data_cut=1000)
@@ -29,6 +29,7 @@ DTCR.Load_Data(beta_sequences=beta_sequences,v_beta=v_beta,d_beta=d_beta,j_beta=
 folds = 1
 graph_seed=0
 seeds = np.array(range(folds))
-DTCR.Monte_Carlo_CrossVal(folds=folds,seeds=seeds,graph_seed=graph_seed,l2_reg=0.00,
-                          test_size=0.40,combine_train_valid=True,train_loss_min=0.2)
+DTCR.Monte_Carlo_CrossVal(folds=folds,seeds=seeds,graph_seed=graph_seed,l2_reg=0.00,epochs_min=10,
+                          test_size=0.40,combine_train_valid=True,train_loss_min=0.2,
+                          num_agg_layers=3,units_agg=12)
 DTCR.AUC_Curve()

@@ -3997,7 +3997,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.Features = Features
                 agg_list = []
                 if qualitative_agg:
-                    attn=True
+                    attn=False
                     attn_heads=1
                     if attn is False:
                         #qualitative agg
