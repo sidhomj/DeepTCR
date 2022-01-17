@@ -1623,6 +1623,11 @@ class vis_class(object):
         sample_id = self.sample_id
         freq = self.freq
         predicted = self.predicted
+        if set != 'all':
+            train_idx = self.train_idx
+            valid_idx = self.valid_idx
+            test_idx = self.test_idx
+
         if hasattr(self, 'Cluster_Assignments'):
             IDX = self.Cluster_Assignments
         else:
@@ -1639,6 +1644,11 @@ class vis_class(object):
             sample_id = sample_id[idx]
             freq = freq[idx]
             predicted = predicted[idx]
+            if set != 'all':
+                train_idx = train_idx[idx]
+                valid_idx = valid_idx[idx]
+                test_idx = test_idx[idx]
+
             if hasattr(self, 'Cluster_Assignments'):
                 IDX = IDX[idx]
             else:
@@ -1651,6 +1661,10 @@ class vis_class(object):
             freq_temp = []
             predicted_temp = []
             cluster_temp = []
+            if set != 'all':
+                train_idx_temp = []
+                valid_idx_temp = []
+                test_idx_temp = []
 
             for i in self.lb.classes_:
                 sel = np.where(class_id == i)[0]
@@ -1660,6 +1674,11 @@ class vis_class(object):
                 sample_temp.append(sample_id[sel])
                 freq_temp.append(freq[sel])
                 predicted_temp.append(predicted[sel])
+                if set != 'all':
+                    train_idx_temp.append(train_idx[sel])
+                    valid_idx_temp.append(valid_idx[sel])
+                    test_idx_temp.append(test_idx[sel])
+
                 if hasattr(self, 'Cluster_Assignments'):
                     cluster_temp.append(IDX[sel])
 
@@ -1667,7 +1686,13 @@ class vis_class(object):
             class_id = np.hstack(class_temp)
             sample_id = np.hstack(sample_temp)
             freq = np.hstack(freq_temp)
-            predicted = np.hstack(predicted_temp)
+            predicted = np.vstack(predicted_temp)
+
+            if set != 'all':
+                train_idx = np.hstack(train_idx_temp)
+                valid_idx = np.hstack(valid_idx_temp)
+                test_idx = np.hstack(test_idx_temp)
+
             if hasattr(self, 'Cluster_Assignments'):
                 IDX = np.hstack(cluster_temp)
 
@@ -1694,9 +1719,9 @@ class vis_class(object):
         if set != 'all':
             df_plot['Set'] = None
             with pd.option_context('mode.chained_assignment',None):
-                df_plot['Set'].iloc[np.where(self.train_idx)[0]] = 'train'
-                df_plot['Set'].iloc[np.where(self.valid_idx)[0]] = 'valid'
-                df_plot['Set'].iloc[np.where(self.test_idx)[0]] = 'test'
+                df_plot['Set'].iloc[np.where(train_idx)[0]] = 'train'
+                df_plot['Set'].iloc[np.where(valid_idx)[0]] = 'valid'
+                df_plot['Set'].iloc[np.where(test_idx)[0]] = 'test'
 
         if IDX is not None:
             IDX[IDX == -1] = np.max(IDX) + 1
@@ -3997,7 +4022,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.Features = Features
                 agg_list = []
                 if qualitative_agg:
-                    attn=False
+                    attn=True
                     attn_heads=1
                     if attn is False:
                         #qualitative agg
@@ -4229,6 +4254,15 @@ class DeepTCR_WF(DeepTCR_S_base):
             self.test_idx = np.isin(self.sample_id,self.test[0])
 
             if write:
+                with open(os.path.join(self.Name, 'seq_features.pkl'), 'wb') as f:
+                    pickle.dump(self.features, f)
+
+                with open(os.path.join(self.Name, 'seq_preds.pkl'), 'wb') as f:
+                    pickle.dump(self.predicted, f)
+
+                with open(os.path.join(self.Name, 'split_indices.pkl'), 'wb') as f:
+                    pickle.dump([self.train_idx,self.valid_idx,self.test_idx], f)
+
                 if self.use_alpha is True:
                     var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
                     with open(os.path.join(self.Name, 'alpha_features.pkl'), 'wb') as f:
