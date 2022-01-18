@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 from DeepTCR.DeepTCR import DeepTCR_WF
+import matplotlib.pyplot as plt
+import os
+import pickle
 
 meta = pd.read_csv('../../Data/natgen/cohort1_meta.csv')
 meta[meta.columns[0]] = meta[meta.columns[0]]+'.tsv'
@@ -9,11 +12,11 @@ meta = meta[meta[meta.columns[4]]!='CMVUnknown']
 # meta = meta.sample(10)
 label_dict = dict(zip(meta[meta.columns[0]],meta[meta.columns[4]]))
 
-DTCR_l = DeepTCR_WF('load_500')
+DTCR_l = DeepTCR_WF('load_5000')
 DTCR_l.Get_Data(directory='../../Data/natgen/data/cohort1/',Load_Prev_Data=True,
                 aa_column_beta=1,v_beta_column=10,d_beta_column=13,j_beta_column=16,count_column=5,
                 type_of_data_cut='Num_Seq',
-                data_cut=1000)
+                data_cut=5000)
 
 idx = np.isin(DTCR_l.sample_id,meta[meta.columns[0]])
 beta_sequences = DTCR_l.beta_sequences[idx]
@@ -39,53 +42,32 @@ graph_seed = 0
 DTCR.Monte_Carlo_CrossVal(folds=folds,seeds=seeds,graph_seed=graph_seed,l2_reg=0.0,epochs_min=epochs_min,
                           num_concepts=num_concepts,size_of_net=size_of_net,
                           test_size=0.40,combine_train_valid=True,train_loss_min=train_loss_min,
-                          hinge_loss_t=hinge_loss_t,subsample=None)
+                          hinge_loss_t=hinge_loss_t,subsample=500)
                           #num_agg_layers=1,units_agg=12)
 # DTCR.AUC_Curve()
-DTCR.UMAP_Plot(set='train',by_class=True,sample_per_class=100,prob_plot='CMV+')
+with open(os.path.join(DTCR.Name, 'seq_features.pkl'), 'rb') as f:
+    DTCR.features = pickle.load(f)
 
-import umap
-import warnings
-import os
-import pickle
-idx = None
-features = DTCR.features
-class_id = DTCR.class_id
-sample_id = DTCR.sample_id
-freq = DTCR.freq
-predicted = DTCR.predicted
+with open(os.path.join(DTCR.Name, 'seq_preds.pkl'), 'rb') as f:
+    DTCR.predicted = pickle.load(f)
 
-features_temp = []
-class_temp = []
-sample_temp = []
-freq_temp = []
-predicted_temp = []
-cluster_temp = []
+with open(os.path.join(DTCR.Name, 'split_indices.pkl'), 'rb') as f:
+    DTCR.train_idx, DTCR.valid_idx, DTCR.test_idx = pickle.load(f)
 
-for i in DTCR.lb.classes_:
-    sel = np.where(class_id == i)[0]
-    sel = np.random.choice(sel, 1000, replace=False)
-    features_temp.append(features[sel])
-    class_temp.append(class_id[sel])
-    sample_temp.append(sample_id[sel])
-    freq_temp.append(freq[sel])
-    predicted_temp.append(predicted[sel])
+# DTCR.UMAP_Plot(set='train',by_class=True,sample_per_class=1000,Load_Prev_Data=False,plot_by_class=True,scale=10)
+# DTCR.UMAP_Plot(set='train',by_sample=True,sample_per_class=10000,Load_Prev_Data=True,plot_by_class=True,scale=10)
+DTCR.HeatMap_Sequences(set='train',by_sample=True,sample_num_per_class=10000,figsize=(7,7),color_dict={'CMV+':'b','CMV-':'r'})
+DTCR.HeatMap_Samples(set='train',figsize=(7,7),color_dict={'CMV+':'b','CMV-':'r'})
 
-features = np.vstack(features_temp)
-class_id = np.hstack(class_temp)
-sample_id = np.hstack(sample_temp)
-freq = np.hstack(freq_temp)
-predicted = np.hstack(predicted_temp)
-IDX = None
-umap_obj = umap.UMAP()
-with warnings.catch_warnings():
-    warnings.simplefilter('ignore')
-    X_2 = umap_obj.fit_transform(features)
-with open(os.path.join(DTCR.Name, 'umap.pkl'), 'wb') as f:
-    pickle.dump([X_2, features, class_id, sample_id, freq, IDX, idx], f, protocol=4)
+from scipy.spatial.distance import pdist, squareform
+features = DTCR.features[DTCR.test_idx]
+sel = np.random.choice(range(len(features)), 1000, replace=False)
+features = features[sel]
+pw = squareform(pdist(features))
+import seaborn as sns
+sns.clustermap(pw,figsize=(7,7),cmap='jet')
+plt.subplots(figsize=(7,7))
+sns.heatmap(pw)
 
-df_plot = pd.DataFrame()
-df_plot['x'] = X_2[:, 0]
-df_plot['y'] = X_2[:, 1]
-df_plot['Class'] = class_id
-df_plot['Sample'] = sample_id
+sel = np.random.choice(DTC)
+

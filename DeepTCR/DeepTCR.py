@@ -1256,7 +1256,7 @@ class feature_analytics_class(object):
 class vis_class(object):
 
     def HeatMap_Sequences(self,set='all', filename='Heatmap_Sequences.tif', sample_num=None,
-                          sample_num_per_class=None,color_dict=None):
+                          sample_num_per_class=None,color_dict=None,figsize=(10,10),by_sample=False):
 
         """
         # HeatMap of Sequences
@@ -1316,17 +1316,15 @@ class vis_class(object):
             label_temp = []
             file_temp = []
             for i in self.lb.classes_:
-                sel = np.where(self.class_id == i)[0]
+                sel = np.where(class_id == i)[0]
                 sel = np.random.choice(sel, sample_num_per_class, replace=False)
                 features_temp.append(features[sel])
                 label_temp.append(class_id[sel])
                 file_temp.append(sample_id[sel])
 
-
             features = np.vstack(features_temp)
             class_id = np.hstack(label_temp)
             sample_id = np.hstack(file_temp)
-
 
         if color_dict is None:
             N = len(np.unique(class_id))
@@ -1336,8 +1334,16 @@ class vis_class(object):
             color_dict = dict(zip(np.unique(class_id), RGB_tuples))
 
         row_colors = [color_dict[x] for x in class_id]
+        if by_sample:
+            N = len(np.unique(sample_id))
+            HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
+            np.random.shuffle(HSV_tuples)
+            RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
+            color_dict = dict(zip(np.unique(sample_id), RGB_tuples))
+            row_colors =  [color_dict[x] for x in sample_id]
+
         sns.set(font_scale=0.5)
-        CM = sns.clustermap(features, standard_scale=1, row_colors=row_colors, cmap='bwr')
+        CM = sns.clustermap(features, standard_scale=1, row_colors=row_colors, cmap='bwr',figsize=figsize)
         ax = CM.ax_heatmap
         ax.set_xticklabels('')
         ax.set_yticklabels('')
@@ -1345,7 +1351,7 @@ class vis_class(object):
         plt.savefig(os.path.join(self.directory_results, filename))
 
     def HeatMap_Samples(self, set='all',filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True,
-                        font_scale=1.0):
+                        font_scale=1.0,figsize=(10,10)):
         """
         # HeatMap of Samples
 
@@ -1431,7 +1437,7 @@ class vis_class(object):
         dfs = pd.DataFrame(vector)
         dfs.set_index(sample_list, inplace=True)
         sns.set(font_scale=font_scale)
-        CM = sns.clustermap(dfs, standard_scale=1, cmap='bwr', figsize=(12, 10), row_colors=row_colors)
+        CM = sns.clustermap(dfs, standard_scale=1, cmap='bwr', figsize=figsize, row_colors=row_colors)
         ax = CM.ax_heatmap
         ax.set_xticklabels('')
         if labels is False:
@@ -4035,6 +4041,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                         for _ in range(attn_heads):
                             attn_w = transformer_attn(Features,GO.X_Freq[:, tf.newaxis],GO.sp,GO,num_iter=3,units=[12,12,12])
                             GO.Features_W = attn_w*Features * GO.X_Freq[:, tf.newaxis]
+                            # GO.Features_W = attn_w* GO.X_Freq[:, tf.newaxis]
                             GO.Features_Agg = tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W)
                             #normalize
                             GO.Features_Agg = GO.Features_Agg / tf.sparse.sparse_dense_matmul(GO.sp, GO.X_Freq[:, tf.newaxis])

@@ -1,4 +1,5 @@
 import tensorflow as tf
+from DeepTCR.functions.act_fun import isru
 
 class graph_object(object):
     def __init__(self):
@@ -426,7 +427,7 @@ def transformer_attn(x,f,sp,GO,num_iter=3,units=[12,12,12]):
         for u in units:
             x = tf.compat.v1.layers.dense(x, u, tf.nn.relu,
                                           kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
-        w = tf.compat.v1.layers.dense(x,1,tf.nn.sigmoid)
+        w = tf.compat.v1.layers.dense(x,1,lambda x: isru(x, l=0, h=1, a=0, b=0))
     return w
 
 
