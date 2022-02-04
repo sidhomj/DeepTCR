@@ -24,6 +24,7 @@ from sklearn.metrics import roc_curve, roc_auc_score
 import shutil
 import warnings
 from scipy.stats import spearmanr,gaussian_kde
+from distinctipy import distinctipy
 
 class DeepTCR_base(object):
 
@@ -1345,7 +1346,7 @@ class vis_class(object):
         plt.savefig(os.path.join(self.directory_results, filename))
 
     def HeatMap_Samples(self, set='all',filename='Heatmap_Samples.tif', Weight_by_Freq=True, color_dict=None, labels=True,
-                        font_scale=1.0):
+                        font_scale=1.0,figsize=(12,10),legend=False,legend_size=10):
         """
         # HeatMap of Samples
 
@@ -1365,10 +1366,16 @@ class vis_class(object):
 
             font_scale (float): This parameter controls the font size of the row labels. If there are many rows, one can make this value smaller to get better labeling of the rows.
 
+            figsize (tuple): This parameter controls the size of the figure.
+
+            legend (bool): Whether to show legend for class labels
+
+            legend_size (int): Size of legend.
+
         Returns:
             Sample Features
 
-            - self.sample_featres (pandas dataframe):
+            - self.sample_features (pandas dataframe):
             This function returns the average feature vector for each sample analyzed. This can be used to make further downstream comparisons such as inter-repertoire distances.
 
         """
@@ -1421,22 +1428,25 @@ class vis_class(object):
 
         if color_dict is None:
             N = len(np.unique(class_id))
-            HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
-            np.random.shuffle(HSV_tuples)
-            RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-            color_dict = dict(zip(np.unique(class_id), RGB_tuples))
+            RGB_tuples = distinctipy.get_colors(N)
+            color_dict=  dict(zip(np.unique(class_id), RGB_tuples))
 
         row_colors = [color_dict[x] for x in file_label]
 
         dfs = pd.DataFrame(vector)
         dfs.set_index(sample_list, inplace=True)
         sns.set(font_scale=font_scale)
-        CM = sns.clustermap(dfs, standard_scale=1, cmap='bwr', figsize=(12, 10), row_colors=row_colors)
+        CM = sns.clustermap(dfs, standard_scale=1, cmap='bwr', figsize=figsize, row_colors=row_colors)
         ax = CM.ax_heatmap
         ax.set_xticklabels('')
         if labels is False:
             ax.set_yticklabels('')
+        plt.tight_layout()
         plt.subplots_adjust(right=0.8)
+        if legend:
+            handles = [matplotlib.patches.Patch(facecolor=color_dict[name]) for name in color_dict]
+            plt.legend(handles, color_dict, title=None,prop={'size': legend_size},
+                       bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc='upper right')
         plt.show()
         plt.savefig(os.path.join(self.directory_results, filename))
         self.sample_features = dfs

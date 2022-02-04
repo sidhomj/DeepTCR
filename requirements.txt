@@ -7,6 +7,7 @@ certifi==2020.12.5
 chardet==3.0.4
 colorama==0.4.4
 cycler==0.10.0
+distinctipy==1.2.1
 docutils==0.17
 flatbuffers==2.0
 gast==0.3.3
