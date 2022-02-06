@@ -635,6 +635,15 @@ def Run_Graph_WF_dep(set,sess,self,GO,batch_size,random=True,train=True,drop_out
         auc = 0.0
     return loss,accuracy,predicted_out,auc
 
+def subsample_fn(obj,subsample,subsample_by_freq=False):
+    if subsample > len(obj):
+        return obj
+    else:
+        if subsample_by_freq:
+            return obj.loc[np.random.choice(obj.index, subsample, False,p=obj[1]), :]
+        else:
+            return obj.loc[np.random.choice(obj.index, subsample, False), :]
+
 def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train=True,drop_out_rate=None,multisample_dropout_rate=None,
                  subsample=None,subsample_by_freq=False):
     loss = []
@@ -648,11 +657,9 @@ def Run_Graph_WF(set,sess,self,GO,batch_size,batch_size_update,random=True,train
     w = []
     if subsample is not None:
         df_varidx = pd.DataFrame(self.sample_id)
-        if subsample_by_freq is False:
-            fn = lambda obj: obj.loc[np.random.choice(obj.index, subsample, False), :]
-        else:
+        if subsample_by_freq:
             df_varidx[1] = self.freq
-            fn = lambda obj: obj.loc[np.random.choice(obj.index, subsample, False,p=obj[1]), :]
+        fn = lambda obj: subsample_fn(obj,subsample,subsample_by_freq)
 
     for vars in get_batches(set, batch_size=batch_size, random=random):
         if subsample is None:
