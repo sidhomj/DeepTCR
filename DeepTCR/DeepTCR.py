@@ -4834,10 +4834,12 @@ class DeepTCR_WF(DeepTCR_S_base):
                 indices = np.mat([sp.row, sp.col]).T
 
                 feed_dict = {X_Freq: freq[var_idx],
-                             X_Counts: counts[var_idx],
                              sp_i: indices,
                              sp_v: sp.data,
                              sp_s: sp.shape}
+
+                if counts is not None:
+                    feed_dict[X_Counts] = counts[var_idx]
 
                 if self.use_alpha is True:
                     feed_dict[X_Seq_alpha_v] = X_Seq_alpha[var_idx]
