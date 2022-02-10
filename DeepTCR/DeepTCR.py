@@ -76,7 +76,7 @@ class DeepTCR_base(object):
         self.aa_idx_inv = aa_idx_inv
 
         #Create directory for results of analysis
-        directory = self.Name + '_Results'
+        directory = os.path.join(self.Name,'results')
         self.directory_results = directory
         if not os.path.exists(directory):
             os.makedirs(directory)
