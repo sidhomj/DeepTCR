@@ -3712,18 +3712,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
             if self.regression is False:
                 if suppress_output is False:
-                    for set in ['train','valid','test']:
-                        y_test2 = np.vstack(self.test_pred.__dict__[set].y_test)
-                        y_pred2 = np.vstack(self.test_pred.__dict__[set].y_pred)
-                        print(set.capitalize()+" Accuracy = {:.2f}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))),end=', ')
-
-                    print('')
-                    try:
-                        for set in ['train', 'valid', 'test']:
-                            print(set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))),end=', ')
-                        print('')
-                    except:
-                        pass
+                    print_performance_epoch(self)
             print('')
 
         self.y_test = np.vstack(y_test)
@@ -3927,19 +3916,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
             if self.regression is False:
                 if suppress_output is False:
-                    for set in ['train','valid','test']:
-                        y_test2 = np.vstack(self.test_pred.__dict__[set].y_test)
-                        y_pred2 = np.vstack(self.test_pred.__dict__[set].y_pred)
-                        print(set.capitalize()+" Accuracy = {:.2f}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))),end=', ')
-
-                    print('')
-                    try:
-                        for set in ['train', 'valid', 'test']:
-                            print(set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))),end=', ')
-                        print('')
-                    except:
-                        pass
-
+                    print_performance_epoch(self)
             print('')
 
         self.y_test = np.vstack(y_test)
@@ -4596,18 +4573,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             if self.regression is False:
                 if suppress_output is False:
-                    for set in ['train','valid','test']:
-                        y_test2 = np.vstack(self.test_pred.__dict__[set].y_test)
-                        y_pred2 = np.vstack(self.test_pred.__dict__[set].y_pred)
-                        print(set.capitalize()+" Accuracy = {:.2f}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))),end=', ')
-
-                    print('')
-                    try:
-                        for set in ['train', 'valid', 'test']:
-                            print(set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))),end=', ')
-                        print('')
-                    except:
-                        pass
+                    print_performance_epoch(self)
             print('')
 
         self.y_test = np.vstack(y_test)
@@ -4816,19 +4782,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             if self.regression is False:
                 if suppress_output is False:
-                    for set in ['train','valid','test']:
-                        y_test2 = np.vstack(self.test_pred.__dict__[set].y_test)
-                        y_pred2 = np.vstack(self.test_pred.__dict__[set].y_pred)
-                        print(set.capitalize()+" Accuracy = {:.2f}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))),end=', ')
-
-                    print('')
-                    try:
-                        for set in ['train', 'valid', 'test']:
-                            print(set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))),end=', ')
-                        print('')
-                    except:
-                        pass
-
+                    print_performance_epoch(self)
             print('')
 
         self.y_test = np.vstack(y_test)
