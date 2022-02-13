@@ -2521,7 +2521,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
     def AUC_Curve(self,by=None,filename='AUC.tif',title=None,title_font=None,plot=True,diag_line=True,
                   xtick_size = None, ytick_size=None, xlabel_size = None, ylabel_size=None,
                   legend_font_size=None,frameon=True,legend_loc = 'lower right',
-                  figsize=None):
+                  figsize=None,set='test'):
         """
         # AUC Curve for both Sequence and Repertoire/Sample Classifiers
 
@@ -2553,6 +2553,8 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
             figsize (tuple): To change the default size of the figure, set this to size of figure (i.e. - (10,10) )
 
+            set (str): Which partition of the data to look at performance of model. Options are train/valid/test.
+
         Returns:
             AUC Data
 
@@ -2562,8 +2564,13 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             In addition to plotting the ROC Curve, the AUC's are saved to a csv file in the results directory called 'AUC.csv'
 
         """
-        y_test = self.y_test
-        y_pred = self.y_pred
+        try:
+            y_test = self.test_pred.__dict__[set].y_test
+            y_pred = self.test_pred.__dict__[set].y_pred
+        except:
+            y_test = self.y_test
+            y_pred = self.y_pred
+
         auc_scores = []
         classes = []
         if plot is False:
@@ -3435,6 +3442,24 @@ class DeepTCR_SS(DeepTCR_S_base):
 
                 e += 1
 
+            train_loss, train_accuracy, train_predicted, train_auc = \
+                Run_Graph_SS(self.train, sess, self, GO, batch_size, random=False, train=False)
+
+            self.test_pred.train.y_test.append(self.train[-1])
+            self.test_pred.train.y_pred.append(train_predicted)
+
+            valid_loss, valid_accuracy, valid_predicted, valid_auc = \
+                Run_Graph_SS(self.valid, sess, self, GO, batch_size, random=False, train=False)
+
+            self.test_pred.valid.y_test.append(self.valid[-1])
+            self.test_pred.valid.y_pred.append(valid_predicted)
+
+            test_loss, test_accuracy, test_predicted, test_auc = \
+                Run_Graph_SS(self.test, sess, self, GO, batch_size, random=False, train=False)
+
+            self.test_pred.test.y_test.append(self.test[-1])
+            self.test_pred.test.y_pred.append(test_predicted)
+
             Get_Seq_Features_Indices(self,batch_size,GO,sess)
             self.features = Get_Latent_Features(self,batch_size,GO,sess)
 
@@ -3660,6 +3685,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         y_pred = []
         y_test = []
+        self.test_pred = make_test_pred_object()
         predicted = np.zeros_like(self.predicted)
         counts = np.zeros_like(self.predicted)
         self._reset_models()
@@ -3672,7 +3698,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         for i in range(0, folds):
             if suppress_output is False:
-                print(i)
+                print('Fold '+str(i))
             if seeds is not None:
                 np.random.seed(seeds[i])
             self.Get_Train_Valid_Test(test_size=test_size, LOO=LOO,split_by_sample=split_by_sample,combine_train_valid=combine_train_valid)
@@ -3685,21 +3711,29 @@ class DeepTCR_SS(DeepTCR_S_base):
             counts[self.test[self.var_dict['seq_index']]] += 1
 
             if self.regression is False:
-                y_test2 = np.vstack(y_test)
-                y_pred2 = np.vstack(y_pred)
                 if suppress_output is False:
-                    print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
+                    for set in ['train','valid','test']:
+                        y_test2 = np.vstack(self.test_pred.__dict__[set].y_test)
+                        y_pred2 = np.vstack(self.test_pred.__dict__[set].y_pred)
+                        print(set.capitalize()+" Accuracy = {:.2f}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))),end=', ')
 
-                    if self.y_test.shape[1] == 2:
-                        if i > 0:
-                            y_test2 = np.vstack(y_test)
-                            if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
-                                print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
-
+                    print('')
+                    try:
+                        for set in ['train', 'valid', 'test']:
+                            print(set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))),end=', ')
+                        print('')
+                    except:
+                        pass
+            print('')
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
         self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
+
+        for set in ['train', 'valid', 'test']:
+            self.test_pred.__dict__[set].y_test = np.vstack(self.test_pred.__dict__[set].y_test)
+            self.test_pred.__dict__[set].y_pred = np.vstack(self.test_pred.__dict__[set].y_pred)
+
         print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal(self,folds=None,split_by_sample=False,combine_train_valid=False,seeds=None,
@@ -3855,9 +3889,10 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         y_test = []
         y_pred = []
+        self.test_pred = make_test_pred_object()
         for ii in range(folds):
             if suppress_output is False:
-                print(ii)
+                print('Fold '+str(ii))
             train_idx = np.setdiff1d(idx,test_idx[ii])
             valid_idx = np.random.choice(train_idx,len(train_idx)//(folds-1),replace=False)
             train_idx = np.setdiff1d(train_idx,valid_idx)
@@ -3891,22 +3926,31 @@ class DeepTCR_SS(DeepTCR_S_base):
             y_pred.append(self.y_pred)
 
             if self.regression is False:
-                y_test2 = np.vstack(y_test)
-                y_pred2 = np.vstack(y_pred)
-
                 if suppress_output is False:
-                    print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))))
+                    for set in ['train','valid','test']:
+                        y_test2 = np.vstack(self.test_pred.__dict__[set].y_test)
+                        y_pred2 = np.vstack(self.test_pred.__dict__[set].y_pred)
+                        print(set.capitalize()+" Accuracy = {:.2f}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))),end=', ')
 
-                    if self.y_test.shape[1] == 2:
-                        if ii > 0:
-                            if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
-                                print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+                    print('')
+                    try:
+                        for set in ['train', 'valid', 'test']:
+                            print(set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))),end=', ')
+                        print('')
+                    except:
+                        pass
+
+            print('')
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
         test_idx = np.hstack(test_idx)
         self.predicted = np.zeros_like(self.predicted)
         self.predicted[test_idx] = self.y_pred
+
+        for set in ['train', 'valid', 'test']:
+            self.test_pred.__dict__[set].y_test = np.vstack(self.test_pred.__dict__[set].y_test)
+            self.test_pred.__dict__[set].y_pred = np.vstack(self.test_pred.__dict__[set].y_pred)
 
         print('K-fold Cross Validation Completed')
 
@@ -4201,11 +4245,23 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                 e +=  1
 
-            self.train_loss = train_loss_total
-            self.kernel_weights = kernel_weights
+            train_loss, train_accuracy, train_predicted, train_auc = \
+                Run_Graph_WF(self.train, sess, self, GO, batch_size, batch_size_update, random=False, train=False)
+
+            self.test_pred.train.y_test.append(self.train[-1])
+            self.test_pred.train.y_pred.append(train_predicted)
+
+            valid_loss, valid_accuracy, valid_predicted, valid_auc = \
+                Run_Graph_WF(self.valid, sess, self, GO, batch_size, batch_size_update, random=False, train=False)
+
+            self.test_pred.valid.y_test.append(self.valid[-1])
+            self.test_pred.valid.y_pred.append(valid_predicted)
 
             test_loss, test_accuracy, test_predicted, test_auc = \
                 Run_Graph_WF(self.test, sess, self, GO, batch_size, batch_size_update, random=False, train=False)
+
+            self.test_pred.test.y_test.append(self.test[-1])
+            self.test_pred.test.y_pred.append(test_predicted)
 
             self.y_pred = test_predicted
             self.y_test = self.test[-1]
@@ -4519,9 +4575,11 @@ class DeepTCR_WF(DeepTCR_S_base):
                     accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output,
                     loss_criteria,l2_reg)
 
+        self.test_pred = make_test_pred_object()
+
         for i in range(0, folds):
             if suppress_output is False:
-                print(i)
+                print('Fold '+str(i))
             if seeds is not None:
                 np.random.seed(seeds[i])
 
@@ -4536,19 +4594,21 @@ class DeepTCR_WF(DeepTCR_S_base):
 
             counts[self.seq_idx] += 1
 
-            y_test2 = np.vstack(y_test)
-            y_pred2 = np.vstack(y_pred)
-
             if self.regression is False:
                 if suppress_output is False:
-                    print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
+                    for set in ['train','valid','test']:
+                        y_test2 = np.vstack(self.test_pred.__dict__[set].y_test)
+                        y_pred2 = np.vstack(self.test_pred.__dict__[set].y_pred)
+                        print(set.capitalize()+" Accuracy = {:.2f}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))),end=', ')
 
-                    if self.y_test.shape[1] == 2:
-                        if i > 0:
-                            y_test2 = np.vstack(y_test)
-                            if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
-                                print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
-
+                    print('')
+                    try:
+                        for set in ['train', 'valid', 'test']:
+                            print(set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))),end=', ')
+                        print('')
+                    except:
+                        pass
+            print('')
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
@@ -4565,6 +4625,11 @@ class DeepTCR_WF(DeepTCR_S_base):
             self.DFs_pred = dict(zip(self.lb.classes_,DFs))
 
         self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
+
+        for set in ['train', 'valid', 'test']:
+            self.test_pred.__dict__[set].y_test = np.vstack(self.test_pred.__dict__[set].y_test)
+            self.test_pred.__dict__[set].y_pred = np.vstack(self.test_pred.__dict__[set].y_pred)
+
         print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal(self,folds=None,combine_train_valid=False,seeds=None,
@@ -4725,9 +4790,10 @@ class DeepTCR_WF(DeepTCR_S_base):
 
         y_test = []
         y_pred = []
+        self.test_pred = make_test_pred_object()
         for ii in range(folds):
             if suppress_output is False:
-                print(ii)
+                print('Fold '+str(ii))
             train_idx = np.setdiff1d(idx,test_idx[ii])
             valid_idx = np.random.choice(train_idx,len(train_idx)//(folds-1),replace=False)
             train_idx = np.setdiff1d(train_idx,valid_idx)
@@ -4748,20 +4814,29 @@ class DeepTCR_WF(DeepTCR_S_base):
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
 
-            y_test2 = np.vstack(y_test)
-            y_pred2 = np.vstack(y_pred)
-
             if self.regression is False:
                 if suppress_output is False:
-                    print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))))
+                    for set in ['train','valid','test']:
+                        y_test2 = np.vstack(self.test_pred.__dict__[set].y_test)
+                        y_pred2 = np.vstack(self.test_pred.__dict__[set].y_pred)
+                        print(set.capitalize()+" Accuracy = {:.2f}".format(np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))),end=', ')
 
-                    if self.y_test.shape[1] == 2:
-                        if ii > 0:
-                            if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
-                                print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+                    print('')
+                    try:
+                        for set in ['train', 'valid', 'test']:
+                            print(set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))),end=', ')
+                        print('')
+                    except:
+                        pass
+
+            print('')
 
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
+
+        for set in ['train', 'valid', 'test']:
+            self.test_pred.__dict__[set].y_test = np.vstack(self.test_pred.__dict__[set].y_test)
+            self.test_pred.__dict__[set].y_pred = np.vstack(self.test_pred.__dict__[set].y_pred)
         print('K-fold Cross Validation Completed')
 
     def _inf(self,data,model='model_0'):

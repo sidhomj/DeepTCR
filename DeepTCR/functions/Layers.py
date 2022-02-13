@@ -360,3 +360,11 @@ def MultiSample_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
             out.append(tf.compat.v1.layers.dense(fc,units=units,activation=activation,use_bias=use_bias,
                                        kernel_regularizer=tf.keras.regularizers.l1(reg)))
     return tf.reduce_mean(input_tensor=tf.stack(out),axis=0)
+
+def make_test_pred_object():
+    test_pred = graph_object()
+    for set in ['train', 'valid', 'test']:
+        test_pred.__dict__[set] = graph_object()
+        test_pred.__dict__[set].y_test = []
+        test_pred.__dict__[set].y_pred = []
+    return test_pred

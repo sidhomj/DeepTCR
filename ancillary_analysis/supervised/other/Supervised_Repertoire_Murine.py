@@ -8,27 +8,32 @@ from sklearn.metrics import roc_curve, roc_auc_score
 import numpy as np
 from matplotlib import pyplot as plt
 
-# #Train Sequence Classifier
-# DTCR_SS = DeepTCR_SS('Rudqvist_SS',device='/device:GPU:2')
-# DTCR_SS.Get_Data(directory='../../Data/Rudqvist',Load_Prev_Data=False,
-#                aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21)
-#
-# DTCR_SS.K_Fold_CrossVal(folds=5)
+#Train Sequence Classifier
+DTCR_SS = DeepTCR_SS('Rudqvist_SS')
+DTCR_SS.Get_Data(directory='../../../Data/Rudqvist',Load_Prev_Data=False,
+               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,
+                 type_of_data_cut='Num_Seq',
+                 data_cut=100)
+
+DTCR_SS.Monte_Carlo_CrossVal(folds=3)
+DTCR_SS.K_Fold_CrossVal(folds=3)
 
 #Train Repertoire Classifier
-folds = 100
+folds = 3
 LOO = 4
 epochs_min = 10
 size_of_net = 'small'
 num_concepts=64
 hinge_loss_t = 0.1
-train_loss_min=0.1
+train_loss_min=1.0
 seeds = np.array(range(folds))
 graph_seed=0
 
-DTCR_WF = DeepTCR_WF('Rudqvist_WF2',device='/device:GPU:5')
-DTCR_WF.Get_Data(directory='../../Data/Rudqvist',Load_Prev_Data=False,
-               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21)
+DTCR_WF = DeepTCR_WF('Rudqvist_WF2')
+DTCR_WF.Get_Data(directory='../../../Data/Rudqvist',Load_Prev_Data=False,
+               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,
+                 type_of_data_cut='Num_Seq',
+                 data_cut=100)
 
 DTCR_WF.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,num_concepts=num_concepts,size_of_net=size_of_net,
                              train_loss_min=train_loss_min,hinge_loss_t=hinge_loss_t,combine_train_valid=True,seeds=seeds,
