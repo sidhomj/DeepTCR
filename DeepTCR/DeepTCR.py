@@ -28,7 +28,7 @@ from distinctipy import distinctipy
 
 class DeepTCR_base(object):
 
-    def __init__(self,Name,max_length=40,device=0):
+    def __init__(self,Name,max_length=40,device=0,tf_verbosity=3):
         """
         # Initialize Training Object.
         Initializes object and sets initial parameters.
@@ -48,6 +48,13 @@ class DeepTCR_base(object):
             max_length (int): maximum length of CDR3 sequence.
 
             device (int): In the case user is using tensorflow-gpu, one can specify the particular device to build the graphs on. This selects which GPU the user wants to put the graph and train on.
+
+            tf_verbosity (str): determines how much tensorflow log output to display while training.
+            0 = all messages are logged (default behavior)
+            1 = INFO messages are not printed
+            2 = INFO and WARNING messages are not printed
+            3 = INFO, WARNING, and ERROR messages are not printed
+
         """
 
         #Assign parameters
@@ -87,6 +94,7 @@ class DeepTCR_base(object):
             os.makedirs(directory)
 
         tf.compat.v1.disable_eager_execution()
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = str(tf_verbosity)
 
     def Get_Data(self,directory,Load_Prev_Data=False,classes=None,type_of_data_cut='Fraction_Response',data_cut=1.0,n_jobs=40,
                     aa_column_alpha = None,aa_column_beta = None, count_column = None,sep='\t',aggregate_by_aa=True,
