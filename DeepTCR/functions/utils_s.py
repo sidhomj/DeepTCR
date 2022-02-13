@@ -640,6 +640,9 @@ def subsample_fn(obj,subsample,subsample_by_freq=False):
         return obj
     else:
         if subsample_by_freq:
+            sum_freq = np.sum(obj[1])
+            if sum_freq != 1.0:
+                obj[1] = obj[1]/sum_freq
             return obj.loc[np.random.choice(obj.index, subsample, False,p=obj[1]), :]
         else:
             return obj.loc[np.random.choice(obj.index, subsample, False), :]
