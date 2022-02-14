@@ -2761,7 +2761,8 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             df_temp['Regressed_Val'] = self.Y
         df_temp['Sample'] = self.sample_id
         df_temp['Freq'] = self.freq
-        df_temp['Counts'] = self.counts
+        if hasattr(self, 'counts'):
+            df_temp['Counts'] = self.counts
         try:
             df_temp['HLA'] = list(map(list, self.hla_data_seq.tolist()))
         except:
