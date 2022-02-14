@@ -14,7 +14,8 @@ DTCR_SS.Get_Data(directory='../../../Data/Rudqvist',Load_Prev_Data=False,
                aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,
                  type_of_data_cut='Num_Seq',
                  data_cut=100)
-
+DTCR_SS.Get_Train_Valid_Test()
+DTCR_SS.Train()
 DTCR_SS.Monte_Carlo_CrossVal(folds=3)
 DTCR_SS.K_Fold_CrossVal(folds=3)
 

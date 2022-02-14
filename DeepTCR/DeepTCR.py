@@ -3584,6 +3584,7 @@ class DeepTCR_SS(DeepTCR_S_base):
 
         """
         self._reset_models()
+        self.test_pred = make_test_pred_object()
         self._build(kernel,trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
                num_fc_layers, units_fc,weight_by_class, class_weights,
                use_only_seq, use_only_gene, use_only_hla, size_of_net,graph_seed,
@@ -3591,6 +3592,9 @@ class DeepTCR_SS(DeepTCR_S_base):
                batch_size, epochs_min, stop_criterion, stop_criterion_window,
                accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
         self._train(batch_seed=batch_seed,iteration=0)
+        for set in ['train', 'valid', 'test']:
+            self.test_pred.__dict__[set].y_test = np.vstack(self.test_pred.__dict__[set].y_test)
+            self.test_pred.__dict__[set].y_pred = np.vstack(self.test_pred.__dict__[set].y_pred)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,split_by_sample=False,combine_train_valid=False,seeds=None,
                              kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
@@ -4403,6 +4407,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         """
         #Create directory for models
         self._reset_models()
+        self.test_pred = make_test_pred_object()
         self._build(kernel,num_concepts,trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
                num_fc_layers, units_fc,weight_by_class, class_weights,
                use_only_seq, use_only_gene, use_only_hla, size_of_net,graph_seed,
@@ -4413,6 +4418,9 @@ class DeepTCR_WF(DeepTCR_S_base):
                     loss_criteria,l2_reg)
         self._train(write=True,batch_seed=batch_seed,iteration=0,
                     subsample=subsample,subsample_by_freq=subsample_by_freq,subsample_valid_test=subsample_valid_test)
+        for set in ['train', 'valid', 'test']:
+            self.test_pred.__dict__[set].y_test = np.vstack(self.test_pred.__dict__[set].y_test)
+            self.test_pred.__dict__[set].y_pred = np.vstack(self.test_pred.__dict__[set].y_pred)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,combine_train_valid=False,random_perm=False,seeds=None,
                              kernel=5, num_concepts=12, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
