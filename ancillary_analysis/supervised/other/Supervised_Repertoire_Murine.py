@@ -9,11 +9,18 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 #Train Sequence Classifier
-DTCR_SS = DeepTCR_SS('Rudqvist_SS')
-DTCR_SS.Get_Data(directory='../../../Data/Rudqvist',Load_Prev_Data=False,
-               aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,
-                 type_of_data_cut='Num_Seq',
-                 data_cut=100)
+# DTCR_SS = DeepTCR_SS('Rudqvist_SS')
+# DTCR_SS.Get_Data(directory='../../../Data/Rudqvist',Load_Prev_Data=False,
+#                aa_column_beta=1,count_column=2,v_beta_column=7,d_beta_column=14,j_beta_column=21,
+#                  type_of_data_cut='Num_Seq',
+#                  data_cut=100)
+
+
+#Train Sequence Classifier
+DTCR_SS = DeepTCR_SS('help_model')
+DTCR_SS.Get_Data(directory='../../../Data/help',Load_Prev_Data=False,aggregate_by_aa=True,
+               aa_column_beta=0,count_column=4,v_beta_column=1,j_beta_column=3)
+
 DTCR_SS.Get_Train_Valid_Test()
 DTCR_SS.Train()
 DTCR_SS.Monte_Carlo_CrossVal(folds=3)

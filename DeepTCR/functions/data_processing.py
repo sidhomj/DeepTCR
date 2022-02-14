@@ -134,6 +134,7 @@ def Get_DF_Data(file,type_of_data_cut='Fraction_Response',data_cut = 1.0,aa_colu
 
         dtypes = dict(zip(cols_to_keep,dtypes))
         df = pd.read_csv(file, sep=sep,dtype=dtypes,usecols=cols_to_keep)
+        df = df.iloc[:,np.argsort(np.argsort(cols_to_keep))]
         if count_column is None:
             df['counts'] = 1
             column_names.append('counts')
