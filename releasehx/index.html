@@ -76,6 +76,10 @@
     <li class="toctree-l2"><a class="reference internal" href="#14">1.4</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#20">2.0</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#210">2.1.0</a>
+    </li>
+        </ul>
     </li>
     </ul>
                     </li>
@@ -130,29 +134,31 @@ visualization methods. Removed GAN from unsupervised learning techniques. </p>
 <p>Third release including improved repertoire classification architecture. Details in method will follow 
 in manuscript.</p>
 <h3 id="14">1.4</h3>
-<p>Fourth release includes major refactoring of code and adding more features including:</p>
-<ul>
-<li>Multi-Model Inference. When training the supervised sequence or repertoire classifier, in Monte-Carlo or K-Fold 
+<p>Fourth release includes major refactoring of code and adding more features including:
+- Multi-Model Inference. When training the supervised sequence or repertoire classifier, in Monte-Carlo or K-Fold 
 Cross Validation, a separate model will be stored for each cross-validation. When using the inference engine, 
-users can choose to do an ensemble inference of some or many of the trained models.</li>
-<li>HLA Supertype Integration. Previous versions allowed users to provide HLA alleles for additional dimension of featurization
+users can choose to do an ensemble inference of some or many of the trained models.
+- HLA Supertype Integration. Previous versions allowed users to provide HLA alleles for additional dimension of featurization
 for the TCR. In this version, when providing HLA (either via the Get_Data or Load_Data methods), one now has the option of 
-assigning the HLA-A and B genes to known supertypes for a more biologically functional representation of HLA.</li>
-<li>VAE now has an optional method by which to find a minimal number of latent features to model the underlying distribution
+assigning the HLA-A and B genes to known supertypes for a more biologically functional representation of HLA.
+- VAE now has an optional method by which to find a minimal number of latent features to model the underlying distribution
 by incorporating a sparsity regularization on the latent layer. When using this feature, the VAE will provide a more 
-compact latent space even if the initial latent_dim is unnecessarily high to model the distribution of data.</li>
-<li>Supervised models now have an additional option to use Multi-Sample Dropout to improve training and generalization.</li>
-<li>Incorporation of LogoMaker so now when Representative Sequences are generated along with enriched motifs,
-seq logos are made and saved directly in the results folder under Motifs.</li>
-<li>Improved Motif Identification algorithm behind supervised method Representative_Sequences that uses a multinomial
-linear model to identify which motifs are associated to predicted probabilites from neural network.</li>
-<li>Supervised Repertoire Model now able to do regression. By providing per-instance label with regression value with Load_Data method, this will automatically use the average of all instance level labels as the sample level value to regress the model against.</li>
-</ul>
+compact latent space even if the initial latent_dim is unnecessarily high to model the distribution of data.
+- Supervised models now have an additional option to use Multi-Sample Dropout to improve training and generalization.
+- Incorporation of LogoMaker so now when Representative Sequences are generated along with enriched motifs,
+seq logos are made and saved directly in the results folder under Motifs.
+- Improved Motif Identification algorithm behind supervised method Representative_Sequences that uses a multinomial
+linear model to identify which motifs are associated to predicted probabilites from neural network.
+- Supervised Repertoire Model now able to do regression. By providing per-instance label with regression value with Load_Data method, this will automatically use the average of all instance level labels as the sample level value to regress the model against.</p>
 <h3 id="20">2.0</h3>
-<p>Fifth release: </p>
+<p>Fifth release: 
+- Upgrading to use python 3.7 &amp; Tensorflow 2.0
+- For large repertoires, we have incorporated the ability to randomly subsample the repertoire over the course of training. Two methods of sub-sampling exist. 1) Completely randomly sampled from across the entire repertoire vs 2) randomly sampled as a probability function of the frequency of the TCR (at the amino acid level), meaning that a TCR with a 25% frequency will be sample at that probability.</p>
+<h4 id="210">2.1.0</h4>
 <ul>
-<li>Upgrading to use python 3.8 &amp; Tensorflow 2.0</li>
-<li>For large repertoires, we have incorporated the ability to randomly subsample the repertoire over the course of training. Two methods of sub-sampling exist. 1) Completely randomly sampled from across the entire repertoire vs 2) randomly sampled as a probability function of the frequency of the TCR (at the amino acid level), meaning that a TCR with a 25% frequency will be sample at that probability.</li>
+<li>Upgrading to Tensorflow 2.7</li>
+<li>Improved handling of inference with previously unseen V/D/J gene usage.</li>
+<li>Improved computational efficiency for loading data from large files (~2x improvement in speed, 50% or more decrease in peak memory consumption).</li>
 </ul>
               
             </div>
