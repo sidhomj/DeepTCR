@@ -1242,6 +1242,7 @@ def stop_check(loss,stop_criterion,stop_criterion_window):
 
 
 def print_performance_epoch(self):
+    print('')
     for set in ['train', 'valid', 'test']:
         y_test2 = np.vstack(self.test_pred.__dict__[set].y_test)
         y_pred2 = np.vstack(self.test_pred.__dict__[set].y_pred)
@@ -1256,6 +1257,16 @@ def print_performance_epoch(self):
                 set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(np.vstack(self.test_pred.__dict__[set].y_test),
                                                                         np.vstack(self.test_pred.__dict__[set].y_pred))),
                 end=', ')
+        print('')
+        print('')
+        print('Per Class AUC')
+        for set in ['train', 'valid', 'test']:
+            scores = roc_auc_score(np.vstack(self.test_pred.__dict__[set].y_test),
+                      np.vstack(self.test_pred.__dict__[set].y_pred),average=None)
+            print(set.capitalize()+':',end = ' ')
+            for cl,s in zip(self.lb.classes_,scores):
+                print(cl + " = {:.2f}".format(s),end=', ')
+            print('')
         print('')
     except:
         pass
