@@ -1265,7 +1265,7 @@ class feature_analytics_class(object):
 class vis_class(object):
 
     def HeatMap_Sequences(self,set='all', filename='Heatmap_Sequences.tif', sample_num=None,
-                          sample_num_per_class=None,color_dict=None):
+                          sample_num_per_class=None,color_dict=None,figsize=(12,10),legend=False,legend_size=10):
 
         """
         # HeatMap of Sequences
@@ -1283,6 +1283,12 @@ class vis_class(object):
             sample_num_per_class (int): Number of events to randomly sample per class for heatmap.
 
             color_dict (dict): Optional dictionary to provide specified colors for classes.
+
+            figsize (tuple): This parameter controls the size of the figure.
+
+            legend (bool): Whether to show legend for class labels
+
+            legend_size (int): Size of legend.
 
         """
 
@@ -1338,18 +1344,19 @@ class vis_class(object):
 
 
         if color_dict is None:
-            N = len(np.unique(class_id))
-            HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
-            np.random.shuffle(HSV_tuples)
-            RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
+            RGB_tuples = distinctipy.get_colors(len(np.unique(class_id)),rng=0)
             color_dict = dict(zip(np.unique(class_id), RGB_tuples))
 
         row_colors = [color_dict[x] for x in class_id]
         sns.set(font_scale=0.5)
-        CM = sns.clustermap(features, standard_scale=1, row_colors=row_colors, cmap='bwr')
+        CM = sns.clustermap(features, standard_scale=1, row_colors=row_colors, cmap='bwr',figsize=figsize)
         ax = CM.ax_heatmap
         ax.set_xticklabels('')
         ax.set_yticklabels('')
+        if legend:
+            handles = [matplotlib.patches.Patch(facecolor=color_dict[name]) for name in color_dict]
+            plt.legend(handles, color_dict, title=None,prop={'size': legend_size},
+                       bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc='upper right')
         plt.show()
         plt.savefig(os.path.join(self.directory_results, filename))
 
@@ -1435,8 +1442,7 @@ class vis_class(object):
         vector = np.vstack(vector)
 
         if color_dict is None:
-            N = len(np.unique(class_id))
-            RGB_tuples = distinctipy.get_colors(N)
+            RGB_tuples = distinctipy.get_colors(len(np.unique(class_id)),rng=0)
             color_dict=  dict(zip(np.unique(class_id), RGB_tuples))
 
         row_colors = [color_dict[x] for x in file_label]
@@ -2529,7 +2535,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
     def AUC_Curve(self,by=None,filename='AUC.tif',title=None,title_font=None,plot=True,diag_line=True,
                   xtick_size = None, ytick_size=None, xlabel_size = None, ylabel_size=None,
                   legend_font_size=None,frameon=True,legend_loc = 'lower right',
-                  figsize=None,set='test'):
+                  figsize=None,set='test',color_dict=None):
         """
         # AUC Curve for both Sequence and Repertoire/Sample Classifiers
 
@@ -2563,6 +2569,8 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
             set (str): Which partition of the data to look at performance of model. Options are train/valid/test.
 
+            color_dict (dict): An optional dictionary that maps classes to colors in the case user wants to define colors of lines on plot.
+
         Returns:
             AUC Data
 
@@ -2590,6 +2598,12 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         if diag_line:
             plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+
+
+        if color_dict is None:
+            RGB_tuples = distinctipy.get_colors(len(self.lb.classes_),rng=0)
+            color_dict = dict(zip(self.lb.classes_, RGB_tuples))
+
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
         plt.xlabel('False Positive Rate')
@@ -2601,7 +2615,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                 classes.append(class_name)
                 auc_scores.append(roc_score)
                 fpr, tpr, _ = roc_curve(y_test[:, ii], y_pred[:,ii])
-                plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score))
+                plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score),c=color_dict[class_name])
         else:
             class_name = by
             ii = self.lb.transform([by])[0]
@@ -2609,7 +2623,7 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             auc_scores.append(roc_score)
             classes.append(class_name)
             fpr, tpr, _ = roc_curve(y_test[:, ii], y_pred[:, ii])
-            plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score))
+            plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score),c=color_dict[class_name])
 
         plt.legend(loc=legend_loc,frameon=frameon)
         if legend_font_size is not None:

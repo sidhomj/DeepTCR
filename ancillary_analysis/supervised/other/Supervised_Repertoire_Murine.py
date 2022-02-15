@@ -16,15 +16,15 @@ from matplotlib import pyplot as plt
 #                  data_cut=100)
 
 
-#Train Sequence Classifier
-DTCR_SS = DeepTCR_SS('help_model')
-DTCR_SS.Get_Data(directory='../../../Data/help',Load_Prev_Data=False,aggregate_by_aa=True,
-               aa_column_beta=0,count_column=4,v_beta_column=1,j_beta_column=3)
-
-DTCR_SS.Get_Train_Valid_Test()
-DTCR_SS.Train()
-DTCR_SS.Monte_Carlo_CrossVal(folds=3)
-DTCR_SS.K_Fold_CrossVal(folds=3)
+# #Train Sequence Classifier
+# DTCR_SS = DeepTCR_SS('help_model')
+# DTCR_SS.Get_Data(directory='../../../Data/help',Load_Prev_Data=False,aggregate_by_aa=True,
+#                aa_column_beta=0,count_column=4,v_beta_column=1,j_beta_column=3)
+#
+# DTCR_SS.Get_Train_Valid_Test()
+# DTCR_SS.Train()
+# DTCR_SS.Monte_Carlo_CrossVal(folds=3)
+# DTCR_SS.K_Fold_CrossVal(folds=3)
 
 #Train Repertoire Classifier
 folds = 3
@@ -46,6 +46,8 @@ DTCR_WF.Get_Data(directory='../../../Data/Rudqvist',Load_Prev_Data=False,
 DTCR_WF.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,num_concepts=num_concepts,size_of_net=size_of_net,
                              train_loss_min=train_loss_min,hinge_loss_t=hinge_loss_t,combine_train_valid=True,seeds=seeds,
                              graph_seed=graph_seed,multisample_dropout=False,multisample_dropout_rate=0.50,multisample_dropout_num_masks=64)
+
+DTCR_WF.AUC_Curve()
 
 #Create plot to compare SS/WF performance
 plt.figure()
