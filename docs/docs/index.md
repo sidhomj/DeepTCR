@@ -1,15 +1,22 @@
 # DeepTCR
 
-### Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data
+## Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data
 
 DeepTCR is a python package that has a collection of unsupervised and supervised 
 deep learning methods to parse TCRSeq data. To see examples of how the algorithms can 
-be used on an example datasets, see the subdirectory 'tutorials' at the [github repository](https://github.com/sidhomj/DeepTCR) for a collection of tutorial 
-use cases across multiple datasets. 
+be used on an example datasets, see the subdirectory 'tutorials' for a collection of tutorial 
+use cases across multiple datasets. For complete documentation for all available methods,
+ click [here](https://sidhomj.github.io/DeepTCR/).
 
-While DeepTCR will run with Tensorflow-CPU versions, for optimal training times, we suggest training these algorithms on GPU's (requiring CUDA, cuDNN, and tensorflow-GPU). 
+While DeepTCR will run with Tensorflow-CPU versions, for optimal training times, 
+we suggest training these algorithms on GPU's (requiring CUDA, cuDNN, and tensorflow-GPU). 
 
-For questions or help, email: jsidhom1@jhmi.edu
+DeepTCR now has the added functionality of being able to analyze paired alpha/beta chain inputs as well
+as also being able to take in v/d/j gene usage and the contextual HLA information the TCR-Sequences
+were seen in (i.e. HLA alleles for a repertoire from a given human sample). For detailed instructions on 
+how to upload this type of data, refer to the documentation for loading data into DeepTCR.  
+
+For questions or help, email: johnwilliamsidhom@gmail.com
 
 ## Publication
 
@@ -17,7 +24,18 @@ For full description of algorithm and methods behind DeepTCR, refer to the follo
 
 [Sidhom, J. W., Larman, H. B., Pardoll, D. M., & Baras, A. S. (2021). DeepTCR is a deep learning framework for revealing sequence concepts within T-cell repertoires. Nat Commun 12, 1605](https://www.nature.com/articles/s41467-021-21879-w)
 
-### Installation
+## Dependencies
+
+See requirements.txt for all DeepTCR dependencies. Installing DeepTCR from Github repository or PyPi will install all required dependencies.
+It is recommended to create a virtualenv and installing DeepTCR within this environment to ensure proper versioning of dependencies.
+
+In the most recent release (DeepTCR 2.0, fifth release), the package now uses python 3.7 & Tensorflow 2.0. Since this has required an overhaul in a lot of the code, there could be some bugs so we would greatly appreciate if you post any issues to the issues page and I will do my best to fix them as quickly as possible. One can find the latest DeepTCR 1.x version under the v1 branch if you still want to use that version. Or one can specifically pip install the specific version desired.
+
+Instructions on how to create a virtual environment can be found here:
+https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
+
+## Installation
+
 In order to install DeepTCR:
 
 ```python
@@ -39,13 +57,3 @@ Or use:
 pip3 install git+https://github.com/sidhomj/DeepTCR.git
 
 ```
-
-## Dependencies
-
-See [requirements.txt](https://github.com/sidhomj/DeepTCR/blob/master/requirements.txt) for all DeepTCR dependencies. Installing DeepTCR from Github repository or PyPi will install all required dependencies. It is recommended to create a virtualenv and installing DeepTCR within this environment to ensure proper versioning of dependencies.
-
-In the most recent release (DeepTCR 2.0, fifth release), the package now uses python 3.8 & Tensorflow 2.0. Since this has required an overhaul in a lot of the code, there could be some bugs so we would greatly appreciate if you post any issues to the issues page and I will do my best to fix them as quickly as possible. One can find the latest DeepTCR 1.x version under the v1 branch if you still want to use that version. Or one can specifically pip install the specific version desired.
-
-Instructions on how to create a virtual environment can be found [here.](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
-
-
