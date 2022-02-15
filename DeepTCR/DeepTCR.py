@@ -3413,6 +3413,8 @@ class DeepTCR_SS(DeepTCR_S_base):
             train_loss_total = []
             stop_check_list = []
             e = 0
+
+            print('')
             while True:
                 if batch_seed is not None:
                     np.random.seed(batch_seed)
@@ -4185,6 +4187,7 @@ class DeepTCR_WF(DeepTCR_S_base):
             var_train = tf.compat.v1.trainable_variables()
             e = 0
 
+            print('')
             while True:
                 if batch_seed is not None:
                     np.random.seed(batch_seed)

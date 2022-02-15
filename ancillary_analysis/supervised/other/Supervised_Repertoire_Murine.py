@@ -27,7 +27,7 @@ from matplotlib import pyplot as plt
 # DTCR_SS.K_Fold_CrossVal(folds=3)
 
 #Train Repertoire Classifier
-folds = 3
+folds = 25
 LOO = 4
 epochs_min = 10
 size_of_net = 'small'
