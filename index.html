@@ -54,12 +54,10 @@
     <li class="toctree-l2"><a class="reference internal" href="#deep-learning-methods-for-parsing-t-cell-receptor-sequencing-tcrseq-data">Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#publication">Publication</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a>
-    </li>
-        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
     </li>
     </ul>
                     </li>
@@ -105,17 +103,29 @@
             <div class="section">
               
                 <h1 id="deeptcr">DeepTCR</h1>
-<h3 id="deep-learning-methods-for-parsing-t-cell-receptor-sequencing-tcrseq-data">Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data</h3>
+<h2 id="deep-learning-methods-for-parsing-t-cell-receptor-sequencing-tcrseq-data">Deep Learning Methods for Parsing T-Cell Receptor Sequencing (TCRSeq) Data</h2>
 <p>DeepTCR is a python package that has a collection of unsupervised and supervised 
 deep learning methods to parse TCRSeq data. To see examples of how the algorithms can 
-be used on an example datasets, see the subdirectory 'tutorials' at the <a href="https://github.com/sidhomj/DeepTCR">github repository</a> for a collection of tutorial 
-use cases across multiple datasets. </p>
-<p>While DeepTCR will run with Tensorflow-CPU versions, for optimal training times, we suggest training these algorithms on GPU's (requiring CUDA, cuDNN, and tensorflow-GPU). </p>
-<p>For questions or help, email: jsidhom1@jhmi.edu</p>
+be used on an example datasets, see the subdirectory 'tutorials' for a collection of tutorial 
+use cases across multiple datasets. For complete documentation for all available methods,
+ click <a href="https://sidhomj.github.io/DeepTCR/">here</a>.</p>
+<p>While DeepTCR will run with Tensorflow-CPU versions, for optimal training times, 
+we suggest training these algorithms on GPU's (requiring CUDA, cuDNN, and tensorflow-GPU). </p>
+<p>DeepTCR now has the added functionality of being able to analyze paired alpha/beta chain inputs as well
+as also being able to take in v/d/j gene usage and the contextual HLA information the TCR-Sequences
+were seen in (i.e. HLA alleles for a repertoire from a given human sample). For detailed instructions on 
+how to upload this type of data, refer to the documentation for loading data into DeepTCR.  </p>
+<p>For questions or help, email: johnwilliamsidhom@gmail.com</p>
 <h2 id="publication">Publication</h2>
 <p>For full description of algorithm and methods behind DeepTCR, refer to the following manuscript:</p>
 <p><a href="https://www.nature.com/articles/s41467-021-21879-w">Sidhom, J. W., Larman, H. B., Pardoll, D. M., &amp; Baras, A. S. (2021). DeepTCR is a deep learning framework for revealing sequence concepts within T-cell repertoires. Nat Commun 12, 1605</a></p>
-<h3 id="installation">Installation</h3>
+<h2 id="dependencies">Dependencies</h2>
+<p>See requirements.txt for all DeepTCR dependencies. Installing DeepTCR from Github repository or PyPi will install all required dependencies.
+It is recommended to create a virtualenv and installing DeepTCR within this environment to ensure proper versioning of dependencies.</p>
+<p>In the most recent release (DeepTCR 2.0, fifth release), the package now uses python 3.7 &amp; Tensorflow 2.0. Since this has required an overhaul in a lot of the code, there could be some bugs so we would greatly appreciate if you post any issues to the issues page and I will do my best to fix them as quickly as possible. One can find the latest DeepTCR 1.x version under the v1 branch if you still want to use that version. Or one can specifically pip install the specific version desired.</p>
+<p>Instructions on how to create a virtual environment can be found here:
+https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/</p>
+<h2 id="installation">Installation</h2>
 <p>In order to install DeepTCR:</p>
 <pre><code class="language-python">pip3 install DeepTCR
 
@@ -128,10 +138,6 @@ use cases across multiple datasets. </p>
 <pre><code class="language-python">pip3 install git+https://github.com/sidhomj/DeepTCR.git
 
 </code></pre>
-<h2 id="dependencies">Dependencies</h2>
-<p>See <a href="https://github.com/sidhomj/DeepTCR/blob/master/requirements.txt">requirements.txt</a> for all DeepTCR dependencies. Installing DeepTCR from Github repository or PyPi will install all required dependencies. It is recommended to create a virtualenv and installing DeepTCR within this environment to ensure proper versioning of dependencies.</p>
-<p>In the most recent release (DeepTCR 2.0, fifth release), the package now uses python 3.8 &amp; Tensorflow 2.0. Since this has required an overhaul in a lot of the code, there could be some bugs so we would greatly appreciate if you post any issues to the issues page and I will do my best to fix them as quickly as possible. One can find the latest DeepTCR 1.x version under the v1 branch if you still want to use that version. Or one can specifically pip install the specific version desired.</p>
-<p>Instructions on how to create a virtual environment can be found <a href="https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/">here.</a></p>
               
             </div>
           </div>
@@ -185,5 +191,5 @@ use cases across multiple datasets. </p>
 
 <!--
 MkDocs version : 1.1.2
-Build Date UTC : 2021-04-14 08:25:55.626386+00:00
+Build Date UTC : 2022-02-15 06:33:04.759309+00:00
 -->

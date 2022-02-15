@@ -352,7 +352,7 @@
 
 
 <h4 id="DeepTCR.DeepTCR.DeepTCR_base.__init__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Name</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Name</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tf_verbosity</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -385,6 +385,7 @@
             <li><p><strong>Name</strong> (<code>str</code>) – Name of the object. This name will be used to create folders with results as well as a folder with parameters and specifications for any models built/trained.</p></li>
             <li><p><strong>max_length</strong> (<code>int</code>) – maximum length of CDR3 sequence.</p></li>
             <li><p><strong>device</strong> (<code>int</code>) – In the case user is using tensorflow-gpu, one can specify the particular device to build the graphs on. This selects which GPU the user wants to put the graph and train on.</p></li>
+            <li><p><strong>tf_verbosity</strong> (<code>str</code>) – determines how much tensorflow log output to display while training.</p></li>
         </ul>
       </td>
     </tr>
@@ -738,7 +739,7 @@ a user can load numpy arrays with relevant TCRSeq data for analysis.</p>
 
 
 <h4 id="DeepTCR.DeepTCR.DeepTCR_S_base.AUC_Curve" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">AUC_Curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;AUC.tif&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title_font</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">diag_line</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xtick_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ytick_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xlabel_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ylabel_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">legend_font_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">legend_loc</span><span class="o">=</span><span class="s1">&#39;lower right&#39;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">AUC_Curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">by</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;AUC.tif&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title_font</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">diag_line</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">xtick_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ytick_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">xlabel_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ylabel_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">legend_font_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">frameon</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">legend_loc</span><span class="o">=</span><span class="s1">&#39;lower right&#39;</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">set</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 </h4>
@@ -770,6 +771,8 @@ a user can load numpy arrays with relevant TCRSeq data for analysis.</p>
             <li><p><strong>legend_font_size</strong> (<code>float</code>) – Size of legend</p></li>
             <li><p><strong>frameon</strong> (<code>bool</code>) – Whether to show frame around legend.</p></li>
             <li><p><strong>figsize</strong> (<code>tuple</code>) – To change the default size of the figure, set this to size of figure (i.e. - (10,10) )</p></li>
+            <li><p><strong>set</strong> (<code>str</code>) – Which partition of the data to look at performance of model. Options are train/valid/test.</p></li>
+            <li><p><strong>color_dict</strong> (<code>dict</code>) – An optional dictionary that maps classes to colors in the case user wants to define colors of lines on plot.</p></li>
         </ul>
       </td>
     </tr>
@@ -2392,7 +2395,7 @@ of the structural diversity within a repertoire.</p>
 
 
 <h4 id="DeepTCR.DeepTCR.vis_class.HeatMap_Samples" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">HeatMap_Samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;Heatmap_Samples.tif&#39;</span><span class="p">,</span> <span class="n">Weight_by_Freq</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">font_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">HeatMap_Samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;Heatmap_Samples.tif&#39;</span><span class="p">,</span> <span class="n">Weight_by_Freq</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">font_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">legend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">legend_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span></code>
 
 
 </h4>
@@ -2418,6 +2421,9 @@ of the structural diversity within a repertoire.</p>
             <li><p><strong>color_dict</strong> (<code>dict</code>) – Optional dictionary to provide specified colors for classes.</p></li>
             <li><p><strong>labels</strong> (<code>bool</code>) – Option to show names of samples on y-axis of heatmap.</p></li>
             <li><p><strong>font_scale</strong> (<code>float</code>) – This parameter controls the font size of the row labels. If there are many rows, one can make this value smaller to get better labeling of the rows.</p></li>
+            <li><p><strong>figsize</strong> (<code>tuple</code>) – This parameter controls the size of the figure.</p></li>
+            <li><p><strong>legend</strong> (<code>bool</code>) – Whether to show legend for class labels</p></li>
+            <li><p><strong>legend_size</strong> (<code>int</code>) – Size of legend.</p></li>
         </ul>
       </td>
     </tr>
@@ -2435,7 +2441,7 @@ of the structural diversity within a repertoire.</p>
         <ul class="first simple">
           <li><p>`Sample Features</p>
 <ul>
-<li>self.sample_featres (pandas dataframe)` – This function returns the average feature vector for each sample analyzed. This can be used to make further downstream comparisons such as inter-repertoire distances.</li>
+<li>self.sample_features (pandas dataframe)` – This function returns the average feature vector for each sample analyzed. This can be used to make further downstream comparisons such as inter-repertoire distances.</li>
 </ul></li>
         </ul>
     </td>
@@ -2453,7 +2459,7 @@ of the structural diversity within a repertoire.</p>
 
 
 <h4 id="DeepTCR.DeepTCR.vis_class.HeatMap_Sequences" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">HeatMap_Sequences</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;Heatmap_Sequences.tif&#39;</span><span class="p">,</span> <span class="n">sample_num</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_num_per_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">HeatMap_Sequences</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">set</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;Heatmap_Sequences.tif&#39;</span><span class="p">,</span> <span class="n">sample_num</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_num_per_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">color_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">legend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">legend_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span></code>
 
 
 </h4>
@@ -2478,6 +2484,9 @@ of the structural diversity within a repertoire.</p>
             <li><p><strong>sample_num</strong> (<code>int</code>) – Number of events to randomly sample for heatmap.</p></li>
             <li><p><strong>sample_num_per_class</strong> (<code>int</code>) – Number of events to randomly sample per class for heatmap.</p></li>
             <li><p><strong>color_dict</strong> (<code>dict</code>) – Optional dictionary to provide specified colors for classes.</p></li>
+            <li><p><strong>figsize</strong> (<code>tuple</code>) – This parameter controls the size of the figure.</p></li>
+            <li><p><strong>legend</strong> (<code>bool</code>) – Whether to show legend for class labels</p></li>
+            <li><p><strong>legend_size</strong> (<code>int</code>) – Size of legend.</p></li>
         </ul>
       </td>
     </tr>
