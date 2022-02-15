@@ -25,6 +25,7 @@ import shutil
 import warnings
 from scipy.stats import spearmanr,gaussian_kde
 from distinctipy import distinctipy
+from tqdm import tqdm
 
 class DeepTCR_base(object):
 
@@ -3723,7 +3724,7 @@ class DeepTCR_SS(DeepTCR_S_base):
                batch_size, epochs_min, stop_criterion, stop_criterion_window,
                accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
 
-        for i in range(0, folds):
+        for i in tqdm(range(0, folds)):
             if suppress_output is False:
                 print('Fold '+str(i))
             if seeds is not None:
@@ -3879,7 +3880,7 @@ class DeepTCR_SS(DeepTCR_S_base):
             idx_left = idx
             file_per_sample = len(np.unique(self.sample_id)) // folds
             test_idx = []
-            for ii in range(folds):
+            for ii in tqdm(range(folds)):
                 if seeds is not None:
                     np.random.seed(seeds[ii])
                 if ii != folds-1:
@@ -4584,8 +4585,7 @@ class DeepTCR_WF(DeepTCR_S_base):
                     loss_criteria,l2_reg)
 
         self.test_pred = make_test_pred_object()
-
-        for i in range(0, folds):
+        for i in tqdm(range(0, folds)):
             if suppress_output is False:
                 print('Fold '+str(i))
             if seeds is not None:
@@ -4764,7 +4764,7 @@ class DeepTCR_WF(DeepTCR_S_base):
         idx_left = idx
         file_per_sample = num_samples // folds
         test_idx = []
-        for ii in range(folds):
+        for ii in tqdm(range(folds)):
             if seeds is not None:
                 np.random.seed(seeds[ii])
             if ii != folds-1:
