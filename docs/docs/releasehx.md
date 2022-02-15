@@ -24,7 +24,6 @@ in manuscript.
 
 ### 1.4
 Fourth release includes major refactoring of code and adding more features including:
-
 - Multi-Model Inference. When training the supervised sequence or repertoire classifier, in Monte-Carlo or K-Fold 
 Cross Validation, a separate model will be stored for each cross-validation. When using the inference engine, 
 users can choose to do an ensemble inference of some or many of the trained models.
@@ -43,8 +42,10 @@ linear model to identify which motifs are associated to predicted probabilites f
 
 ### 2.0
 Fifth release: 
-
-- Upgrading to use python 3.8 & Tensorflow 2.0
+- Upgrading to use python 3.7 & Tensorflow 2.0
 - For large repertoires, we have incorporated the ability to randomly subsample the repertoire over the course of training. Two methods of sub-sampling exist. 1) Completely randomly sampled from across the entire repertoire vs 2) randomly sampled as a probability function of the frequency of the TCR (at the amino acid level), meaning that a TCR with a 25% frequency will be sample at that probability.
 
-
+#### 2.1.0
+- Upgrading to Tensorflow 2.7
+- Improved handling of inference with previously unseen V/D/J gene usage.
+- Improved computational efficiency for loading data from large files (~2x improvement in speed, 50% or more decrease in peak memory consumption).
