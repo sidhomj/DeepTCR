@@ -637,7 +637,7 @@ def Run_Graph_WF_dep(set,sess,self,GO,batch_size,random=True,train=True,drop_out
 
 def subsample_fn(obj,subsample,subsample_by_freq=False):
     if subsample > len(obj):
-        return obj
+        return obj[:]
     else:
         if subsample_by_freq:
             sum_freq = np.sum(obj[1])
