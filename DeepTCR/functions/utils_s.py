@@ -1251,24 +1251,27 @@ def print_performance_epoch(self):
 
     print('')
 
-    try:
-        for set in ['train', 'valid', 'test']:
+    for set in ['train', 'valid', 'test']:
+        try:
             print(
                 set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(np.vstack(self.test_pred.__dict__[set].y_test),
                                                                         np.vstack(self.test_pred.__dict__[set].y_pred))),
                 end=', ')
-        print('')
-        print('')
-        print('Per Class AUC')
-        for set in ['train', 'valid', 'test']:
+        except:
+            pass
+    print('')
+    print('')
+    print('Per Class AUC')
+    for set in ['train', 'valid', 'test']:
+        try:
             scores = roc_auc_score(np.vstack(self.test_pred.__dict__[set].y_test),
                       np.vstack(self.test_pred.__dict__[set].y_pred),average=None)
             print(set.capitalize()+':',end = ' ')
             for cl,s in zip(self.lb.classes_,scores):
                 print(cl + " = {:.2f}".format(s),end=', ')
             print('')
-        print('')
-    except:
-        pass
+        except:
+            pass
+    print('')
 
 
