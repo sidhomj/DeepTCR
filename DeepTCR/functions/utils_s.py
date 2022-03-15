@@ -1244,18 +1244,21 @@ def stop_check(loss,stop_criterion,stop_criterion_window):
 def print_performance_epoch(self):
     print('')
     for set in ['train', 'valid', 'test']:
-        y_test2 = np.vstack(self.test_pred.__dict__[set].y_test)
-        y_pred2 = np.vstack(self.test_pred.__dict__[set].y_pred)
+        y_test_temp = np.vstack(self.test_pred.__dict__[set].y_test)
+        y_pred_temp = np.vstack(self.test_pred.__dict__[set].y_pred)
         print(set.capitalize() + " Accuracy = {:.2f}".format(
-            np.average(np.equal(np.argmax(y_pred2, 1), np.argmax(y_test2, 1)))), end=', ')
+            np.average(np.equal(np.argmax(y_pred_temp, 1), np.argmax(y_test_temp, 1)))), end=', ')
 
     print('')
 
     for set in ['train', 'valid', 'test']:
         try:
+            y_test_temp = np.vstack(self.test_pred.__dict__[set].y_test)
+            y_pred_temp = np.vstack(self.test_pred.__dict__[set].y_pred)
+            idx = np.where(np.sum(y_test_temp,0)>0)[0]
             print(
-                set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(np.vstack(self.test_pred.__dict__[set].y_test),
-                                                                        np.vstack(self.test_pred.__dict__[set].y_pred))),
+                set.capitalize() + " AUC = {:.2f}".format(roc_auc_score(y_test_temp[:,idx],
+                                                                       y_pred_temp[:,idx])),
                 end=', ')
         except:
             pass
@@ -1264,10 +1267,13 @@ def print_performance_epoch(self):
     print('Per Class AUC')
     for set in ['train', 'valid', 'test']:
         try:
-            scores = roc_auc_score(np.vstack(self.test_pred.__dict__[set].y_test),
-                      np.vstack(self.test_pred.__dict__[set].y_pred),average=None)
+            y_test_temp = np.vstack(self.test_pred.__dict__[set].y_test)
+            y_pred_temp = np.vstack(self.test_pred.__dict__[set].y_pred)
+            idx = np.where(np.sum(y_test_temp,0)>0)[0]
+            scores = roc_auc_score(y_test_temp[:,idx],
+                      y_pred_temp[:,idx],average=None)
             print(set.capitalize()+':',end = ' ')
-            for cl,s in zip(self.lb.classes_,scores):
+            for cl,s in zip(self.lb.classes_[idx],scores):
                 print(cl + " = {:.2f}".format(s),end=', ')
             print('')
         except:
