@@ -2612,11 +2612,14 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         if by is None:
             for ii, class_name in enumerate(self.lb.classes_, 0):
-                roc_score = roc_auc_score(y_test[:, ii], y_pred[:,ii])
-                classes.append(class_name)
-                auc_scores.append(roc_score)
-                fpr, tpr, _ = roc_curve(y_test[:, ii], y_pred[:,ii])
-                plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score),c=color_dict[class_name])
+                try:
+                    roc_score = roc_auc_score(y_test[:, ii], y_pred[:,ii])
+                    classes.append(class_name)
+                    auc_scores.append(roc_score)
+                    fpr, tpr, _ = roc_curve(y_test[:, ii], y_pred[:,ii])
+                    plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score),c=color_dict[class_name])
+                except:
+                    continue
         else:
             class_name = by
             ii = self.lb.transform([by])[0]
