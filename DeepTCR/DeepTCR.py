@@ -2838,8 +2838,9 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
                                                             'beta', self.kernel, motif_seq,make_seq_logos,
                                                                 color_scheme,logo_file_format)
 
-    def _residue(self,alpha_sequence,beta_sequence,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
-                 p,batch_size,models):
+    def _residue(self, alpha_sequence, beta_sequence, v_beta, d_beta, j_beta, v_alpha, j_alpha, hla,
+                 p, batch_size, models, chain):
+
         if self.model_type == 'SS':
             inf_func = self.Sequence_Inference
         elif self.model_type == 'WF':
@@ -2847,134 +2848,139 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
 
         df_alpha = pd.DataFrame()
         df_beta = pd.DataFrame()
-        if alpha_sequence is not None:
-            alpha_list,pos,ref,alt = make_seq_list(alpha_sequence,ref= list(self.aa_idx.keys()))
-            len_list = len(alpha_list)
+        if chain == 'alpha':
+            if alpha_sequence is not None:
+                alpha_list, pos, ref, alt = make_seq_list(alpha_sequence, ref=list(self.aa_idx.keys()))
+                len_list = len(alpha_list)
 
-            if beta_sequence is None:
-                beta_sequences = None
-            else:
-                beta_sequences = np.array([beta_sequence] * len_list)
+                if beta_sequence is None:
+                    beta_sequences = None
+                else:
+                    beta_sequences = np.array([beta_sequence] * len_list)
 
-            if v_beta is None:
-                v_beta = None
-            else:
-                v_beta = np.array([v_beta]*len_list)
+                if v_beta is None:
+                    v_beta = None
+                else:
+                    v_beta = np.array([v_beta] * len_list)
 
-            if d_beta is None:
-                d_beta = None
-            else:
-                d_beta = np.array([d_beta]*len_list)
+                if d_beta is None:
+                    d_beta = None
+                else:
+                    d_beta = np.array([d_beta] * len_list)
 
-            if j_beta is None:
-                j_beta = None
-            else:
-                j_beta =  np.array([j_beta]*len_list)
+                if j_beta is None:
+                    j_beta = None
+                else:
+                    j_beta = np.array([j_beta] * len_list)
 
-            if v_alpha is None:
-                v_alpha = None
-            else:
-                v_alpha =  np.array([v_alpha]*len_list)
+                if v_alpha is None:
+                    v_alpha = None
+                else:
+                    v_alpha = np.array([v_alpha] * len_list)
 
-            if j_alpha is None:
-                j_alpha = None
-            else:
-                j_alpha = np.array([j_alpha]*len_list)
+                if j_alpha is None:
+                    j_alpha = None
+                else:
+                    j_alpha = np.array([j_alpha] * len_list)
 
-            if hla is None:
-                hla = None
-            else:
-                hla = np.array([hla]*len_list)
+                if hla is None:
+                    hla = None
+                else:
+                    hla = np.array([hla] * len_list)
 
-            out = inf_func(beta_sequences = beta_sequences,
-                                 alpha_sequences = np.array(alpha_list),
-                                 v_beta = v_beta,
-                                 d_beta = d_beta,
-                                 j_beta = j_beta,
-                                 v_alpha = v_alpha,
-                                 j_alpha = j_alpha,
-                                 p = p,
-                                 hla = hla,
-                                 batch_size = batch_size,
-                                 models=models)
+                out = inf_func(beta_sequences=beta_sequences,
+                               alpha_sequences=np.array(alpha_list),
+                               v_beta=v_beta,
+                               d_beta=d_beta,
+                               j_beta=j_beta,
+                               v_alpha=v_alpha,
+                               j_alpha=j_alpha,
+                               p=p,
+                               hla=hla,
+                               batch_size=batch_size,
+                               models=models)
 
-            df_alpha['alpha'] = alpha_list
-            df_alpha['pos'] = pos
-            df_alpha['ref'] = ref
-            df_alpha['alt'] = alt
-            if self.regression:
-                df_alpha['high'] = out[:,0]
-            else:
-                for ii in range(out.shape[1]):
-                    df_alpha[self.lb.inverse_transform([ii])[0]] = out[:,ii]
+                df_alpha['alpha'] = alpha_list
+                df_alpha['pos'] = pos
+                df_alpha['ref'] = ref
+                df_alpha['alt'] = alt
+                if self.regression:
+                    df_alpha['high'] = out[:, 0]
+                else:
+                    for ii in range(out.shape[1]):
+                        df_alpha[self.lb.inverse_transform([ii])[0]] = out[:, ii]
 
-        if beta_sequence is not None:
-            beta_list,pos,ref,alt = make_seq_list(beta_sequence,ref= list(self.aa_idx.keys()))
-            len_list = len(beta_list)
-            if alpha_sequence is None:
-                alpha_sequences = None
-            else:
-                alpha_sequences = np.array([alpha_sequence] * len_list)
+        if chain == 'beta':
+            if beta_sequence is not None:
+                beta_list, pos, ref, alt = make_seq_list(beta_sequence, ref=list(self.aa_idx.keys()))
+                len_list = len(beta_list)
+                if alpha_sequence is None:
+                    alpha_sequences = None
+                else:
+                    alpha_sequences = np.array([alpha_sequence] * len_list)
 
-            if v_beta is None:
-                v_beta = None
-            else:
-                v_beta = np.array([v_beta]*len_list)
+                if v_beta is None:
+                    v_beta = None
+                else:
+                    v_beta = np.array([v_beta] * len_list)
 
-            if d_beta is None:
-                d_beta = None
-            else:
-                d_beta = np.array([d_beta]*len_list)
+                if d_beta is None:
+                    d_beta = None
+                else:
+                    d_beta = np.array([d_beta] * len_list)
 
-            if j_beta is None:
-                j_beta = None
-            else:
-                j_beta =  np.array([j_beta]*len_list)
+                if j_beta is None:
+                    j_beta = None
+                else:
+                    j_beta = np.array([j_beta] * len_list)
 
-            if v_alpha is None:
-                v_alpha = None
-            else:
-                v_alpha =  np.array([v_alpha]*len_list)
+                if v_alpha is None:
+                    v_alpha = None
+                else:
+                    v_alpha = np.array([v_alpha] * len_list)
 
-            if j_alpha is None:
-                j_alpha = None
-            else:
-                j_alpha = np.array([j_alpha]*len_list)
+                if j_alpha is None:
+                    j_alpha = None
+                else:
+                    j_alpha = np.array([j_alpha] * len_list)
 
-            if hla is None:
-                hla = None
-            else:
-                hla = np.array([hla]*len_list)
+                if hla is None:
+                    hla = None
+                else:
+                    hla = np.array([hla] * len_list)
 
-            out = inf_func(beta_sequences = np.array(beta_list),
-                                 alpha_sequences = alpha_sequences,
-                                 v_beta = v_beta,
-                                 d_beta = d_beta,
-                                 j_beta = j_beta,
-                                 v_alpha = v_alpha,
-                                 j_alpha = j_alpha,
-                                 p = p,
-                                 hla = hla,
-                                 batch_size = batch_size,
-                                 models=models)
+                out = inf_func(beta_sequences=np.array(beta_list),
+                               alpha_sequences=alpha_sequences,
+                               v_beta=v_beta,
+                               d_beta=d_beta,
+                               j_beta=j_beta,
+                               v_alpha=v_alpha,
+                               j_alpha=j_alpha,
+                               p=p,
+                               hla=hla,
+                               batch_size=batch_size,
+                               models=models)
 
-            df_beta['beta'] = beta_list
-            df_beta['pos'] = pos
-            df_beta['ref'] = ref
-            df_beta['alt'] = alt
-            if self.regression:
-                df_beta['high'] = out[:,0]
-            else:
-                for ii in range(out.shape[1]):
-                    df_beta[self.lb.inverse_transform([ii])[0]] = out[:,ii]
+                df_beta['beta'] = beta_list
+                df_beta['pos'] = pos
+                df_beta['ref'] = ref
+                df_beta['alt'] = alt
+                if self.regression:
+                    df_beta['high'] = out[:, 0]
+                else:
+                    for ii in range(out.shape[1]):
+                        df_beta[self.lb.inverse_transform([ii])[0]] = out[:, ii]
 
-            return df_alpha,df_beta
+        if chain == 'alpha':
+            return df_alpha
+        elif chain == 'beta':
+            return df_beta
 
     def Residue_Sensitivity_Logo(self,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
                                 v_alpha=None, j_alpha=None, hla=None,p=None, batch_size=10000,models=None,
-                                 figsize=(10,8),low_color='red',medium_color='white',high_color='blue',
+                                 figsize=(4,8),low_color='red',medium_color='white',high_color='blue',
                                     font_name='serif',class_sel=None,
-                                 cmap=None,min_size=0.0,edgecolor='black',edgewidth=0.25,background_color='white',
+                                 cmap=None,min_size=0.0,edgecolor='black',edgewidth=0.25,background_color='black',
                                  Load_Prev_Data=False,norm_to_seq=True):
         """
         # Create Residue Sensitivity Logos
@@ -3093,10 +3099,14 @@ class DeepTCR_S_base(DeepTCR_base,feature_analytics_class,vis_class):
             df_alpha_list = []
             df_beta_list = []
             for i in range(len_input):
-                df_alpha,df_beta = self._residue(alpha_sequences[i],beta_sequences[i],
-                              v_beta[i],d_beta[i],j_beta[i],
-                              v_alpha[i],j_alpha[i],hla[i],
-                              p_,batch_size,models)
+                df_alpha = self._residue(alpha_sequences[i], beta_sequences[i],
+                                         v_beta[i], d_beta[i], j_beta[i],
+                                         v_alpha[i], j_alpha[i], hla[i],
+                                         p_, batch_size, models, 'alpha')
+                df_beta = self._residue(alpha_sequences[i], beta_sequences[i],
+                                        v_beta[i], d_beta[i], j_beta[i],
+                                        v_alpha[i], j_alpha[i], hla[i],
+                                        p_, batch_size, models, 'beta')
                 df_alpha_list.append(df_alpha)
                 df_beta_list.append(df_beta)
                 if not df_alpha.empty:
