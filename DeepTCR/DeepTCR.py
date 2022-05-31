@@ -4071,36 +4071,68 @@ class DeepTCR_WF(DeepTCR_S_base):
                 GO.Features = Features
                 agg_list = []
                 if qualitative_agg:
-                    #qualitative agg
-                    GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
-                    GO.Features_Agg = tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W)
-                    #normalize
-                    GO.Features_Agg = GO.Features_Agg / tf.sparse.sparse_dense_matmul(GO.sp, GO.X_Freq[:, tf.newaxis])
-                    agg_list.append(GO.Features_Agg)
-                if quantitative_agg:
-                    #quantitative agg
-                    GO.Features_W_c = Features * GO.X_Counts[:, tf.newaxis]
-                    c_b = tf.Variable(name='c_b',initial_value=np.zeros(num_concepts), trainable=True,dtype=tf.float32)
-                    GO.Features_Agg_c = isru(tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W_c)+c_b,l=0,h=1,a=0,b=0)
-                    agg_list.append(GO.Features_Agg_c)
-
-                GO.Features_Agg = tf.concat(agg_list,axis=1)
-
-                if num_agg_layers != 0:
-                    for lyr in range(num_agg_layers):
-                        GO.Features_Agg = tf.compat.v1.layers.dropout(GO.Features_Agg, GO.prob)
-                        GO.Features_Agg = tf.compat.v1.layers.dense(GO.Features_Agg, units_agg, tf.nn.relu,
-                                                                    kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
-
-                if self.regression is False:
-                    if multisample_dropout:
-                        GO.logits = MultiSample_Dropout(GO.Features_Agg,
-                                                        num_masks=multisample_dropout_num_masks,
-                                                        units=self.Y.shape[1],
-                                                        activation=None,
-                                                        rate=GO.prob_multisample)
+                    attn = True
+                    attn_heads = 1
+                    if attn is False:
+                        #qualitative agg
+                        GO.Features_W = Features * GO.X_Freq[:, tf.newaxis]
+                        GO.Features_Agg = tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W)
+                        #normalize
+                        GO.Features_Agg = GO.Features_Agg / tf.sparse.sparse_dense_matmul(GO.sp, GO.X_Freq[:, tf.newaxis])
+                        agg_list.append(GO.Features_Agg)
                     else:
-                        GO.logits = tf.compat.v1.layers.dense(GO.Features_Agg, self.Y.shape[1])
+                        # for _ in range(attn_heads):
+                        #     attn_w = transformer_attn(Features,GO.X_Freq[:, tf.newaxis],GO.sp,GO,num_iter=3,units=[12,12,12])
+                        #     GO.Features_W = attn_w*Features * GO.X_Freq[:, tf.newaxis]
+                        #     # GO.Features_W = attn_w* GO.X_Freq[:, tf.newaxis]
+                        #     GO.Features_Agg = tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W)
+                        #     #normalize
+                        #     GO.Features_Agg = GO.Features_Agg / tf.sparse.sparse_dense_matmul(GO.sp, GO.X_Freq[:, tf.newaxis])
+                        #     agg_list.append(GO.Features_Agg)
+
+                        # features_list = []
+                        # for _ in range(len(self.lb.classes_)):
+                        #     attn_w = transformer_attn(Features,GO.X_Freq[:, tf.newaxis],GO.sp,GO,num_iter=3,units=[12,12,12])
+                        #     features_w = attn_w * GO.X_Freq[:, tf.newaxis]
+                        #     features_agg = tf.sparse.sparse_dense_matmul(GO.sp, features_w)
+                        #     features_agg = features_agg / tf.sparse.sparse_dense_matmul(GO.sp, GO.X_Freq[:, tf.newaxis])
+                        #     features_list.append(features_agg)
+                        # GO.logits = tf.concat(features_list,axis=1)
+
+                        features_list = []
+                        for _ in range(len(self.lb.classes_)):
+                            attn_w = transformer_attn(Features,GO.X_Freq[:, tf.newaxis],GO.sp,GO,num_iter=3,units=[12,12,12])
+                            features_w = attn_w*Features * GO.X_Freq[:, tf.newaxis]
+                            features_agg = tf.sparse.sparse_dense_matmul(GO.sp, features_w)
+                            features_agg = features_agg / tf.sparse.sparse_dense_matmul(GO.sp, GO.X_Freq[:, tf.newaxis])
+                            features_agg = tf.compat.v1.layers.dense(features_agg,1)
+                            features_list.append(features_agg)
+                        GO.logits = tf.concat(features_list,axis=1)
+
+                # if quantitative_agg:
+                #     #quantitative agg
+                #     GO.Features_W_c = Features * GO.X_Counts[:, tf.newaxis]
+                #     c_b = tf.Variable(name='c_b',initial_value=np.zeros(num_concepts), trainable=True,dtype=tf.float32)
+                #     GO.Features_Agg_c = isru(tf.sparse.sparse_dense_matmul(GO.sp, GO.Features_W_c)+c_b,l=0,h=1,a=0,b=0)
+                #     agg_list.append(GO.Features_Agg_c)
+                #
+                # GO.Features_Agg = tf.concat(agg_list,axis=1)
+                #
+                # if num_agg_layers != 0:
+                #     for lyr in range(num_agg_layers):
+                #         GO.Features_Agg = tf.compat.v1.layers.dropout(GO.Features_Agg, GO.prob)
+                #         GO.Features_Agg = tf.compat.v1.layers.dense(GO.Features_Agg, units_agg, tf.nn.relu,
+                #                                                     kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
+                #
+                # if self.regression is False:
+                #     if multisample_dropout:
+                #         GO.logits = MultiSample_Dropout(GO.Features_Agg,
+                #                                         num_masks=multisample_dropout_num_masks,
+                #                                         units=self.Y.shape[1],
+                #                                         activation=None,
+                #                                         rate=GO.prob_multisample)
+                #     else:
+                #         GO.logits = tf.compat.v1.layers.dense(GO.Features_Agg, self.Y.shape[1])
 
                     per_sample_loss = tf.nn.softmax_cross_entropy_with_logits(labels=GO.Y, logits=GO.logits)
                     per_sample_loss = per_sample_loss - hinge_loss_t

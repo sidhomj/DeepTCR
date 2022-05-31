@@ -1,4 +1,5 @@
 import tensorflow as tf
+from DeepTCR.functions.act_fun import isru
 
 class graph_object(object):
     def __init__(self):
@@ -368,3 +369,22 @@ def make_test_pred_object():
         test_pred.__dict__[set].y_test = []
         test_pred.__dict__[set].y_pred = []
     return test_pred
+
+def transformer_attn(x,f,sp,GO,num_iter=3,units=[12,12,12]):
+    x_init = x
+    w = tf.ones(tf.shape(x)[0])[:,tf.newaxis]
+    for it in range(num_iter):
+        #compute bag representation
+        sig = tf.sparse.sparse_dense_matmul(sp, f*x_init*w)
+        #normalize
+        sig = sig / tf.sparse.sparse_dense_matmul(sp, f)
+        #broadcast to instances
+        s_i = tf.transpose(tf.sparse.sparse_dense_matmul(tf.transpose(sig),sp))
+        #concatenate bag representations to instance instances
+        x = tf.concat([x_init,s_i],axis=-1)
+        #multiple dense layers to arrive to attn w, sigmoid function constraints w between 0 and 1
+        for u in units:
+            x = tf.compat.v1.layers.dense(x, u, tf.nn.relu,
+                                          kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
+        w = tf.compat.v1.layers.dense(x,1,lambda x: isru(x, l=0, h=1, a=0, b=0))
+    return w
