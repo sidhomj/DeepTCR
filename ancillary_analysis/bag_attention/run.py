@@ -12,9 +12,9 @@ meta = meta[meta[meta.columns[4]]!='CMVUnknown']
 # meta = meta.sample(10)
 label_dict = dict(zip(meta[meta.columns[0]],meta[meta.columns[4]]))
 
-n = 500
+n = 1000
 DTCR_l = DeepTCR_WF('load_'+str(n))
-DTCR_l.Get_Data(directory='../../Data/natgen/data/cohort1/',Load_Prev_Data=True,
+DTCR_l.Get_Data(directory='../../Data/natgen/data/cohort1/',Load_Prev_Data=False,
                 aa_column_beta=1,v_beta_column=10,d_beta_column=13,j_beta_column=16,count_column=5,
                 type_of_data_cut='Num_Seq',
                 data_cut=n)
