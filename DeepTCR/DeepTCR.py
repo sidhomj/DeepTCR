@@ -4101,7 +4101,7 @@ class DeepTCR_WF(DeepTCR_S_base):
 
                         features_list = []
                         for _ in range(len(self.lb.classes_)):
-                            attn_w = transformer_attn(Features,GO.X_Freq[:, tf.newaxis],GO.sp,GO,num_iter=10,units=[12,12,12])
+                            attn_w = transformer_attn(Features,GO.X_Freq[:, tf.newaxis],GO.sp,GO,num_iter=3,units=[12,12,12])
                             features_w = attn_w*Features * GO.X_Freq[:, tf.newaxis]
                             features_agg = tf.sparse.sparse_dense_matmul(GO.sp, features_w)
                             features_agg = features_agg / tf.sparse.sparse_dense_matmul(GO.sp, GO.X_Freq[:, tf.newaxis])

@@ -45,7 +45,8 @@ DTCR_WF.Get_Data(directory='../../../Data/Rudqvist',Load_Prev_Data=True,
 
 DTCR_WF.Monte_Carlo_CrossVal(folds=folds,LOO=LOO,epochs_min=epochs_min,num_concepts=num_concepts,size_of_net=size_of_net,
                              train_loss_min=train_loss_min,hinge_loss_t=hinge_loss_t,combine_train_valid=True,seeds=seeds,
-                             graph_seed=graph_seed,multisample_dropout=False,multisample_dropout_rate=0.50,multisample_dropout_num_masks=64)
+                             graph_seed=graph_seed,multisample_dropout=False,multisample_dropout_rate=0.50,multisample_dropout_num_masks=64,
+                             subsample=100,l2_reg=1e-5)
 
 DTCR_WF.AUC_Curve()
 
