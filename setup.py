@@ -36,5 +36,6 @@ setup(
     long_description=open(os.path.join(dir,"README.md")).read(),
     long_description_content_type='text/markdown',
     package_data={'DeepTCR':[os.path.join('phenograph','louvain','*'),
-                             os.path.join('functions','Supertype_Data_Dict.csv')]}
+                             os.path.join('functions','Supertype_Data_Dict.csv'),
+                             os.path.join('functions','hla_reference_rna.fasta')]}
 )
