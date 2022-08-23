@@ -543,7 +543,9 @@ class Synapse(object):
                 self.GO = GO
                 self.train_params = train_params
                 self.graph_model = graph_model
-                self.kernel = kernel
+                self.kernel_tcr = kernel_tcr
+                self.kernel_epitope = kernel_epitope
+                self.kernel_hla = kernel_hla
 
     def _train(self,batch_seed=None,iteration=0):
 
@@ -677,9 +679,10 @@ class Synapse(object):
             # save model data and information for inference engine
             save_model_data(self, GO.saver, sess, name='SS', get=GO.predicted,iteration=iteration)
 
-    def Train(self,kernel = 5,trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
+    def Train(self,kernel_tcr = 5, kernel_epitope = 5, kernel_hla = 30,
+              trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
                num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
-               use_only_seq = False, use_only_gene = False, use_only_hla = False, size_of_net = 'medium',graph_seed = None,
+               size_of_net = 'medium',graph_seed = None,
                drop_out_rate=0.0,multisample_dropout = False, multisample_dropout_rate = 0.50, multisample_dropout_num_masks = 64,
                batch_size = 1000, epochs_min = 10, stop_criterion = 0.001, stop_criterion_window = 10,
                accuracy_min = None, train_loss_min = None, hinge_loss_t = 0.0, convergence = 'validation', learning_rate = 0.001, suppress_output = False,
@@ -764,9 +767,10 @@ class Synapse(object):
         """
         self._reset_models()
         self.test_pred = make_test_pred_object()
-        self._build(kernel,trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
+        self._build(kernel_tcr,kernel_epitope,kernel_hla,
+                    trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
                num_fc_layers, units_fc,weight_by_class, class_weights,
-               use_only_seq, use_only_gene, use_only_hla, size_of_net,graph_seed,
+               size_of_net,graph_seed,
                drop_out_rate,multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                batch_size, epochs_min, stop_criterion, stop_criterion_window,
                accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
@@ -776,9 +780,10 @@ class Synapse(object):
             self.test_pred.__dict__[set].y_pred = np.vstack(self.test_pred.__dict__[set].y_pred)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,split_by_sample=False,combine_train_valid=False,seeds=None,
-                             kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
+                             kernel_tcr=5,kernel_epitope=5,kernel_hla=30,
+                             trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                              num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
-                             use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
+                            size_of_net='medium', graph_seed=None,
                              drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50, multisample_dropout_num_masks=64,
                              batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                              accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
@@ -881,9 +886,10 @@ class Synapse(object):
         predicted = np.zeros_like(self.predicted)
         counts = np.zeros_like(self.predicted)
         self._reset_models()
-        self._build(kernel,trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
+        self._build(kernel_tcr,kernel_epitope,kernel_hla,
+                    trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
                num_fc_layers, units_fc,weight_by_class, class_weights,
-               use_only_seq, use_only_gene, use_only_hla, size_of_net,graph_seed,
+               size_of_net,graph_seed,
                drop_out_rate,multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                batch_size, epochs_min, stop_criterion, stop_criterion_window,
                accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
@@ -918,9 +924,10 @@ class Synapse(object):
         print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal(self,folds=None,split_by_sample=False,combine_train_valid=False,seeds=None,
-                        kernel=5, trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
+                        kernel_tcr=5,kernel_epitope=5,kernel_hla=30,
+                        trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                         num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
-                        use_only_seq=False, use_only_gene=False, use_only_hla=False, size_of_net='medium', graph_seed=None,
+                        size_of_net='medium', graph_seed=None,
                         drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50, multisample_dropout_num_masks=64,
                         batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                         accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
@@ -1061,9 +1068,10 @@ class Synapse(object):
 
 
         self._reset_models()
-        self._build(kernel, trainable_embedding, embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
+        self._build(kernel_tcr,kernel_epitope,kernel_hla,
+                    trainable_embedding, embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
                     num_fc_layers, units_fc, weight_by_class, class_weights,
-                    use_only_seq, use_only_gene, use_only_hla, size_of_net, graph_seed,
+                    size_of_net, graph_seed,
                     drop_out_rate, multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                     batch_size, epochs_min, stop_criterion, stop_criterion_window,
                     accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
