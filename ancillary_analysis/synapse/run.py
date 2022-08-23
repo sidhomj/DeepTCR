@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from DeepTCR.Synapse import Synapse
-from DeepTCR.functions.data_processing import Process_Seq, supertype_conv_op
+from DeepTCR.functions_syn.data_processing import Process_Seq, supertype_conv_op
 
 df = pd.read_csv('../../Data/synapse/training_data.csv')
 df['bind'] = True
@@ -36,15 +36,15 @@ df_train['HLA'] = df_train['HLA'].str.replace('*',"")
 df_train['HLA'] = df_train['HLA'].str.replace(':',"")
 df_train['HLA'] = df_train['HLA'].str[0:5]
 # df_train['HLA'] = df_train['HLA'].apply((lambda x: [x]))
-# df_train['HLA_sup'] = supertype_conv_op(df_train['HLA'],keep_non_supertype_alleles=True)
+df_train['HLA_sup'] = supertype_conv_op(df_train['HLA'],keep_non_supertype_alleles=True)
 # df_train['HLA_sup'] = df_train['HLA_sup'].apply(lambda x: x[0])
 DTCR = Synapse('epitope_tcr')
 DTCR.Load_Data(beta_sequences=np.array(df_train['CDR3']),
-               epitope_sequences = np.array(df_train['Antigen']),
-               hla=np.array(df_train['HLA']),
-                class_labels= np.array(df_train['bind_cat']),
-               use_hla_supertype=False,
-               use_hla_seq=True)
+               # epitope_sequences = np.array(df_train['Antigen']),
+               hla=np.array(df_train['HLA_sup']),
+                class_labels= np.array(df_train['bind_cat']))
+               #use_hla_supertype=False)
+               # use_hla_seq=True)
 DTCR.Get_Train_Valid_Test()
 DTCR.Train()
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=5000,epochs_min=50,

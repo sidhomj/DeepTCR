@@ -88,8 +88,12 @@ def Get_HLA_Features(self,GO,embedding_dim):
     GO.HLA_Features = tf.matmul(GO.X_hla,GO.embedding_layer_hla)
     return GO.HLA_Features
 
-def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Features',kernel=3,net='ae',
-                           size_of_net = 'medium',l2_reg=0.0):
+def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Features',
+                           size_of_net='medium', kernel=[5,5,5], stride=[1,1,1],
+                           agg='max_pool',
+                          l2_reg=0.0):
+
+
     with tf.compat.v1.variable_scope(name,reuse=reuse):
         if size_of_net == 'small':
             units = [12,32,64]
@@ -100,31 +104,23 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
         else:
             units = size_of_net
 
+        assert len(kernel) == len(units) == len(stride), 'kernel, units, and stride must be of same length'
+
+        conv = inputs
         for ii,_ in enumerate(units,0):
-            if ii == 0:
-                conv = tf.compat.v1.layers.conv2d(inputs, units[ii], (1, kernel), 1, padding='same',
-                                                  kernel_regularizer=tf.keras.regularizers.l2(l2_reg))
-                conv_out = tf.compat.v1.layers.flatten(tf.reduce_max(input_tensor=conv, axis=2))
-                indices = tf.squeeze(tf.cast(tf.argmax(input=conv, axis=2), tf.float32), 1)
-                conv = tf.nn.leaky_relu(conv)
-                conv = tf.compat.v1.layers.dropout(conv, prob)
-            else:
-                kernel = 3
-                conv = tf.compat.v1.layers.conv2d(conv, units[ii], (1, kernel), (1, kernel), padding='same',
-                                                  kernel_regularizer=tf.keras.regularizers.l2(l2_reg))
-                conv = tf.nn.leaky_relu(conv)
-                conv = tf.compat.v1.layers.dropout(conv, prob)
+            conv = tf.compat.v1.layers.conv2d(conv, units[ii], (1, kernel[ii]), (1,stride[ii]), padding='same',
+                                              kernel_regularizer=tf.keras.regularizers.l2(l2_reg))
+            conv = tf.nn.leaky_relu(conv)
+            conv = tf.compat.v1.layers.dropout(conv, prob)
 
-        conv_3 = conv
-        conv_3_out = tf.compat.v1.layers.flatten(tf.reduce_max(input_tensor=conv_3,axis=2))
-
-        if net == 'ae':
-            return tf.compat.v1.layers.flatten(conv_3),conv_out,indices
+        if agg == 'max_pool':
+            return tf.compat.v1.layers.flatten(tf.reduce_max(input_tensor=conv,axis=2))
         else:
-            return conv_3_out,conv_out,indices
+            return tf.compat.v1.layers.flatten(conv)
 
 def Conv_Model(GO, self, trainable_embedding,
                kernel_tcr,kernel_epitope,kernel_hla,
+               stride_tcr,stride_epitope,stride_hla,
                num_fc_layers=0, units_fc=12):
 
     if self.use_alpha is True:
@@ -200,29 +196,33 @@ def Conv_Model(GO, self, trainable_embedding,
 
     # Convolutional Features
     if self.use_alpha is True:
-        GO.Seq_Features_alpha, GO.alpha_out, GO.indices_alpha = Convolutional_Features(inputs_seq_embed_alpha,
-                                                                                       kernel=kernel_tcr,
-                                                                                       name='alpha_conv', prob=GO.prob,
-                                                                                       net=GO.net,size_of_net=GO.size_of_net,
-                                                                                       l2_reg=GO.l2_reg)
+        GO.Seq_Features_alpha  = Convolutional_Features(inputs_seq_embed_alpha,
+                                                        kernel=kernel_tcr,
+                                                        stride=stride_tcr,
+                                                        name='alpha_conv', prob=GO.prob,
+                                                        agg='max_pool',size_of_net=GO.size_of_net,
+                                                        l2_reg=GO.l2_reg)
 
     if self.use_beta is True:
-        GO.Seq_Features_beta, GO.beta_out, GO.indices_beta = Convolutional_Features(inputs_seq_embed_beta,
-                                                                                    kernel=kernel_tcr,
-                                                                                    name='beta_conv', prob=GO.prob,
-                                                                                    net=GO.net,size_of_net=GO.size_of_net,
-                                                                                    l2_reg = GO.l2_reg)
+        GO.Seq_Features_beta = Convolutional_Features(inputs_seq_embed_beta,
+                                                        kernel=kernel_tcr,
+                                                        stride=stride_tcr,
+                                                        name='beta_conv', prob=GO.prob,
+                                                        agg='max_pool',size_of_net=GO.size_of_net,
+                                                        l2_reg = GO.l2_reg)
     if self.use_epitope is True:
-        GO.Seq_Features_epitope, GO.epitope_out, GO.indices_epitope = Convolutional_Features(inputs_seq_embed_epitope,
-                                                                                                kernel=kernel_epitope,
-                                                                                                name='epitope_conv', prob=GO.prob,
-                                                                                                net=GO.net,size_of_net=GO.size_of_net,
-                                                                                                l2_reg = GO.l2_reg)
+        GO.Seq_Features_epitope  = Convolutional_Features(inputs_seq_embed_epitope,
+                                                        kernel=kernel_epitope,
+                                                        stride=stride_epitope,
+                                                        name='epitope_conv', prob=GO.prob,
+                                                        agg='max_pool',size_of_net=GO.size_of_net,
+                                                        l2_reg = GO.l2_reg)
     if self.use_hla and self.use_hla_seq:
-        GO.Seq_Features_hla, GO.hla_out, GO.indices_hla = Convolutional_Features(inputs_seq_embed_hla,
+        GO.Seq_Features_hla  = Convolutional_Features(inputs_seq_embed_hla,
                                                                                 kernel=kernel_hla,
+                                                                                 stride=stride_hla,
                                                                                 name='hla_conv', prob=GO.prob,
-                                                                                net=GO.net,size_of_net=GO.size_of_net,
+                                                                                agg='flat',size_of_net=GO.size_of_net,
                                                                                 l2_reg = GO.l2_reg)
 
     Seq_Features = []
