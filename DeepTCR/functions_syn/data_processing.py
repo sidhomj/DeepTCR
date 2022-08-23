@@ -6,6 +6,9 @@ import pandas as pd
 import re
 import os
 import pickle
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.Alphabet import generic_rna
 
 def Embed_Seq_Num(seq,aa_idx,maxlength):
     seq_embed = np.zeros((1, maxlength)).astype('int64')
@@ -237,4 +240,43 @@ def make_seq_list(seq,
             alt_list.append(r)
     return (seq_run_list, pos, ref_list, alt_list)
 
+def load_hla_seq():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    filename = os.path.join(dir_path, '../library/hla_reference_rna.fasta')
+    seq_hla = SeqIO.parse(open(filename), 'fasta')
+    sequences = []
+    labels = []
+    for fasta in seq_hla:
+        name, sequence = fasta.description, str(fasta.seq)
+        sequence = Seq(sequence, generic_rna)
+        sequence = sequence[2:].translate()
+        sequence = sequence._data
+        sequences.append(sequence)
+        labels.append(name)
 
+    df = pd.DataFrame()
+    df['Allele'] = labels
+    df['Sequence'] = sequences
+    idx = df['Allele'].str.contains('HLA-(A|B|C)')
+    df = df[idx]
+    df[['ID', 'Allele']] = df['Allele'].str.split(' ', expand=True)
+    df['Allele'] = df['Allele'].str[:11]
+    df['Allele'] = df['Allele'].str.replace('HLA-', '')
+    df['Allele'] = df['Allele'].str.replace('*', '')
+    df['Allele'] = df['Allele'].str.replace(':', '')
+    df = df.groupby('Allele').agg({'Sequence': 'first'})
+    return df
+
+# def hla_seq_conv_op(hla,df_hla):
+#     hla_dict = dict(zip(df_hla.index, df_hla['Sequence']))
+#     hla_list_seq = []
+#     np.array([hla_dict[x] if x in hla_dict.keys() else x for x in hla])
+#     for h in hla:
+#         h = [x for x in h if x in hla_dict.keys()]
+#         hla_list_seq.append(np.array([hla_dict[x] if x in hla_dict.keys() else x for x in h]))
+#     return hla_list_seq
+
+def hla_seq_conv_op(hla,df_hla):
+    hla_dict = dict(zip(df_hla.index, df_hla['Sequence']))
+    hla_list_seq = np.array([hla_dict[x] if x in hla_dict.keys() else x for x in hla])
+    return hla_list_seq
