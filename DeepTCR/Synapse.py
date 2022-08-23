@@ -340,7 +340,7 @@ class Synapse(object):
                 hla = supertype_conv_op(hla,keep_non_supertype_alleles)
                 self.use_hla_sup = True
                 self.keep_non_supertype_alleles = keep_non_supertype_alleles
-                self.hla_data_seq_num = self.lb_hla.fit_transform(hla)
+                self.hla_data_seq_num = self.lb_hla.fit_transform(hla.reshape(-1,1))
                 self.hla_data_seq = hla
 
             elif use_hla_seq:
