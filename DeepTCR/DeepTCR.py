@@ -524,7 +524,7 @@ class DeepTCR_base(object):
 
     def Load_Data(self,alpha_sequences=None,beta_sequences=None,v_beta=None,d_beta=None,j_beta=None,
                   v_alpha=None,j_alpha=None,class_labels=None,sample_labels=None,freq=None,counts=None,Y=None,
-                  p=None,hla=None,use_hla_supertype=False,keep_non_supertype_alleles=False,use_hla_seq=False,
+                  p=None,hla=None,use_hla_supertype=False,keep_non_supertype_alleles=False,
                   w=None):
         """
         # Load Data programatically into DeepTCR.
@@ -746,11 +746,6 @@ class DeepTCR_base(object):
                 hla = supertype_conv_op(hla,keep_non_supertype_alleles)
                 self.use_hla_sup = True
                 self.keep_non_supertype_alleles = keep_non_supertype_alleles
-
-            if use_hla_seq:
-                df_hla = load_hla_seq()
-                hla = hla_seq_conv_op(hla,df_hla)
-                self.use_hla_seq = True
 
             else:
                 self.lb_hla = MultiLabelBinarizer()
