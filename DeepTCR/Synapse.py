@@ -5,6 +5,7 @@ from DeepTCR.functions.utils_u import *
 from DeepTCR.functions.utils_s import *
 from DeepTCR.functions.act_fun import *
 from DeepTCR.functions.plot_func import *
+from DeepTCR.functions_syn.data_processing import *
 import seaborn as sns
 import colorsys
 from scipy.cluster.hierarchy import linkage,fcluster,dendrogram, leaves_list
@@ -334,12 +335,13 @@ class Synapse(object):
             self.freq = freq
 
         if hla is not None:
+            self.use_hla = True
             if use_hla_supertype:
                 hla = supertype_conv_op(hla,keep_non_supertype_alleles)
                 self.use_hla_sup = True
                 self.keep_non_supertype_alleles = keep_non_supertype_alleles
 
-            if use_hla_seq:
+            elif use_hla_seq:
                 df_hla = load_hla_seq()
                 hla = hla_seq_conv_op(hla,df_hla)
                 self.use_hla_seq = True
@@ -349,7 +351,6 @@ class Synapse(object):
                 self.hla_data_seq_num = self.lb_hla.fit_transform(hla)
                 self.hla_data_seq = hla
 
-            self.use_hla = True
         else:
             self.lb_hla = MultiLabelBinarizer()
             self.hla_data_seq_num = np.zeros([len_input,1])
