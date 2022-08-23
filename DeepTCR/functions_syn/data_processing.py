@@ -186,11 +186,10 @@ def supertype_conv_op(hla,keep_non_supertype_alleles=False):
     df_supertypes = pd.read_csv(os.path.join(dir_path, '../library/Supertype_Data_Dict.csv'))
     df_supertypes = df_supertypes[~df_supertypes['Supertype_2'].isin(['AU', 'BU'])]
     hla_dict = dict(zip(df_supertypes['Allele'], df_supertypes['Supertype_2']))
-    hla_list_sup = []
-    for h in hla:
-        if not keep_non_supertype_alleles:
-            h = [x for x in h if x in hla_dict.keys()]
-        hla_list_sup.append(np.array([hla_dict[x] if x in hla_dict.keys() else x for x in h]))
+    if not keep_non_supertype_alleles:
+        hla_list_sup = np.array([hla_dict[x] if x in hla_dict.keys() else '' for x in hla])
+    else:
+        hla_list_sup = np.array([hla_dict[x] if x in hla_dict.keys() else x for x in hla])
     return hla_list_sup
 
 def supertype_conv(df,keep_non_supertype_alleles=False):

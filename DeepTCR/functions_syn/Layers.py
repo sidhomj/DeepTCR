@@ -138,6 +138,18 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
                                        name='Input_Beta')
         GO.X_Seq_beta_OH = tf.one_hot(GO.X_Seq_beta, depth=21)
 
+    if self.use_epitope is True:
+        GO.X_Seq_epitope = tf.compat.v1.placeholder(tf.int64,
+                                                    shape=[None,self.X_Seq_epitope.shape[1], self.X_Seq_epitope.shape[2]],
+                                                    name='Input_Epitope')
+        GO.X_Seq_epitope_OH = tf.one_hot(GO.X_Seq_epitope, depth=21)
+
+    if self.use_hla and self.use_hla_seq:
+        GO.X_Seq_hla = tf.compat.v1.placeholder(tf.int64,
+                                               shape=[None, self.hla_data_seq_num.shape[1], self.hla_data_seq_num.shape[2]],
+                                               name='Input_HLA')
+        GO.X_Seq_hla_OH = tf.one_hot(GO.X_Seq_hla, depth=21)
+
     GO.prob = tf.compat.v1.placeholder_with_default(0.0, shape=(), name='prob')
     GO.prob_multisample = tf.compat.v1.placeholder_with_default(0.0, shape=(), name='prob_multisample')
     GO.sp = tf.compat.v1.sparse.placeholder(dtype=tf.float32, shape=[None, None],name='sp')
@@ -165,6 +177,12 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
             if self.use_beta is True:
                 inputs_seq_embed_beta = tf.squeeze(
                     tf.tensordot(GO.X_Seq_beta_OH, GO.embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+            if self.use_epitope is True:
+                inputs_seq_embed_epitope = tf.squeeze(
+                    tf.tensordot(GO.X_Seq_epitope_OH, GO.embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
+            if self.use_hla and self.use_hla_seq:
+                inputs_seq_embed_hla = tf.squeeze(
+                    tf.tensordot(GO.X_Seq_hla_OH, GO.embedding_layer_seq, axes=(3, 2)), axis=(3, 4))
 
     else:
         if self.use_alpha is True:
@@ -172,6 +190,12 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
 
         if self.use_beta is True:
             inputs_seq_embed_beta = GO.X_Seq_beta_OH
+
+        if self.use_epitope is True:
+            inputs_seq_embed_epitope = GO.X_Seq_epitope_OH
+
+        if self.use_hla and self.use_hla_seq:
+            inputs_seq_embed_hla = GO.X_Seq_hla_OH
 
     # Convolutional Features
     if self.use_alpha is True:
@@ -187,6 +211,18 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
                                                                                     name='beta_conv', prob=GO.prob,
                                                                                     net=GO.net,size_of_net=GO.size_of_net,
                                                                                     l2_reg = GO.l2_reg)
+    if self.use_epitope is True:
+        GO.Seq_Features_epitope, GO.epitope_out, GO.indices_epitope = Convolutional_Features(inputs_seq_embed_epitope,
+                                                                                                kernel=kernel,
+                                                                                                name='epitope_conv', prob=GO.prob,
+                                                                                                net=GO.net,size_of_net=GO.size_of_net,
+                                                                                                l2_reg = GO.l2_reg)
+    if self.use_hla and self.use_hla_seq:
+        GO.Seq_Features_hla, GO.hla_out, GO.indices_hla = Convolutional_Features(inputs_seq_embed_hla,
+                                                                                kernel=kernel,
+                                                                                name='hla_conv', prob=GO.prob,
+                                                                                net=GO.net,size_of_net=GO.size_of_net,
+                                                                                l2_reg = GO.l2_reg)
 
     Seq_Features = []
     if self.use_alpha is True:
@@ -213,7 +249,7 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     except:
         pass
 
-    if self.use_hla:
+    if self.use_hla and not self.use_hla_seq:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
         Features = tf.concat((Features,HLA_Features),axis=1)
 

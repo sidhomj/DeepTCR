@@ -43,7 +43,10 @@ DTCR.Load_Data(beta_sequences=np.array(df_train['CDR3']),
                epitope_sequences = np.array(df_train['Antigen']),
                hla=np.array(df_train['HLA']),
                 class_labels= np.array(df_train['bind_cat']),
-               use_hla_seq=True)
+               use_hla_supertype=True,
+               use_hla_seq=False)
+DTCR.Get_Train_Valid_Test()
+DTCR.Train()
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=5000,epochs_min=50,
                           num_fc_layers=3,units_fc=256,
                           drop_out_rate=0.5)

@@ -501,7 +501,8 @@ def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
     accuracy = []
     predicted_list = []
     var_names = ['X_Seq_alpha','X_Seq_beta','v_beta_num','d_beta_num',
-                 'j_beta_num','v_alpha_num','j_alpha_num','hla_data_seq_num']
+                 'j_beta_num','v_alpha_num','j_alpha_num','hla_data_seq_num',
+                 'X_Seq_epitope']
     Vars = []
     for v in var_names:
         Vars.append(set[self.var_dict[v]])
@@ -537,7 +538,13 @@ def Run_Graph_SS(set,sess,self,GO,batch_size,random=True,train=True,drop_out_rat
             feed_dict[GO.X_j_alpha] = vars[6]
 
         if self.use_hla:
-            feed_dict[GO.X_hla] = vars[7]
+            if self.use_hla_seq:
+                feed_dict[GO.X_Seq_hla] = vars[7]
+            else:
+                feed_dict[GO.X_hla] = vars[7]
+
+        if self.use_epitope:
+            feed_dict[GO.X_Seq_epitope] = vars[8]
 
         if train is True:
             loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted], feed_dict=feed_dict)
