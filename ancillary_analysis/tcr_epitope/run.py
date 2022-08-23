@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
-from DeepTCR.DeepTCR import DeepTCR_SS
+from DeepTCR.Synapse import Synapse
 from DeepTCR.functions.data_processing import Process_Seq, supertype_conv_op
 
-df = pd.read_csv('training_data.csv')
+df = pd.read_csv('../../Data/synapse/training_data.csv')
 df['bind'] = True
 df['id'] = df['CDR3']+'_'+df['Antigen']+'_'+df['HLA']
 # df = df.sample(n=5000,replace=False)
@@ -35,16 +35,14 @@ df_train = Process_Seq(df_train,'Antigen')
 df_train['HLA'] = df_train['HLA'].str.replace('*',"")
 df_train['HLA'] = df_train['HLA'].str.replace(':',"")
 df_train['HLA'] = df_train['HLA'].str[0:5]
-df_train['HLA'] = df_train['HLA'].apply((lambda x: [x]))
+# df_train['HLA'] = df_train['HLA'].apply((lambda x: [x]))
 # df_train['HLA_sup'] = supertype_conv_op(df_train['HLA'],keep_non_supertype_alleles=True)
 # df_train['HLA_sup'] = df_train['HLA_sup'].apply(lambda x: x[0])
-DTCR = DeepTCR_SS('epitope_tcr')
+DTCR = Synapse('epitope_tcr')
 DTCR.Load_Data(beta_sequences=np.array(df_train['CDR3']),
-               alpha_sequences=np.array(df_train['Antigen']),
+               epitope_sequences = np.array(df_train['Antigen']),
                hla=np.array(df_train['HLA']),
                 class_labels= np.array(df_train['bind_cat']),
-               use_hla_supertype=False,
-               keep_non_supertype_alleles=False,
                use_hla_seq=True)
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=5000,epochs_min=50,
                           num_fc_layers=3,units_fc=256,

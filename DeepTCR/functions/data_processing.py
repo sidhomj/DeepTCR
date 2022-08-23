@@ -268,10 +268,16 @@ def load_hla_seq():
     df = df.groupby('Allele').agg({'Sequence': 'first'})
     return df
 
+# def hla_seq_conv_op(hla,df_hla):
+#     hla_dict = dict(zip(df_hla.index, df_hla['Sequence']))
+#     hla_list_seq = []
+#     np.array([hla_dict[x] if x in hla_dict.keys() else x for x in hla])
+#     for h in hla:
+#         h = [x for x in h if x in hla_dict.keys()]
+#         hla_list_seq.append(np.array([hla_dict[x] if x in hla_dict.keys() else x for x in h]))
+#     return hla_list_seq
+
 def hla_seq_conv_op(hla,df_hla):
     hla_dict = dict(zip(df_hla.index, df_hla['Sequence']))
-    hla_list_seq = []
-    for h in hla:
-        h = [x for x in h if x in hla_dict.keys()]
-        hla_list_seq.append(np.array([hla_dict[x] if x in hla_dict.keys() else x for x in h]))
+    hla_list_seq = np.array([hla_dict[x] if x in hla_dict.keys() else x for x in hla])
     return hla_list_seq
