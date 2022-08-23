@@ -287,9 +287,7 @@ class Synapse(object):
             self.j_alpha_num = np.zeros(shape=[len_input])
             self.j_alpha = np.asarray([None] * len_input)
 
-        if p is None:
-            p_.close()
-            p_.join()
+
 
         if counts is not None:
             if sample_labels is not None:
@@ -334,27 +332,33 @@ class Synapse(object):
             self.counts = counts
             self.freq = freq
 
+        self.lb_hla = MultiLabelBinarizer()
+        self.hla_data_seq_num = np.zeros([len_input, 1])
+        self.hla_data_seq = np.zeros(len_input)
         if hla is not None:
             self.use_hla = True
             if use_hla_supertype:
                 hla = supertype_conv_op(hla,keep_non_supertype_alleles)
                 self.use_hla_sup = True
                 self.keep_non_supertype_alleles = keep_non_supertype_alleles
-
-            elif use_hla_seq:
-                df_hla = load_hla_seq()
-                hla = hla_seq_conv_op(hla,df_hla)
-                self.use_hla_seq = True
-
-            else:
-                self.lb_hla = MultiLabelBinarizer()
                 self.hla_data_seq_num = self.lb_hla.fit_transform(hla)
                 self.hla_data_seq = hla
 
-        else:
-            self.lb_hla = MultiLabelBinarizer()
-            self.hla_data_seq_num = np.zeros([len_input,1])
-            self.hla_data_seq = np.zeros(len_input)
+            elif use_hla_seq:
+                df_hla = load_hla_seq()
+                hla_sequences = hla_seq_conv_op(hla,df_hla)
+                self.hla_data_seq = hla_sequences
+
+                self.max_length_hla = np.max(np.vectorize(len)(hla_sequences))
+                args = list(zip(hla_sequences, [self.aa_idx] * len(hla_sequences),[self.max_length_hla] * len(hla_sequences)))
+                result = p_.starmap(Embed_Seq_Num, args)
+                sequences_num = np.vstack(result)
+                self.hla_data_seq_num = np.expand_dims(sequences_num, 1)
+                self.use_hla_seq = True
+
+        if p is None:
+            p_.close()
+            p_.join()
 
         if Y is not None:
             if Y.ndim == 1:
