@@ -123,8 +123,9 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
         else:
             return conv_3_out,conv_out,indices
 
-def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
-               use_only_gene,use_only_hla,num_fc_layers=0, units_fc=12):
+def Conv_Model(GO, self, trainable_embedding,
+               kernel_tcr,kernel_epitope,kernel_hla,
+               num_fc_layers=0, units_fc=12):
 
     if self.use_alpha is True:
         GO.X_Seq_alpha = tf.compat.v1.placeholder(tf.int64,
@@ -200,26 +201,26 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     # Convolutional Features
     if self.use_alpha is True:
         GO.Seq_Features_alpha, GO.alpha_out, GO.indices_alpha = Convolutional_Features(inputs_seq_embed_alpha,
-                                                                                       kernel=kernel,
+                                                                                       kernel=kernel_tcr,
                                                                                        name='alpha_conv', prob=GO.prob,
                                                                                        net=GO.net,size_of_net=GO.size_of_net,
                                                                                        l2_reg=GO.l2_reg)
 
     if self.use_beta is True:
         GO.Seq_Features_beta, GO.beta_out, GO.indices_beta = Convolutional_Features(inputs_seq_embed_beta,
-                                                                                    kernel=kernel,
+                                                                                    kernel=kernel_tcr,
                                                                                     name='beta_conv', prob=GO.prob,
                                                                                     net=GO.net,size_of_net=GO.size_of_net,
                                                                                     l2_reg = GO.l2_reg)
     if self.use_epitope is True:
         GO.Seq_Features_epitope, GO.epitope_out, GO.indices_epitope = Convolutional_Features(inputs_seq_embed_epitope,
-                                                                                                kernel=kernel,
+                                                                                                kernel=kernel_epitope,
                                                                                                 name='epitope_conv', prob=GO.prob,
                                                                                                 net=GO.net,size_of_net=GO.size_of_net,
                                                                                                 l2_reg = GO.l2_reg)
     if self.use_hla and self.use_hla_seq:
         GO.Seq_Features_hla, GO.hla_out, GO.indices_hla = Convolutional_Features(inputs_seq_embed_hla,
-                                                                                kernel=kernel,
+                                                                                kernel=kernel_hla,
                                                                                 name='hla_conv', prob=GO.prob,
                                                                                 net=GO.net,size_of_net=GO.size_of_net,
                                                                                 l2_reg = GO.l2_reg)
@@ -252,15 +253,6 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
     if self.use_hla and not self.use_hla_seq:
         HLA_Features = Get_HLA_Features(self,GO,GO.embedding_dim_hla)
         Features = tf.concat((Features,HLA_Features),axis=1)
-
-    if use_only_seq:
-        Features = Seq_Features
-
-    if use_only_gene:
-        Features = gene_features
-
-    if use_only_hla:
-        Features = HLA_Features
 
     GO.Features_Base = Features
     # if (self.use_hla) and (not use_only_hla):

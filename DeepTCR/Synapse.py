@@ -445,9 +445,10 @@ class Synapse(object):
             shutil.rmtree(self.models_dir)
         os.makedirs(self.models_dir)
 
-    def _build(self,kernel = 5,trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
+    def _build(self,kernel_tcr = 5,kernel_epitope=5,kernel_hla=30,
+               trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
                num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
-               use_only_seq = False, use_only_gene = False, use_only_hla = False, size_of_net = 'medium',graph_seed = None,
+               size_of_net = 'medium',graph_seed = None,
                drop_out_rate=0.0,multisample_dropout = False, multisample_dropout_rate = 0.50, multisample_dropout_num_masks = 64,
                batch_size = 1000, epochs_min = 10, stop_criterion = 0.001, stop_criterion_window = 10,
                accuracy_min = None, train_loss_min = None, hinge_loss_t = 0.0, convergence = 'validation', learning_rate = 0.001, suppress_output = False):
@@ -479,7 +480,8 @@ class Synapse(object):
                     tf.compat.v1.set_random_seed(graph_seed)
 
                 GO.net = 'sup'
-                GO.Features = Conv_Model(GO,self,trainable_embedding,kernel,use_only_seq,use_only_gene,use_only_hla,
+                GO.Features = Conv_Model(GO,self,trainable_embedding,
+                                         kernel_tcr,kernel_epitope,kernel_hla,
                                          num_fc_layers,units_fc)
                 if self.regression is False:
                     GO.Y = tf.compat.v1.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
