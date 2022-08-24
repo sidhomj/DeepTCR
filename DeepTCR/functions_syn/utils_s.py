@@ -1043,6 +1043,7 @@ def _inf_ss(data,model='model_0'):
     j_beta_num = data.j_beta_num
     v_alpha_num = data.v_alpha_num
     j_alpha_num = data.j_alpha_num
+    X_Seq_epitope = data.X_Seq_epitope
     hla_data_seq_num = data.hla_data_seq_num
     batch_size = data.batch_size
     get = data.get
@@ -1080,11 +1081,14 @@ def _inf_ss(data,model='model_0'):
         if self.use_hla:
             X_hla = graph.get_tensor_by_name('HLA:0')
 
+        if self.use_epitope:
+            X_Seq_epitope_v = graph.get_tensor_by_name('Input_Epitope:0')
+
         get_obj = graph.get_tensor_by_name(get)
 
         out_list = []
         Vars = [X_Seq_alpha, X_Seq_beta, v_beta_num, d_beta_num, j_beta_num,
-                v_alpha_num, j_alpha_num,hla_data_seq_num]
+                v_alpha_num, j_alpha_num,hla_data_seq_num,X_Seq_epitope]
 
         for vars in get_batches(Vars, batch_size=batch_size):
             feed_dict = {}
@@ -1111,6 +1115,9 @@ def _inf_ss(data,model='model_0'):
             if self.use_hla:
                 feed_dict[X_hla] = vars[7]
 
+            if self.use_epitope:
+                feed_dict[X_Seq_epitope_v] = vars[8]
+
             get_ind = sess.run(get_obj, feed_dict=feed_dict)
             out_list.append(get_ind)
 
@@ -1122,7 +1129,7 @@ class data_object(object):
 
 def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,epitope_sequences,hla,p,batch_size,self,models):
 
-    inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha,epitope_sequences,hla]
+    inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha, epitope_sequences, hla]
     for i in inputs:
         if i is not None:
             len_input = len(i)
@@ -1133,7 +1140,7 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
 
     if alpha_sequences is not None:
         args = list(
-            zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length] * len(alpha_sequences)))
+            zip(alpha_sequences, [self.aa_idx] * len(alpha_sequences), [self.max_length_alpha] * len(alpha_sequences)))
         result = p.starmap(Embed_Seq_Num, args)
         sequences_num = np.vstack(result)
         X_Seq_alpha = np.expand_dims(sequences_num, 1)
@@ -1143,13 +1150,23 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
 
     if beta_sequences is not None:
         args = list(
-            zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length] * len(beta_sequences)))
+            zip(beta_sequences, [self.aa_idx] * len(beta_sequences), [self.max_length_beta] * len(beta_sequences)))
         result = p.starmap(Embed_Seq_Num, args)
         sequences_num = np.vstack(result)
         X_Seq_beta = np.expand_dims(sequences_num, 1)
     else:
         X_Seq_beta = np.zeros(shape=[len_input])
         beta_sequences = np.asarray([None] * len_input)
+
+    if epitope_sequences is not None:
+        args = list(
+            zip(epitope_sequences,[self.aa_idx]*len(epitope_sequences),[self.max_length_epitope]*len(epitope_sequences)))
+        result = p.starmap(Embed_Seq_Num,args)
+        sequences_num = np.vstack(result)
+        X_Seq_epitope = np.expand_dims(sequences_num,1)
+    else:
+        X_Seq_epitope = np.zeros(shape=[len_input])
+        epitope_sequence = np.asarray([None]*len_input)
 
     if v_beta is not None:
         v_beta = v_beta.astype(self.lb_v_beta.classes_.dtype)
@@ -1199,7 +1216,7 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
     if hla is not None:
         if self.use_hla_sup:
             hla = supertype_conv_op(hla,self.keep_non_supertype_alleles)
-        hla_data_seq_num = self.lb_hla.transform(hla)
+        hla_data_seq_num = self.lb_hla.transform(hla.reshape(-1,1))
     else:
         hla_data_seq_num = np.zeros(shape=[len_input])
 
@@ -1216,6 +1233,7 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
     data.j_beta_num = j_beta_num
     data.v_alpha_num = v_alpha_num
     data.j_alpha_num = j_alpha_num
+    data.X_Seq_epitope = X_Seq_epitope
     data.hla_data_seq_num = hla_data_seq_num
     data.batch_size = batch_size
     data.get = get

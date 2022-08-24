@@ -3,6 +3,7 @@ import numpy as np
 from DeepTCR.DeepSynapse import DeepSynapse
 from DeepTCR.functions_syn.data_processing import Process_Seq, supertype_conv_op
 import utils
+from sklearn.metrics import roc_curve, roc_auc_score
 
 df = pd.read_csv('../../Data/synapse/testing_data.csv')
 df['bind'] = True
@@ -37,3 +38,5 @@ DTCR = DeepSynapse('epitope_tcr')
 preds = DTCR.Sequence_Inference(beta_sequences=np.array(df_input['CDR3']),
                epitope_sequences = np.array(df_input['Antigen']),
                hla=np.array(df_input['HLA_sup']))
+df_input['pred'] = preds[:,0]
+roc_auc_score(df_input['bind'],df_input['pred'])
