@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from DeepTCR.Synapse import Synapse
+from DeepTCR.DeepSynapse import DeepSynapse
 from DeepTCR.functions_syn.data_processing import Process_Seq, supertype_conv_op
 
 df = pd.read_csv('../../Data/synapse/training_data.csv')
@@ -68,7 +68,7 @@ df_train['HLA_sup'] = supertype_conv_op(df_train['HLA'],keep_non_supertype_allel
 # df_train = df_train[df_train['HLA_sup'].isin(['A02','B07'])]
 # df_train = df_train[df_train['HLA'].isin(['A0301','A0201'])]
 
-DTCR = Synapse('epitope_tcr')
+DTCR = DeepSynapse('epitope_tcr')
 DTCR.Load_Data(beta_sequences=np.array(df_train['CDR3']),
                epitope_sequences = np.array(df_train['Antigen']),
                hla=np.array(df_train['HLA']),

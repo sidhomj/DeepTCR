@@ -26,7 +26,7 @@ from scipy.stats import spearmanr,gaussian_kde
 from distinctipy import distinctipy
 from tqdm import tqdm
 
-class Synapse(object):
+class DeepSynapse(object):
 
     def __init__(self,Name,
                  device=0,
