@@ -232,6 +232,10 @@ def Conv_Model(GO, self, trainable_embedding,
         Seq_Features.append(GO.Seq_Features_alpha)
     if self.use_beta is True:
         Seq_Features.append(GO.Seq_Features_beta)
+    if self.use_epitope is True:
+        Seq_Features.append(GO.Seq_Features_epitope)
+    if self.use_hla and self.use_hla_seq:
+        Seq_Features.append(GO.Seq_Features_hla)
 
     if Seq_Features:
         Seq_Features = tf.concat(Seq_Features, axis=1)

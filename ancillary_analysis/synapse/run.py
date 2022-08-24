@@ -42,14 +42,14 @@ df_train['HLA_sup'] = supertype_conv_op(df_train['HLA'],keep_non_supertype_allel
 df_train = df_train[df_train['HLA'].isin(['A0301','A0201'])]
 
 DTCR = Synapse('epitope_tcr')
-DTCR.Load_Data(#beta_sequences=np.array(df_train['CDR3']),
+DTCR.Load_Data(beta_sequences=np.array(df_train['CDR3']),
                # epitope_sequences = np.array(df_train['Antigen']),
                hla=np.array(df_train['HLA']),
                 class_labels= np.array(df_train['bind_cat']),
                use_hla_seq=True)
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=5000,epochs_min=50,
                           num_fc_layers=3,units_fc=256,
-                          units_hla=[3,3,3],kernel_hla=[30,30,30],stride_hla=[5,5,5],padding_hla='same')
+                          units_hla=[12,12,12],kernel_hla=[30,30,30],stride_hla=[5,5,5],padding_hla='same')
 
 DTCR.Representative_Sequences(top_seq=50,make_seq_logos=False)
 class_sel = 'bind'
