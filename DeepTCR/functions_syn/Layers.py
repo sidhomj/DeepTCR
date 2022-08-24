@@ -109,6 +109,7 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
             return tf.compat.v1.layers.flatten(conv)
 
 def Conv_Model(GO, self, trainable_embedding,
+               units_tcr,units_epitope,units_hla,
                kernel_tcr,kernel_epitope,kernel_hla,
                stride_tcr,stride_epitope,stride_hla,
                padding_tcr,padding_epitope,padding_hla,
@@ -188,36 +189,40 @@ def Conv_Model(GO, self, trainable_embedding,
     # Convolutional Features
     if self.use_alpha is True:
         GO.Seq_Features_alpha  = Convolutional_Features(inputs_seq_embed_alpha,
+                                                        units = units_tcr,
                                                         kernel=kernel_tcr,
                                                         stride=stride_tcr,
                                                         padding=padding_tcr,
                                                         name='alpha_conv', prob=GO.prob,
-                                                        agg='max_pool',size_of_net=GO.size_of_net,
+                                                        agg='max_pool',
                                                         l2_reg=GO.l2_reg)
 
     if self.use_beta is True:
         GO.Seq_Features_beta = Convolutional_Features(inputs_seq_embed_beta,
+                                                        units = units_tcr,
                                                         kernel=kernel_tcr,
                                                         stride=stride_tcr,
                                                         padding=padding_tcr,
                                                         name='beta_conv', prob=GO.prob,
-                                                        agg='max_pool',size_of_net=GO.size_of_net,
+                                                        agg='max_pool',
                                                         l2_reg = GO.l2_reg)
     if self.use_epitope is True:
         GO.Seq_Features_epitope  = Convolutional_Features(inputs_seq_embed_epitope,
+                                                        units = units_epitope,
                                                         kernel=kernel_epitope,
                                                         stride=stride_epitope,
                                                         padding=padding_epitope,
                                                         name='epitope_conv', prob=GO.prob,
-                                                        agg='max_pool',size_of_net=GO.size_of_net,
+                                                        agg='max_pool',
                                                         l2_reg = GO.l2_reg)
     if self.use_hla and self.use_hla_seq:
         GO.Seq_Features_hla  = Convolutional_Features(inputs_seq_embed_hla,
+                                                        units = units_hla,
                                                         kernel=kernel_hla,
                                                         stride=stride_hla,
                                                         padding=padding_hla,
                                                         name='hla_conv', prob=GO.prob,
-                                                        agg='flat',size_of_net=GO.size_of_net,
+                                                        agg='flat',
                                                         l2_reg = GO.l2_reg)
 
     Seq_Features = []

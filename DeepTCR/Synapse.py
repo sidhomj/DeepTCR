@@ -448,12 +448,13 @@ class Synapse(object):
             shutil.rmtree(self.models_dir)
         os.makedirs(self.models_dir)
 
-    def _build(self,kernel_tcr = [5,5,5],kernel_epitope=[5,5,5],kernel_hla=[30,5,5],
+    def _build(self,units_tcr = [32,64,128],units_epitope = [32,64,128],units_hla = [32,64,128],
+               kernel_tcr = [5,5,5],kernel_epitope=[5,5,5],kernel_hla=[30,5,5],
                stride_tcr=[1,1,1],stride_epitope=[1,1,1],stride_hla=[15,1,1],
                padding_tcr='same',padding_epitope='same',padding_hla='same',
                trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
                num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
-               size_of_net = 'medium',graph_seed = None,
+               graph_seed = None,
                drop_out_rate=0.0,multisample_dropout = False, multisample_dropout_rate = 0.50, multisample_dropout_num_masks = 64,
                batch_size = 1000, epochs_min = 10, stop_criterion = 0.001, stop_criterion_window = 10,
                accuracy_min = None, train_loss_min = None, hinge_loss_t = 0.0, convergence = 'validation', learning_rate = 0.001, suppress_output = False):
@@ -462,7 +463,6 @@ class Synapse(object):
         graph_model = tf.Graph()
         GO = graph_object()
         GO.on_graph_clustering=False
-        GO.size_of_net = size_of_net
         GO.embedding_dim_genes = embedding_dim_genes
         GO.embedding_dim_aa = embedding_dim_aa
         GO.embedding_dim_hla = embedding_dim_hla
@@ -486,6 +486,7 @@ class Synapse(object):
 
                 GO.net = 'sup'
                 GO.Features = Conv_Model(GO,self,trainable_embedding,
+                                         units_tcr, units_epitope, units_hla,
                                          kernel_tcr,kernel_epitope,kernel_hla,
                                          stride_tcr, stride_epitope, stride_hla,
                                          padding_tcr,padding_epitope,padding_hla,
@@ -669,29 +670,30 @@ class Synapse(object):
                 self.predicted[self.test[self.var_dict['seq_index']]] += self.y_pred
 
             #
-            if self.use_alpha is True:
-                var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
-                with open(os.path.join(self.Name, 'alpha_features.pkl'), 'wb') as f:
-                    pickle.dump(var_save, f)
+            # if self.use_alpha is True:
+            #     var_save = [self.alpha_features,self.alpha_indices,self.alpha_sequences]
+            #     with open(os.path.join(self.Name, 'alpha_features.pkl'), 'wb') as f:
+            #         pickle.dump(var_save, f)
+            #
+            # if self.use_beta is True:
+            #     var_save = [self.beta_features,self.beta_indices,self.beta_sequences]
+            #     with open(os.path.join(self.Name, 'beta_features.pkl'), 'wb') as f:
+            #         pickle.dump(var_save, f)
 
-            if self.use_beta is True:
-                var_save = [self.beta_features,self.beta_indices,self.beta_sequences]
-                with open(os.path.join(self.Name, 'beta_features.pkl'), 'wb') as f:
-                    pickle.dump(var_save, f)
-
-            with open(os.path.join(self.Name, 'kernel.pkl'), 'wb') as f:
-                pickle.dump(self.kernel, f)
+            # with open(os.path.join(self.Name, 'kernel.pkl'), 'wb') as f:
+            #     pickle.dump(self.kernel, f)
 
             print('Done Training')
             # save model data and information for inference engine
             save_model_data(self, GO.saver, sess, name='SS', get=GO.predicted,iteration=iteration)
 
-    def Train(self,kernel_tcr = [5,5,5], kernel_epitope = [5,5,5],kernel_hla = [30,5,5],
+    def Train(self,units_tcr = [32,64,128],units_epitope = [32,64,128],units_hla = [32,64,128],
+              kernel_tcr = [5,5,5], kernel_epitope = [5,5,5],kernel_hla = [30,5,5],
               stride_tcr=[1, 1, 1], stride_epitope=[1, 1, 1], stride_hla=[15, 1, 1],
               padding_tcr='same', padding_epitope='same', padding_hla='same',
               trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
                num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
-               size_of_net = 'medium',graph_seed = None,
+               graph_seed = None,
                drop_out_rate=0.0,multisample_dropout = False, multisample_dropout_rate = 0.50, multisample_dropout_num_masks = 64,
                batch_size = 1000, epochs_min = 10, stop_criterion = 0.001, stop_criterion_window = 10,
                accuracy_min = None, train_loss_min = None, hinge_loss_t = 0.0, convergence = 'validation', learning_rate = 0.001, suppress_output = False,
@@ -776,12 +778,13 @@ class Synapse(object):
         """
         self._reset_models()
         self.test_pred = make_test_pred_object()
-        self._build(kernel_tcr,kernel_epitope,kernel_hla,
+        self._build(units_tcr,units_epitope,units_hla,
+                    kernel_tcr,kernel_epitope,kernel_hla,
                     stride_tcr, stride_epitope, stride_hla,
                     padding_tcr, padding_epitope, padding_hla,
                     trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
                num_fc_layers, units_fc,weight_by_class, class_weights,
-               size_of_net,graph_seed,
+               graph_seed,
                drop_out_rate,multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                batch_size, epochs_min, stop_criterion, stop_criterion_window,
                accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
@@ -791,12 +794,13 @@ class Synapse(object):
             self.test_pred.__dict__[set].y_pred = np.vstack(self.test_pred.__dict__[set].y_pred)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,split_by_sample=False,combine_train_valid=False,seeds=None,
+                             units_tcr=[32, 64, 128], units_epitope=[32, 64, 128], units_hla=[32, 64, 128],
                              kernel_tcr=[5,5,5],kernel_epitope=[5,5,5],kernel_hla=[10,10,10],
                              stride_tcr=[1, 1, 1], stride_epitope=[1, 1, 1], stride_hla=[1, 5, 5],
                              padding_tcr='valid', padding_epitope='valid', padding_hla='valid',
                              trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                              num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
-                            size_of_net='medium', graph_seed=None,
+                             graph_seed=None,
                              drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50, multisample_dropout_num_masks=64,
                              batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                              accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
@@ -899,12 +903,13 @@ class Synapse(object):
         predicted = np.zeros_like(self.predicted)
         counts = np.zeros_like(self.predicted)
         self._reset_models()
-        self._build(kernel_tcr,kernel_epitope,kernel_hla,
+        self._build(units_tcr,units_epitope,units_hla,
+                    kernel_tcr,kernel_epitope,kernel_hla,
                     stride_tcr, stride_epitope, stride_hla,
                     padding_tcr, padding_epitope, padding_hla,
                     trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
                num_fc_layers, units_fc,weight_by_class, class_weights,
-               size_of_net,graph_seed,
+               graph_seed,
                drop_out_rate,multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                batch_size, epochs_min, stop_criterion, stop_criterion_window,
                accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)
@@ -939,12 +944,13 @@ class Synapse(object):
         print('Monte Carlo Simulation Completed')
 
     def K_Fold_CrossVal(self,folds=None,split_by_sample=False,combine_train_valid=False,seeds=None,
+                        units_tcr=[32, 64, 128], units_epitope=[32, 64, 128], units_hla=[32, 64, 128],
                         kernel_tcr=5,kernel_epitope=5,kernel_hla=30,
                         stride_tcr=[1, 1, 1], stride_epitope=[1, 1, 1], stride_hla=[15, 1, 1],
                         padding_tcr='same', padding_epitope='same', padding_hla='same',
                         trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                         num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
-                        size_of_net='medium', graph_seed=None,
+                        graph_seed=None,
                         drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50, multisample_dropout_num_masks=64,
                         batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                         accuracy_min=None, train_loss_min=None, hinge_loss_t=0.0, convergence='validation', learning_rate=0.001, suppress_output=False,
@@ -1085,12 +1091,13 @@ class Synapse(object):
 
 
         self._reset_models()
-        self._build(kernel_tcr,kernel_epitope,kernel_hla,
+        self._build(units_tcr,units_epitope,units_hla,
+                    kernel_tcr,kernel_epitope,kernel_hla,
                     stride_tcr, stride_epitope, stride_hla,
                     padding_tcr, padding_epitope, padding_hla,
                     trainable_embedding, embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
                     num_fc_layers, units_fc, weight_by_class, class_weights,
-                    size_of_net, graph_seed,
+                    graph_seed,
                     drop_out_rate, multisample_dropout, multisample_dropout_rate, multisample_dropout_num_masks,
                     batch_size, epochs_min, stop_criterion, stop_criterion_window,
                     accuracy_min, train_loss_min, hinge_loss_t, convergence, learning_rate, suppress_output)

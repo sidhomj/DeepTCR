@@ -36,20 +36,20 @@ df_train['HLA'] = df_train['HLA'].str.replace('*',"")
 df_train['HLA'] = df_train['HLA'].str.replace(':',"")
 df_train['HLA'] = df_train['HLA'].str[0:5]
 df_train = df_train[df_train['HLA'].str.len()==5]
-# df_train['HLA_sup'] = supertype_conv_op(df_train['HLA'],keep_non_supertype_alleles=True)
+df_train['HLA_sup'] = supertype_conv_op(df_train['HLA'],keep_non_supertype_alleles=True)
 
 DTCR = Synapse('epitope_tcr')
 DTCR.Load_Data(beta_sequences=np.array(df_train['CDR3']),
                # epitope_sequences = np.array(df_train['Antigen']),
                hla=np.array(df_train['HLA']),
-                class_labels= np.array(df_train['bind_cat']),
+                # class_labels= np.array(df_train['bind_cat']),
+               class_labels=np.array(df_train['HLA_sup']),
                use_hla_supertype=False,
                use_hla_seq=True)
-DTCR.Get_Train_Valid_Test()
-DTCR.Train()
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=5000,epochs_min=50,
                           num_fc_layers=3,units_fc=256,
-                          drop_out_rate=0.5)
+                          drop_out_rate=0.5,
+                          units_hla=[12,12,12],kernel_hla=[10,10,10],stride_hla=[5,1,1])
 DTCR.Representative_Sequences(top_seq=50,make_seq_logos=False)
 class_sel = 'bind'
 DTCR.Residue_Sensitivity_Logo(beta_sequences=np.array(DTCR.Rep_Seq[class_sel]['beta'])[0:25],
