@@ -38,9 +38,10 @@ df_input['HLA_sup'] = supertype_conv_op(df_input['HLA'],keep_non_supertype_allel
 DTCR = DeepSynapse('epitope_tcr')
 DTCR.Load_Data(beta_sequences=np.array(df_input['CDR3']),
                epitope_sequences = np.array(df_input['Antigen']),
-               hla=np.array(df_input['HLA_sup']),
+               # hla=np.array(df_input['HLA_sup']),
                 class_labels= np.array(df_input['bind_cat']),
-               use_hla_seq=False)
+               # use_hla_seq=False
+               )
 
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=50000,epochs_min=50,
                           num_fc_layers=3,units_fc=256,
