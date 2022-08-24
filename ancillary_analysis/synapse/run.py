@@ -7,7 +7,7 @@ import utils
 df = pd.read_csv('../../Data/synapse/training_data.csv')
 df['bind'] = True
 df['id'] = df['CDR3']+'_'+df['Antigen']+'_'+df['HLA']
-# df = df.sample(n=1000,replace=False)
+df = df.sample(n=1000,replace=False)
 # bg = pd.read_csv('library/bg_tcr_library/TCR_10k_bg_seq.csv')
 dfs = utils.create_negative_samples(df,within_hla=False,multiplier=1)
 
@@ -38,9 +38,9 @@ df_input['HLA_sup'] = supertype_conv_op(df_input['HLA'],keep_non_supertype_allel
 DTCR = DeepSynapse('epitope_tcr')
 DTCR.Load_Data(beta_sequences=np.array(df_input['CDR3']),
                epitope_sequences = np.array(df_input['Antigen']),
-               # hla=np.array(df_input['HLA_sup']),
+               hla=np.array(df_input['HLA']),
                 class_labels= np.array(df_input['bind_cat']),
-               # use_hla_seq=False
+               use_hla_seq=True
                )
 
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=50000,epochs_min=50,

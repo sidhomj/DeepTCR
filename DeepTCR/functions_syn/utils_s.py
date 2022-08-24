@@ -1216,7 +1216,20 @@ def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,
     if hla is not None:
         if self.use_hla_sup:
             hla = supertype_conv_op(hla,self.keep_non_supertype_alleles)
-        hla_data_seq_num = self.lb_hla.transform(hla.reshape(-1,1))
+
+        if self.use_hla_seq:
+            df_hla = load_hla_seq()
+            hla_sequences = hla_seq_conv_op(hla, df_hla)
+
+            self.max_length_hla = np.max(np.vectorize(len)(hla_sequences))
+            args = list(
+                zip(hla_sequences, [self.aa_idx] * len(hla_sequences), [self.max_length_hla] * len(hla_sequences)))
+            result = p.starmap(Embed_Seq_Num, args)
+            sequences_num = np.vstack(result)
+            hla_data_seq_num = np.expand_dims(sequences_num, 1)
+        else:
+            hla_data_seq_num = self.lb_hla.transform(hla.reshape(-1,1))
+
     else:
         hla_data_seq_num = np.zeros(shape=[len_input])
 

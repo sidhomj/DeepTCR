@@ -37,7 +37,7 @@ df_input['HLA_sup'] = supertype_conv_op(df_input['HLA'],keep_non_supertype_allel
 DTCR = DeepSynapse('epitope_tcr')
 preds = DTCR.Sequence_Inference(beta_sequences=np.array(df_input['CDR3']),
                epitope_sequences = np.array(df_input['Antigen']),
-               # hla=np.array(df_input['HLA_sup'])
+               hla=np.array(df_input['HLA'])
                                 )
 df_input['pred'] = preds[:,0]
 roc_auc_score(df_input['bind'],df_input['pred'])
