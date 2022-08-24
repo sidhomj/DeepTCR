@@ -138,7 +138,7 @@ def Conv_Model(GO, self, trainable_embedding,
     if self.use_hla and self.use_hla_seq:
         GO.X_Seq_hla = tf.compat.v1.placeholder(tf.int64,
                                                shape=[None, self.hla_data_seq_num.shape[1], self.hla_data_seq_num.shape[2]],
-                                               name='Input_HLA')
+                                               name='HLA')
         GO.X_Seq_hla_OH = tf.one_hot(GO.X_Seq_hla, depth=21)
 
     GO.prob = tf.compat.v1.placeholder_with_default(0.0, shape=(), name='prob')
