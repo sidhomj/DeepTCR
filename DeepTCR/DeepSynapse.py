@@ -436,7 +436,8 @@ class DeepSynapse(object):
             shutil.rmtree(self.models_dir)
         os.makedirs(self.models_dir)
 
-    def _build(self,units_tcr = [32,64,128],units_epitope = [32,64,128],units_hla = [32,64,128],
+    def _build(self,
+               units_tcr = [32,64,128],units_epitope = [32,64,128],units_hla = [32,64,128],
                kernel_tcr = [5,5,5],kernel_epitope=[5,5,5],kernel_hla=[30,5,5],
                stride_tcr=[1,1,1],stride_epitope=[1,1,1],stride_hla=[15,1,1],
                padding_tcr='same',padding_epitope='same',padding_hla='same',
@@ -675,7 +676,8 @@ class DeepSynapse(object):
             # save model data and information for inference engine
             save_model_data(self, GO.saver, sess, name='SS', get=GO.predicted,iteration=iteration)
 
-    def Train(self,units_tcr = [32,64,128],units_epitope = [32,64,128],units_hla = [32,64,128],
+    def Train(self,
+              units_tcr = [32,64,128],units_epitope = [32,64,128],units_hla = [32,64,128],
               kernel_tcr = [5,5,5], kernel_epitope = [5,5,5],kernel_hla = [30,5,5],
               stride_tcr=[1, 1, 1], stride_epitope=[1, 1, 1], stride_hla=[15, 1, 1],
               padding_tcr='same', padding_epitope='same', padding_hla='same',
