@@ -4,20 +4,8 @@ from DeepTCR.functions_syn.Layers import *
 from DeepTCR.functions_syn.utils_s import *
 from DeepTCR.functions_syn.act_fun import *
 from DeepTCR.functions_syn.data_processing import *
-import seaborn as sns
-import colorsys
-from scipy.cluster.hierarchy import linkage,fcluster,dendrogram, leaves_list
-from scipy.stats import wasserstein_distance, entropy
-from scipy.spatial.distance import pdist, squareform
-import umap
-from sklearn.cluster import DBSCAN,KMeans
-import sklearn
-import DeepTCR.phenograph as phenograph
-from scipy.spatial import distance
-import glob
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, MultiLabelBinarizer
 from multiprocessing import Pool
-import pickle
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
 import shutil
