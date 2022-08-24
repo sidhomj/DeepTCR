@@ -8,7 +8,7 @@ from sklearn.metrics import roc_curve, roc_auc_score
 df = pd.read_csv('../../Data/synapse/testing_data.csv')
 df['bind'] = True
 df['id'] = df['CDR3']+'_'+df['Antigen']+'_'+df['HLA']
-dfs = utils.create_negative_samples(df,within_hla=False)
+dfs = utils.create_negative_samples(df,within_hla=False,multiplier=1)
 
 #add labels
 df_input  = pd.concat([df,dfs])

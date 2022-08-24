@@ -9,7 +9,7 @@ df['bind'] = True
 df['id'] = df['CDR3']+'_'+df['Antigen']+'_'+df['HLA']
 # df = df.sample(n=1000,replace=False)
 # bg = pd.read_csv('library/bg_tcr_library/TCR_10k_bg_seq.csv')
-dfs = utils.create_negative_samples(df,within_hla=False)
+dfs = utils.create_negative_samples(df,within_hla=False,multiplier=1)
 
 #add labels
 df_input  = pd.concat([df,dfs])
@@ -44,4 +44,4 @@ DTCR.Load_Data(beta_sequences=np.array(df_input['CDR3']),
 
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=50000,epochs_min=50,
                           num_fc_layers=3,units_fc=256,
-                          units_hla=[12,12,12],kernel_hla=[30,30,30],stride_hla=[5,5,5],padding_hla='same')
+                          units_hla=[12,12,12],kernel_hla=[30,30,30],stride_hla=[5,5,5])
