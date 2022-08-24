@@ -1512,4 +1512,403 @@ class DeepSynapse(object):
         else:
             return out
 
+    def _residue(self, alpha_sequence, beta_sequence, v_beta, d_beta, j_beta, v_alpha, j_alpha, hla,
+                 p, batch_size, models, chain):
+
+        if self.model_type == 'SS':
+            inf_func = self.Sequence_Inference
+        elif self.model_type == 'WF':
+            inf_func = self.Sample_Inference
+
+        df_alpha = pd.DataFrame()
+        df_beta = pd.DataFrame()
+        if chain == 'alpha':
+            if alpha_sequence is not None:
+                alpha_list, pos, ref, alt = make_seq_list(alpha_sequence, ref=list(self.aa_idx.keys()))
+                len_list = len(alpha_list)
+
+                if beta_sequence is None:
+                    beta_sequences = None
+                else:
+                    beta_sequences = np.array([beta_sequence] * len_list)
+
+                if v_beta is None:
+                    v_beta = None
+                else:
+                    v_beta = np.array([v_beta] * len_list)
+
+                if d_beta is None:
+                    d_beta = None
+                else:
+                    d_beta = np.array([d_beta] * len_list)
+
+                if j_beta is None:
+                    j_beta = None
+                else:
+                    j_beta = np.array([j_beta] * len_list)
+
+                if v_alpha is None:
+                    v_alpha = None
+                else:
+                    v_alpha = np.array([v_alpha] * len_list)
+
+                if j_alpha is None:
+                    j_alpha = None
+                else:
+                    j_alpha = np.array([j_alpha] * len_list)
+
+                if hla is None:
+                    hla = None
+                else:
+                    hla = np.array([hla] * len_list)
+
+                out = inf_func(beta_sequences=beta_sequences,
+                               alpha_sequences=np.array(alpha_list),
+                               v_beta=v_beta,
+                               d_beta=d_beta,
+                               j_beta=j_beta,
+                               v_alpha=v_alpha,
+                               j_alpha=j_alpha,
+                               p=p,
+                               hla=hla,
+                               batch_size=batch_size,
+                               models=models)
+
+                df_alpha['alpha'] = alpha_list
+                df_alpha['pos'] = pos
+                df_alpha['ref'] = ref
+                df_alpha['alt'] = alt
+                if self.regression:
+                    df_alpha['high'] = out[:, 0]
+                else:
+                    for ii in range(out.shape[1]):
+                        df_alpha[self.lb.inverse_transform([ii])[0]] = out[:, ii]
+
+        if chain == 'beta':
+            if beta_sequence is not None:
+                beta_list, pos, ref, alt = make_seq_list(beta_sequence, ref=list(self.aa_idx.keys()))
+                len_list = len(beta_list)
+                if alpha_sequence is None:
+                    alpha_sequences = None
+                else:
+                    alpha_sequences = np.array([alpha_sequence] * len_list)
+
+                if v_beta is None:
+                    v_beta = None
+                else:
+                    v_beta = np.array([v_beta] * len_list)
+
+                if d_beta is None:
+                    d_beta = None
+                else:
+                    d_beta = np.array([d_beta] * len_list)
+
+                if j_beta is None:
+                    j_beta = None
+                else:
+                    j_beta = np.array([j_beta] * len_list)
+
+                if v_alpha is None:
+                    v_alpha = None
+                else:
+                    v_alpha = np.array([v_alpha] * len_list)
+
+                if j_alpha is None:
+                    j_alpha = None
+                else:
+                    j_alpha = np.array([j_alpha] * len_list)
+
+                if hla is None:
+                    hla = None
+                else:
+                    hla = np.array([hla] * len_list)
+
+                out = inf_func(beta_sequences=np.array(beta_list),
+                               alpha_sequences=alpha_sequences,
+                               v_beta=v_beta,
+                               d_beta=d_beta,
+                               j_beta=j_beta,
+                               v_alpha=v_alpha,
+                               j_alpha=j_alpha,
+                               p=p,
+                               hla=hla,
+                               batch_size=batch_size,
+                               models=models)
+
+                df_beta['beta'] = beta_list
+                df_beta['pos'] = pos
+                df_beta['ref'] = ref
+                df_beta['alt'] = alt
+                if self.regression:
+                    df_beta['high'] = out[:, 0]
+                else:
+                    for ii in range(out.shape[1]):
+                        df_beta[self.lb.inverse_transform([ii])[0]] = out[:, ii]
+
+        if chain == 'alpha':
+            return df_alpha
+        elif chain == 'beta':
+            return df_beta
+
+    def Residue_Sensitivity_Logo(self,alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
+                                v_alpha=None, j_alpha=None, hla=None,p=None, batch_size=10000,models=None,
+                                 figsize=(4,8),low_color='red',medium_color='white',high_color='blue',
+                                    font_name='serif',class_sel=None,
+                                 cmap=None,min_size=0.0,edgecolor='black',edgewidth=0.25,background_color='black',
+                                 Load_Prev_Data=False,norm_to_seq=True):
+        """
+        # Create Residue Sensitivity Logos
+
+        This method allows the user to create Residue Sensitivity Logos where a set of provided sequences is perturbed to assess for position of the CDR3 sequence that if altered, would change the predicted specificity or affinity of the sequence (depending on whether training classification or regression task).
+
+        Residue Sensitivity Logos can be created from any supervised model (including sequence and repertoire classifiers). Following the training of one of these models, one can feed into this method an cdr3 sequence defined by all/any of alpha/beta cdr3 sequence, V/D/J gene usage, and HLA context within which the TCR was seen.
+
+        The output is a logo created by LogoMaker where the size of the character denotes how sensitive this position is to perturbation and color denotes the consequences of changes at this site. As default, red coloration means changes at this site would generally decrease the predicted value and blue coloration means changes at this site would increase the predicted value.
+
+        Args:
+
+            alpha_sequences (ndarray of strings): A 1d array with the sequences for inference for the alpha chain.
+
+            beta_sequences (ndarray of strings): A 1d array with the sequences for inference for the beta chain.
+
+            v_beta (ndarray of strings): A 1d array with the v-beta genes for inference.
+
+            d_beta (ndarray of strings): A 1d array with the d-beta genes for inference.
+
+            j_beta (ndarray of strings): A 1d array with the j-beta genes for inference.
+
+            v_alpha (ndarray of strings): A 1d array with the v-alpha genes for inference.
+
+            j_alpha (ndarray of strings): A 1d array with the j-alpha genes for inference.
+
+            hla (ndarray of tuples/arrays): To input the hla context for each sequence fed into DeepTCR, this will need to formatted as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring to the alleles seen for that sequence. ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+
+            p (multiprocessing pool object): a pre-formed pool object can be passed to method for multiprocessing tasks.
+
+            batch_size (int): Batch size for inference.
+
+            models (list): In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals), one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the distribution of outputs for the user.
+
+            figsize (tuple): This specifies the dimensions of the logo.
+
+            low_color (str): The color to use when changes at this site would largely result in decreased prediction values.
+
+            medium_color (str): The color to use when changes at this site would result in either decreased or inreased prediction values.
+
+            high_color (str): The color to use when changes at this site would result in increased prediction values.
+
+            font_name (str): The font to use for LogoMaker.
+
+            class_sel (str): In the case of a model being trained in a multi-class fashion, one must select which class to make the logo for.
+
+            cmap (matplotlib cmap): One can alsp provide custom cmap for logomaker that will be used to denote changes at sites that result in increased of decreased prediction values.
+
+            min_size (float (0.0 - 1.0)):
+            Some residues may have such little change with any perturbation that the character would be difficult to read. To set a minimum size for a residue, one can set this parameter to a value between 0 and 1.
+
+            edgecolor (str): The color of the edge of the characters of the logo.
+
+            edgewidth (float): The thickness of the edge of the characters.
+
+            background_color (str): The background color of the logo.
+
+            norm_to_seq (bool): When determining the color intensity of the logo, one can choose to normalize the value to just characters in that sequence (True) or one can choose to normalize to all characters in the sequences provdied (False).
+
+            Load_Prev_Data (bool): Since the first part of the method runs a time-intensive step to get all the predictions for all perturbations at all residue sites, we've incorporated a paramter which can be set to True following running the method once in order to adjust the visual aspects of the plot. Therefore, one should run this method first setting this parameter to False (it's default setting) but then switch to True and run again with different visualization parameters (i.e. figsize, etc).
+
+        Returns:
+            Residue Sensitivity Logo
+
+            - (fig,ax) - the matplotlib figure and axis/axes.
+
+        """
+
+        self.model_type, get = load_model_data(self)
+        if Load_Prev_Data is False:
+            if p is None:
+                p_ = Pool(40)
+            else:
+                p_ = p
+
+            inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha, hla]
+
+            for i in inputs:
+                if i is not None:
+                    assert isinstance(i,np.ndarray),'Inputs into DeepTCR must come in as numpy arrays!'
+
+            inputs = [alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla]
+            for i in inputs:
+                if i is not None:
+                    len_input = len(i)
+                    break
+
+            if alpha_sequences is None:
+                alpha_sequences = np.array([None]*len_input)
+
+            if beta_sequences is None:
+                beta_sequences = np.array([None]*len_input)
+
+            if v_beta is None:
+                v_beta = np.array([None]*len_input)
+
+            if d_beta is None:
+                d_beta = np.array([None] * len_input)
+
+            if j_beta is None:
+                j_beta = np.array([None]*len_input)
+
+            if v_alpha is None:
+                v_alpha = np.array([None]*len_input)
+
+            if j_alpha is None:
+                j_alpha = np.array([None]*len_input)
+
+            if hla is None:
+                hla = np.array([None]*len_input)
+
+            alpha_matrices = []
+            alpha_masks = []
+            beta_matrices = []
+            beta_masks = []
+            df_alpha_list = []
+            df_beta_list = []
+            for i in range(len_input):
+                df_alpha = self._residue(alpha_sequences[i], beta_sequences[i],
+                                         v_beta[i], d_beta[i], j_beta[i],
+                                         v_alpha[i], j_alpha[i], hla[i],
+                                         p_, batch_size, models, 'alpha')
+                df_beta = self._residue(alpha_sequences[i], beta_sequences[i],
+                                        v_beta[i], d_beta[i], j_beta[i],
+                                        v_alpha[i], j_alpha[i], hla[i],
+                                        p_, batch_size, models, 'beta')
+                df_alpha_list.append(df_alpha)
+                df_beta_list.append(df_beta)
+                if not df_alpha.empty:
+                    if self.regression:
+                        temp = np.zeros(shape=[len(alpha_sequences[i]),len(self.aa_idx.keys())])
+                        temp_mask = np.zeros(shape=[len(alpha_sequences[i]),len(self.aa_idx.keys())])
+                        for _ in df_alpha.iterrows():
+                            temp[_[1]['pos'],self.aa_idx[_[1]['alt']]-1] =_[1]['high']
+                            if _[1]['ref'] == _[1]['alt']:
+                                temp_mask[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                        alpha_matrices.append(temp)
+                        alpha_masks.append(temp_mask)
+                    else:
+                        temp = []
+                        temp_mask = []
+                        for ii, cl in enumerate(self.lb.classes_, 0):
+                            temp_i = np.zeros(shape=[len(alpha_sequences[i]), len(self.aa_idx.keys())])
+                            temp_mask_i = np.zeros(shape=[len(alpha_sequences[i]), len(self.aa_idx.keys())])
+                            for _ in df_alpha.iterrows():
+                                temp_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1][cl]
+                                if _[1]['ref'] == _[1]['alt']:
+                                    temp_mask_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                            temp.append(temp_i)
+                            temp_mask.append(temp_mask_i)
+                        temp = np.stack(temp, 0)
+                        temp_mask = np.stack(temp_mask, 0)
+                        temp = temp[self.lb.transform([class_sel])[0]]
+                        temp_mask = temp_mask[self.lb.transform([class_sel])[0]]
+                        alpha_matrices.append(temp)
+                        alpha_masks.append(temp_mask)
+
+                if not df_beta.empty:
+                    if self.regression:
+                        temp = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
+                        temp_mask = np.zeros(shape=[len(beta_sequences[i]),len(self.aa_idx.keys())])
+                        for _ in df_beta.iterrows():
+                            temp[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1]['high']
+                            if _[1]['ref'] == _[1]['alt']:
+                                temp_mask[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                        beta_matrices.append(temp)
+                        beta_masks.append(temp_mask)
+                    else:
+                        temp = []
+                        temp_mask = []
+                        for ii,cl in enumerate(self.lb.classes_,0):
+                            temp_i = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
+                            temp_mask_i = np.zeros(shape=[len(beta_sequences[i]), len(self.aa_idx.keys())])
+                            for _ in df_beta.iterrows():
+                                temp_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = _[1][cl]
+                                if _[1]['ref'] == _[1]['alt']:
+                                    temp_mask_i[_[1]['pos'], self.aa_idx[_[1]['alt']] - 1] = 1
+                            temp.append(temp_i)
+                            temp_mask.append(temp_mask_i)
+                        temp = np.stack(temp,0)
+                        temp_mask = np.stack(temp_mask,0)
+                        temp = temp[self.lb.transform([class_sel])[0]]
+                        temp_mask = temp_mask[self.lb.transform([class_sel])[0]]
+                        beta_matrices.append(temp)
+                        beta_masks.append(temp_mask)
+
+
+            if p is None:
+                p_.close()
+                p_.join()
+
+            with open(os.path.join(self.Name,'sens_data.pkl'),'wb') as f:
+                pickle.dump([alpha_sequences,alpha_matrices,alpha_masks,df_alpha_list,
+                             beta_sequences,beta_matrices,beta_masks,df_beta_list],f,protocol=4)
+
+        else:
+            with open(os.path.join(self.Name,'sens_data.pkl'),'rb') as f:
+                alpha_sequences, alpha_matrices, alpha_masks,df_alpha_list,\
+                beta_sequences, beta_matrices, beta_masks,df_beta_list = pickle.load(f)
+
+        max_max_diff = []
+        max_mean_diff = []
+        if self.use_alpha:
+            max_max_diff_alpha,max_mean_diff_alpha = get_max_val(alpha_matrices,alpha_masks)
+            max_max_diff.append(max_max_diff_alpha)
+            max_mean_diff.append(max_mean_diff_alpha)
+
+        if self.use_beta:
+            max_max_diff_beta, max_mean_diff_beta = get_max_val(beta_matrices, beta_masks)
+            max_max_diff.append(max_max_diff_beta)
+            max_mean_diff.append(max_mean_diff_beta)
+
+        if norm_to_seq:
+            max_max_diff = np.max(np.vstack(max_max_diff),0)
+            max_mean_diff = np.max(np.vstack(max_mean_diff),0)
+        else:
+            max_max_diff = np.max(max_max_diff)
+            max_mean_diff = np.max(max_mean_diff)
+            max_max_diff = np.array([max_max_diff]*len(alpha_sequences))
+            max_mean_diff = np.array([max_mean_diff]*len(alpha_sequences))
+
+        if self.use_alpha & self.use_beta:
+            fig, ax = plt.subplots(1, 2, figsize=figsize,facecolor=background_color)
+            dir_alpha, mag_alpha = sensitivity_logo(alpha_sequences,alpha_matrices,alpha_masks,ax=ax[0],
+                             low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
+                             cmap=cmap,max_max_diff=max_max_diff,max_mean_diff=max_mean_diff,
+                             min_size=min_size,edgecolor=edgecolor,edgewidth=edgewidth,background_color=background_color)
+            dir_beta, mag_beta = sensitivity_logo(beta_sequences,beta_matrices,beta_masks,ax=ax[1],
+                             low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
+                             cmap=cmap,max_max_diff=max_max_diff,max_mean_diff=max_mean_diff,
+                             min_size=min_size,edgecolor=edgecolor,edgewidth=edgewidth,background_color=background_color)
+            plt.tight_layout()
+        else:
+            fig, ax = plt.subplots(figsize=figsize,facecolor=background_color)
+            if self.use_alpha:
+                dir_alpha, mag_alpha = sensitivity_logo(alpha_sequences, alpha_matrices, alpha_masks, ax=ax,
+                                 low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
+                                 cmap=cmap, max_max_diff=max_max_diff, max_mean_diff=max_mean_diff,
+                                 min_size=min_size, edgecolor=edgecolor, edgewidth=edgewidth,background_color=background_color)
+            if self.use_beta:
+                dir_beta, mag_beta = sensitivity_logo(beta_sequences, beta_matrices, beta_masks, ax=ax,
+                                 low_color=low_color,medium_color=medium_color,high_color=high_color,font_name=font_name,
+                                 cmap=cmap, max_max_diff=max_max_diff, max_mean_diff=max_mean_diff,
+                                 min_size=min_size, edgecolor=edgecolor, edgewidth=edgewidth,background_color=background_color)
+            plt.tight_layout()
+
+        self.df_alpha_list = df_alpha_list
+        self.df_beta_list = df_beta_list
+
+        if self.use_alpha:
+            self.dir_alpha, self.mag_alpha = dir_alpha, mag_alpha
+        if self.use_beta:
+            self.dir_beta,self.mag_beta = dir_beta, mag_beta
+
+        return fig,ax
+
 
