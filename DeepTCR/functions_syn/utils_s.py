@@ -1120,9 +1120,9 @@ class data_object(object):
     def __init__(self):
         self.init=0
 
-def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,p,batch_size,self,models):
+def inference_method_ss(get,alpha_sequences,beta_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,epitope_sequences,hla,p,batch_size,self,models):
 
-    inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha,hla]
+    inputs = [alpha_sequences, beta_sequences, v_beta, d_beta, j_beta, v_alpha, j_alpha,epitope_sequences,hla]
     for i in inputs:
         if i is not None:
             len_input = len(i)

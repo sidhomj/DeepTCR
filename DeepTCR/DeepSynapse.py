@@ -1322,3 +1322,64 @@ class DeepSynapse(object):
             plt.title(title)
         return corr, ax
 
+    def Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
+                  v_alpha=None, j_alpha=None, epitope_sequences=None, p=None,hla=None, batch_size=10000,models=None,return_dist=False):
+        """
+        # Predicting outputs of sequence models on new data
+
+        This method allows a user to take a pre-trained autoencoder/sequence classifier and generate outputs from the model on new data. For the autoencoder, this returns the features from the latent space. For the sequence classifier, it is the probability of belonging to each class.
+
+        In the case that multiple models have been trained via MC or K-fold Cross-Validation strategy for the sequence classifier, this method can use some or all trained models in an ensemble fashion to provide the average prediction per sequence as well as the distribution of predictions from all trained models.
+
+        This method is included in the two sequence DeepTCR objects:
+
+        - DeepTCR_U (unsupervised)
+        - DeepTCR_SS (supervised sequence classifier/regressor)
+
+        Args:
+
+            alpha_sequences (ndarray of strings): A 1d array with the sequences for inference for the alpha chain.
+
+            beta_sequences (ndarray of strings): A 1d array with the sequences for inference for the beta chain.
+
+            v_beta (ndarray of strings): A 1d array with the v-beta genes for inference.
+
+            d_beta (ndarray of strings): A 1d array with the d-beta genes for inference.
+
+            j_beta (ndarray of strings): A 1d array with the j-beta genes for inference.
+
+            v_alpha (ndarray of strings): A 1d array with the v-alpha genes for inference.
+
+            j_alpha (ndarray of strings): A 1d array with the j-alpha genes for inference.
+
+            hla (ndarray of tuples/arrays): To input the hla context for each sequence fed into DeepTCR, this will need to formatted as an ndarray that is (N,) for each sequence where each entry is a tuple/array of strings referring to the alleles seen for that sequence. ('A*01:01', 'A*11:01', 'B*35:01', 'B*35:02', 'C*04:01')
+
+                - If the model used for inference was trained to use HLA-supertypes, one should still enter the HLA in the format it was provided to the original model (i.e. A0101). This mehthod will then convert those HLA alleles into the appropriaet supertype designation. The HLA alleles DO NOT need to be provided to this method in the supertype designation.
+
+            p (multiprocessing pool object): a pre-formed pool object can be passed to method for multiprocessing tasks.
+
+            batch_size (int): Batch size for inference.
+
+            models (list): In the case of the supervised sequence classifier, if several models were trained (via MC or Kfold crossvals), one can specify which ones to use for inference. Otherwise, thie method uses all trained models found in Name/models/ in an ensemble fashion. The method will output of the average of all models as well as the distribution of outputs for the user.
+
+            return_dist (bool): If the user wants to also return teh distribution of sequence predicionts over all models use dfor inference, one should set this value to True.
+
+        Returns:
+            features, features_dist
+
+            - features (array), shape = [N, latent_dim]: An array that contains n x latent_dim containing features for all sequences. For the VAE, this represents the features from the latent space. For the sequence classifier, this represents the probabilities for every class or the regressed value from the sequence regressor. In the case of multiple models being used for inference in ensemble, this becomes the average prediction over all models.
+
+            - features_dist (array), shape = [n_models,N,latent_dim]: An array that contains the output of all models separately for each input sequence. This output is useful if using multiple models in ensemble to predict on a new sequence. This output describes the distribution of the predictions over all models.
+
+        """
+        model_type,get = load_model_data(self)
+        out, out_dist = inference_method_ss(get,alpha_sequences,beta_sequences,
+                               v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
+                                p,batch_size,self,models)
+
+        if return_dist:
+            return out, out_dist
+        else:
+            return out
+
+
