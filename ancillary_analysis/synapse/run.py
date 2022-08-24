@@ -7,9 +7,9 @@ import utils
 df = pd.read_csv('../../Data/synapse/training_data.csv')
 df['bind'] = True
 df['id'] = df['CDR3']+'_'+df['Antigen']+'_'+df['HLA']
-# df = df.sample(n=5000,replace=False)
+df = df.sample(n=100,replace=False)
 # bg = pd.read_csv('library/bg_tcr_library/TCR_10k_bg_seq.csv')
-dfs = utils.create_negative_samples(df,within_hla=True)
+dfs = utils.create_negative_samples(df,within_hla=False)
 
 #add labels
 df_input  = pd.concat([df,dfs])

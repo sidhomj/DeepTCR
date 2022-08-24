@@ -648,7 +648,7 @@ class DeepSynapse(object):
             self.test_pred.test.y_pred.append(test_predicted)
 
             # Get_Seq_Features_Indices(self,batch_size,GO,sess)
-            self.features = Get_Latent_Features(self,batch_size,GO,sess)
+            # self.features = Get_Latent_Features(self,batch_size,GO,sess)
 
             idx_base = np.asarray(range(len(self.sample_id)))
             self.train_idx = np.isin(idx_base,self.train[self.var_dict['seq_index']])
