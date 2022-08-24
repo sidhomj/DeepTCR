@@ -21,8 +21,9 @@ for _ in range(100):
     df_shuffle['bind'] = df_shuffle['id'].isin(df['id'])
     df_shuffle = df_shuffle[df_shuffle['bind'] != True]
     dfs.append(df_shuffle)
-    n_count += len(df)
-    if n_count > 10 * len(df):
+    dfs_temp = pd.concat(dfs)
+    dfs_temp.drop_duplicates(inplace=True)
+    if len(dfs_temp) > 10 * len(df):
         break
 dfs = pd.concat(dfs)
 dfs.drop_duplicates(inplace=True)
