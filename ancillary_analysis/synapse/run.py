@@ -11,46 +11,47 @@ hla_list = np.array(df['HLA'].value_counts().index)
 
 # bg = pd.read_csv('library/bg_tcr_library/TCR_10k_bg_seq.csv')
 
-# shuffle across all HLA
-dfs = []
-n_count = 0
-for _ in range(100):
-    df_shuffle = pd.DataFrame()
-    df_shuffle['CDR3'] = np.random.choice(df['CDR3'],size=len(df),replace=False)
-    # df_shuffle['CDR3'] = np.random.choice(bg['x'],size=len(df),replace=True)
-    df_shuffle['Antigen'] = df['Antigen']
-    df_shuffle['HLA'] = df['HLA']
-    df_shuffle['id'] = df_shuffle['CDR3']+'_'+df_shuffle['Antigen']+'_'+df_shuffle['HLA']
-    df_shuffle['bind'] = df_shuffle['id'].isin(df['id'])
-    df_shuffle = df_shuffle[df_shuffle['bind'] != True]
-    dfs.append(df_shuffle)
-    dfs_temp = pd.concat(dfs)
-    dfs_temp.drop_duplicates(inplace=True)
-    if len(dfs_temp) > 10 * len(df):
-        break
-dfs = pd.concat(dfs)
-dfs.drop_duplicates(inplace=True)
-
-# #shuffle within HLA types
+# # shuffle across all HLA
 # dfs = []
-# for h in hla_list:
-#     df_sel = df[df['HLA']==h]
-#     df_sel.reset_index(drop=True,inplace=True)
-#     n_count = 0
-#     for _ in range(100):
-#         df_shuffle = pd.DataFrame()
-#         df_shuffle['CDR3'] = np.random.choice(df_sel['CDR3'], size=len(df_sel), replace=False)
-#         df_shuffle['Antigen'] = df_sel['Antigen']
-#         df_shuffle['HLA'] = df_sel['HLA']
-#         df_shuffle['id'] = df_shuffle['CDR3'] + '_' + df_shuffle['Antigen'] + '_' + df_shuffle['HLA']
-#         df_shuffle['bind'] = df_shuffle['id'].isin(df_sel['id'])
-#         df_shuffle = df_shuffle[df_shuffle['bind'] != True]
-#         dfs.append(df_shuffle)
-#         n_count += len(df_shuffle)
-#         if n_count > 10*len(df_sel):
-#             break
+# for _ in range(100):
+#     df_shuffle = pd.DataFrame()
+#     df_shuffle['CDR3'] = np.random.choice(df['CDR3'],size=len(df),replace=False)
+#     # df_shuffle['CDR3'] = np.random.choice(bg['x'],size=len(df),replace=True)
+#     df_shuffle['Antigen'] = df['Antigen']
+#     df_shuffle['HLA'] = df['HLA']
+#     df_shuffle['id'] = df_shuffle['CDR3']+'_'+df_shuffle['Antigen']+'_'+df_shuffle['HLA']
+#     df_shuffle['bind'] = df_shuffle['id'].isin(df['id'])
+#     df_shuffle = df_shuffle[df_shuffle['bind'] != True]
+#     dfs.append(df_shuffle)
+#     dfs_temp = pd.concat(dfs)
+#     dfs_temp.drop_duplicates(inplace=True)
+#     if len(dfs_temp) > 10 * len(df):
+#         break
 # dfs = pd.concat(dfs)
 # dfs.drop_duplicates(inplace=True)
+
+#shuffle within HLA types
+dfs = []
+for h in hla_list:
+    df_sel = df[df['HLA']==h]
+    df_sel.reset_index(drop=True,inplace=True)
+    dfs_temp = []
+    for _ in range(100):
+        df_shuffle = pd.DataFrame()
+        df_shuffle['CDR3'] = np.random.choice(df_sel['CDR3'], size=len(df_sel), replace=False)
+        df_shuffle['Antigen'] = df_sel['Antigen']
+        df_shuffle['HLA'] = df_sel['HLA']
+        df_shuffle['id'] = df_shuffle['CDR3'] + '_' + df_shuffle['Antigen'] + '_' + df_shuffle['HLA']
+        df_shuffle['bind'] = df_shuffle['id'].isin(df_sel['id'])
+        df_shuffle = df_shuffle[df_shuffle['bind'] != True]
+        dfs_temp.append(df_shuffle)
+        dfs_temp2 = pd.concat(dfs_temp)
+        dfs_temp2.drop_duplicates(inplace=True)
+        if len(dfs_temp2) > 10 * len(df_sel):
+            break
+    dfs.append(dfs_temp2)
+dfs = pd.concat(dfs)
+dfs.drop_duplicates(inplace=True)
 
 
 df_train  = pd.concat([df,dfs])
