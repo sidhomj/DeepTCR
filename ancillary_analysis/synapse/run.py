@@ -7,12 +7,14 @@ df = pd.read_csv('../../Data/synapse/training_data.csv')
 df['bind'] = True
 df['id'] = df['CDR3']+'_'+df['Antigen']+'_'+df['HLA']
 # df = df.sample(n=5000,replace=False)
+hla_list = np.array(df['HLA'].value_counts().index)
 
 # bg = pd.read_csv('library/bg_tcr_library/TCR_10k_bg_seq.csv')
 
 # shuffle across all HLA
 dfs = []
-for _ in range(1):
+n_count = 0
+for _ in range(100):
     df_shuffle = pd.DataFrame()
     df_shuffle['CDR3'] = np.random.choice(df['CDR3'],size=len(df),replace=False)
     # df_shuffle['CDR3'] = np.random.choice(bg['x'],size=len(df),replace=True)
@@ -22,10 +24,32 @@ for _ in range(1):
     df_shuffle['bind'] = df_shuffle['id'].isin(df['id'])
     df_shuffle = df_shuffle[df_shuffle['bind'] != True]
     dfs.append(df_shuffle)
+    if n_count > 10 * len(df):
+        break
 dfs = pd.concat(dfs)
 dfs.drop_duplicates(inplace=True)
 
-#shuffle within HLA types
+# #shuffle within HLA types
+# dfs = []
+# for h in hla_list:
+#     df_sel = df[df['HLA']==h]
+#     df_sel.reset_index(drop=True,inplace=True)
+#     n_count = 0
+#     for _ in range(100):
+#         df_shuffle = pd.DataFrame()
+#         df_shuffle['CDR3'] = np.random.choice(df_sel['CDR3'], size=len(df_sel), replace=False)
+#         df_shuffle['Antigen'] = df_sel['Antigen']
+#         df_shuffle['HLA'] = df_sel['HLA']
+#         df_shuffle['id'] = df_shuffle['CDR3'] + '_' + df_shuffle['Antigen'] + '_' + df_shuffle['HLA']
+#         df_shuffle['bind'] = df_shuffle['id'].isin(df_sel['id'])
+#         df_shuffle = df_shuffle[df_shuffle['bind'] != True]
+#         dfs.append(df_shuffle)
+#         n_count += len(df_shuffle)
+#         if n_count > 10*len(df_sel):
+#             break
+# dfs = pd.concat(dfs)
+# dfs.drop_duplicates(inplace=True)
+
 
 df_train  = pd.concat([df,dfs])
 df_train['bind'] = df_train['bind'].astype(int)
