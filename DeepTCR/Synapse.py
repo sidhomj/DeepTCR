@@ -450,6 +450,7 @@ class Synapse(object):
 
     def _build(self,kernel_tcr = [5,5,5],kernel_epitope=[5,5,5],kernel_hla=[30,5,5],
                stride_tcr=[1,1,1],stride_epitope=[1,1,1],stride_hla=[15,1,1],
+               padding_tcr='same',padding_epitope='same',padding_hla='same',
                trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
                num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
                size_of_net = 'medium',graph_seed = None,
@@ -487,6 +488,7 @@ class Synapse(object):
                 GO.Features = Conv_Model(GO,self,trainable_embedding,
                                          kernel_tcr,kernel_epitope,kernel_hla,
                                          stride_tcr, stride_epitope, stride_hla,
+                                         padding_tcr,padding_epitope,padding_hla,
                                          num_fc_layers,units_fc)
                 if self.regression is False:
                     GO.Y = tf.compat.v1.placeholder(tf.float64, shape=[None, self.Y.shape[1]])
@@ -686,6 +688,7 @@ class Synapse(object):
 
     def Train(self,kernel_tcr = [5,5,5], kernel_epitope = [5,5,5],kernel_hla = [30,5,5],
               stride_tcr=[1, 1, 1], stride_epitope=[1, 1, 1], stride_hla=[15, 1, 1],
+              padding_tcr='same', padding_epitope='same', padding_hla='same',
               trainable_embedding = True,embedding_dim_aa = 64, embedding_dim_genes = 48, embedding_dim_hla = 12,
                num_fc_layers = 0, units_fc = 12,weight_by_class = False, class_weights = None,
                size_of_net = 'medium',graph_seed = None,
@@ -775,6 +778,7 @@ class Synapse(object):
         self.test_pred = make_test_pred_object()
         self._build(kernel_tcr,kernel_epitope,kernel_hla,
                     stride_tcr, stride_epitope, stride_hla,
+                    padding_tcr, padding_epitope, padding_hla,
                     trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
                num_fc_layers, units_fc,weight_by_class, class_weights,
                size_of_net,graph_seed,
@@ -787,8 +791,9 @@ class Synapse(object):
             self.test_pred.__dict__[set].y_pred = np.vstack(self.test_pred.__dict__[set].y_pred)
 
     def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,LOO=None,split_by_sample=False,combine_train_valid=False,seeds=None,
-                             kernel_tcr=[5,5,5],kernel_epitope=[5,5,5],kernel_hla=[30,5,5],
-                             stride_tcr=[1, 1, 1], stride_epitope=[1, 1, 1], stride_hla=[15, 1, 1],
+                             kernel_tcr=[5,5,5],kernel_epitope=[5,5,5],kernel_hla=[10,10,10],
+                             stride_tcr=[1, 1, 1], stride_epitope=[1, 1, 1], stride_hla=[1, 5, 5],
+                             padding_tcr='valid', padding_epitope='valid', padding_hla='valid',
                              trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                              num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
                             size_of_net='medium', graph_seed=None,
@@ -896,6 +901,7 @@ class Synapse(object):
         self._reset_models()
         self._build(kernel_tcr,kernel_epitope,kernel_hla,
                     stride_tcr, stride_epitope, stride_hla,
+                    padding_tcr, padding_epitope, padding_hla,
                     trainable_embedding,embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
                num_fc_layers, units_fc,weight_by_class, class_weights,
                size_of_net,graph_seed,
@@ -935,6 +941,7 @@ class Synapse(object):
     def K_Fold_CrossVal(self,folds=None,split_by_sample=False,combine_train_valid=False,seeds=None,
                         kernel_tcr=5,kernel_epitope=5,kernel_hla=30,
                         stride_tcr=[1, 1, 1], stride_epitope=[1, 1, 1], stride_hla=[15, 1, 1],
+                        padding_tcr='same', padding_epitope='same', padding_hla='same',
                         trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                         num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
                         size_of_net='medium', graph_seed=None,
@@ -1080,6 +1087,7 @@ class Synapse(object):
         self._reset_models()
         self._build(kernel_tcr,kernel_epitope,kernel_hla,
                     stride_tcr, stride_epitope, stride_hla,
+                    padding_tcr, padding_epitope, padding_hla,
                     trainable_embedding, embedding_dim_aa, embedding_dim_genes, embedding_dim_hla,
                     num_fc_layers, units_fc, weight_by_class, class_weights,
                     size_of_net, graph_seed,

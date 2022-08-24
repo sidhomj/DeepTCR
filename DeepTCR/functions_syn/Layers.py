@@ -89,26 +89,16 @@ def Get_HLA_Features(self,GO,embedding_dim):
     return GO.HLA_Features
 
 def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Features',
-                           size_of_net='medium', kernel=[5,5,5], stride=[1,1,1],
+                           units=[32,64,128], kernel=[5,5,5], stride=[1,1,1],padding='same',
                            agg='max_pool',
                           l2_reg=0.0):
 
-
     with tf.compat.v1.variable_scope(name,reuse=reuse):
-        if size_of_net == 'small':
-            units = [12,32,64]
-        elif size_of_net == 'medium':
-            units = [32,64,128]
-        elif size_of_net == 'large':
-            units = [64,128,256]
-        else:
-            units = size_of_net
-
         assert len(kernel) == len(units) == len(stride), 'kernel, units, and stride must be of same length'
 
         conv = inputs
         for ii,_ in enumerate(units,0):
-            conv = tf.compat.v1.layers.conv2d(conv, units[ii], (1, kernel[ii]), (1,stride[ii]), padding='same',
+            conv = tf.compat.v1.layers.conv2d(conv, units[ii], (1, kernel[ii]), (1,stride[ii]), padding=padding,
                                               kernel_regularizer=tf.keras.regularizers.l2(l2_reg))
             conv = tf.nn.leaky_relu(conv)
             conv = tf.compat.v1.layers.dropout(conv, prob)
@@ -121,6 +111,7 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
 def Conv_Model(GO, self, trainable_embedding,
                kernel_tcr,kernel_epitope,kernel_hla,
                stride_tcr,stride_epitope,stride_hla,
+               padding_tcr,padding_epitope,padding_hla,
                num_fc_layers=0, units_fc=12):
 
     if self.use_alpha is True:
@@ -199,6 +190,7 @@ def Conv_Model(GO, self, trainable_embedding,
         GO.Seq_Features_alpha  = Convolutional_Features(inputs_seq_embed_alpha,
                                                         kernel=kernel_tcr,
                                                         stride=stride_tcr,
+                                                        padding=padding_tcr,
                                                         name='alpha_conv', prob=GO.prob,
                                                         agg='max_pool',size_of_net=GO.size_of_net,
                                                         l2_reg=GO.l2_reg)
@@ -207,6 +199,7 @@ def Conv_Model(GO, self, trainable_embedding,
         GO.Seq_Features_beta = Convolutional_Features(inputs_seq_embed_beta,
                                                         kernel=kernel_tcr,
                                                         stride=stride_tcr,
+                                                        padding=padding_tcr,
                                                         name='beta_conv', prob=GO.prob,
                                                         agg='max_pool',size_of_net=GO.size_of_net,
                                                         l2_reg = GO.l2_reg)
@@ -214,16 +207,18 @@ def Conv_Model(GO, self, trainable_embedding,
         GO.Seq_Features_epitope  = Convolutional_Features(inputs_seq_embed_epitope,
                                                         kernel=kernel_epitope,
                                                         stride=stride_epitope,
+                                                        padding=padding_epitope,
                                                         name='epitope_conv', prob=GO.prob,
                                                         agg='max_pool',size_of_net=GO.size_of_net,
                                                         l2_reg = GO.l2_reg)
     if self.use_hla and self.use_hla_seq:
         GO.Seq_Features_hla  = Convolutional_Features(inputs_seq_embed_hla,
-                                                                                kernel=kernel_hla,
-                                                                                 stride=stride_hla,
-                                                                                name='hla_conv', prob=GO.prob,
-                                                                                agg='flat',size_of_net=GO.size_of_net,
-                                                                                l2_reg = GO.l2_reg)
+                                                        kernel=kernel_hla,
+                                                        stride=stride_hla,
+                                                        padding=padding_hla,
+                                                        name='hla_conv', prob=GO.prob,
+                                                        agg='flat',size_of_net=GO.size_of_net,
+                                                        l2_reg = GO.l2_reg)
 
     Seq_Features = []
     if self.use_alpha is True:
