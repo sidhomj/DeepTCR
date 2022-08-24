@@ -96,6 +96,8 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
     with tf.compat.v1.variable_scope(name,reuse=reuse):
         assert len(kernel) == len(units) == len(stride), 'kernel, units, and stride must be of same length'
 
+        if inputs.shape[2] > 40:
+            check=1
         conv = inputs
         for ii,_ in enumerate(units,0):
             conv = tf.compat.v1.layers.conv2d(conv, units[ii], (1, kernel[ii]), (1,stride[ii]), padding=padding,

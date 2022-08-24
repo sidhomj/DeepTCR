@@ -37,21 +37,20 @@ df_train['HLA'] = df_train['HLA'].str.replace(':',"")
 df_train['HLA'] = df_train['HLA'].str[0:5]
 df_train = df_train[df_train['HLA'].str.len()==5]
 df_train['HLA_sup'] = supertype_conv_op(df_train['HLA'],keep_non_supertype_alleles=True)
-df_train.drop_duplicates(inplace=True,subset=['HLA','HLA_sup'])
-df_train = df_train[df_train['HLA_sup'].isin(['A02','B07'])]
+# df_train.drop_duplicates(inplace=True,subset=['HLA','HLA_sup'])
+# df_train = df_train[df_train['HLA_sup'].isin(['A02','B07'])]
+df_train = df_train[df_train['HLA'].isin(['A0301','A0201'])]
 
 DTCR = Synapse('epitope_tcr')
-DTCR.Load_Data(beta_sequences=np.array(df_train['CDR3']),
+DTCR.Load_Data(#beta_sequences=np.array(df_train['CDR3']),
                # epitope_sequences = np.array(df_train['Antigen']),
                hla=np.array(df_train['HLA']),
-                # class_labels= np.array(df_train['bind_cat']),
-               class_labels=np.array(df_train['HLA_sup']),
-               use_hla_supertype=False,
+                class_labels= np.array(df_train['bind_cat']),
                use_hla_seq=True)
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=5000,epochs_min=50,
                           num_fc_layers=3,units_fc=256,
-                          drop_out_rate=0.5,
-                          units_hla=[12,12,12],kernel_hla=[10,10,10],stride_hla=[5,1,1])
+                          units_hla=[3,3,3],kernel_hla=[30,30,30],stride_hla=[5,5,5],padding_hla='same')
+
 DTCR.Representative_Sequences(top_seq=50,make_seq_logos=False)
 class_sel = 'bind'
 DTCR.Residue_Sensitivity_Logo(beta_sequences=np.array(DTCR.Rep_Seq[class_sel]['beta'])[0:25],

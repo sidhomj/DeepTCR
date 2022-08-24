@@ -184,7 +184,7 @@ class Synapse(object):
             if i is not None:
                 assert isinstance(i,np.ndarray),'Inputs into DeepTCR must come in as numpy arrays!'
 
-        inputs = [alpha_sequences,beta_sequences,epitope_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha]
+        inputs = [alpha_sequences,beta_sequences,epitope_sequences,v_beta,d_beta,j_beta,v_alpha,j_alpha,hla]
         for i in inputs:
             if i is not None:
                 len_input = len(i)
@@ -797,7 +797,7 @@ class Synapse(object):
                              units_tcr=[32, 64, 128], units_epitope=[32, 64, 128], units_hla=[32, 64, 128],
                              kernel_tcr=[5,5,5],kernel_epitope=[5,5,5],kernel_hla=[10,10,10],
                              stride_tcr=[1, 1, 1], stride_epitope=[1, 1, 1], stride_hla=[1, 5, 5],
-                             padding_tcr='valid', padding_epitope='valid', padding_hla='valid',
+                             padding_tcr='same', padding_epitope='same', padding_hla='same',
                              trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
                              num_fc_layers=0, units_fc=12, weight_by_class=False, class_weights=None,
                              graph_seed=None,
