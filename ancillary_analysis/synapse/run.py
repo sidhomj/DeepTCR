@@ -37,6 +37,8 @@ df_train['HLA'] = df_train['HLA'].str.replace(':',"")
 df_train['HLA'] = df_train['HLA'].str[0:5]
 df_train = df_train[df_train['HLA'].str.len()==5]
 df_train['HLA_sup'] = supertype_conv_op(df_train['HLA'],keep_non_supertype_alleles=True)
+df_train.drop_duplicates(inplace=True,subset=['HLA','HLA_sup'])
+df_train = df_train[df_train['HLA_sup'].isin(['A02','B07'])]
 
 DTCR = Synapse('epitope_tcr')
 DTCR.Load_Data(beta_sequences=np.array(df_train['CDR3']),

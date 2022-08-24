@@ -658,7 +658,7 @@ class Synapse(object):
             self.test_pred.test.y_test.append(self.test[-1])
             self.test_pred.test.y_pred.append(test_predicted)
 
-            Get_Seq_Features_Indices(self,batch_size,GO,sess)
+            # Get_Seq_Features_Indices(self,batch_size,GO,sess)
             self.features = Get_Latent_Features(self,batch_size,GO,sess)
 
             idx_base = np.asarray(range(len(self.sample_id)))
