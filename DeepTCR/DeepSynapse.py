@@ -1322,6 +1322,136 @@ class DeepSynapse(object):
             plt.title(title)
         return corr, ax
 
+    def Representative_Sequences(self,top_seq=10,motif_seq=5,make_seq_logos=True,
+                                 color_scheme='weblogo_protein',logo_file_format='.eps'):
+        """
+        # Identify most highly predicted sequences for each class and corresponding motifs.
+
+        This method allows the user to query which sequences were most predicted to belong to a given class along with the motifs that were learned for these representative sequences. Of note, this method only reports sequences that were in the test set so as not to return highly predicted sequences that were over-fit in the training set. To obtain the highest predicted sequences in all the data, run a K-fold cross-validation or Monte-Carlo cross-validation before running this method. In this way, the predicted probability will have been assigned to a sequence only when it was in the independent test set.
+
+        In the case of a regression task, the representative sequences for the 'high' and 'low' values for the regression model are returned in the Rep_Seq Dict.
+
+        This method will also determine motifs the network has learned that are highly associated with the label through multi-nomial linear regression and creates seq logos and fasta files in the results folder. Within a folder for a given class, the motifs are sorted by their linear coefficient. The coefficient is in the file name (i.e. 0_0.125_feature_2.eps reflects the the 0th highest feature with a coefficient of 0.125.
+
+        Args:
+
+            top_seq (int): The number of top sequences to show for each class.
+
+            motif_seq (int): The number of sequences to use to generate each motif. The more sequences, the possibly more noisy the seq_logo will be.
+
+            make_seq_logos (bool): In order to make seq logos for visualization of enriched motifs, set this to True. Whether this is set to True or not, the fast files that define enriched motifs will still be saved.
+
+            color_scheme (str): color scheme to use for LogoMaker.
+            ###
+            options are:
+                - weblogo_protein
+                - skylign_protein
+                - dmslogo_charge
+                - dmslogo_funcgroup
+                - hydrophobicity
+                - chemistry
+                - charge
+                - NajafabadiEtAl2017
+
+            logo_file_format (str):
+                The type of image file one wants to save the seqlogo as. Default is vector-based format (.eps)
+
+        Returns:
+            Outputs
+
+            - self.Rep_Seq (dictionary of dataframes):
+            This dictionary of dataframes holds for each class the top sequences and their respective probabiltiies for all classes. These dataframes can also be found in the results folder under Rep_Sequences.
+
+            - self.Rep_Seq_Features_(alpha/beta) (dataframe):
+            This dataframe holds information for which features were associated by a multinomial linear model to the predicted probabilities of the neural network. The values in this dataframe are the linear model coefficients. This allows one to see which features were associated with the output of the trained neural network. These are also the same values that are on the motif seqlogo files in the results folder.
+
+        Furthermore, the motifs are written in the results directory underneath the Motifs folder. To find the beta motifs for a given class, look under Motifs/beta/class_name/. These fasta/logo files are labeled by the linear coefficient of that given feature for that given class followed by the number name of the feature. These fasta files can then be visualized via weblogos at the following site: "https://weblogo.berkeley.edu/logo.cgi" or are present in the folder for direct visualization.
+
+
+        """
+        dir = 'Rep_Sequences'
+        dir = os.path.join(self.directory_results, dir)
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
+        os.makedirs(dir)
+
+        file_list = [f for f in os.listdir(dir)]
+        [os.remove(os.path.join(dir, f)) for f in file_list]
+
+        Rep_Seq = []
+        keep = []
+        df_temp = pd.DataFrame()
+        df_temp['alpha'] = self.alpha_sequences
+        df_temp['beta'] = self.beta_sequences
+        df_temp['v_alpha'] = self.v_alpha
+        df_temp['j_alpha'] = self.j_alpha
+        df_temp['v_beta'] = self.v_beta
+        df_temp['d_beta'] = self.d_beta
+        df_temp['j_beta'] = self.j_beta
+        df_temp['Class'] = self.class_id
+        if self.regression is True:
+            df_temp['Regressed_Val'] = self.Y
+        df_temp['Sample'] = self.sample_id
+        df_temp['Freq'] = self.freq
+        if hasattr(self, 'counts'):
+            df_temp['Counts'] = self.counts
+        try:
+            df_temp['HLA'] = list(map(list, self.hla_data_seq.tolist()))
+        except:
+            pass
+
+        if self.regression is False:
+            for ii, sample in enumerate(self.lb.classes_, 0):
+                df_temp[sample] = self.predicted[:, ii]
+
+            for ii, sample in enumerate(self.lb.classes_, 0):
+                df_temp.sort_values(by=sample, ascending=False, inplace=True)
+                df_sample = df_temp[df_temp['Class'] == sample][0:top_seq]
+
+                if not df_sample.empty:
+                    Rep_Seq.append(df_sample)
+                    df_sample.to_csv(os.path.join(dir, sample + '.csv'), index=False)
+                    keep.append(ii)
+
+            self.Rep_Seq = dict(zip(self.lb.classes_[keep], Rep_Seq))
+
+            if self.use_alpha:
+                self.Req_Seq_Features_alpha = Motif_Features(self, self.alpha_features, self.alpha_indices,
+                                                             self.alpha_sequences, self.directory_results,
+                                                             'alpha', self.kernel, motif_seq,make_seq_logos,
+                                                                 color_scheme,logo_file_format)
+
+            if self.use_beta:
+                self.Req_Seq_Features_beta = Motif_Features(self, self.beta_features, self.beta_indices,
+                                                            self.beta_sequences, self.directory_results,
+                                                            'beta', self.kernel, motif_seq,make_seq_logos,
+                                                                color_scheme,logo_file_format)
+        else:
+            df_temp['Predicted'] = self.predicted
+            df_temp.sort_values(by='Predicted',ascending=False,inplace=True)
+            df_sample_top = df_temp[0:top_seq]
+            df_temp.sort_values(by='Predicted',ascending=True,inplace=True)
+            df_sample_bottom = df_temp[0:top_seq]
+            labels = ['High','Low']
+            Rep_Seq.append(df_sample_top)
+            Rep_Seq.append(df_sample_bottom)
+            df_sample_top.to_csv(os.path.join(dir,'high.csv'),index=False)
+            df_sample_bottom.to_csv(os.path.join(dir,'low.csv'),index=False)
+
+            self.Rep_Seq = dict(zip(labels,Rep_Seq))
+
+            if self.use_alpha:
+                self.Req_Seq_Features_alpha = Motif_Features_Reg(self, self.alpha_features, self.alpha_indices,
+                                                             self.alpha_sequences, self.directory_results,
+                                                             'alpha', self.kernel, motif_seq,make_seq_logos,
+                                                                 color_scheme,logo_file_format)
+
+            if self.use_beta:
+                self.Req_Seq_Features_beta = Motif_Features_Reg(self, self.beta_features, self.beta_indices,
+                                                            self.beta_sequences, self.directory_results,
+                                                            'beta', self.kernel, motif_seq,make_seq_logos,
+                                                                color_scheme,logo_file_format)
+
     def Sequence_Inference(self, alpha_sequences=None, beta_sequences=None, v_beta=None, d_beta=None, j_beta=None,
                   v_alpha=None, j_alpha=None, epitope_sequences=None, p=None,hla=None, batch_size=10000,models=None,return_dist=False):
         """
