@@ -74,7 +74,7 @@ DTCR.Load_Data(beta_sequences=np.array(df_train['CDR3']),
                hla=np.array(df_train['HLA']),
                 class_labels= np.array(df_train['bind_cat']),
                use_hla_seq=True)
-DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=5000,epochs_min=50,
+DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=50000,epochs_min=50,
                           num_fc_layers=3,units_fc=256,
                           units_hla=[12,12,12],kernel_hla=[30,30,30],stride_hla=[5,5,5],padding_hla='same')
 
