@@ -1157,3 +1157,178 @@ class Synapse(object):
 
         print('K-fold Cross Validation Completed')
 
+    def AUC_Curve(self,by=None,filename='AUC.tif',title=None,title_font=None,plot=True,diag_line=True,
+                  xtick_size = None, ytick_size=None, xlabel_size = None, ylabel_size=None,
+                  legend_font_size=None,frameon=True,legend_loc = 'lower right',
+                  figsize=None,set='test',color_dict=None):
+        """
+        # AUC Curve for both Sequence and Repertoire/Sample Classifiers
+
+        Args:
+
+            by (str): To show AUC curve for only one class, set this parameter to the name of the class label one wants to plot.
+
+            filename (str): Filename to save tif file of AUC curve.
+
+            title (str): Optional Title to put on ROC Curve.
+
+            title_font (int): Optional font size for title
+
+            plot (bool): To suppress plotting and just save the data/figure, set to False.
+
+            diag_line (bool): To plot the line/diagonal of y=x defining no predictive power, set to True. To remove from plot, set to False.
+
+            xtick_size (float): Size of xticks
+
+            ytick_size (float): Size of yticks
+
+            xlabel_size (float): Size of xlabel
+
+            ylabel_size (float): Size of ylabel
+
+            legend_font_size (float): Size of legend
+
+            frameon (bool): Whether to show frame around legend.
+
+            figsize (tuple): To change the default size of the figure, set this to size of figure (i.e. - (10,10) )
+
+            set (str): Which partition of the data to look at performance of model. Options are train/valid/test.
+
+            color_dict (dict): An optional dictionary that maps classes to colors in the case user wants to define colors of lines on plot.
+
+        Returns:
+            AUC Data
+
+            - self.AUC_DF (Pandas Dataframe):
+            AUC scores are returned for each class.
+
+            In addition to plotting the ROC Curve, the AUC's are saved to a csv file in the results directory called 'AUC.csv'
+
+        """
+        try:
+            y_test = self.test_pred.__dict__[set].y_test
+            y_pred = self.test_pred.__dict__[set].y_pred
+        except:
+            y_test = self.y_test
+            y_pred = self.y_pred
+
+        auc_scores = []
+        classes = []
+        if plot is False:
+            plt.ioff()
+        if figsize is not None:
+            fig, ax = plt.subplots(figsize=figsize)
+        else:
+            plt.figure()
+
+        if diag_line:
+            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+
+
+        if color_dict is None:
+            RGB_tuples = distinctipy.get_colors(len(self.lb.classes_),rng=0)
+            color_dict = dict(zip(self.lb.classes_, RGB_tuples))
+
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+
+        if by is None:
+            for ii, class_name in enumerate(self.lb.classes_, 0):
+                try:
+                    roc_score = roc_auc_score(y_test[:, ii], y_pred[:,ii])
+                    classes.append(class_name)
+                    auc_scores.append(roc_score)
+                    fpr, tpr, _ = roc_curve(y_test[:, ii], y_pred[:,ii])
+                    plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score),c=color_dict[class_name])
+                except:
+                    continue
+        else:
+            class_name = by
+            ii = self.lb.transform([by])[0]
+            roc_score = roc_auc_score(y_test[:, ii], y_pred[:, ii])
+            auc_scores.append(roc_score)
+            classes.append(class_name)
+            fpr, tpr, _ = roc_curve(y_test[:, ii], y_pred[:, ii])
+            plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score),c=color_dict[class_name])
+
+        plt.legend(loc=legend_loc,frameon=frameon)
+        if legend_font_size is not None:
+            plt.legend(prop={'size': legend_font_size},loc=legend_loc,frameon=frameon)
+
+        if title is not None:
+            if title_font is not None:
+                plt.title(title,fontsize=title_font)
+            else:
+                plt.title(title)
+
+        ax = plt.gca()
+
+        if xlabel_size is not None:
+            ax.xaxis.label.set_size(xlabel_size)
+
+        if ylabel_size is not None:
+            ax.yaxis.label.set_size(ylabel_size)
+
+        if xtick_size is not None:
+            plt.xticks(fontsize=xtick_size)
+
+        if ytick_size is not None:
+            plt.yticks(fontsize=ytick_size)
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(self.directory_results,filename))
+        if plot is True:
+            plt.show(block=False)
+        else:
+            plt.close()
+
+        df_out = pd.DataFrame()
+        df_out['Class'] = classes
+        df_out['AUC'] = auc_scores
+        df_out.to_csv(os.path.join(self.directory_results,'AUC.csv'),index=False)
+        self.AUC_DF = df_out
+
+    def SRCC(self, s=10, kde=False, title=None):
+        """
+        # Spearman's Rank Correlation Coefficient Plot
+
+        In the case one is doing a regression-based model for the sequence classiifer, one can plot the predicted vs actual labeled value with this method. The method returns a plot for the regression and a value of the correlation coefficient.
+
+        Args:
+
+            s (int): size of points for scatterplot
+
+            kde (bool): To do a kernel density estimation per point and plot this as a color-scheme, set to True. Warning: this option will take longer to run.
+
+            title (str): Title for the plot.
+
+        Returns:
+            SRCC Output
+
+            - corr (float):
+            Spearman's Rank Correlation Coefficient
+
+            - ax (matplotlib axis):
+                axis on which plot is drawn
+        """
+        x, y = np.squeeze(self.y_pred, -1), np.squeeze(self.y_test, -1)
+        corr, _ = spearmanr(x, y)
+
+        fig, ax = plt.subplots()
+        if kde:
+            xy = np.vstack([x, y])
+            z = gaussian_kde(xy)(xy)
+            r = np.argsort(z)
+            x, y, z = x[r], y[r], z[r]
+            ax.scatter(x, y, s=s, c=z, cmap=plt.cm.jet)
+        else:
+            ax.scatter(x, y, s=s)
+
+        ax.set_xlabel('Predicted')
+        ax.set_ylabel('Actual')
+        if title is not None:
+            plt.title(title)
+        return corr, ax
+
