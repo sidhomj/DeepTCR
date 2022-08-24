@@ -66,6 +66,10 @@ class DeepSynapse(object):
         self.use_w = False
         self.ind = None
         self.unknown_str = '__unknown__'
+        self.max_length_alpha = None
+        self.max_length_beta = None
+        self.max_length_epitope = None
+        self.max_length_hla = None
 
         #Create dataframes for assigning AA to ints
         aa_idx, aa_mat = make_aa_df()
@@ -1504,7 +1508,7 @@ class DeepSynapse(object):
         """
         model_type,get = load_model_data(self)
         out, out_dist = inference_method_ss(get,alpha_sequences,beta_sequences,
-                               v_beta,d_beta,j_beta,v_alpha,j_alpha,hla,
+                               v_beta,d_beta,j_beta,v_alpha,j_alpha,epitope_sequences,hla,
                                 p,batch_size,self,models)
 
         if return_dist:

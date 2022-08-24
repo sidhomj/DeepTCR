@@ -7,7 +7,7 @@ import utils
 df = pd.read_csv('../../Data/synapse/testing_data.csv')
 df['bind'] = True
 df['id'] = df['CDR3']+'_'+df['Antigen']+'_'+df['HLA']
-dfs = utils.create_negative_samples(df,within_hla=True)
+dfs = utils.create_negative_samples(df,within_hla=False)
 
 #add labels
 df_input  = pd.concat([df,dfs])
@@ -34,3 +34,6 @@ df_input = df_input[df_input['HLA'].str.len()==5]
 df_input['HLA_sup'] = supertype_conv_op(df_input['HLA'],keep_non_supertype_alleles=True)
 
 DTCR = DeepSynapse('epitope_tcr')
+preds = DTCR.Sequence_Inference(beta_sequences=np.array(df_input['CDR3']),
+               epitope_sequences = np.array(df_input['Antigen']),
+               hla=np.array(df_input['HLA_sup']))
