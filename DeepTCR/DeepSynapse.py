@@ -1380,7 +1380,7 @@ class DeepSynapse(object):
             plt.title(title)
         return corr, ax
 
-    def Representative_Sequences(self,top_seq=10,motif_seq=5,make_seq_logos=True,
+    def Representative_Sequences(self,top_seq=10,motif_seq=5,make_seq_logos=False,
                                  color_scheme='weblogo_protein',logo_file_format='.eps'):
         """
         # Identify most highly predicted sequences for each class and corresponding motifs.
