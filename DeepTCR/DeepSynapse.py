@@ -1284,6 +1284,60 @@ class DeepSynapse(object):
         df_out.to_csv(os.path.join(self.directory_results,'AUC.csv'),index=False)
         self.AUC_DF = df_out
 
+    def AUC_Curve_CV(self, threshold, plot=True):
+        y_test = self.ic50_dict['Test'][-1] >= self.transformed_binding_threshold
+        y_pred = self.predicted_ic50
+
+        class_name = '<' + str(self.binding_threshold) + 'nm'
+        roc_score = roc_auc_score(y_test, y_pred)
+        fpr, tpr, _ = roc_curve(y_test, y_pred)
+
+        plt.figure()
+        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('ROC')
+
+        plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (class_name, roc_score))
+
+        plt.legend(loc="lower right")
+        plt.savefig(os.path.join(self.directory_results, 'IC50_AUC.png'))
+        if plot is True:
+            plt.show(block=False)
+        else:
+            plt.close()
+
+        AUC = []
+        allele_list = []
+        allele_counts = []
+        for ii, allele in enumerate(self.lb_hla.classes_, 0):
+            sel = self.ic50_dict['Test'][2] == self.lb_hla.transform([allele])[0]
+            if np.sum(sel) != 0:
+                y_test = self.ic50_dict['Test'][-1][sel] >= self.transformed_binding_threshold
+                if (np.sum(y_test) != len(y_test)) and (np.sum(y_test) != 0):
+                    y_pred = self.predicted_ic50[sel]
+                    AUC.append(roc_auc_score(y_test, y_pred))
+                else:
+                    AUC.append(np.nan)
+                idx = np.where((self.ic50_dict['df_allele_counts']['Allele Name'] == allele).tolist())[0][0]
+                allele_counts.append(self.ic50_dict['df_allele_counts']['Counts'][idx])
+            else:
+                AUC.append(np.nan)
+                allele_counts.append(0)
+
+            allele_list.append(allele)
+
+        df = pd.DataFrame()
+        df['Allele'] = allele_list
+        df['Peptide Counts'] = allele_counts
+        df['AUC'] = AUC
+        df = df[df['Peptide Counts'] != 0]
+        df.reset_index(inplace=True, drop=True)
+
+        self.AUC_CV_DF = df
+
     def SRCC(self, s=10, kde=False, title=None):
         """
         # Spearman's Rank Correlation Coefficient Plot
