@@ -230,6 +230,30 @@ def Get_Supplementary_Data():
     df_kim = df_kim.reset_index()
     return df_kim
 
+def load_foreign_v_self():
+    filename = os.path.join('../../Data/synapse/iedb/mhc_ligand_full.csv')
+    # load data
+    df = load_data(filename)
+
+    # Get Sequence & Parent Species
+    df_train = df[['AA Sequence', 'Parent Species']]
+
+    # Aggregate possible duplicates
+    df_train = df_train.groupby(['AA Sequence']).agg({'Parent Species': 'first'})
+    df_train = df_train.reset_index()
+
+    # remove nan's from parent species
+    idx = df_train['Parent Species'].isnull()
+    df_train = df_train[~idx]
+
+    # Assign self vs non-self
+    df_train['Y'] = ''
+    idx = df_train['Parent Species'].str.contains('Homo sapiens')
+    df_train['Y'][idx] = 0
+    df_train['Y'][~idx] = 1
+    df_train['Y'] = df_train['Y'].astype(dtype='float32')
+
+    return df_train
 
 
 

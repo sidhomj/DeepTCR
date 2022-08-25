@@ -5,15 +5,14 @@ import utils
 from DeepTCR.DeepSynapse import DeepSynapse
 from sklearn.metrics import roc_auc_score
 
-df = utils.load_mhc_binding()
+df = utils.load_foreign_v_self()
 
-
-DTCR = DeepSynapse('mhc_binding')
+DTCR = DeepSynapse('foreign_v_self')
 DTCR.Load_Data(epitope_sequences = np.array(df['AA Sequence']),
                hla=np.array(df['Allele Name']),
                 Y=np.array(df['Y']),
-               use_hla_supertype=True,
-               use_hla_seq=False
+               use_hla_supertype=False,
+               use_hla_seq=True
                )
 
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=50000,epochs_min=10,
@@ -23,6 +22,3 @@ DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=50000,epochs_min=10,
 DTCR.SRCC()
 threshold = 1 - np.log10(500) / np.log10(50000)
 DTCR.AUC_Curve_CV(threshold=threshold)
-
-y_test = DTCR.y_test >= threshold
-roc_auc_score(y_test,DTCR.y_pred)
