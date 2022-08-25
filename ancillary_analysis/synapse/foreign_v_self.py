@@ -9,10 +9,7 @@ df = utils.load_foreign_v_self()
 
 DTCR = DeepSynapse('foreign_v_self')
 DTCR.Load_Data(epitope_sequences = np.array(df['AA Sequence']),
-               hla=np.array(df['Allele Name']),
-                Y=np.array(df['Y']),
-               use_hla_supertype=False,
-               use_hla_seq=True
+                class_labels=np.array(df['Y']),
                )
 
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=50000,epochs_min=10,

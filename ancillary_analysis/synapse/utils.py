@@ -249,9 +249,8 @@ def load_foreign_v_self():
     # Assign self vs non-self
     df_train['Y'] = ''
     idx = df_train['Parent Species'].str.contains('Homo sapiens')
-    df_train['Y'][idx] = 0
-    df_train['Y'][~idx] = 1
-    df_train['Y'] = df_train['Y'].astype(dtype='float32')
+    df_train['Y'][idx] = 'self'
+    df_train['Y'][~idx] = 'foreign'
 
     return df_train
 
