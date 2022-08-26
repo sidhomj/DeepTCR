@@ -6,7 +6,9 @@ from DeepTCR.DeepSynapse import DeepSynapse
 from sklearn.metrics import roc_auc_score
 
 df = utils.load_mhc_binding()
-
+df = df[df['AA Sequence'].str.len() <= 12]
+df['Y'][df['Y']>1]=1
+df['Y'][df['Y']<0]=0
 
 DTCR = DeepSynapse('mhc_binding')
 DTCR.Load_Data(epitope_sequences = np.array(df['AA Sequence']),
@@ -17,8 +19,8 @@ DTCR.Load_Data(epitope_sequences = np.array(df['AA Sequence']),
                )
 
 DTCR.Monte_Carlo_CrossVal(folds=1,batch_size=50000,epochs_min=10,
-                          units_fc=[64,32,12],
-                          units_epitope=[256],kernel_epitope=[10],stride_epitope=[1],
+                          units_fc=[1024,1024,1024],
+                          units_epitope=[1024],kernel_epitope=[10],stride_epitope=[1],
                           units_hla=[12,12,12],kernel_hla=[30,30,30],stride_hla=[5,5,5])
 
 DTCR.SRCC()
