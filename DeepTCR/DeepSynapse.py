@@ -793,7 +793,7 @@ class DeepSynapse(object):
                              stride_tcr=[1, 1, 1], stride_epitope=[1, 1, 1], stride_hla=[1, 5, 5],
                              padding_tcr='same', padding_epitope='same', padding_hla='same',
                              trainable_embedding=True, embedding_dim_aa=64, embedding_dim_genes=48, embedding_dim_hla=12,
-                             units_fc=[12], weight_by_class=False, class_weights=None,
+                             units_fc=[], weight_by_class=False, class_weights=None,
                              graph_seed=None,
                              drop_out_rate=0.0, multisample_dropout=False, multisample_dropout_rate=0.50, multisample_dropout_num_masks=64,
                              batch_size=1000, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
