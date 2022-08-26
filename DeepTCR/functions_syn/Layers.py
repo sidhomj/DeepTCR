@@ -115,7 +115,7 @@ def Conv_Model(GO, self, trainable_embedding,
                kernel_tcr,kernel_epitope,kernel_hla,
                stride_tcr,stride_epitope,stride_hla,
                padding_tcr,padding_epitope,padding_hla,
-               num_fc_layers=0, units_fc=12):
+               units_fc=[]):
 
     if self.use_alpha is True:
         GO.X_Seq_alpha = tf.compat.v1.placeholder(tf.int64,
@@ -266,11 +266,10 @@ def Conv_Model(GO, self, trainable_embedding,
     #     Features = tf.layers.dense(Features,Features.shape[1],tf.nn.relu)
 
     fc = Features
-    if num_fc_layers != 0:
-        for lyr in range(num_fc_layers):
-            fc = tf.compat.v1.layers.dropout(fc, GO.prob)
-            fc = tf.compat.v1.layers.dense(fc, units_fc, tf.nn.relu,
-                                           kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
+    for u in units_fc:
+        fc = tf.compat.v1.layers.dropout(fc, GO.prob)
+        fc = tf.compat.v1.layers.dense(fc, u, tf.nn.relu,
+                                    kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
 
     return fc
 
