@@ -89,7 +89,7 @@ def Get_HLA_Features(self,GO,embedding_dim):
     return GO.HLA_Features
 
 def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Features',kernel=3,net='ae',
-                           size_of_net = 'medium',l2_reg=0.0):
+                           size_of_net = 'medium',l2_reg=0.0,length_invariance=False):
     with tf.compat.v1.variable_scope(name,reuse=reuse):
         if size_of_net == 'small':
             units = [12,32,64]
@@ -117,14 +117,18 @@ def Convolutional_Features(inputs,reuse=False,prob=0.0,name='Convolutional_Featu
 
         conv_3 = conv
         conv_3_out = tf.compat.v1.layers.flatten(tf.reduce_max(input_tensor=conv_3,axis=2))
+        indices_3 = tf.squeeze(tf.cast(tf.argmax(input=conv_3, axis=2), tf.float32), 1)
 
         if net == 'ae':
-            return tf.compat.v1.layers.flatten(conv_3),conv_out,indices
+            if length_invariance:
+                return conv_3_out,conv_out,indices,indices_3
+            else:
+                return tf.compat.v1.layers.flatten(conv_3), conv_out, indices
         else:
             return conv_3_out,conv_out,indices
 
 def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
-               use_only_gene,use_only_hla,num_fc_layers=0, units_fc=12):
+               use_only_gene,use_only_hla,num_fc_layers=0, units_fc=12,length_invariance=False):
 
     if self.use_alpha is True:
         GO.X_Seq_alpha = tf.compat.v1.placeholder(tf.int64,
@@ -175,28 +179,51 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
 
     # Convolutional Features
     if self.use_alpha is True:
-        GO.Seq_Features_alpha, GO.alpha_out, GO.indices_alpha = Convolutional_Features(inputs_seq_embed_alpha,
-                                                                                       kernel=kernel,
-                                                                                       name='alpha_conv', prob=GO.prob,
-                                                                                       net=GO.net,size_of_net=GO.size_of_net,
-                                                                                       l2_reg=GO.l2_reg)
+        if length_invariance is False:
+            GO.Seq_Features_alpha, GO.alpha_out, GO.indices_alpha = Convolutional_Features(inputs_seq_embed_alpha,
+                                                                                           kernel=kernel,
+                                                                                           name='alpha_conv', prob=GO.prob,
+                                                                                           net=GO.net,size_of_net=GO.size_of_net,
+                                                                                           l2_reg=GO.l2_reg)
+        else:
+            GO.Seq_Features_alpha, GO.alpha_out, GO.indices_alpha,GO.indices_alpha_last = Convolutional_Features(inputs_seq_embed_alpha,
+                                                                                           kernel=kernel,
+                                                                                           name='alpha_conv', prob=GO.prob,
+                                                                                           net=GO.net,size_of_net=GO.size_of_net,
+                                                                                           l2_reg=GO.l2_reg,length_invariance=length_invariance)
 
     if self.use_beta is True:
-        GO.Seq_Features_beta, GO.beta_out, GO.indices_beta = Convolutional_Features(inputs_seq_embed_beta,
-                                                                                    kernel=kernel,
-                                                                                    name='beta_conv', prob=GO.prob,
-                                                                                    net=GO.net,size_of_net=GO.size_of_net,
-                                                                                    l2_reg = GO.l2_reg)
+        if length_invariance is False:
+            GO.Seq_Features_beta, GO.beta_out, GO.indices_beta = Convolutional_Features(inputs_seq_embed_beta,
+                                                                                        kernel=kernel,
+                                                                                        name='beta_conv', prob=GO.prob,
+                                                                                        net=GO.net,size_of_net=GO.size_of_net,
+                                                                                        l2_reg = GO.l2_reg)
+        else:
+            GO.Seq_Features_beta, GO.beta_out, GO.indices_beta,GO.indices_beta_last = Convolutional_Features(inputs_seq_embed_beta,
+                                                                                        kernel=kernel,
+                                                                                        name='beta_conv', prob=GO.prob,
+                                                                                        net=GO.net,size_of_net=GO.size_of_net,
+                                                                                        l2_reg = GO.l2_reg,length_invariance=length_invariance)
 
     Seq_Features = []
+    Seq_Indices = []
     if self.use_alpha is True:
         Seq_Features.append(GO.Seq_Features_alpha)
+        if length_invariance:
+            Seq_Features.append(GO.indices_alpha_last)
+            Seq_Indices.append(GO.indices_alpha_last)
     if self.use_beta is True:
         Seq_Features.append(GO.Seq_Features_beta)
+        if length_invariance:
+            Seq_Features.append(GO.indices_beta_last)
+            Seq_Indices.append(GO.indices_beta_last)
+
+    if Seq_Indices:
+        Seq_Indices = tf.concat(Seq_Indices,axis=1)
 
     if Seq_Features:
         Seq_Features = tf.concat(Seq_Features, axis=1)
-
 
     Features = [Seq_Features,gene_features]
     for ii,f in enumerate(Features,0):
@@ -238,7 +265,10 @@ def Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq,
             fc = tf.compat.v1.layers.dense(fc, units_fc, tf.nn.relu,
                                            kernel_regularizer=tf.keras.regularizers.l2(GO.l2_reg))
 
-    return fc
+    if length_invariance is False:
+        return fc
+    else:
+        return fc, Seq_Indices
 
 #Layers for VAE
 
@@ -368,3 +398,256 @@ def make_test_pred_object():
         test_pred.__dict__[set].y_test = []
         test_pred.__dict__[set].y_pred = []
     return test_pred
+
+
+def normalized_diversity_regularization(features):
+    # Compute mean activations for each filter
+    mean_activations = tf.reduce_mean(features, axis=0)  # shape: [num_filters]
+
+    # Normalize the activations
+    normalized_activations = (mean_activations - tf.reduce_mean(mean_activations)) / (
+                tf.math.reduce_std(mean_activations) + 1e-8)
+
+    # Compute correlation matrix
+    correlation_matrix = tf.matmul(normalized_activations[:, tf.newaxis],
+                                   normalized_activations[tf.newaxis, :])
+
+    # Take absolute value of correlations
+    correlation_matrix = tf.abs(correlation_matrix)
+
+    # Compute off-diagonal correlations
+    num_filters = tf.shape(correlation_matrix)[0]
+    off_diagonal_mask = 1.0 - tf.eye(num_filters)
+    off_diagonal_correlations = correlation_matrix * off_diagonal_mask
+
+    # Normalize by the number of off-diagonal elements
+    num_off_diagonal = num_filters * (num_filters - 1)
+    diversity_loss = tf.reduce_sum(off_diagonal_correlations) / tf.cast(num_off_diagonal, tf.float32)
+
+    return diversity_loss
+
+
+def normalized_activation_loss(features, epsilon=1e-8):
+    """
+    Compute a normalized activation loss to encourage high activations of convolutional kernels.
+
+    Args:
+    features (tf.Tensor): The activation features from the convolutional layer.
+                          Expected shape: [batch_size, sequence_length, num_filters]
+    epsilon (float): A small constant to prevent division by zero.
+
+    Returns:
+    tf.Tensor: The normalized activation loss.
+    """
+    # Compute mean activation for each filter across the batch and sequence
+    mean_activations = tf.reduce_mean(features, axis=0)  # shape: [num_filters]
+
+    # Normalize the mean activations
+    normalized_activations = mean_activations / (tf.reduce_max(mean_activations) + epsilon)
+
+    # Compute the loss: we want to maximize activations, so we minimize the negative
+    loss = 1.0 - normalized_activations
+
+    # Take the mean across all filters to get a single loss value
+    mean_loss = tf.reduce_mean(loss)
+
+    return mean_loss
+
+
+def normalized_sparsity_regularization(features, target_sparsity=0.05, epsilon=1e-8):
+    """
+    Compute a normalized sparsity regularization to encourage sparse activations of convolutional kernels.
+
+    Args:
+    features (tf.Tensor): The activation features from the convolutional layer.
+                          Expected shape: [batch_size, sequence_length, num_filters]
+    target_sparsity (float): The desired level of sparsity, between 0 and 1.
+                             Lower values encourage more sparsity.
+    epsilon (float): A small constant to prevent division by zero.
+
+    Returns:
+    tf.Tensor: The normalized sparsity regularization loss.
+    """
+    # Compute mean activation for each filter across the batch and sequence
+    mean_activations = tf.reduce_mean(features, axis=0)  # shape: [num_filters]
+
+    # Normalize the mean activations to be between 0 and 1
+    normalized_activations = mean_activations / (tf.reduce_max(mean_activations) + epsilon)
+
+    # Compute the sparsity penalty
+    sparsity_loss = tf.abs(normalized_activations - target_sparsity)
+
+    # Normalize the loss
+    mean_loss = tf.reduce_mean(sparsity_loss)
+
+    # Scale the loss to be between 0 and 1
+    scaled_loss = mean_loss / (1.0 - target_sparsity + epsilon)
+
+    return scaled_loss
+
+
+def compute_sequence_lengths(sequences):
+    """
+    Compute the actual length of each sequence in the batch.
+
+    Args:
+    sequences: Tensor of shape [batch_size, 1, max_length] (max_length is 40 in your case)
+
+    Returns:
+    Tensor of shape [batch_size] containing the length of each sequence
+    """
+    sequences = tf.squeeze(sequences, axis=1)  # Remove singleton dimension
+    mask = tf.greater(sequences, 0)
+    return tf.reduce_sum(tf.cast(mask, tf.int32), axis=-1)
+
+
+def length_feature_correlation(features, lengths):
+    # """
+    # Compute correlation between pairwise feature distances and length differences.
+    #
+    # Args:
+    # features: Tensor of shape [batch_size, feature_dim]
+    # lengths: Tensor of shape [batch_size] containing sequence lengths
+    #
+    # Returns:
+    # Scalar tensor representing the correlation
+    # """
+    # Compute pairwise distances in feature space
+    # feature_distances = tf.sqrt(
+    #     tf.maximum(tf.reduce_sum(tf.square(features[:, None] - features[None, :]), axis=-1), 1e-12))
+    #
+    # # Compute pairwise differences in length
+    # length_diff = tf.abs(lengths[:, None] - lengths[None, :])
+    #
+    # # Normalize both to [0, 1] range
+    # feature_distances /= tf.reduce_max(feature_distances)
+    # length_diff = tf.cast(length_diff, tf.float32) / tf.reduce_max(tf.cast(length_diff, tf.float32))
+    #
+    # # Compute correlation
+    # return tf.reduce_mean(feature_distances * length_diff)
+    # Normalize lengths to [0, 1]
+    # lengths_norm = tf.cast(lengths, tf.float32) / tf.reduce_max(tf.cast(lengths, tf.float32))
+    #
+    # # Compute correlation between feature dimensions and normalized length
+    # return tf.reduce_mean(tf.abs(tf.matmul(tf.transpose(features), lengths_norm[:, tf.newaxis])))
+    """
+    Compute a normalized, efficient approximation of length invariance loss.
+
+    Args:
+    features: Tensor of shape [batch_size, feature_dim]
+    lengths: Tensor of shape [batch_size] containing sequence lengths
+
+    Returns:
+    Scalar tensor representing the normalized length invariance loss
+    """
+    # Normalize lengths to [0, 1]
+    lengths_norm = tf.cast(lengths, tf.float32) / tf.reduce_max(tf.cast(lengths, tf.float32))
+
+    # Center and normalize features
+    features_centered = features - tf.reduce_mean(features, axis=0)
+    features_normalized = features_centered / (tf.math.reduce_std(features_centered, axis=0) + 1e-8)
+
+    # Compute correlation between feature dimensions and normalized length
+    corr = tf.matmul(tf.transpose(features_normalized), lengths_norm[:, tf.newaxis])
+
+    # Take absolute value and average across feature dimensions
+    avg_abs_corr = tf.reduce_mean(tf.abs(corr))
+
+    # Normalize to [0, 1] range
+    normalized_loss = avg_abs_corr / tf.sqrt(tf.cast(tf.shape(features)[1], tf.float32))
+
+    return normalized_loss
+
+
+def flexible_length_aware_loss(features, lengths, similarity_threshold=0.8):
+    """
+    Compute a loss that encourages feature similarity for sequences with different lengths,
+    but allows for length correlation when features are very similar.
+
+    Args:
+    features: Tensor of shape [batch_size, feature_dim]
+    lengths: Tensor of shape [batch_size] containing sequence lengths
+    similarity_threshold: Threshold for considering features as similar
+
+    Returns:
+    Scalar tensor representing the flexible length-aware loss
+    """
+    # Normalize features
+    features_norm = tf.nn.l2_normalize(features, axis=1)
+
+    # Compute pairwise cosine similarities
+    similarities = tf.matmul(features_norm, features_norm, transpose_b=True)
+
+    # Compute pairwise length differences
+    length_diff = tf.abs(lengths[:, tf.newaxis] - lengths[tf.newaxis, :])
+    length_diff = tf.cast(length_diff, tf.float32) / tf.reduce_max(tf.cast(length_diff, tf.float32))
+
+    # Create a mask for pairs with high feature similarity
+    similar_mask = tf.cast(similarities > similarity_threshold, tf.float32)
+
+    # Compute loss: encourage length difference for dissimilar features,
+    # but allow length similarity for very similar features
+    loss = tf.reduce_mean(length_diff * (1 - similar_mask) + (1 - length_diff) * similar_mask)
+
+    return loss
+
+
+def true_length_invariance_loss(features, lengths, temperature=0.1):
+    """
+    Compute a loss that encourages true length invariance, regardless of feature similarity.
+
+    Args:
+    features: Tensor of shape [batch_size, feature_dim]
+    lengths: Tensor of shape [batch_size] containing sequence lengths
+    temperature: Scaling factor for softmax (lower values make it more sensitive to differences)
+
+    Returns:
+    Scalar tensor representing the length invariance loss
+    """
+    # Normalize features
+    features_norm = tf.nn.l2_normalize(features, axis=1)
+
+    # Compute pairwise cosine similarities
+    similarities = tf.matmul(features_norm, features_norm, transpose_b=True)
+
+    # Apply softmax to similarities (optional, helps to accentuate differences)
+    similarities = tf.nn.softmax(similarities / temperature, axis=-1)
+
+    # Compute pairwise length equality (1 if lengths are equal, 0 otherwise)
+    length_equality = tf.cast(tf.equal(lengths[:, tf.newaxis], lengths[tf.newaxis, :]), tf.float32)
+
+    # Compute loss: we want to minimize correlation between feature similarity and length equality
+    loss = tf.reduce_mean(similarities * length_equality)
+
+    return loss
+
+
+def improved_length_invariance_loss(features, lengths, temperature=0.1, length_weight=1.0):
+    """
+    Compute a loss that encourages length invariance while allowing
+    similar features to cluster regardless of length.
+
+    Args:
+    features: Tensor of shape [batch_size, num_features]
+    lengths: Tensor of shape [batch_size] containing sequence lengths
+    temperature: Scaling factor for softmax
+    length_weight: Weight for the length invariance term
+
+    Returns:
+    Scalar tensor representing the loss
+    """
+    # Normalize features
+    features_norm = tf.nn.l2_normalize(features, axis=1)
+
+    # Compute pairwise cosine similarities
+    similarities = tf.matmul(features_norm, features_norm, transpose_b=True)
+    similarities = tf.nn.softmax(similarities / temperature, axis=-1)
+
+    # Compute pairwise length ratios
+    length_ratios = lengths[:, tf.newaxis] / tf.maximum(lengths[tf.newaxis, :], 1)
+    length_ratios = tf.cast(tf.minimum(length_ratios, 1.0 / length_ratios),tf.float32)  # Ensure ratio is always <= 1
+
+    # Compute loss
+    length_inv_loss = tf.reduce_mean(tf.abs(similarities - length_ratios))
+
+    return length_weight * length_inv_loss
