@@ -1883,7 +1883,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
             shutil.rmtree(self.models_dir)
         os.makedirs(self.models_dir)
 
-    def Train_VAE(self,latent_dim=256, kernel = 5, trainable_embedding=True, embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
+    def Train_VAE(self,latent_dim=256, length_invariance=True, kernel = 5, trainable_embedding=True, embedding_dim_aa = 64,embedding_dim_genes = 48,embedding_dim_hla=12,
                   use_only_seq=False,use_only_gene=False,use_only_hla=False,size_of_net='medium',latent_alpha=1e-3,sparsity_alpha=None,var_explained=None,graph_seed=None,
                   batch_size=10000, epochs_min=0,stop_criterion=0.01,stop_criterion_window=30, accuracy_min=None,
                   suppress_output = False,learning_rate=0.001,split_seed=None,Load_Prev_Data=False):
@@ -1980,7 +1980,20 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     GO.net = 'ae'
                     if self.use_w:
                         GO.w = tf.compat.v1.placeholder(tf.float32, shape=[None])
+                    # if length_invariance is False:
                     GO.Features = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla)
+                    # else:
+                    #     GO.Features, GO.Indices = Conv_Model(GO, self, trainable_embedding, kernel, use_only_seq, use_only_gene,use_only_hla,length_invariance=length_invariance)
+                    #     activation_loss = normalized_activation_loss(GO.Features)
+                    #     diversity_loss = normalized_diversity_regularization(GO.Features)
+                    #     sparsity_loss = normalized_sparsity_regularization(GO.Features)
+                    #     #
+                        # normalized_activations = mean_activations - tf.reduce_mean(mean_activations)
+                        # correlation_matrix = tf.matmul(normalized_activations[:, tf.newaxis],
+                        #                                normalized_activations[tf.newaxis, :])
+                        # correlation_matrix = tf.abs(correlation_matrix)
+                        # diversity_loss = tf.reduce_sum(correlation_matrix) - tf.reduce_sum(tf.linalg.diag_part(correlation_matrix))
+
                     fc = tf.compat.v1.layers.dense(GO.Features, 256)
                     fc = tf.compat.v1.layers.dense(fc, latent_dim)
                     z_w = tf.compat.v1.get_variable(name='z_w',shape=[latent_dim,latent_dim])
@@ -1991,6 +2004,14 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
 
                     z = z_mean + tf.exp(z_log_var / 2) * tf.random.normal(tf.shape(input=z_mean), 0.0, 1.0, dtype=tf.float32)
                     z = tf.identity(z, name='z')
+
+                    if length_invariance:
+                        if self.use_beta:
+                            lengths_beta = compute_sequence_lengths(GO.X_Seq_beta)
+                            # li_loss = length_feature_correlation(z_mean,lengths_beta)
+                            # li_loss = flexible_length_aware_loss(z_mean, lengths_beta)
+                            # li_loss = true_length_invariance_loss(z_mean, lengths_beta)
+                            li_loss = improved_length_invariance_loss(z_mean, lengths_beta)
 
                     fc_up = tf.compat.v1.layers.dense(z, 128)
                     fc_up = tf.compat.v1.layers.dense(fc_up, 256)
@@ -2008,6 +2029,7 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     else:
                         units = size_of_net
 
+                    # if length_invariance is False:
                     if self.use_beta:
                         upsample_beta = fc_up
                         for _ in range(len(units)-1):
@@ -2062,6 +2084,38 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                         correct_ae_alpha = tf.reduce_sum(input_tensor=w * tf.cast(tf.equal(predicted_alpha, actual_ae_alpha), tf.float32), axis=1) / tf.reduce_sum(input_tensor=w, axis=1)
                         accuracy_alpha = tf.reduce_mean(input_tensor=correct_ae_alpha, axis=0)
                         seq_accuracies.append(accuracy_alpha)
+                    # else:
+                    #     if self.use_beta:
+                    #         upsample_beta = fc_up_flat
+                    #         for _ in range(len(units)):
+                    #             upsample_beta = tf.compat.v1.layers.dense(upsample_beta,units[_], tf.nn.relu)
+                    #         recon_cost_beta_features = tf.reduce_mean(tf.square(GO.Seq_Features_beta - upsample_beta),axis=-1)
+                    #
+                    #         upsample_beta = fc_up_flat
+                    #         for _ in range(len(units)):
+                    #             upsample_beta = tf.compat.v1.layers.dense(upsample_beta,units[_],tf.nn.relu)
+                    #         recon_cost_beta_indices = tf.reduce_mean(tf.square(GO.indices_beta_last/self.max_length - upsample_beta/self.max_length),axis=-1)
+                    #
+                    #         seq_losses.append(recon_cost_beta_features + recon_cost_beta_indices)
+                    #         accuracy_beta = tf.constant(0.0)
+                    #         seq_accuracies.append(accuracy_beta)
+
+
+                        # if self.use_alpha:
+                        #     upsample_alpha = fc_up_flat
+                        #     for _ in range(len(units)):
+                        #         upsample_alpha = tf.compat.v1.layers.dense(upsample_alpha,units[_], tf.nn.relu)
+                        #     recon_cost_alpha_features = tf.reduce_mean(tf.square(GO.Seq_Features_alpha - upsample_alpha),axis=-1)
+                        #
+                        #     upsample_alpha = fc_up_flat
+                        #     for _ in range(len(units)):
+                        #         upsample_alpha = tf.compat.v1.layers.dense(upsample_alpha,units[_],tf.nn.relu)
+                        #     recon_cost_alpha_indices = tf.reduce_mean(tf.square(GO.indices_alpha_last - upsample_alpha),axis=-1)
+                        #
+                        #     seq_losses.append(recon_cost_alpha_features + recon_cost_alpha_indices)
+                        #     accuracy_alpha = tf.constant(0.0)
+                        #     seq_accuracies.append(accuracy_alpha)
+
 
                     hla_accuracies = []
                     hla_losses = []
@@ -2129,6 +2183,9 @@ class DeepTCR_U(DeepTCR_base,feature_analytics_class,vis_class):
                     total_cost = tf.concat(total_cost,1)
                     total_cost = tf.reduce_sum(input_tensor=total_cost,axis=1)
                     total_cost = tf.reduce_mean(input_tensor=total_cost)
+                    if length_invariance:
+                        # li_loss = activation_loss + diversity_loss + sparsity_loss
+                        total_cost += li_loss
 
                     num_acc = len(accuracies)
                     accuracy = 0
