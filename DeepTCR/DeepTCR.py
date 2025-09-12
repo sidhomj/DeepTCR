@@ -18,7 +18,6 @@ from scipy.spatial import distance
 import glob
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, MultiLabelBinarizer
 from multiprocessing import Pool
-import multiprocessing
 import pickle
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
@@ -27,7 +26,6 @@ import warnings
 from scipy.stats import spearmanr,gaussian_kde
 from distinctipy import distinctipy
 from tqdm import tqdm
-import platform
 
 class DeepTCR_base(object):
 
