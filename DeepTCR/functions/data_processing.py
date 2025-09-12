@@ -6,6 +6,9 @@ import pandas as pd
 import re
 import os
 import pickle
+import platform
+import multiprocessing
+from multiprocessing import Pool
 
 def Embed_Seq_Num(seq,aa_idx,maxlength):
     seq_embed = np.zeros((1, maxlength)).astype('int64')
@@ -54,6 +57,22 @@ def Cut_DF(df,type_cut,cut):
     elif type_cut == 'Read_Sum':
         return df.iloc[np.where(np.cumsum(df['counts']) <= (cut))[0]]
 
+def make_pool(n_jobs):
+    try:
+        if platform.system() in ['Linux', 'Darwin']:  # Linux or macOS
+            try:
+                multiprocessing.set_start_method('fork', force=True)
+            except RuntimeError:
+                # start method already set or not supported
+                pass
+        # On Windows, 'spawn' is the only option and is already default
+        p_ = Pool(n_jobs)
+    except Exception as e:
+        # Fallback: try with default start method
+        print(f"Warning: Could not set multiprocessing start method: {e}")
+        print("Using default multiprocessing method")
+        p_ = Pool(n_jobs)
+    return p_
 # def Process_Seq(df,col):
 #     #Drop null values
 #     df = df.dropna(subset=[col])

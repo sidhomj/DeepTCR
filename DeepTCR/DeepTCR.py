@@ -18,7 +18,7 @@ from scipy.spatial import distance
 import glob
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, MultiLabelBinarizer
 from multiprocessing import Pool
-import multiprocessing as mp
+import multiprocessing
 import pickle
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
@@ -232,9 +232,14 @@ class DeepTCR_base(object):
             self.classes = self.lb.classes_
 
             if p is None:
-                p_ = Pool(n_jobs)
+                p_ = make_pool(n_jobs)
             else:
                 p_ = p
+
+            # if p is None:
+            #     p_ = Pool(n_jobs)
+            # else:
+            #     p_ = p
 
             if sep == '\t':
                 ext = '*.tsv'
@@ -614,7 +619,7 @@ class DeepTCR_base(object):
                 break
 
         if p is None:
-            p_ = Pool(40)
+            p_ = make_pool(40)
         else:
             p_ = p
 
