@@ -11,7 +11,7 @@ import seaborn as sns
 import pandas as pd
 import umap
 import itertools
-from Bio import pairwise2
+from Bio.Align import PairwiseAligner
 import numpy as np
 from multiprocessing import Pool
 import colorsys
@@ -56,7 +56,7 @@ def KNN(distances,labels,k=1,metrics=['Recall','Precision','F1_Score','AUC']):
     pred_prob = np.asarray(pred_prob_list)
     labels = np.asarray(labels_list)
 
-    OH = OneHotEncoder(sparse=False)
+    OH = OneHotEncoder(sparse_output=False)
     labels = OH.fit_transform(labels.reshape(-1,1))
     pred = OH.transform(pred.reshape(-1,1))
 
@@ -246,9 +246,11 @@ def kmer_search(sequences):
     return matrix
 
 def get_score(a,b):
-    s_12 =  pairwise2.align.globalxx(a, b)[-1][-1]
-    s_11 =  pairwise2.align.globalxx(a, a)[-1][-1]
-    s_22 =  pairwise2.align.globalxx(b, b)[-1][-1]
+    aligner = PairwiseAligner()
+    aligner.mode = 'global'
+    s_12 = aligner.score(a, b)
+    s_11 = aligner.score(a, a)
+    s_22 = aligner.score(b, b)
     return (1-s_12/s_11)*(1-s_12/s_22)
 
 
@@ -400,7 +402,7 @@ def KNN_samples(distances,labels,k,metrics):
     pred_prob = np.asarray(pred_prob_list)
     labels = np.asarray(labels_list)
 
-    OH = OneHotEncoder(sparse=False)
+    OH = OneHotEncoder(sparse_output=False)
     labels = OH.fit_transform(labels.reshape(-1,1))
     pred = OH.transform(pred.reshape(-1,1))
 

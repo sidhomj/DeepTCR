@@ -15,7 +15,6 @@ import shutil
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
-from Bio.Alphabet import IUPAC
 
 df = pd.read_csv('../../Data/10x_Data/Data_Regression.csv')
 DTCRS = DeepTCR_SS('reg',device=2)
@@ -46,14 +45,14 @@ seq = t['beta'].tolist()
 seq = seq[:10]
 out = []
 for ii,s in enumerate(seq,0):
-    out.append(SeqRecord(Seq(s, IUPAC.protein), str(ii)))
+    out.append(SeqRecord(Seq(s), str(ii)))
 SeqIO.write(out, os.path.join(dir, 'beta.fasta'), 'fasta')
 
 seq = t['alpha'].tolist()
 seq = seq[:10]
 out = []
 for ii,s in enumerate(seq,0):
-    out.append(SeqRecord(Seq(s, IUPAC.protein), str(ii)))
+    out.append(SeqRecord(Seq(s), str(ii)))
 SeqIO.write(out, os.path.join(dir, 'alpha.fasta'), 'fasta')
 
 

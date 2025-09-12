@@ -10,7 +10,6 @@ from DeepTCR.DeepTCR import DeepTCR_SS
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
-from Bio.Alphabet import IUPAC
 import numpy as np
 import os
 import shutil
@@ -40,7 +39,7 @@ for item in DTCRS.Rep_Seq:
     seq = seq[:10]
     out = []
     for s in seq:
-        out.append(SeqRecord(Seq(s, IUPAC.protein), s))
+        out.append(SeqRecord(Seq(s), s))
     SeqIO.write(out,os.path.join(dir,item+'.fasta'),'fasta')
 
 

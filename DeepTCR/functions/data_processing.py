@@ -1,5 +1,3 @@
-from Bio.SubsMat import MatrixInfo
-from Bio.Alphabet import IUPAC
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
@@ -17,24 +15,12 @@ def Embed_Seq_Num(seq,aa_idx,maxlength):
     return seq_embed
 
 def make_aa_df():
-    # load matrix as symmetric pandas dataframe
-    aa_df = pd.Series(MatrixInfo.blosum100).unstack()
-    aa_df.where(~aa_df.isnull(), other=aa_df.T, inplace=True)
-
-    # only keep IUPAC protein letters
-    aa_keep = list(IUPAC.IUPACProtein.letters)
-    aa_df = aa_df.loc[aa_keep, aa_keep]
-
-    # add NULL '-' with max loss (min value) & median for match
-    aa_df.loc['-', :] = aa_df.values.min()
-    aa_df.loc[:, '-'] = aa_df.values.min()
-    aa_df.loc['-', '-'] = np.median(aa_df.values.diagonal())
-
-    # checks that we have square matrix with same elements
-    if (aa_df.columns == aa_df.index).all():
-        return OrderedDict(tuple(zip(list(aa_df.index.values), list(range(1, len(aa_df.index.values)))))), aa_df.values
-    else:
-        return None, None
+    # Simple amino acid to index mapping - no substitution matrix needed
+    amino_acids = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y', '-']
+    aa_idx = OrderedDict(tuple(zip(amino_acids, list(range(1, len(amino_acids) + 1)))))
+    # Return dummy matrix since it's expected but not used
+    dummy_matrix = np.zeros((len(amino_acids), len(amino_acids)))
+    return aa_idx, dummy_matrix
 
 def Cut_DF(df,type_cut,cut):
     if type_cut == 'Fraction_Response':
@@ -72,7 +58,7 @@ def Process_Seq(df,col):
     #strip any white space and remove non-IUPAC characters
     df[col] = df[col].str.strip()
     df = df[~df[col].str.contains(r'[^A-Z]')]
-    iupac_c = set((list(IUPAC.IUPACProtein.letters)))
+    iupac_c = set(list('ACDEFGHIKLMNPQRSTVWY'))
     all_c = set(''.join(list(df[col])))
     searchfor = list(all_c.difference(iupac_c))
     if len(searchfor) != 0:

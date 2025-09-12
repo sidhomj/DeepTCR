@@ -215,7 +215,7 @@ def KNN(distances,labels,k=1,folds=5,metrics=['Recall','Precision','F1_Score','A
     pred_prob = np.asarray(pred_prob_list)
     labels = np.asarray(labels_list)
 
-    OH = OneHotEncoder(sparse=False,categories='auto')
+    OH = OneHotEncoder(sparse_output=False,categories='auto')
     labels = OH.fit_transform(labels.reshape(-1,1))
     pred = OH.transform(pred.reshape(-1,1))
 
@@ -284,7 +284,7 @@ def KNN_samples(distances,labels,k,metrics,folds,n_jobs):
     pred_prob = np.asarray(pred_prob_list)
     labels = np.asarray(labels_list)
 
-    OH = OneHotEncoder(sparse=False,categories='auto')
+    OH = OneHotEncoder(sparse_output=False,categories='auto')
     labels = OH.fit_transform(labels.reshape(-1,1))
     pred = OH.transform(pred.reshape(-1,1))
 

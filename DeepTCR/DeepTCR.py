@@ -17,7 +17,9 @@ import DeepTCR.phenograph as phenograph
 from scipy.spatial import distance
 import glob
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, MultiLabelBinarizer
+import multiprocessing
 from multiprocessing import Pool
+import platform
 import pickle
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
@@ -230,7 +232,22 @@ class DeepTCR_base(object):
             self.classes = self.lb.classes_
 
             if p is None:
-                p_ = Pool(n_jobs)
+                # Cross-platform multiprocessing fix
+                # Use 'fork' on Unix-like systems if available, 'spawn' otherwise
+                try:
+                    if platform.system() in ['Linux', 'Darwin']:  # Linux or macOS
+                        try:
+                            multiprocessing.set_start_method('fork', force=True)
+                        except RuntimeError:
+                            # start method already set or not supported
+                            pass
+                    # On Windows, 'spawn' is the only option and is already default
+                    p_ = Pool(n_jobs)
+                except Exception as e:
+                    # Fallback: try with default start method
+                    print(f"Warning: Could not set multiprocessing start method: {e}")
+                    print("Using default multiprocessing method")
+                    p_ = Pool(n_jobs)
             else:
                 p_ = p
 
@@ -332,7 +349,7 @@ class DeepTCR_base(object):
             seq_index = np.asarray(seq_index)
 
             Y = self.lb.transform(label_id)
-            OH = OneHotEncoder(sparse=False,categories='auto')
+            OH = OneHotEncoder(sparse_output=False,categories='auto')
             Y = OH.fit_transform(Y.reshape(-1,1))
 
             print('Embedding Sequences...')
@@ -366,8 +383,11 @@ class DeepTCR_base(object):
             num_seq = X_Seq_alpha.shape[0]
             if self.use_v_beta is True:
                 self.lb_v_beta = LabelEncoder()
-                self.lb_v_beta.classes_ = np.insert(np.unique(v_beta), 0, self.unknown_str)
-                v_beta_num = self.lb_v_beta.transform(v_beta)
+                # Filter out None values before calling unique
+                v_beta_filtered = v_beta[v_beta != None]
+                self.lb_v_beta.classes_ = np.insert(np.unique(v_beta_filtered), 0, self.unknown_str)
+                v_beta_transform = np.where(v_beta == None, self.unknown_str, v_beta)
+                v_beta_num = self.lb_v_beta.transform(v_beta_transform)
             else:
                 self.lb_v_beta = LabelEncoder()
                 v_beta_num = np.zeros(shape=[num_seq])
@@ -375,8 +395,11 @@ class DeepTCR_base(object):
 
             if self.use_d_beta is True:
                 self.lb_d_beta = LabelEncoder()
-                self.lb_d_beta.classes_ = np.insert(np.unique(d_beta), 0, self.unknown_str)
-                d_beta_num = self.lb_d_beta.transform(d_beta)
+                # Filter out None values before calling unique
+                d_beta_filtered = d_beta[d_beta != None]
+                self.lb_d_beta.classes_ = np.insert(np.unique(d_beta_filtered), 0, self.unknown_str)
+                d_beta_transform = np.where(d_beta == None, self.unknown_str, d_beta)
+                d_beta_num = self.lb_d_beta.transform(d_beta_transform)
             else:
                 self.lb_d_beta = LabelEncoder()
                 d_beta_num = np.zeros(shape=[num_seq])
@@ -384,8 +407,11 @@ class DeepTCR_base(object):
 
             if self.use_j_beta is True:
                 self.lb_j_beta = LabelEncoder()
-                self.lb_j_beta.classes_ = np.insert(np.unique(j_beta), 0, self.unknown_str)
-                j_beta_num = self.lb_j_beta.transform(j_beta)
+                # Filter out None values before calling unique
+                j_beta_filtered = j_beta[j_beta != None]
+                self.lb_j_beta.classes_ = np.insert(np.unique(j_beta_filtered), 0, self.unknown_str)
+                j_beta_transform = np.where(j_beta == None, self.unknown_str, j_beta)
+                j_beta_num = self.lb_j_beta.transform(j_beta_transform)
             else:
                 self.lb_j_beta = LabelEncoder()
                 j_beta_num = np.zeros(shape=[num_seq])
@@ -393,8 +419,11 @@ class DeepTCR_base(object):
 
             if self.use_v_alpha is True:
                 self.lb_v_alpha = LabelEncoder()
-                self.lb_v_alpha.classes_ = np.insert(np.unique(v_alpha), 0, self.unknown_str)
-                v_alpha_num = self.lb_v_alpha.transform(v_alpha)
+                # Filter out None values before calling unique
+                v_alpha_filtered = v_alpha[v_alpha != None]
+                self.lb_v_alpha.classes_ = np.insert(np.unique(v_alpha_filtered), 0, self.unknown_str)
+                v_alpha_transform = np.where(v_alpha == None, self.unknown_str, v_alpha)
+                v_alpha_num = self.lb_v_alpha.transform(v_alpha_transform)
             else:
                 self.lb_v_alpha = LabelEncoder()
                 v_alpha_num = np.zeros(shape=[num_seq])
@@ -402,8 +431,11 @@ class DeepTCR_base(object):
 
             if self.use_j_alpha is True:
                 self.lb_j_alpha = LabelEncoder()
-                self.lb_j_alpha.classes_ = np.insert(np.unique(j_alpha), 0, self.unknown_str)
-                j_alpha_num = self.lb_j_alpha.transform(j_alpha)
+                # Filter out None values before calling unique
+                j_alpha_filtered = j_alpha[j_alpha != None]
+                self.lb_j_alpha.classes_ = np.insert(np.unique(j_alpha_filtered), 0, self.unknown_str)
+                j_alpha_transform = np.where(j_alpha == None, self.unknown_str, j_alpha)
+                j_alpha_num = self.lb_j_alpha.transform(j_alpha_transform)
             else:
                 self.lb_j_alpha = LabelEncoder()
                 j_alpha_num = np.zeros(shape=[num_seq])
@@ -641,8 +673,11 @@ class DeepTCR_base(object):
         if v_beta is not None:
             self.v_beta = v_beta
             self.lb_v_beta = LabelEncoder()
-            self.lb_v_beta.classes_ = np.insert(np.unique(v_beta), 0, self.unknown_str)
-            self.v_beta_num = self.lb_v_beta.transform(v_beta)
+            # Filter out None values before calling unique
+            v_beta_filtered = v_beta[v_beta != None]
+            self.lb_v_beta.classes_ = np.insert(np.unique(v_beta_filtered), 0, self.unknown_str)
+            v_beta_transform = np.where(v_beta == None, self.unknown_str, v_beta)
+            self.v_beta_num = self.lb_v_beta.transform(v_beta_transform)
             self.use_v_beta = True
         else:
             self.lb_v_beta = LabelEncoder()
@@ -652,8 +687,11 @@ class DeepTCR_base(object):
         if d_beta is not None:
             self.d_beta = d_beta
             self.lb_d_beta = LabelEncoder()
-            self.lb_d_beta.classes_ = np.insert(np.unique(d_beta), 0, self.unknown_str)
-            self.d_beta_num = self.lb_d_beta.transform(d_beta)
+            # Filter out None values before calling unique
+            d_beta_filtered = d_beta[d_beta != None]
+            self.lb_d_beta.classes_ = np.insert(np.unique(d_beta_filtered), 0, self.unknown_str)
+            d_beta_transform = np.where(d_beta == None, self.unknown_str, d_beta)
+            self.d_beta_num = self.lb_d_beta.transform(d_beta_transform)
             self.use_d_beta = True
         else:
             self.lb_d_beta = LabelEncoder()
@@ -663,8 +701,11 @@ class DeepTCR_base(object):
         if j_beta is not None:
             self.j_beta = j_beta
             self.lb_j_beta = LabelEncoder()
-            self.lb_j_beta.classes_ = np.insert(np.unique(j_beta), 0, self.unknown_str)
-            self.j_beta_num = self.lb_j_beta.transform(j_beta)
+            # Filter out None values before calling unique
+            j_beta_filtered = j_beta[j_beta != None]
+            self.lb_j_beta.classes_ = np.insert(np.unique(j_beta_filtered), 0, self.unknown_str)
+            j_beta_transform = np.where(j_beta == None, self.unknown_str, j_beta)
+            self.j_beta_num = self.lb_j_beta.transform(j_beta_transform)
             self.use_j_beta = True
         else:
             self.lb_j_beta = LabelEncoder()
@@ -674,8 +715,11 @@ class DeepTCR_base(object):
         if v_alpha is not None:
             self.v_alpha = v_alpha
             self.lb_v_alpha = LabelEncoder()
-            self.lb_v_alpha.classes_ = np.insert(np.unique(v_alpha), 0, self.unknown_str)
-            self.v_alpha_num = self.lb_v_alpha.transform(v_alpha)
+            # Filter out None values before calling unique
+            v_alpha_filtered = v_alpha[v_alpha != None]
+            self.lb_v_alpha.classes_ = np.insert(np.unique(v_alpha_filtered), 0, self.unknown_str)
+            v_alpha_transform = np.where(v_alpha == None, self.unknown_str, v_alpha)
+            self.v_alpha_num = self.lb_v_alpha.transform(v_alpha_transform)
             self.use_v_alpha = True
         else:
             self.lb_v_alpha = LabelEncoder()
@@ -685,8 +729,11 @@ class DeepTCR_base(object):
         if j_alpha is not None:
             self.j_alpha = j_alpha
             self.lb_j_alpha = LabelEncoder()
-            self.lb_j_alpha.classes_ = np.insert(np.unique(j_alpha), 0, self.unknown_str)
-            self.j_alpha_num = self.lb_j_alpha.transform(j_alpha)
+            # Filter out None values before calling unique
+            j_alpha_filtered = j_alpha[j_alpha != None]
+            self.lb_j_alpha.classes_ = np.insert(np.unique(j_alpha_filtered), 0, self.unknown_str)
+            j_alpha_transform = np.where(j_alpha == None, self.unknown_str, j_alpha)
+            self.j_alpha_num = self.lb_j_alpha.transform(j_alpha_transform)
             self.use_j_alpha = True
         else:
             self.lb_j_alpha = LabelEncoder()
@@ -764,7 +811,7 @@ class DeepTCR_base(object):
         else:
             self.lb = LabelEncoder()
             Y = self.lb.fit_transform(self.class_id)
-            OH = OneHotEncoder(sparse=False, categories='auto')
+            OH = OneHotEncoder(sparse_output=False, categories='auto')
             Y = OH.fit_transform(Y.reshape(-1, 1))
             self.Y = Y
 
