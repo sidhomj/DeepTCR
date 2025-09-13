@@ -366,7 +366,8 @@ class DeepTCR_base(object):
             num_seq = X_Seq_alpha.shape[0]
             if self.use_v_beta is True:
                 self.lb_v_beta = LabelEncoder()
-                self.lb_v_beta.classes_ = np.insert(np.unique(v_beta), 0, self.unknown_str)
+                self.lb_v_beta.classes_ = np.insert(np.unique(v_beta[pd.notna(v_beta)]), 0, self.unknown_str)
+                v_beta = np.where(pd.isna(v_beta), self.unknown_str, v_beta)
                 v_beta_num = self.lb_v_beta.transform(v_beta)
             else:
                 self.lb_v_beta = LabelEncoder()
@@ -375,7 +376,8 @@ class DeepTCR_base(object):
 
             if self.use_d_beta is True:
                 self.lb_d_beta = LabelEncoder()
-                self.lb_d_beta.classes_ = np.insert(np.unique(d_beta), 0, self.unknown_str)
+                self.lb_d_beta.classes_ = np.insert(np.unique(d_beta[pd.notna(d_beta)]), 0, self.unknown_str)
+                d_beta = np.where(pd.isna(d_beta), self.unknown_str, d_beta)
                 d_beta_num = self.lb_d_beta.transform(d_beta)
             else:
                 self.lb_d_beta = LabelEncoder()
@@ -384,7 +386,8 @@ class DeepTCR_base(object):
 
             if self.use_j_beta is True:
                 self.lb_j_beta = LabelEncoder()
-                self.lb_j_beta.classes_ = np.insert(np.unique(j_beta), 0, self.unknown_str)
+                self.lb_j_beta.classes_ = np.insert(np.unique(j_beta[pd.notna(j_beta)]), 0, self.unknown_str)
+                j_beta = np.where(pd.isna(j_beta), self.unknown_str, j_beta)
                 j_beta_num = self.lb_j_beta.transform(j_beta)
             else:
                 self.lb_j_beta = LabelEncoder()
@@ -393,7 +396,8 @@ class DeepTCR_base(object):
 
             if self.use_v_alpha is True:
                 self.lb_v_alpha = LabelEncoder()
-                self.lb_v_alpha.classes_ = np.insert(np.unique(v_alpha), 0, self.unknown_str)
+                self.lb_v_alpha.classes_ = np.insert(np.unique(v_alpha[pd.notna(v_alpha)]), 0, self.unknown_str)
+                v_alpha = np.where(pd.isna(v_alpha), self.unknown_str, v_alpha)
                 v_alpha_num = self.lb_v_alpha.transform(v_alpha)
             else:
                 self.lb_v_alpha = LabelEncoder()
@@ -402,7 +406,8 @@ class DeepTCR_base(object):
 
             if self.use_j_alpha is True:
                 self.lb_j_alpha = LabelEncoder()
-                self.lb_j_alpha.classes_ = np.insert(np.unique(j_alpha), 0, self.unknown_str)
+                self.lb_j_alpha.classes_ = np.insert(np.unique(j_alpha[pd.notna(j_alpha)]), 0, self.unknown_str)
+                j_alpha = np.where(pd.isna(j_alpha), self.unknown_str, j_alpha)
                 j_alpha_num = self.lb_j_alpha.transform(j_alpha)
             else:
                 self.lb_j_alpha = LabelEncoder()
@@ -641,7 +646,8 @@ class DeepTCR_base(object):
         if v_beta is not None:
             self.v_beta = v_beta
             self.lb_v_beta = LabelEncoder()
-            self.lb_v_beta.classes_ = np.insert(np.unique(v_beta), 0, self.unknown_str)
+            self.lb_v_beta.classes_ = np.insert(np.unique(v_beta[pd.notna(v_beta)]), 0, self.unknown_str)
+            v_beta = np.where(pd.isna(v_beta), self.unknown_str, v_beta)
             self.v_beta_num = self.lb_v_beta.transform(v_beta)
             self.use_v_beta = True
         else:
@@ -652,7 +658,8 @@ class DeepTCR_base(object):
         if d_beta is not None:
             self.d_beta = d_beta
             self.lb_d_beta = LabelEncoder()
-            self.lb_d_beta.classes_ = np.insert(np.unique(d_beta), 0, self.unknown_str)
+            self.lb_d_beta.classes_ = np.insert(np.unique(d_beta[pd.notna(d_beta)]), 0, self.unknown_str)
+            d_beta = np.where(pd.isna(d_beta), self.unknown_str, d_beta)
             self.d_beta_num = self.lb_d_beta.transform(d_beta)
             self.use_d_beta = True
         else:
@@ -663,7 +670,8 @@ class DeepTCR_base(object):
         if j_beta is not None:
             self.j_beta = j_beta
             self.lb_j_beta = LabelEncoder()
-            self.lb_j_beta.classes_ = np.insert(np.unique(j_beta), 0, self.unknown_str)
+            self.lb_j_beta.classes_ = np.insert(np.unique(j_beta[pd.notna(j_beta)]), 0, self.unknown_str)
+            j_beta = np.where(pd.isna(j_beta), self.unknown_str, j_beta)
             self.j_beta_num = self.lb_j_beta.transform(j_beta)
             self.use_j_beta = True
         else:
@@ -674,7 +682,8 @@ class DeepTCR_base(object):
         if v_alpha is not None:
             self.v_alpha = v_alpha
             self.lb_v_alpha = LabelEncoder()
-            self.lb_v_alpha.classes_ = np.insert(np.unique(v_alpha), 0, self.unknown_str)
+            self.lb_v_alpha.classes_ = np.insert(np.unique(v_alpha[pd.notna(v_alpha)]), 0, self.unknown_str)
+            v_alpha = np.where(pd.isna(v_alpha), self.unknown_str, v_alpha)
             self.v_alpha_num = self.lb_v_alpha.transform(v_alpha)
             self.use_v_alpha = True
         else:
@@ -685,7 +694,8 @@ class DeepTCR_base(object):
         if j_alpha is not None:
             self.j_alpha = j_alpha
             self.lb_j_alpha = LabelEncoder()
-            self.lb_j_alpha.classes_ = np.insert(np.unique(j_alpha), 0, self.unknown_str)
+            self.lb_j_alpha.classes_ = np.insert(np.unique(j_alpha[pd.notna(j_alpha)]), 0, self.unknown_str)
+            j_alpha = np.where(pd.isna(j_alpha), self.unknown_str, j_alpha)
             self.j_alpha_num = self.lb_j_alpha.transform(j_alpha)
             self.use_j_alpha = True
         else:
