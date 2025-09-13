@@ -234,11 +234,6 @@ class DeepTCR_base(object):
             else:
                 p_ = p
 
-            # if p is None:
-            #     p_ = Pool(n_jobs)
-            # else:
-            #     p_ = p
-
             if sep == '\t':
                 ext = '*.tsv'
             elif sep == ',':
