@@ -1,2 +1,3 @@
 include requirements.txt
+include requirements-macos.txt
 include README.md
